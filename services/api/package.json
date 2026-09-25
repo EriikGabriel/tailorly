@@ -1,0 +1,12 @@
+{
+  "name": "@tailorly/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "./mvnw spring-boot:run",
+    "build": "./mvnw clean package",
+    "test": "./mvnw test",
+    "lint": "./mvnw test",
+    "check": "./mvnw compile"
+  }
+}

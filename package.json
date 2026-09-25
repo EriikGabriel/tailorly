@@ -1,0 +1,22 @@
+{
+  "name": "tailorly",
+  "author": {
+    "name": "Erik Gabriel",
+    "email": "erikgabriel.work@gmail.com",
+    "url": "https://erikgabriel.dev"
+  },
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.9.0",
+  "scripts": {
+    "dev": "turbo dev --parallel",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "biome check",
+    "check": "biome check"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.8",
+    "@biomejs/biome": "latest"
+  }
+}

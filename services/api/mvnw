@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -eu
+
+if command -v mvn >/dev/null 2>&1; then
+  exec mvn "$@"
+fi
+
+if [ -x "${MAVEN_HOME:-}/bin/mvn" ]; then
+  exec "$MAVEN_HOME/bin/mvn" "$@"
+fi
+
+MAVEN_VERSION=3.9.9
+WRAPPER_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/.mvn/wrapper"
+MAVEN_HOME="$WRAPPER_DIR/dists/apache-maven-$MAVEN_VERSION"
+
+if [ ! -x "$MAVEN_HOME/bin/mvn" ]; then
+  mkdir -p "$WRAPPER_DIR/dists"
+  ARCHIVE="$WRAPPER_DIR/dists/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+  if [ ! -f "$ARCHIVE" ]; then
+    curl --fail --location --silent --show-error \
+      "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.tar.gz" \
+      --output "$ARCHIVE"
+  fi
+  tar -xzf "$ARCHIVE" -C "$WRAPPER_DIR/dists"
+fi
+
+exec "$MAVEN_HOME/bin/mvn" -Dmaven.repo.local="$WRAPPER_DIR/repository" "$@"

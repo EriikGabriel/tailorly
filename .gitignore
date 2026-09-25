@@ -1,0 +1,13 @@
+node_modules/
+.turbo/
+dist/
+target/
+.mvn/wrapper/dists/
+.mvn/wrapper/repository/
+.env
+.env.*
+!.env.example
+.idea/
+*.iml
+.DS_Store
+.omo
