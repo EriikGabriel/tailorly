@@ -15,9 +15,26 @@ export default defineConfig({
     tailwindcss(),
   ],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [
+      {
+        find: "@components",
+        replacement: path.resolve(__dirname, "./src/components"),
+      },
+      {
+        find: "@ui",
+        replacement: path.resolve(__dirname, "./src/components/ui"),
+      },
+      {
+        find: "@animate",
+        replacement: path.resolve(__dirname, "./src/components/ui/animate"),
+      },
+      { find: "@assets", replacement: path.resolve(__dirname, "./src/assets") },
+      { find: "@stores", replacement: path.resolve(__dirname, "./src/stores") },
+      { find: "@pages", replacement: path.resolve(__dirname, "./src/pages") },
+      { find: "@lib", replacement: path.resolve(__dirname, "./src/lib") },
+      { find: "@hooks", replacement: path.resolve(__dirname, "./src/hooks") },
+      { find: /^@\//, replacement: `${path.resolve(__dirname, "./src")}/` },
+    ],
   },
   server: {
     proxy: {

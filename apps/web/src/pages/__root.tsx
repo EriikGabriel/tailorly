@@ -1,10 +1,11 @@
+import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
+import { Header } from "@components/header";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   HeadContent,
   Outlet,
 } from "@tanstack/react-router";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface RouterContext {
   queryClient: QueryClient;
@@ -29,9 +30,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootComponent() {
   return (
-    <TooltipProvider>
+    <TooltipPrimitive.Provider delay={0}>
       <HeadContent />
+      <Header />
       <Outlet />
-    </TooltipProvider>
+    </TooltipPrimitive.Provider>
   );
 }

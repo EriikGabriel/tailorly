@@ -1,0 +1,54 @@
+"use client";
+
+import { buttonVariants } from "@animate/buttons/button";
+import {
+  RippleButton as RippleButtonPrimitive,
+  type RippleButtonProps as RippleButtonPrimitiveProps,
+  RippleButtonRipples as RippleButtonRipplesPrimitive,
+  type RippleButtonRipplesProps as RippleButtonRipplesPrimitiveProps,
+} from "@animate/primitives/buttons/ripple";
+import type { VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+
+const rippleButtonVariants = {
+  default: "[--ripple-button-ripple-color:var(--primary-foreground)]",
+  accent: "[--ripple-button-ripple-color:var(--accent-foreground)]",
+  destructive: "[--ripple-button-ripple-color:var(--destructive-foreground)]",
+  outline: "[--ripple-button-ripple-color:var(--foreground)]",
+  secondary: "[--ripple-button-ripple-color:var(--secondary-foreground)]",
+  ghost: "[--ripple-button-ripple-color:var(--foreground)]",
+  link: "[--ripple-button-ripple-color:var(--primary-foreground)]",
+};
+
+type RippleButtonProps = RippleButtonPrimitiveProps &
+  VariantProps<typeof buttonVariants>;
+
+function RippleButton({
+  className,
+  variant,
+  size,
+  ...props
+}: RippleButtonProps) {
+  return (
+    <RippleButtonPrimitive
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        rippleButtonVariants[variant as keyof typeof rippleButtonVariants],
+      )}
+      {...props}
+    />
+  );
+}
+
+type RippleButtonRipplesProps = RippleButtonRipplesPrimitiveProps;
+
+function RippleButtonRipples(props: RippleButtonRipplesProps) {
+  return <RippleButtonRipplesPrimitive {...props} />;
+}
+
+export {
+  RippleButton,
+  type RippleButtonProps,
+  RippleButtonRipples,
+  type RippleButtonRipplesProps,
+};

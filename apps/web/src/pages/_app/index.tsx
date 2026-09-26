@@ -5,5 +5,5 @@ export const Route = createFileRoute("/_app/")({
 });
 
 function App() {
-  return <main className="min-h-dvh">Teste</main>;
+  return <main className="min-h-[calc(100dvh-4rem)]" />;
 }

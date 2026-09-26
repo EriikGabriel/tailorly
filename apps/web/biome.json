@@ -11,7 +11,12 @@
     }
   },
   "files": {
-    "includes": ["**", "!dist", "!src/routeTree.gen.ts"]
+    "includes": [
+      "**",
+      "!dist",
+      "!src/routeTree.gen.ts",
+      "!src/assets/header/*.svg"
+    ]
   },
   "css": {
     "parser": {

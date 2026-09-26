@@ -5,15 +5,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ------------------------------------------------------------------ */
+/* 1. Variáveis "cruas" (nomes simples, sem prefixo)  */
+/* ------------------------------------------------------------------ */
 :root {
-  font-family: "Inter Variable", Inter, sans-serif;
-  color: #1b1c1b;
-  background: #faf7f5;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-
-  /* Warm Editorial Executive palette */
+  /* Material roles - Warm Editorial Executive */
   --surface: #fcf9f7;
   --surface-dim: #dcd9d8;
   --surface-bright: #fcf9f7;
@@ -22,146 +18,113 @@
   --surface-container: #f0edeb;
   --surface-container-high: #eae8e6;
   --surface-container-highest: #e5e2e0;
+  --surface-variant: #e5e2e0;
+  --surface-tint: #745853;
+
   --on-surface: #1b1c1b;
   --on-surface-variant: #504442;
+  --on-background: #1b1c1b;
+
   --inverse-surface: #30302f;
   --inverse-on-surface: #f3f0ee;
+  --inverse-primary: #e3beb8;
+
   --outline: #827472;
   --outline-variant: #d3c3c0;
-  --surface-tint: #745853;
-  --material-primary: #271310;
+
+  /* Primary = Rich Espresso */
+  --material-primary: #3e2723;
   --on-primary: #ffffff;
-  --primary-container: #3e2723;
+  --primary-container: #271310;
   --on-primary-container: #ae8d87;
-  --inverse-primary: #e3beb8;
-  --material-secondary: #77574d;
+
+  /* Secondary = Warm Walnut */
+  --material-secondary: #5d4037;
   --on-secondary: #ffffff;
   --secondary-container: #fed3c7;
   --on-secondary-container: #795950;
-  --tertiary: #2a1200;
+
+  /* Tertiary = Golden Amber  */
+  --material-tertiary: #d97706;
   --on-tertiary: #ffffff;
   --tertiary-container: #482300;
   --on-tertiary-container: #de7b0d;
+
   --error: #ba1a1a;
   --on-error: #ffffff;
   --error-container: #ffdad6;
   --on-error-container: #93000a;
+
   --primary-fixed: #ffdad4;
   --primary-fixed-dim: #e3beb8;
   --on-primary-fixed: #2b1613;
   --on-primary-fixed-variant: #5b403c;
+
   --secondary-fixed: #ffdbd0;
   --secondary-fixed-dim: #e7bdb1;
   --on-secondary-fixed: #2c160e;
   --on-secondary-fixed-variant: #5d4037;
+
   --tertiary-fixed: #ffdcc3;
   --tertiary-fixed-dim: #ffb77d;
   --on-tertiary-fixed: #2f1500;
   --on-tertiary-fixed-variant: #6e3900;
-  --on-background: #1b1c1b;
-  --surface-variant: #e5e2e0;
 
-  /* Brand colors and shadcn semantics */
+  /* Semânticas Shadcn/ui  */
   --background: #faf7f5;
-  --foreground: #1b1c1b;
-  --card: #ffffff;
-  --card-foreground: #1b1c1b;
-  --popover: #ffffff;
-  --popover-foreground: #1b1c1b;
-  --primary: #3e2723;
-  --primary-foreground: #ffffff;
-  --secondary: #f0edeb;
-  --secondary-foreground: #5d4037;
-  --muted: #f6f3f1;
-  --muted-foreground: #795950;
-  --accent: #f6f3f1;
-  --accent-foreground: #3e2723;
-  --destructive: #ba1a1a;
+  --foreground: var(--on-surface);
+  --card: var(--surface-container-lowest);
+  --card-foreground: var(--on-surface);
+  --popover: var(--surface-container-lowest);
+  --popover-foreground: var(--on-surface);
+  --primary: var(--material-primary);
+  --primary-foreground: var(--on-primary);
+  --secondary: var(--material-secondary);
+  --secondary-foreground: var(--on-secondary);
+  --muted: var(--surface-container-low);
+  --muted-foreground: var(--on-secondary-container);
+  --accent: var(--surface-container-low);
+  --accent-foreground: var(--material-primary);
+  --destructive: var(--error);
   --border: #e7e0d8;
   --input: #e7e0d8;
-  --ring: #77574d;
-  --chart-1: #d97706;
-  --chart-2: #77574d;
-  --chart-3: #3e2723;
-  --chart-4: #ae8d87;
-  --chart-5: #d3c3c0;
-  --radius: 0.5rem;
-  --sidebar: #f6f3f1;
-  --sidebar-foreground: #1b1c1b;
-  --sidebar-primary: #3e2723;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f0edeb;
-  --sidebar-accent-foreground: #3e2723;
-  --sidebar-border: #e7e0d8;
-  --sidebar-ring: #77574d;
+  --ring: var(--material-secondary);
 
-  --brand-primary: #3e2723;
-  --brand-secondary: #5d4037;
-  --brand-amber: #d97706;
-  --brand-canvas: #faf7f5;
+  --brand-amber: var(--material-tertiary);
+  --brand-canvas: var(--background);
+
+  --chart-1: var(--material-tertiary);
+  --chart-2: var(--material-secondary);
+  --chart-3: var(--material-primary);
+  --chart-4: var(--on-primary-container);
+  --chart-5: var(--outline-variant);
+
+  --sidebar: var(--surface-container-low);
+  --sidebar-foreground: var(--on-surface);
+  --sidebar-primary: var(--material-primary);
+  --sidebar-primary-foreground: var(--on-primary);
+  --sidebar-accent: var(--surface-container);
+  --sidebar-accent-foreground: var(--material-primary);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--material-secondary);
+
   --shadow-1: 0 1px 3px rgb(62 39 35 / 5%), 0 1px 2px rgb(62 39 35 / 8%);
   --shadow-2: 0 4px 12px rgb(62 39 35 / 8%), 0 2px 4px rgb(62 39 35 / 4%);
   --shadow-3: 0 12px 32px rgb(62 39 35 / 12%), 0 2px 6px rgb(62 39 35 / 4%);
 
-  --type-display-lg: 3.5rem;
-  --type-headline-lg: 2rem;
-  --type-headline-lg-mobile: 1.625rem;
-  --type-headline-md: 1.5rem;
-  --type-headline-sm: 1.25rem;
-  --type-title-md: 1rem;
-  --type-body-lg: 1.125rem;
-  --type-body-md: 0.9375rem;
-  --type-body-sm: 0.8125rem;
-  --type-label-md: 0.875rem;
-  --type-label-sm: 0.75rem;
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2.5rem;
+  --radius: 0.5rem;
   --gutter: 1.5rem;
   --canvas-margin: 2rem;
 }
 
+/* ------------------------------------------------------------------ */
+/* 2. @theme inline — mapeia pro namespace que o Tailwind usa nas     */
+/*    utilities (bg-primary, text-foreground, rounded-lg, etc.)       */
+/* ------------------------------------------------------------------ */
 @theme inline {
   --font-sans: "Inter Variable", Inter, sans-serif;
   --font-heading: "Inter Variable", Inter, sans-serif;
-  --text-display-lg: 3.5rem;
-  --text-display-lg--line-height: 4rem;
-  --text-display-lg--font-weight: 700;
-  --text-display-lg--letter-spacing: -0.025em;
-  --text-headline-lg: 2rem;
-  --text-headline-lg--line-height: 2.5rem;
-  --text-headline-lg--font-weight: 600;
-  --text-headline-lg--letter-spacing: -0.015em;
-  --text-headline-lg-mobile: 1.625rem;
-  --text-headline-lg-mobile--line-height: 2.125rem;
-  --text-headline-lg-mobile--font-weight: 600;
-  --text-headline-lg-mobile--letter-spacing: -0.01em;
-  --text-headline-md: 1.5rem;
-  --text-headline-md--line-height: 2rem;
-  --text-headline-md--font-weight: 600;
-  --text-headline-md--letter-spacing: -0.01em;
-  --text-headline-sm: 1.25rem;
-  --text-headline-sm--line-height: 1.75rem;
-  --text-headline-sm--font-weight: 600;
-  --text-title-md: 1rem;
-  --text-title-md--line-height: 1.5rem;
-  --text-title-md--font-weight: 600;
-  --text-body-lg: 1.125rem;
-  --text-body-lg--line-height: 1.75rem;
-  --text-body-md: 0.9375rem;
-  --text-body-md--line-height: 1.5rem;
-  --text-body-sm: 0.8125rem;
-  --text-body-sm--line-height: 1.25rem;
-  --text-label-md: 0.875rem;
-  --text-label-md--line-height: 1.25rem;
-  --text-label-md--font-weight: 500;
-  --text-label-md--letter-spacing: 0.01em;
-  --text-label-sm: 0.75rem;
-  --text-label-sm--line-height: 1rem;
-  --text-label-sm--font-weight: 600;
-  --text-label-sm--letter-spacing: 0.025em;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -181,36 +144,45 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-brand-amber: var(--brand-amber);
+  --color-brand-canvas: var(--brand-canvas);
+
   --color-surface: var(--surface);
   --color-surface-dim: var(--surface-dim);
   --color-surface-bright: var(--surface-bright);
   --color-surface-container-lowest: var(--surface-container-lowest);
-  --color-surface-container: var(--surface-container);
   --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
   --color-surface-container-high: var(--surface-container-high);
   --color-surface-container-highest: var(--surface-container-highest);
+  --color-surface-variant: var(--surface-variant);
+  --color-surface-tint: var(--surface-tint);
+
   --color-on-surface: var(--on-surface);
   --color-on-surface-variant: var(--on-surface-variant);
+  --color-on-background: var(--on-background);
   --color-inverse-surface: var(--inverse-surface);
   --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-inverse-primary: var(--inverse-primary);
+
   --color-outline: var(--outline);
   --color-outline-variant: var(--outline-variant);
-  --color-surface-tint: var(--surface-tint);
+
   --color-material-primary: var(--material-primary);
   --color-primary-container: var(--primary-container);
   --color-on-primary-container: var(--on-primary-container);
-  --color-inverse-primary: var(--inverse-primary);
   --color-material-secondary: var(--material-secondary);
   --color-secondary-container: var(--secondary-container);
   --color-on-secondary-container: var(--on-secondary-container);
-  --color-tertiary: var(--tertiary);
+  --color-material-tertiary: var(--material-tertiary);
   --color-on-tertiary: var(--on-tertiary);
   --color-tertiary-container: var(--tertiary-container);
   --color-on-tertiary-container: var(--on-tertiary-container);
+
   --color-error: var(--error);
   --color-on-error: var(--on-error);
   --color-error-container: var(--error-container);
   --color-on-error-container: var(--on-error-container);
+
   --color-primary-fixed: var(--primary-fixed);
   --color-primary-fixed-dim: var(--primary-fixed-dim);
   --color-on-primary-fixed: var(--on-primary-fixed);
@@ -223,8 +195,13 @@
   --color-tertiary-fixed-dim: var(--tertiary-fixed-dim);
   --color-on-tertiary-fixed: var(--on-tertiary-fixed);
   --color-on-tertiary-fixed-variant: var(--on-tertiary-fixed-variant);
-  --color-on-background: var(--on-background);
-  --color-surface-variant: var(--surface-variant);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -233,48 +210,112 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: 0.25rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-3xl: 2.5rem;
-  --radius-4xl: 3rem;
+
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --shadow-3: var(--shadow-3);
+
+  /* Raio derivado de --radius (padrão shadcn) */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 12px);
+  --radius-full: 9999px;
+
   --spacing-gutter: var(--gutter);
   --spacing-canvas: var(--canvas-margin);
-  --spacing-space-xs: var(--space-xs);
-  --spacing-space-sm: var(--space-sm);
-  --spacing-space-md: var(--space-md);
-  --spacing-space-lg: var(--space-lg);
-  --spacing-space-xl: var(--space-xl);
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2.5rem;
+
+  /* Tipografia */
+  --text-display-lg: 3.5rem;
+  --text-display-lg--line-height: 4rem;
+  --text-display-lg--font-weight: 700;
+  --text-display-lg--letter-spacing: -0.025em;
+
+  --text-headline-lg: 2rem;
+  --text-headline-lg--line-height: 2.5rem;
+  --text-headline-lg--font-weight: 600;
+  --text-headline-lg--letter-spacing: -0.015em;
+
+  --text-headline-lg-mobile: 1.625rem;
+  --text-headline-lg-mobile--line-height: 2.125rem;
+  --text-headline-lg-mobile--font-weight: 600;
+  --text-headline-lg-mobile--letter-spacing: -0.01em;
+
+  --text-headline-md: 1.5rem;
+  --text-headline-md--line-height: 2rem;
+  --text-headline-md--font-weight: 600;
+  --text-headline-md--letter-spacing: -0.01em;
+
+  --text-headline-sm: 1.25rem;
+  --text-headline-sm--line-height: 1.75rem;
+  --text-headline-sm--font-weight: 600;
+
+  --text-title-md: 1rem;
+  --text-title-md--line-height: 1.5rem;
+  --text-title-md--font-weight: 600;
+
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.75rem;
+  --text-body-md: 0.9375rem;
+  --text-body-md--line-height: 1.5rem;
+  --text-body-sm: 0.8125rem;
+  --text-body-sm--line-height: 1.25rem;
+
+  --text-label-md: 0.875rem;
+  --text-label-md--line-height: 1.25rem;
+  --text-label-md--font-weight: 500;
+  --text-label-md--letter-spacing: 0.01em;
+
+  --text-label-sm: 0.75rem;
+  --text-label-sm--line-height: 1rem;
+  --text-label-sm--font-weight: 600;
+  --text-label-sm--letter-spacing: 0.025em;
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Estilos base                                                    */
+/* ------------------------------------------------------------------ */
+:root {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: var(--background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     @apply font-sans;
   }
+
   body {
     @apply bg-background text-foreground;
     margin: 0;
   }
+
   button,
   input,
   textarea {
     font: inherit;
   }
+
   button {
     cursor: pointer;
   }
+
   ::selection {
     background: #f5d9b5;
-    color: #3e2723;
+    color: var(--primary);
   }
 }

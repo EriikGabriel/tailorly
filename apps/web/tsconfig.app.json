@@ -12,6 +12,14 @@
     "moduleResolution": "Bundler",
     "baseUrl": ".",
     "paths": {
+      "@components/*": ["./src/components/*"],
+      "@ui/*": ["./src/components/ui/*"],
+      "@animate/*": ["./src/components/ui/animate/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@stores/*": ["./src/stores/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@hooks/*": ["./src/hooks/*"],
       "@/*": ["./src/*"]
     },
     "allowImportingTsExtensions": false,
