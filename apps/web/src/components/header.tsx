@@ -1,40 +1,35 @@
 import { Button } from "@animate/buttons/button";
+import {
+  Highlight,
+  HighlightItem,
+} from "@animate/primitives/effects/highlight";
 import tailorlyLogo from "@assets/tailorly-logo.svg";
 import { Notification01Icon, UserIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { cn } from "@lib/utils";
-
-type NavigationItem = {
-  label: string;
-  href?: string;
-  icon?: string;
-};
+import { Link, useLocation } from "@tanstack/react-router";
+import { useReducedMotion } from "motion/react";
 
 const navigation = [
-  { label: "Início", href: "/" },
-  { label: "Gerador", href: "/gerador" },
-  { label: "Meus Currículos", href: "/meus-curriculos" },
-  { label: "Configurações", href: "/configuracoes" },
-] as NavigationItem[];
+  { label: "Início", to: "/" },
+  { label: "Gerador", to: "/generator" },
+  { label: "Meus Currículos", to: "/cvs" },
+] as const;
 
 type HeaderProps = {
-  activeHref?: string;
   onNotificationsClick?: () => void;
   onProfileClick?: () => void;
 };
 
-import { useLocation } from "@tanstack/react-router";
-
 export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
-  const location = useLocation();
-  const activeHref = location.pathname;
+  const activePath = useLocation({ select: (location) => location.pathname });
+  const reduceMotion = useReducedMotion();
 
   return (
     <header className="relative z-10 w-full bg-surface/90 shadow-[0_1px_8px_rgb(62_39_35/6%)] backdrop-blur-md">
       <div className="flex min-h-16 items-center gap-4 px-gutter">
-        <a
+        <Link
           className="flex shrink-0 items-center gap-2 text-primary no-underline"
-          href="/"
+          to="/"
           aria-label="Tailorly, início"
         >
           <img
@@ -44,31 +39,46 @@ export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
             width="64"
             src={tailorlyLogo}
           />
-          <h1 className="text-2xl font-bold">
+          <span className="text-2xl font-bold">
             Tailor<span className="text-secondary">ly</span>
-          </h1>
-        </a>
+          </span>
+        </Link>
 
         <nav
           aria-label="Navegação principal"
-          className="flex-1 justify-center flex"
+          className="flex flex-1 justify-center"
         >
-          <ul className="flex items-center gap-3">
-            {navigation.map(({ label, href }) => (
-              <li key={label}>
-                <Button
-                  aria-current={activeHref === href ? "page" : undefined}
-                  className={cn("transition-all duration-300 ease-in-out")}
-                  variant={activeHref === href ? "default" : "ghost"}
-                  onClick={() => {
-                    if (href) window.location.href = href;
-                  }}
-                >
-                  {label}
-                </Button>
-              </li>
-            ))}
-          </ul>
+          <Highlight
+            mode="parent"
+            controlledItems
+            click={false}
+            enabled={!reduceMotion}
+            value={activePath}
+            className="rounded-md bg-primary shadow-xs"
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          >
+            <ul className="flex items-center gap-3">
+              {navigation.map(({ label, to }) => {
+                const active = activePath === to;
+                return (
+                  <HighlightItem as="li" key={to} value={to}>
+                    <Link
+                      aria-current={active ? "page" : undefined}
+                      className={`inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md px-4 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                        active
+                          ? "text-primary-foreground"
+                          : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                      } ${reduceMotion && active ? "bg-primary" : ""}`}
+                      preload="intent"
+                      to={to}
+                    >
+                      {label}
+                    </Link>
+                  </HighlightItem>
+                );
+              })}
+            </ul>
+          </Highlight>
         </nav>
 
         <div className="flex shrink-0 items-center gap-4">
@@ -78,12 +88,12 @@ export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
             aria-label="Notificações"
             onClick={onNotificationsClick}
           >
-            <HugeiconsIcon icon={Notification01Icon} className="size-5 " />
+            <HugeiconsIcon icon={Notification01Icon} className="size-5" />
           </Button>
           <Button
             aria-label="Perfil"
             type="button"
-            className="rounded-xl size-10"
+            className="size-10 rounded-xl"
             onClick={onProfileClick}
           >
             <HugeiconsIcon icon={UserIcon} className="size-6" />

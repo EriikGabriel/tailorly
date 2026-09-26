@@ -38,17 +38,53 @@
   --primary-container: #271310;
   --on-primary-container: #ae8d87;
 
+  --primary-50: #faf7f6;
+  --primary-100: #f1e9e7;
+  --primary-200: #e3d1cd;
+  --primary-300: #d0afa8;
+  --primary-400: #b98b81;
+  --primary-500: #9d6b61;
+  --primary-600: #805148;
+  --primary-700: #653e37;
+  --primary-800: #50312c;
+  --primary-900: var(--material-primary);
+  --primary-950: var(--primary-container);
+
   /* Secondary = Warm Walnut */
   --material-secondary: #5d4037;
   --on-secondary: #ffffff;
   --secondary-container: #fed3c7;
   --on-secondary-container: #795950;
 
+  --secondary-50: #faf6f4;
+  --secondary-100: #f2e8e4;
+  --secondary-200: #e6d3cb;
+  --secondary-300: #d4b3a7;
+  --secondary-400: #bd9080;
+  --secondary-500: #a37463;
+  --secondary-600: #896052;
+  --secondary-700: var(--on-secondary-container);
+  --secondary-800: var(--material-secondary);
+  --secondary-900: #432c25;
+  --secondary-950: #2c160e;
+
   /* Tertiary = Golden Amber  */
   --material-tertiary: #d97706;
   --on-tertiary: #ffffff;
   --tertiary-container: #482300;
   --on-tertiary-container: #de7b0d;
+
+  --tertiary-50: #fffaf5;
+  --tertiary-100: #fff0e0;
+  --tertiary-200: var(--tertiary-fixed);
+  --tertiary-300: var(--tertiary-fixed-dim);
+  --tertiary-400: #fa9e4a;
+  --tertiary-500: #ec881c;
+  --tertiary-600: var(--material-tertiary);
+  --tertiary-700: #b85e04;
+  --tertiary-800: #924804;
+  --tertiary-900: var(--on-tertiary-fixed-variant);
+  --tertiary-950: var(--tertiary-container);
 
   --error: #ba1a1a;
   --on-error: #ffffff;
@@ -71,8 +107,8 @@
   --on-tertiary-fixed-variant: #6e3900;
 
   /* Semânticas Shadcn/ui  */
-  --background: #faf7f5;
-  --foreground: var(--on-surface);
+  --background: var(--surface);
+  --foreground: var(--on-surface-variant);
   --card: var(--surface-container-lowest);
   --card-foreground: var(--on-surface);
   --popover: var(--surface-container-lowest);
@@ -81,6 +117,8 @@
   --primary-foreground: var(--on-primary);
   --secondary: var(--material-secondary);
   --secondary-foreground: var(--on-secondary);
+  --tertiary: var(--material-tertiary);
+  --tertiary-foreground: var(--on-tertiary);
   --muted: var(--surface-container-low);
   --muted-foreground: var(--on-secondary-container);
   --accent: var(--surface-container-low);
@@ -133,8 +171,43 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-50: var(--secondary-50);
+  --color-secondary-100: var(--secondary-100);
+  --color-secondary-200: var(--secondary-200);
+  --color-secondary-300: var(--secondary-300);
+  --color-secondary-400: var(--secondary-400);
+  --color-secondary-500: var(--secondary-500);
+  --color-secondary-600: var(--secondary-600);
+  --color-secondary-700: var(--secondary-700);
+  --color-secondary-800: var(--secondary-800);
+  --color-secondary-900: var(--secondary-900);
+  --color-secondary-950: var(--secondary-950);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-tertiary-50: var(--tertiary-50);
+  --color-tertiary-100: var(--tertiary-100);
+  --color-tertiary-200: var(--tertiary-200);
+  --color-tertiary-300: var(--tertiary-300);
+  --color-tertiary-400: var(--tertiary-400);
+  --color-tertiary-500: var(--tertiary-500);
+  --color-tertiary-600: var(--tertiary-600);
+  --color-tertiary-700: var(--tertiary-700);
+  --color-tertiary-800: var(--tertiary-800);
+  --color-tertiary-900: var(--tertiary-900);
+  --color-tertiary-950: var(--tertiary-950);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -312,6 +385,15 @@
 
   button {
     cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--primary-container);
   }
 
   ::selection {

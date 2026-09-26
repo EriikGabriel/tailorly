@@ -10,32 +10,52 @@
 
 import { Route as rootRouteImport } from './pages/__root'
 import { Route as AppIndexRouteImport } from './pages/_app/index'
+import { Route as AppCvsRouteImport } from './pages/_app/cvs'
+import { Route as AppGeneratorRouteImport } from './pages/_app/generator'
 
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/_app/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppCvsRoute = AppCvsRouteImport.update({
+  id: '/_app/cvs',
+  path: '/cvs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppGeneratorRoute = AppGeneratorRouteImport.update({
+  id: '/_app/generator',
+  path: '/generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/cvs': typeof AppCvsRoute
+  '/generator': typeof AppGeneratorRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
+  '/cvs': typeof AppCvsRoute
+  '/generator': typeof AppGeneratorRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_app/cvs': typeof AppCvsRoute
+  '/_app/generator': typeof AppGeneratorRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/cvs' | '/generator' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/_app/'
+  to: '/cvs' | '/generator' | '/'
+  id: '__root__' | '/_app/cvs' | '/_app/generator' | '/_app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AppCvsRoute: typeof AppCvsRoute
+  AppGeneratorRoute: typeof AppGeneratorRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -48,10 +68,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/cvs': {
+      id: '/_app/cvs'
+      path: '/cvs'
+      fullPath: '/cvs'
+      preLoaderRoute: typeof AppCvsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/generator': {
+      id: '/_app/generator'
+      path: '/generator'
+      fullPath: '/generator'
+      preLoaderRoute: typeof AppGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  AppCvsRoute: AppCvsRoute,
+  AppGeneratorRoute: AppGeneratorRoute,
   AppIndexRoute: AppIndexRoute,
 }
 export const routeTree = rootRouteImport
