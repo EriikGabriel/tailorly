@@ -9,86 +9,86 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './pages/__root'
-import { Route as AppIndexRouteImport } from './pages/_app/index'
-import { Route as AppCvsRouteImport } from './pages/_app/cvs'
-import { Route as AppGeneratorRouteImport } from './pages/_app/generator'
+import { Route as AppHomeIndexRouteImport } from './pages/_app/_home/index'
+import { Route as AppCvsIndexRouteImport } from './pages/_app/cvs/index'
+import { Route as AppGeneratorIndexRouteImport } from './pages/_app/generator/index'
 
-const AppIndexRoute = AppIndexRouteImport.update({
-  id: '/_app/',
+const AppHomeIndexRoute = AppHomeIndexRouteImport.update({
+  id: '/_app/_home/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppCvsRoute = AppCvsRouteImport.update({
-  id: '/_app/cvs',
-  path: '/cvs',
+const AppCvsIndexRoute = AppCvsIndexRouteImport.update({
+  id: '/_app/cvs/',
+  path: '/cvs/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppGeneratorRoute = AppGeneratorRouteImport.update({
-  id: '/_app/generator',
-  path: '/generator',
+const AppGeneratorIndexRoute = AppGeneratorIndexRouteImport.update({
+  id: '/_app/generator/',
+  path: '/generator/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/cvs': typeof AppCvsRoute
-  '/generator': typeof AppGeneratorRoute
-  '/': typeof AppIndexRoute
+  '/': typeof AppHomeIndexRoute
+  '/cvs/': typeof AppCvsIndexRoute
+  '/generator/': typeof AppGeneratorIndexRoute
 }
 export interface FileRoutesByTo {
-  '/cvs': typeof AppCvsRoute
-  '/generator': typeof AppGeneratorRoute
-  '/': typeof AppIndexRoute
+  '/': typeof AppHomeIndexRoute
+  '/cvs': typeof AppCvsIndexRoute
+  '/generator': typeof AppGeneratorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_app/cvs': typeof AppCvsRoute
-  '/_app/generator': typeof AppGeneratorRoute
-  '/_app/': typeof AppIndexRoute
+  '/_app/_home/': typeof AppHomeIndexRoute
+  '/_app/cvs/': typeof AppCvsIndexRoute
+  '/_app/generator/': typeof AppGeneratorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/cvs' | '/generator' | '/'
+  fullPaths: '/' | '/cvs/' | '/generator/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/cvs' | '/generator' | '/'
-  id: '__root__' | '/_app/cvs' | '/_app/generator' | '/_app/'
+  to: '/' | '/cvs' | '/generator'
+  id: '__root__' | '/_app/_home/' | '/_app/cvs/' | '/_app/generator/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AppCvsRoute: typeof AppCvsRoute
-  AppGeneratorRoute: typeof AppGeneratorRoute
-  AppIndexRoute: typeof AppIndexRoute
+  AppHomeIndexRoute: typeof AppHomeIndexRoute
+  AppCvsIndexRoute: typeof AppCvsIndexRoute
+  AppGeneratorIndexRoute: typeof AppGeneratorIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_app/': {
-      id: '/_app/'
+    '/_app/_home/': {
+      id: '/_app/_home/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AppIndexRouteImport
+      preLoaderRoute: typeof AppHomeIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/cvs': {
-      id: '/_app/cvs'
+    '/_app/cvs/': {
+      id: '/_app/cvs/'
       path: '/cvs'
-      fullPath: '/cvs'
-      preLoaderRoute: typeof AppCvsRouteImport
+      fullPath: '/cvs/'
+      preLoaderRoute: typeof AppCvsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/generator': {
-      id: '/_app/generator'
+    '/_app/generator/': {
+      id: '/_app/generator/'
       path: '/generator'
-      fullPath: '/generator'
-      preLoaderRoute: typeof AppGeneratorRouteImport
+      fullPath: '/generator/'
+      preLoaderRoute: typeof AppGeneratorIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  AppCvsRoute: AppCvsRoute,
-  AppGeneratorRoute: AppGeneratorRoute,
-  AppIndexRoute: AppIndexRoute,
+  AppHomeIndexRoute: AppHomeIndexRoute,
+  AppCvsIndexRoute: AppCvsIndexRoute,
+  AppGeneratorIndexRoute: AppGeneratorIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -99,12 +99,7 @@ function CountingNumber({
     return out;
   };
 
-  const zeroText = padStart
-    ? "0".padStart(finalIntLength, "0") +
-      (decimals > 0 ? decimalSeparator + "0".repeat(decimals) : "")
-    : `0${decimals > 0 ? decimalSeparator + "0".repeat(decimals) : ""}`;
-
-  const initialText = initiallyStable ? formatValue(number) : zeroText;
+  const initialText = formatValue(initiallyStable ? number : fromNumber);
 
   return (
     <span ref={localRef} data-slot="counting-number" {...props}>

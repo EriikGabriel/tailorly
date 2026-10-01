@@ -4,8 +4,9 @@ import {
   Button as ButtonPrimitive,
   type ButtonProps as ButtonPrimitiveProps,
 } from "@animate/primitives/buttons/button";
+import { Copy01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { CheckIcon, CopyIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import * as React from "react";
 import { useControlledState } from "@/hooks/use-controlled-state";
@@ -90,7 +91,7 @@ function CopyButton({
     [onClick, copied, content, setIsCopied, onCopiedChange, delay],
   );
 
-  const Icon = isCopied ? CheckIcon : CopyIcon;
+  const icon = isCopied ? Tick01Icon : Copy01Icon;
 
   return (
     <ButtonPrimitive
@@ -108,7 +109,7 @@ function CopyButton({
           exit={{ scale: 0, opacity: 0.4, filter: "blur(4px)" }}
           transition={{ duration: 0.25 }}
         >
-          <Icon />
+          <HugeiconsIcon icon={icon} className="size-4" />
         </motion.span>
       </AnimatePresence>
     </ButtonPrimitive>
