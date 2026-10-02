@@ -31,7 +31,7 @@ try {
       "--strict",
       "--outDir",
       output,
-      "tests/client-state.test.ts",
+      "tests/unit/client-state.test.ts",
     ],
     { cwd: root, stdio: "inherit" },
   );
@@ -39,7 +39,7 @@ try {
   else {
     const result = spawnSync(
       process.execPath,
-      [path.join(output, "tests/client-state.test.js")],
+      [path.join(output, "tests/unit/client-state.test.js")],
       { cwd: root, stdio: "inherit" },
     );
     process.exitCode = result.status ?? 1;

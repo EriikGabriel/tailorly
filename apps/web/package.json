@@ -9,7 +9,13 @@
     "build": "vite build && tsc -b",
     "lint": "biome lint",
     "check": "biome check",
-    "test:stores": "node scripts/test-stores.mjs"
+    "test:stores": "node scripts/test-stores.mjs",
+    "test": "pnpm run test:stores && pnpm run test:e2e",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@base-ui-components/react": "1.0.0-rc.0",
@@ -37,6 +43,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@playwright/test": "^1.63.0",
     "@tanstack/router-plugin": "^1.168.40",
     "@types/node": "^26.6.2",
     "@types/react": "^19.1.17",

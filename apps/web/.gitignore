@@ -1,1 +1,4 @@
 public/icons.svg
+playwright-report/
+test-results/
+blob-report/

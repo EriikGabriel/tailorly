@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
-import { useBaseCvStore as base } from "../src/stores/base-cv-store";
-import { useDocumentViewerStore as viewer } from "../src/stores/document-viewer-store";
-import { useJobDraftStore as job } from "../src/stores/job-draft-store";
-import { usePresentationStore as presentation } from "../src/stores/presentation-store";
-import { useQuickReviewStore as quick } from "../src/stores/quick-review-store";
-import { resetClientState } from "../src/stores/reset-client-state";
-import { useReviewDraftStore as review } from "../src/stores/review-draft-store";
-import { useWorkspaceStore as workspace } from "../src/stores/workspace-store";
-import type { ReviewIssue } from "../src/types/review";
+import { useBaseCvStore as base } from "../../src/stores/base-cv-store";
+import { useDocumentViewerStore as viewer } from "../../src/stores/document-viewer-store";
+import { useJobDraftStore as job } from "../../src/stores/job-draft-store";
+import { usePresentationStore as presentation } from "../../src/stores/presentation-store";
+import { useQuickReviewStore as quick } from "../../src/stores/quick-review-store";
+import { resetClientState } from "../../src/stores/reset-client-state";
+import { useReviewDraftStore as review } from "../../src/stores/review-draft-store";
+import { useWorkspaceStore as workspace } from "../../src/stores/workspace-store";
+import type { ReviewIssue } from "../../src/types/review";
 
 const pdf = (name = "cv.pdf") =>
   new File(["%PDF-test"], name, { type: "application/pdf" });

@@ -38,6 +38,10 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 | `pnpm lint` | `biome lint` |
 | `pnpm check` | `biome check` (formatação + lint) |
 | `pnpm test:stores` | Suite de estado do cliente. Ver §11. |
+| `pnpm test:e2e:install` | Instala Chromium para Playwright. |
+| `pnpm test:e2e` | Teste de navegador vinculado ao RF16. Ver §11. |
+| `pnpm test:e2e:ui` | Modo interativo do Playwright para TDD. |
+| `pnpm test` | Executa stores e Playwright. |
 
 ---
 
@@ -71,8 +75,9 @@ src/
 ├── lib/                        # query-client, utils (re-export de cn), get-strict-context
 └── assets/tailorly-logo.svg
 
-scripts/test-stores.mjs         # runner da suite de estado
-tests/client-state.test.ts      # 8 testes de estado do cliente
+scripts/test-stores.mjs         # runner da suíte unitária de estado
+tests/unit/client-state.test.ts # 8 testes unitários de estado do cliente
+tests/e2e/                      # jornadas de interface com Playwright
 ```
 
 ### Aliases
@@ -601,14 +606,15 @@ pnpm test:stores   # node scripts/test-stores.mjs
 2. faz `symlink` de `node_modules` para lá;
 3. invoca o `tsc` **já instalado** (`node_modules/typescript/bin/tsc`) com
    `--module commonjs --target ES2022 --strict --skipLibCheck`, compilando
-   `tests/client-state.test.ts` para fora do projeto;
+   `tests/unit/client-state.test.ts` para fora do projeto;
 4. executa o `.js` resultante com `node`;
 5. propaga o `exit code` e apaga o temporário no `finally`.
 
-Ou seja: usa `node:test` e `node:assert/strict` nativos e transpila via o
-TypeScript do próprio projeto. Não há runner de teste em `devDependencies`.
+Ou seja: a suíte de stores usa `node:test` e `node:assert/strict` nativos e
+transpila via o TypeScript do próprio projeto. A suíte de navegador usa
+`@playwright/test` como dependência de desenvolvimento.
 
-`tests/client-state.test.ts` tem **8 testes**, com `beforeEach(resetClientState)`:
+`tests/unit/client-state.test.ts` tem **8 testes**, com `beforeEach(resetClientState)`:
 
 | # | Teste | O que fixa |
 | --- | --- | --- |
@@ -622,7 +628,22 @@ TypeScript do próprio projeto. Não há runner de teste em `devDependencies`.
 | 8 | Visualizador impõe zoom suportado e ignora valores numéricos inválidos | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"` |
 
 **Toda mudança nas stores ou em `reset-client-state.ts` precisa vir acompanhada
-de um teste aqui.** É a única suíte do frontend.
+de um teste aqui.**
+
+### Playwright e TDD baseado nos requisitos
+
+`playwright.config.ts` configura Chromium, inicia um Vite isolado na porta 4173
+e retém trace/screenshot em falhas. `tests/e2e/quick-review.spec.ts` contém um
+único teste de comportamento para **RF16**: bloqueio da continuidade enquanto
+uma correção é vazia, inválida ou igual ao original, e liberação após respostas
+válidas. O teste opera a interface existente, com documento sintético e dados
+de revisão explicitamente fictícios. Não comprova aprovação remota nem geração.
+
+O guia em [tests/README.md](tests/README.md) descreve instalação, execução e o
+ciclo red → green → refactor. O [mapa de requisitos](tests/requirements.md)
+registra cobertura parcial e critérios futuros sem adicionar toda a suíte.
+`pnpm test` agora executa stores e navegador, integrando o workspace à tarefa
+`test` do monorepo. Instale Chromium antes da primeira execução.
 
 ---
 
