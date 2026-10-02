@@ -1,6 +1,5 @@
 import { Button } from "@animate/buttons/button";
-import { NetworkIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Network } from "@react-zero-ui/icon-sprite";
 
 export function SecondBrainSection() {
   return (
@@ -10,7 +9,7 @@ export function SecondBrainSection() {
     >
       <div className="flex min-w-0 items-start gap-4 sm:items-center sm:gap-6">
         <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-white/10 backdrop-blur-[2px]">
-          <HugeiconsIcon icon={NetworkIcon} className="size-8 text-[#ffdcc3]" />
+          <Network className="size-8 text-[#ffdcc3]" />
         </span>
         <div className="min-w-0 max-w-3/4 space-y-1 pt-1">
           <span className="inline-flex rounded bg-white/15 px-2 py-0.5 text-xs font-semibold leading-4 tracking-[0.3px] text-[#ffdcc3]">

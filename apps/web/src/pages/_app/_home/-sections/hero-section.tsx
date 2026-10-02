@@ -1,5 +1,4 @@
-import { ShieldCheckIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { ShieldCheck } from "@react-zero-ui/icon-sprite";
 import { Badge } from "@ui/badge";
 import { HeroIngestionCard } from "../-components/hero-ingestion-card";
 
@@ -33,10 +32,7 @@ export function HeroSection() {
           recrutadores.
         </p>
         <div className="flex max-w-xl items-start gap-3 border-l-2 border-tertiary-600 pl-4 text-sm leading-6 text-secondary-700">
-          <HugeiconsIcon
-            icon={ShieldCheckIcon}
-            className="mt-1 size-4.5 shrink-0 text-tertiary"
-          />
+          <ShieldCheck className="mt-1 size-4.5 shrink-0 text-tertiary" />
           <p>
             Seus dados reais guiam cada adaptação. Sem inventar fatos. Second
             Brain opcional para notas complementares.

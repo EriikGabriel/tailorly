@@ -41,12 +41,25 @@ const buttonVariants = cva(
   },
 );
 
-type ButtonProps = ButtonPrimitiveProps & VariantProps<typeof buttonVariants>;
+type ButtonProps = ButtonPrimitiveProps &
+  VariantProps<typeof buttonVariants> & {
+    disableZoom?: boolean;
+  };
 
-function Button({ className, variant, size, ...props }: ButtonProps) {
+function Button({
+  className,
+  variant,
+  size,
+  disableZoom = false,
+  hoverScale,
+  tapScale,
+  ...props
+}: ButtonProps) {
   return (
     <ButtonPrimitive
       className={cn(buttonVariants({ variant, size, className }))}
+      hoverScale={disableZoom ? 1 : hoverScale}
+      tapScale={disableZoom ? 1 : tapScale}
       {...props}
     />
   );

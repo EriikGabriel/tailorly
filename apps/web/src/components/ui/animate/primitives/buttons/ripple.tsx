@@ -1,7 +1,7 @@
 "use client";
 
 import { Slot, type WithAsChild } from "@animate/primitives/animate/slot";
-import { type HTMLMotionProps, motion } from "motion/react";
+import { type HTMLMotionProps, motion, useReducedMotion } from "motion/react";
 import * as React from "react";
 import { getStrictContext } from "@/lib/get-strict-context";
 
@@ -29,12 +29,13 @@ type RippleButtonProps = WithAsChild<
 function RippleButton({
   ref,
   onClick,
-  hoverScale = 1.05,
-  tapScale = 0.95,
+  hoverScale = 1.025,
+  tapScale = 0.98,
   asChild = false,
   style,
   ...props
 }: RippleButtonProps) {
+  const reducedMotion = useReducedMotion();
   const [ripples, setRipples] = React.useState<Ripple[]>([]);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
   React.useImperativeHandle(ref, () => buttonRef.current as HTMLButtonElement);
@@ -81,8 +82,8 @@ function RippleButton({
         ref={buttonRef}
         data-slot="ripple-button"
         onClick={handleClick}
-        whileTap={{ scale: tapScale }}
-        whileHover={{ scale: hoverScale }}
+        whileHover={{ scale: reducedMotion ? 1 : hoverScale }}
+        whileTap={{ scale: reducedMotion ? 1 : tapScale }}
         style={{
           position: "relative",
           overflow: "hidden",

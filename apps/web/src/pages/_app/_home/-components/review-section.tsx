@@ -1,18 +1,28 @@
-import { Button } from "@animate/primitives/buttons/button";
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
+import { Button } from "@components/ui/animate/buttons/button";
 import {
-  ArrangeByNumbersOneNineIcon,
-  CalendarDate1Icon,
-  CheckIcon,
-  EyeOffIcon,
-  ListIcon,
-  Mail01Icon,
-  QuoteIcon,
-  TextIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+  BookOpenText,
+  Briefcase,
+  CalendarDays,
+  ChartColumnIncreasing,
+  Check,
+  CircleUserRound,
+  EyeOff,
+  FolderBookmark,
+  GraduationCap,
+  IconClock,
+  type IconProps,
+  IconQuote,
+  IdCard,
+  Languages,
+  List,
+  ListOrdered,
+  Mail,
+  Text,
+} from "@react-zero-ui/icon-sprite";
 import { cn } from "cn";
 import { useReducedMotion } from "motion/react";
+import type { ComponentType } from "react";
 import type {
   CorrectionField,
   ReviewAnswer,
@@ -31,23 +41,50 @@ type ReviewSectionProps = {
 };
 
 const correctionIcons = {
-  text: TextIcon,
-  email: Mail01Icon,
-  month: CalendarDate1Icon,
-  number: ArrangeByNumbersOneNineIcon,
-  select: ListIcon,
-} satisfies Record<CorrectionField["type"], typeof TextIcon>;
+  text: Text,
+  email: Mail,
+  month: CalendarDays,
+  number: ListOrdered,
+  select: List,
+} satisfies Record<CorrectionField["type"], typeof Text>;
 
 function getChoiceIcon(choice: ReviewChoice) {
   switch (choice.result) {
     case "confirmed":
-      return CheckIcon;
+      return Check;
     case "omitted":
-      return EyeOffIcon;
+      return EyeOff;
     case "corrected":
       return correctionIcons[choice.correction.type];
   }
 }
+
+const issueTypeMap: Record<
+  ReviewIssue["type"],
+  {
+    label: string;
+    icon: ComponentType<IconProps>;
+  }
+> = {
+  metric: {
+    label: "Métrica relevante para esta vaga",
+    icon: ChartColumnIncreasing,
+  },
+  temporal: {
+    label: "Dúvida Temporal",
+    icon: IconClock,
+  },
+};
+
+const categoryIconMap: Record<ReviewCategory, ComponentType<IconProps>> = {
+  education: GraduationCap,
+  identity: IdCard,
+  employment: Briefcase,
+  projects: FolderBookmark,
+  skills: BookOpenText,
+  languages: Languages,
+  presentation: CircleUserRound,
+};
 
 export function ReviewSection({
   category,
@@ -59,6 +96,9 @@ export function ReviewSection({
   const complete = issues.every((issue) =>
     isReviewIssueComplete(issue, answers[issue.id]),
   );
+  const issueType = issueTypeMap[issues[0]?.type];
+  const IssueIcon = issueType?.icon;
+  const CategoryIcon = categoryIconMap[category];
 
   return (
     <section
@@ -69,14 +109,22 @@ export function ReviewSection({
         <div className="flex items-center justify-center h-fit gap-3">
           <h3
             id={`review-${category}-heading`}
-            className="text-sm font-semibold"
+            className="flex justify-center items-center text-sm font-semibold"
           >
+            {categoryIconMap && (
+              <CategoryIcon className="size-4 inline-block mr-2" />
+            )}
             {reviewCategories[category]}
           </h3>
-          <span className="flex items-center justify-center w-fit rounded-full py-0.5 px-3 border border-secondary-200 bg-secondary-container/40 text-[10px] font-semibold leading-4 tracking-[0.3px] text-secondary-800">
-            {issues[0]?.type === "metric"
-              ? "Métrica relevante para esta vaga"
-              : "Dúvida Temporal"}
+          <span className="flex items-center justify-center w-fit gap-1 rounded-full py-0.5 px-3 border border-secondary-200 bg-secondary-container/40 text-[10px] font-semibold leading-4 tracking-[0.3px] text-secondary-800">
+            {IssueIcon && (
+              <IssueIcon
+                strokeWidth={2}
+                className="size-3.5 shrink-0"
+                aria-hidden="true"
+              />
+            )}
+            {issueType?.label}
           </span>
         </div>
         <span
@@ -105,10 +153,9 @@ export function ReviewSection({
               <p className="text-sm font-semibold">{issue.question}</p>
               {issue.evidence && (
                 <p className="mt-2 flex min-w-0 items-center rounded-lg border bg-card p-2 text-xs leading-5 text-on-surface-variant">
-                  <HugeiconsIcon
-                    icon={QuoteIcon}
-                    strokeWidth={2}
-                    className="inline-block text-primary size-8 zoom-40 shrink-0 mr-4"
+                  <IconQuote
+                    className="size-3.5 shrink-0 mr-2 mb-2"
+                    aria-hidden="true"
                   />
                   <span className="shrink-0 mr-1">
                     Extraído do Currículo Base:
@@ -132,20 +179,13 @@ export function ReviewSection({
                 <legend className="sr-only">{issue.question}</legend>
                 {issue.choices.map((item) => {
                   const selected = answer?.choice === item.value;
+                  const ChoiceIcon = getChoiceIcon(item);
 
                   return (
                     <Button
                       key={item.value}
                       type="button"
                       aria-pressed={selected}
-                      hoverScale={reducedMotion ? 1 : 1.015}
-                      tapScale={reducedMotion ? 1 : 0.97}
-                      animate={{ y: selected && !reducedMotion ? -2 : 0 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 420,
-                        damping: 30,
-                      }}
                       onClick={() =>
                         onAnswerChange(issue.id, {
                           choice: item.value,
@@ -156,15 +196,15 @@ export function ReviewSection({
                         "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-900",
                         selected
                           ? "border-primary-900 bg-primary-900 text-primary-foreground shadow-sm hover:bg-primary-800"
-                          : "border-outline-variant/50 bg-card text-primary-950 hover:border-primary-300 hover:bg-primary-50",
+                          : "border-outline-variant/50 bg-card text-primary-950 hover:border-primary-300 hover:bg-white",
                         item.result === "omitted" && "self-end ml-auto",
                       )}
+                      disableZoom
                     >
-                      <HugeiconsIcon
-                        icon={getChoiceIcon(item)}
-                        strokeWidth={2}
+                      <ChoiceIcon
+                        strokeWidth={1.75}
                         aria-hidden="true"
-                        className="inline-block size-8 zoom-40 shrink-0 mr-4"
+                        className="size-4 shrink-0"
                       />
                       {item.label}
                     </Button>

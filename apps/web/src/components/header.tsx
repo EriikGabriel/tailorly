@@ -4,13 +4,13 @@ import {
   HighlightItem,
 } from "@animate/primitives/effects/highlight";
 import tailorlyLogo from "@assets/tailorly-logo.svg";
-import { Notification01Icon, UserIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Bell, UserRound } from "@react-zero-ui/icon-sprite";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useReducedMotion } from "motion/react";
 
 const navigation = [
   { label: "Início", to: "/" },
+  { label: "Currículo Base", to: "/base" },
   { label: "Gerador", to: "/generator" },
   { label: "Meus Currículos", to: "/cvs" },
 ] as const;
@@ -88,7 +88,7 @@ export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
             aria-label="Notificações"
             onClick={onNotificationsClick}
           >
-            <HugeiconsIcon icon={Notification01Icon} className="size-5" />
+            <Bell className="size-5" />
           </Button>
           <Button
             aria-label="Perfil"
@@ -96,7 +96,7 @@ export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
             className="size-10 rounded-xl"
             onClick={onProfileClick}
           >
-            <HugeiconsIcon icon={UserIcon} className="size-6" />
+            <UserRound className="size-6" />
           </Button>
         </div>
       </div>

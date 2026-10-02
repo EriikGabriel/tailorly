@@ -1,12 +1,11 @@
 import { Button } from "@animate/buttons/button";
 import {
-  ArrowRight01Icon,
-  Download04Icon,
-  Edit02Icon,
-  FileTextIcon,
-  HistoryIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+  ArrowRight,
+  Download,
+  FileText,
+  History,
+  SquarePen,
+} from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
 
 const recentCVs = [
@@ -42,10 +41,7 @@ export function RecentCVSection() {
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-2">
           <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-container">
-            <HugeiconsIcon
-              icon={HistoryIcon}
-              className="size-3.5 text-primary-950"
-            />
+            <History className="size-3.5 text-primary-950" />
           </span>
           <div className="min-w-0">
             <h2
@@ -64,7 +60,7 @@ export function RecentCVSection() {
           className="inline-flex shrink-0 items-center gap-1 self-start rounded-sm text-sm font-semibold leading-5 tracking-[0.14px] text-primary-950 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-900 sm:mt-1"
         >
           Ver todos (18)
-          <HugeiconsIcon icon={ArrowRight01Icon} className="size-3" />
+          <ArrowRight className="size-3" />
         </Link>
       </div>
 
@@ -76,10 +72,7 @@ export function RecentCVSection() {
           >
             <div className="flex min-w-0 items-start gap-4 sm:items-center">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
-                <HugeiconsIcon
-                  icon={FileTextIcon}
-                  className="size-4 text-primary-950"
-                />
+                <FileText className="size-4 text-primary-950" />
               </span>
               <div className="min-w-0 space-y-0.5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -105,11 +98,7 @@ export function RecentCVSection() {
                 to="/generator"
                 className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg bg-surface-container px-4 py-1.5 text-xs font-semibold leading-4 tracking-[0.3px] text-primary-950 hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-900"
               >
-                <HugeiconsIcon
-                  strokeWidth={2.5}
-                  icon={Edit02Icon}
-                  className="size-3"
-                />
+                <SquarePen strokeWidth={2.5} className="size-3" />
                 Abrir Editor
               </Link>
               <Button
@@ -119,11 +108,7 @@ export function RecentCVSection() {
                 aria-label={`Download de ${cv.title} indisponível nesta prévia`}
                 className="flex size-8 items-center justify-center rounded-lg text-primary-950"
               >
-                <HugeiconsIcon
-                  icon={Download04Icon}
-                  strokeWidth={1.5}
-                  className="size-4.5"
-                />
+                <Download strokeWidth={1.5} className="size-4.5" />
               </Button>
             </div>
           </li>

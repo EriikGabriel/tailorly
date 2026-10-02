@@ -1,13 +1,12 @@
 import { Popover } from "@base-ui-components/react/popover";
 import { Select } from "@base-ui-components/react/select";
 import {
-  ArrowDown01Icon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
-  CalendarDate1Icon,
-  CheckIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Check,
+  ChevronDown,
+} from "@react-zero-ui/icon-sprite";
 import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { motion, useReducedMotion } from "motion/react";
@@ -91,9 +90,9 @@ export function ReviewMonthPicker({
         className={`${className} flex items-center justify-between gap-3 text-left`}
       >
         <span>{displayValue}</span>
-        <HugeiconsIcon
-          icon={CalendarDate1Icon}
-          className="inline-block size-10 zoom-40 shrink-0 mr-4"
+        <CalendarDays
+          strokeWidth={1.75}
+          className="size-4 shrink-0"
           aria-hidden="true"
         />
       </Popover.Trigger>
@@ -102,9 +101,9 @@ export function ReviewMonthPicker({
           <Popover.Popup className="w-80 max-w-[calc(100vw-2rem)] origin-(--transform-origin) rounded-xl border border-outline-variant/50 bg-card text-primary-950 shadow-xl transition-[opacity,transform] duration-150 data-starting-style:scale-95 data-starting-style:opacity-0 data-ending-style:scale-95 data-ending-style:opacity-0 motion-reduce:transition-none">
             <div className="flex items-center gap-3 rounded-t-xl border-b border-outline-variant/40 bg-surface-container-low px-4 py-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary-200 bg-card text-primary-900">
-                <HugeiconsIcon
-                  icon={CalendarDate1Icon}
-                  className="inline-block size-4 zoom-40 shrink-0 mr-4"
+                <CalendarDays
+                  strokeWidth={1.75}
+                  className="size-4 shrink-0"
                   aria-hidden="true"
                 />
               </span>
@@ -127,11 +126,7 @@ export function ReviewMonthPicker({
                   onClick={() => setViewYear((year) => clampYear(year - 1))}
                   className={yearButtonClass}
                 >
-                  <HugeiconsIcon
-                    icon={ArrowLeft01Icon}
-                    className="size-4"
-                    aria-hidden="true"
-                  />
+                  <ArrowLeft className="size-4" aria-hidden="true" />
                 </button>
 
                 <Select.Root
@@ -146,8 +141,7 @@ export function ReviewMonthPicker({
                   >
                     <Select.Value className="text-sm font-semibold tabular-nums" />
                     <Select.Icon>
-                      <HugeiconsIcon
-                        icon={ArrowDown01Icon}
+                      <ChevronDown
                         className="size-3.5 text-primary-900"
                         aria-hidden="true"
                       />
@@ -169,8 +163,7 @@ export function ReviewMonthPicker({
                             >
                               <Select.ItemText>{year}</Select.ItemText>
                               <Select.ItemIndicator>
-                                <HugeiconsIcon
-                                  icon={CheckIcon}
+                                <Check
                                   className="size-3.5"
                                   aria-hidden="true"
                                 />
@@ -190,11 +183,7 @@ export function ReviewMonthPicker({
                   onClick={() => setViewYear((year) => clampYear(year + 1))}
                   className={yearButtonClass}
                 >
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    className="size-4"
-                    aria-hidden="true"
-                  />
+                  <ArrowRight className="size-4" aria-hidden="true" />
                 </button>
               </div>
 

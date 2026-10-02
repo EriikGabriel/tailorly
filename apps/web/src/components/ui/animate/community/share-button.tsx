@@ -1,12 +1,11 @@
 "use client";
-import {
-  Facebook01Icon,
-  GithubIcon,
-  Share02Icon,
-  XIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@lib/utils";
+import {
+  IconBrandFacebook,
+  IconBrandGithub,
+  IconBrandX,
+  Share2,
+} from "@react-zero-ui/icon-sprite";
 import { cva, type VariantProps } from "class-variance-authority";
 import { AnimatePresence, type HTMLMotionProps, motion } from "motion/react";
 import * as React from "react";
@@ -75,16 +74,14 @@ function ShareButton({
             className=" absolute left-0 right-0 top-0 bottom-0 flex items-center justify-center gap-2"
           >
             {icon === "prefix" && (
-              <HugeiconsIcon
-                icon={Share02Icon}
+              <Share2
                 className="size-4"
                 size={iconSizeMap[size as keyof typeof iconSizeMap]}
               />
             )}
             {children}
             {icon === "suffix" && (
-              <HugeiconsIcon
-                icon={Share02Icon}
+              <Share2
                 className="size-4"
                 size={iconSizeMap[size as keyof typeof iconSizeMap]}
               />
@@ -161,7 +158,7 @@ function ShareIconGroup({
         className="group-hover:opacity-100 cursor-pointer py-3 rounded-lg box-border"
         onClick={(event) => handleIconClick("github", event)}
       >
-        <HugeiconsIcon icon={GithubIcon} size={iconSize} />
+        <IconBrandGithub size={iconSize} />
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -174,7 +171,7 @@ function ShareIconGroup({
         className="group-hover:opacity-100 cursor-pointer py-3 rounded-lg box-border"
         onClick={(event) => handleIconClick("x", event)}
       >
-        <HugeiconsIcon icon={XIcon} size={iconSize} />
+        <IconBrandX size={iconSize} />
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -187,7 +184,7 @@ function ShareIconGroup({
         className="group-hover:opacity-100 cursor-pointer py-3 rounded-lg box-border"
         onClick={(event) => handleIconClick("facebook", event)}
       >
-        <HugeiconsIcon icon={Facebook01Icon} size={iconSize} />
+        <IconBrandFacebook size={iconSize} />
       </motion.div>
     </motion.div>
   );

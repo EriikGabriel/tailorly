@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './pages/__root'
 import { Route as AppHomeIndexRouteImport } from './pages/_app/_home/index'
+import { Route as AppBaseIndexRouteImport } from './pages/_app/base/index'
 import { Route as AppCvsIndexRouteImport } from './pages/_app/cvs/index'
 import { Route as AppGeneratorIndexRouteImport } from './pages/_app/generator/index'
 
 const AppHomeIndexRoute = AppHomeIndexRouteImport.update({
   id: '/_app/_home/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppBaseIndexRoute = AppBaseIndexRouteImport.update({
+  id: '/_app/base/',
+  path: '/base/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppCvsIndexRoute = AppCvsIndexRouteImport.update({
@@ -31,30 +37,39 @@ const AppGeneratorIndexRoute = AppGeneratorIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppHomeIndexRoute
+  '/base/': typeof AppBaseIndexRoute
   '/cvs/': typeof AppCvsIndexRoute
   '/generator/': typeof AppGeneratorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppHomeIndexRoute
+  '/base': typeof AppBaseIndexRoute
   '/cvs': typeof AppCvsIndexRoute
   '/generator': typeof AppGeneratorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app/_home/': typeof AppHomeIndexRoute
+  '/_app/base/': typeof AppBaseIndexRoute
   '/_app/cvs/': typeof AppCvsIndexRoute
   '/_app/generator/': typeof AppGeneratorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cvs/' | '/generator/'
+  fullPaths: '/' | '/base/' | '/cvs/' | '/generator/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cvs' | '/generator'
-  id: '__root__' | '/_app/_home/' | '/_app/cvs/' | '/_app/generator/'
+  to: '/' | '/base' | '/cvs' | '/generator'
+  id:
+    | '__root__'
+    | '/_app/_home/'
+    | '/_app/base/'
+    | '/_app/cvs/'
+    | '/_app/generator/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppHomeIndexRoute: typeof AppHomeIndexRoute
+  AppBaseIndexRoute: typeof AppBaseIndexRoute
   AppCvsIndexRoute: typeof AppCvsIndexRoute
   AppGeneratorIndexRoute: typeof AppGeneratorIndexRoute
 }
@@ -66,6 +81,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppHomeIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/base/': {
+      id: '/_app/base/'
+      path: '/base'
+      fullPath: '/base/'
+      preLoaderRoute: typeof AppBaseIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/cvs/': {
@@ -87,6 +109,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   AppHomeIndexRoute: AppHomeIndexRoute,
+  AppBaseIndexRoute: AppBaseIndexRoute,
   AppCvsIndexRoute: AppCvsIndexRoute,
   AppGeneratorIndexRoute: AppGeneratorIndexRoute,
 }

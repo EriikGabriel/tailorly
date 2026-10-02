@@ -1,7 +1,7 @@
 "use client";
 
 import { Slot, type WithAsChild } from "@animate/primitives/animate/slot";
-import { type HTMLMotionProps, motion } from "motion/react";
+import { type HTMLMotionProps, motion, useReducedMotion } from "motion/react";
 
 type ButtonProps = WithAsChild<
   HTMLMotionProps<"button"> & {
@@ -11,17 +11,18 @@ type ButtonProps = WithAsChild<
 >;
 
 function Button({
-  hoverScale = 1.05,
-  tapScale = 0.95,
+  hoverScale = 1.025,
+  tapScale = 0.98,
   asChild = false,
   ...props
 }: ButtonProps) {
+  const reducedMotion = useReducedMotion();
   const Component = asChild ? Slot : motion.button;
 
   return (
     <Component
-      whileTap={{ scale: tapScale }}
-      whileHover={{ scale: hoverScale }}
+      whileHover={{ scale: reducedMotion ? 1 : hoverScale }}
+      whileTap={{ scale: reducedMotion ? 1 : tapScale }}
       {...props}
     />
   );

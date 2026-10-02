@@ -47,10 +47,14 @@ Os blocos à direita da API representam a arquitetura planejada. Hoje a API cont
 | Estilos e componentes | Tailwind CSS 4, Base UI e componentes locais |
 | Roteamento | TanStack Router, com geração a partir de `apps/web/src/pages` |
 | Dados remotos | TanStack Query; o `QueryClient` é compartilhado no contexto do router |
-| Estado local | Zustand, inicialmente em `src/stores/workspace-store.ts` |
+| Estado local | Zustand, com sete stores em `apps/web/src/stores` e `resetClientState()` para os fluxos de saída e expiração de sessão |
 | Integração local | Proxy de `/api` para `http://localhost:8080` |
 
-`pages/index.tsx` corresponde a `/`; rotas dinâmicas usam `$id.tsx`; e `pages/__root.tsx` define o layout raiz. O arquivo `apps/web/src/routeTree.gen.ts` é gerado pelo plugin do TanStack Router e não deve ser alterado manualmente.
+A home fica em `apps/web/src/pages/_app/_home/index.tsx` e corresponde a `/`; rotas dinâmicas usam `$id.tsx`; e `pages/__root.tsx` define o layout raiz. O prefixo de arquivo `_app` não aparece na URL. O arquivo `apps/web/src/routeTree.gen.ts` é gerado pelo plugin do TanStack Router e não deve ser alterado manualmente.
+
+**A documentação completa do frontend está em `apps/web/README.md`**: rotas, design system e tokens, as seis dimensões de revisão, regras de pendências, as sete stores e suas guardas de contexto, fluxo da revisão rápida, e o inventário de testes. Ela substitui os READMEs internos que existiam em `src/stores/` e `src/pages/_app/base/`.
+
+Os ícones da interface usam `@react-zero-ui/icon-sprite` (Lucide e Tabler). O `prebuild` de `apps/web` executa `zero-icons`, que gera `public/icons.svg` apenas com os ícones importados; o Vite inclui esse sprite no build. Em desenvolvimento, a biblioteca renderiza os SVGs diretamente. O `components.json` usa `lucide` para o gerador shadcn; componentes adicionados por ele devem trocar os imports gerados para `@react-zero-ui/icon-sprite`.
 
 ### API
 
@@ -147,7 +151,7 @@ Além de `users`, templates e artefatos gerados, o domínio precisará represent
 
 | Ferramenta | Versão |
 | --- | --- |
-| Node.js | 22 ou superior |
+| Node.js | 22.18.0 ou superior (ou 24.11.0 ou superior) |
 | pnpm | 10.9.0 (gerenciado pelo Corepack) |
 | Java | 21 |
 | Docker Compose | Opcional, necessário para PostgreSQL e MinIO locais |

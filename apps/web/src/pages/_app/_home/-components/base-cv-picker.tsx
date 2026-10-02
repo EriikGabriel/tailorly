@@ -1,28 +1,19 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
-import {
-  FileTextIcon,
-  FileUploadIcon,
-  Refresh01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { FileText, FileUp, RefreshCw } from "@react-zero-ui/icon-sprite";
+import { useBaseCvStore } from "@stores/base-cv-store";
 import { useReducedMotion } from "motion/react";
-import { type Dispatch, type SetStateAction, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
-type BaseCvPickerProps = {
-  file: File | null;
-  onFileChange: (file: File | null) => void;
-};
-
-const acceptedExtensions = /\.(pdf|doc|docx)$/i;
-
-export function BaseCvPicker({ file, onFileChange }: BaseCvPickerProps) {
+export function BaseCvPicker() {
   const reducedMotion = useReducedMotion();
-
-  const [error, setError] = useState<string | null>(null);
+  const file = useBaseCvStore((state) => state.file);
+  const error = useBaseCvStore((state) => state.error);
+  const onFileChange = useBaseCvStore((state) => state.selectFile);
+  const setError = useBaseCvStore((state) => state.setError);
 
   function selectFiles(files: FileList | null) {
     if (!files?.length) return;
-    if (files.length !== 1 || !acceptedExtensions.test(files[0].name)) {
+    if (files.length !== 1) {
       setError("Selecione um único arquivo PDF, DOC ou DOCX.");
       return;
     }
@@ -79,20 +70,17 @@ export function BaseCvPicker({ file, onFileChange }: BaseCvPickerProps) {
 interface FilePreviewProps {
   file: File;
   onFileChange: (file: File | null) => void;
-  setError: Dispatch<SetStateAction<string | null>>;
+  setError: (error: string | null) => void;
 }
 
 function FilePreview({ file, onFileChange, setError }: FilePreviewProps) {
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-outline-variant/40 bg-surface-container-low p-3">
       <div className="flex min-w-0 items-start gap-3">
-        <HugeiconsIcon
-          icon={FileTextIcon}
-          className="mt-0.5 size-5 shrink-0 text-primary-900"
-        />
+        <FileText className="mt-0.5 size-5 shrink-0 text-primary-900" />
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="mb-2 w-fit rounded-full border border-secondary-200 bg-secondary-container/40 px-2 text-[10px] font-semibold leading-4 tracking-[0.3px] text-secondary-800">
-            98.4% Precisão Auditada
+            Prévia local • ainda não processado
           </span>
           <p
             className="truncate text-sm font-semibold text-primary-950"
@@ -105,12 +93,12 @@ function FilePreview({ file, onFileChange, setError }: FilePreviewProps) {
           </p>
         </div>
       </div>
-      <div className="flex items-center justify-between border-t border-outline-variant/30 pt-2 ml-auto w-full gap-4 mt-4">
+      <div className="flex items-center justify-end border-t border-outline-variant/30 pt-2 ml-auto w-full gap-4 mt-4">
         <label
           htmlFor="base-cv-file"
           className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-secondary-700 hover:bg-surface-container"
         >
-          <HugeiconsIcon icon={Refresh01Icon} className="size-3.5" />
+          <RefreshCw className="size-3.5" />
           Trocar
         </label>
         <button
@@ -164,10 +152,7 @@ function Picker({ selectFiles }: PickerProps) {
       }}
       className={`flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed p-3 text-center transition-colors ${dragging ? "border-primary-900 bg-primary-50" : "border-outline-variant/60 bg-surface-container-low hover:border-primary-300 hover:bg-surface-container"}`}
     >
-      <HugeiconsIcon
-        icon={FileUploadIcon}
-        className="size-5 text-primary-900"
-      />
+      <FileUp className="size-5 text-primary-900" />
       <span className="text-sm font-semibold text-primary-950">
         Arraste seu currículo aqui ou clique para selecionar
       </span>

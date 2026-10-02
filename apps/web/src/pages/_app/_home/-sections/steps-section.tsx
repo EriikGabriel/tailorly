@@ -1,10 +1,9 @@
 import {
-  CheckmarkBadge01Icon,
-  FileTextIcon,
-  Search01Icon,
-  ShieldCheckIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+  BadgeCheck,
+  FileText,
+  Search,
+  ShieldCheck,
+} from "@react-zero-ui/icon-sprite";
 
 export function StepsSection() {
   return (
@@ -29,10 +28,7 @@ export function StepsSection() {
       <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         <article className="flex flex-col gap-3 rounded-xl border bg-white p-6 drop-shadow-lg">
           <div className="flex justify-center items-center rounded-lg bg-secondary-container size-12 p-3">
-            <HugeiconsIcon
-              icon={ShieldCheckIcon}
-              className="size-6 shrink-0 text-primary"
-            />
+            <ShieldCheck className="size-6 shrink-0 text-primary" />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -50,10 +46,7 @@ export function StepsSection() {
 
         <article className="flex flex-col gap-3 rounded-xl border bg-white p-6 drop-shadow-lg">
           <div className="flex justify-center items-center rounded-lg bg-secondary-container size-12 p-3">
-            <HugeiconsIcon
-              icon={Search01Icon}
-              className="size-6 shrink-0 text-primary"
-            />
+            <Search className="size-6 shrink-0 text-primary" />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -72,10 +65,7 @@ export function StepsSection() {
 
         <article className="flex flex-col gap-3 rounded-xl border bg-white p-6 drop-shadow-lg">
           <div className="flex justify-center items-center rounded-lg bg-secondary-container size-12 p-3">
-            <HugeiconsIcon
-              icon={FileTextIcon}
-              className="size-6 shrink-0 text-primary"
-            />
+            <FileText className="size-6 shrink-0 text-primary" />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -94,10 +84,7 @@ export function StepsSection() {
 
         <article className="flex flex-col gap-3 rounded-xl border bg-white p-6 drop-shadow-lg">
           <div className="flex justify-center items-center rounded-lg bg-secondary-container size-12 p-3">
-            <HugeiconsIcon
-              icon={CheckmarkBadge01Icon}
-              className="size-6 shrink-0 text-primary"
-            />
+            <BadgeCheck className="size-6 shrink-0 text-primary" />
           </div>
 
           <div className="flex flex-col gap-2">

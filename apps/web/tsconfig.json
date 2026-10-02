@@ -12,6 +12,7 @@
       "@lib/*": ["./src/lib/*"],
       "@hooks/*": ["./src/hooks/*"],
       "@app/*": ["./src/pages/_app/*"],
+      "@@types/*": ["./src/types/*"],
       "@/*": ["./src/*"]
     }
   },

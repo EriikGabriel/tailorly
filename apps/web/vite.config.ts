@@ -33,6 +33,11 @@ export default defineConfig({
       { find: "@pages", replacement: path.resolve(__dirname, "./src/pages") },
       { find: "@lib", replacement: path.resolve(__dirname, "./src/lib") },
       { find: "@hooks", replacement: path.resolve(__dirname, "./src/hooks") },
+      {
+        find: "@app",
+        replacement: path.resolve(__dirname, "./src/pages/_app"),
+      },
+      { find: "@@types", replacement: path.resolve(__dirname, "./src/types") },
       { find: /^@\//, replacement: `${path.resolve(__dirname, "./src")}/` },
     ],
   },
