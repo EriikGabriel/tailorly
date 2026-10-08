@@ -27,7 +27,7 @@ flowchart LR
     Storage --> Vault[Second Brain\nB03 Resources/CVs]
 ```
 
-Os blocos à direita da API representam a arquitetura planejada. Hoje a API contém o scaffold Spring Boot, a configuração web e os endpoints de saúde; os componentes de domínio serão introduzidos progressivamente.
+Os blocos de parsing, LLM, templates, PDF, storage e vault representam a arquitetura planejada. Hoje a API já implementa contas, JWT, owners e registros básicos de sessões anônimas; ingestão e geração de currículos ainda não estão disponíveis.
 
 ## Estrutura do repositório
 
@@ -58,6 +58,8 @@ Os ícones da interface usam `@react-zero-ui/icon-sprite` (Lucide e Tabler). O `
 
 ### API
 
+A documentação detalhada da implementação Spring Boot está em [`services/api/README.md`](services/api/README.md).
+
 | Aspecto | Implementação atual | Evolução prevista |
 | --- | --- | --- |
 | Runtime | Java 21 e Spring Boot 3.5 | — |
@@ -65,7 +67,7 @@ Os ícones da interface usam `@react-zero-ui/icon-sprite` (Lucide e Tabler). O `
 | Saúde | Spring Actuator com `health` e `info` expostos | Métricas e logs estruturados |
 | Acesso web | CORS, JWT Bearer e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente e renovação de tokens |
 | Parsing de páginas | Dependência Jsoup já incluída | Extração de vagas por URL |
-| Dados e arquivos | PostgreSQL e MinIO no Compose | Spring Data JPA, Flyway e adaptadores de storage |
+| Dados e arquivos | PostgreSQL via Spring Data JPA; MinIO disponível no Compose, ainda sem integração com a API | Flyway e adaptadores de storage |
 
 O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. A especificação OpenAPI está em `http://localhost:8080/v3/api-docs` e a interface Swagger UI em `http://localhost:8080/swagger-ui.html`. A API inclui operações de usuários, owners e sessões anônimas. Cadastro (`POST /v1/auth/register` e o caminho existente `POST /v1/users`), login (`POST /v1/auth/login`), saúde, documentação e criação/validação de sessões anônimas são públicos; consulta e revogação de sessões exigem `ROLE_ADMIN`. O login valida email e senha e retorna `accessToken`, `tokenType: Bearer`, `expiresAt` e os dados públicos do usuário. Nas chamadas protegidas, envie `Authorization: Bearer <accessToken>`. O token é assinado com HS256, expira após uma hora e inclui o ID do usuário como sujeito. A API consulta a conta e as roles atuais em cada chamada protegida; contas desativadas perdem acesso imediatamente. Como a autenticação usa apenas o cabeçalho Bearer, não há cookie de login nem token CSRF. Ainda não há refresh token, logout ou revogação individual de JWTs.
 
