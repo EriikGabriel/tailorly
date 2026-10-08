@@ -33,7 +33,7 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 
 | Comando | O que faz |
 | --- | --- |
-| `pnpm dev` | Sobe o Vite em `http://localhost:5173` com proxy de `/api` para `http://localhost:8080`. |
+| `pnpm dev` | Sobe o Vite em `http://localhost:5173` com proxy de `/v1` para `http://localhost:8080`. |
 | `pnpm build` | Executa `prebuild` (`zero-icons`) e depois `vite build && tsc -b`. |
 | `pnpm lint` | `biome lint` |
 | `pnpm check` | `biome check` (formatação + lint) |
@@ -664,7 +664,7 @@ comportamento:
 - integração com o vault (Second Brain), Notion, Obsidian;
 - persistência em `localStorage`/`sessionStorage` (só restam as duas chaves
   legadas, removidas em `resetClientState`);
-- `POST /api/cv/generate` e qualquer outro endpoint de domínio.
+- `POST /v1/cv/generate` e qualquer outro endpoint de domínio.
 
 Dados remotos devem entrar pela integração de **TanStack Query** já montada em
 `src/lib/query-client.ts` e injetada no contexto do router. Estas stores **não**

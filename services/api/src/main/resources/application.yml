@@ -1,7 +1,24 @@
 spring:
   application:
     name: tailorly-api
-
+  messages:
+    basename: messages,ValidationMessages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+  web:
+    locale: en
+    locale-resolver: accept-header
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tailorly_api_db
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
 management:
   endpoints:
     web:
@@ -11,3 +28,10 @@ management:
     health:
       probes:
         enabled: true
+tailorly:
+  security:
+    admin-emails: ${TAILORLY_ADMIN_EMAILS:}
+    jwt:
+      secret: ${TAILORLY_JWT_SECRET}
+      issuer: ${TAILORLY_JWT_ISSUER:http://localhost:8080}
+      ttl: PT1H

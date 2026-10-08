@@ -2,7 +2,7 @@
 
 Monorepo para gerar currículos personalizados para cada vaga. O produto recebe uma descrição ou URL de oportunidade, extrai os requisitos, adapta um currículo a partir de um template versionado e disponibiliza os artefatos para download e acompanhamento no Second Brain.
 
-> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator e os serviços locais de PostgreSQL e MinIO já existem. O domínio de geração de currículos, autenticação, persistência e integrações externas ainda estão planejados.
+> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator, autenticação JWT e os serviços locais de PostgreSQL e MinIO já existem. O fluxo completo de sessões anônimas, o domínio de geração de currículos e integrações externas ainda estão planejados.
 
 ## Objetivo e escopo
 
@@ -15,7 +15,7 @@ O fluxo alvo é: receber e validar o Currículo Base → aprovar seus fatos como
 ```mermaid
 flowchart LR
     User[Pessoa usuária] --> Web[Web\nReact + Vite]
-    Web -->|/api| Api[API\nSpring Boot]
+    Web -->|/v1| Api[API\nSpring Boot]
     Api --> Parser[Job parser\ntexto ou URL]
     Parser --> Jsoup[Jsoup]
     Api --> Llm[Cliente LLM]
@@ -48,7 +48,7 @@ Os blocos à direita da API representam a arquitetura planejada. Hoje a API cont
 | Roteamento | TanStack Router, com geração a partir de `apps/web/src/pages` |
 | Dados remotos | TanStack Query; o `QueryClient` é compartilhado no contexto do router |
 | Estado local | Zustand, com sete stores em `apps/web/src/stores` e `resetClientState()` para os fluxos de saída e expiração de sessão |
-| Integração local | Proxy de `/api` para `http://localhost:8080` |
+| Integração local | Proxy de `/v1` para `http://localhost:8080` |
 
 A home fica em `apps/web/src/pages/_app/_home/index.tsx` e corresponde a `/`; rotas dinâmicas usam `$id.tsx`; e `pages/__root.tsx` define o layout raiz. O prefixo de arquivo `_app` não aparece na URL. O arquivo `apps/web/src/routeTree.gen.ts` é gerado pelo plugin do TanStack Router e não deve ser alterado manualmente.
 
@@ -61,13 +61,53 @@ Os ícones da interface usam `@react-zero-ui/icon-sprite` (Lucide e Tabler). O `
 | Aspecto | Implementação atual | Evolução prevista |
 | --- | --- | --- |
 | Runtime | Java 21 e Spring Boot 3.5 | — |
-| HTTP e validação | Spring Web e Validation | Endpoints do domínio e OpenAPI/Swagger |
+| HTTP e validação | Spring Web, Validation, endpoints de usuários e owners, OpenAPI/Swagger UI | Endpoints de geração de currículo |
 | Saúde | Spring Actuator com `health` e `info` expostos | Métricas e logs estruturados |
-| Acesso web | CORS para o frontend local em `http://localhost:5173` | Política por ambiente e autenticação |
+| Acesso web | CORS, JWT Bearer e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente e renovação de tokens |
 | Parsing de páginas | Dependência Jsoup já incluída | Extração de vagas por URL |
 | Dados e arquivos | PostgreSQL e MinIO no Compose | Spring Data JPA, Flyway e adaptadores de storage |
 
-O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. Ainda não há endpoint de geração de currículo, documentação OpenAPI ou autenticação JWT implementados.
+O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. A especificação OpenAPI está em `http://localhost:8080/v3/api-docs` e a interface Swagger UI em `http://localhost:8080/swagger-ui.html`. A API inclui operações de usuários, owners e sessões anônimas. Cadastro (`POST /v1/auth/register` e o caminho existente `POST /v1/users`), login (`POST /v1/auth/login`), saúde, documentação e criação/validação de sessões anônimas são públicos; consulta e revogação de sessões exigem `ROLE_ADMIN`. O login valida email e senha e retorna `accessToken`, `tokenType: Bearer`, `expiresAt` e os dados públicos do usuário. Nas chamadas protegidas, envie `Authorization: Bearer <accessToken>`. O token é assinado com HS256, expira após uma hora e inclui o ID do usuário como sujeito. A API consulta a conta e as roles atuais em cada chamada protegida; contas desativadas perdem acesso imediatamente. Como a autenticação usa apenas o cabeçalho Bearer, não há cookie de login nem token CSRF. Ainda não há refresh token, logout ou revogação individual de JWTs.
+
+Antes de iniciar a API, defina uma chave Base64 com pelo menos 32 bytes e mantenha-a estável entre reinicializações:
+
+```bash
+export TAILORLY_JWT_SECRET="$(openssl rand -base64 32)"
+pnpm --filter @tailorly/api dev
+```
+
+Trocar a chave invalida todos os tokens emitidos anteriormente. Não a inclua no repositório. Fora do ambiente local, defina também `TAILORLY_JWT_ISSUER` com a URL pública da API; o valor padrão é `http://localhost:8080`.
+
+As roles `ROLE_USER` e `ROLE_ADMIN` são criadas na inicialização e persistidas em `roles`/`user_roles`. Todo cadastro recebe `ROLE_USER`. Para definir administradores locais, informe uma lista de e-mails separada por vírgulas antes de iniciar a API:
+
+```bash
+export TAILORLY_ADMIN_EMAILS=admin@example.com,other-admin@example.com
+pnpm --filter @tailorly/api dev
+```
+
+Na inicialização, usuários existentes cujos e-mails estejam na lista recebem `ROLE_ADMIN`; novos cadastros configurados na lista já são criados com as duas roles. A configuração adiciona privilégios de administrador e não remove roles previamente persistidas.
+
+As respostas de erro usam `Accept-Language`. Estão disponíveis mensagens em inglês (padrão) e português do Brasil:
+
+```http
+Accept-Language: en
+Accept-Language: pt-BR
+```
+
+Isso inclui validação, erros de domínio, autenticação (`401`) e autorização (`403`). Sem o cabeçalho, a API responde em inglês.
+
+| Endpoint | Método | Operação |
+| --- | --- | --- |
+| `/v1/auth/register` | `POST` | Cadastrar usuário (`email`, `password`); retorna `201` e dados públicos. `/v1/users` continua disponível. |
+| `/v1/auth/login` | `POST` | Validar `email` e `password`; retorna JWT Bearer, expiração e dados públicos ou `401`. |
+| `/v1/owners` | `POST` | Criar owner (`kind`, `userId` opcional e `activeSnapshotId` opcional) |
+| `/v1/owners/{id}` | `GET` | Consultar owner |
+| `/v1/owners/{id}/active-snapshot` | `PATCH` | Atualizar ou limpar o snapshot ativo |
+| `/v1/owners/{id}/increment-revision` | `PATCH` | Incrementar atomicamente a revisão |
+| `/v1/anonymous-sessions` | `POST` | Criar sessão para owner anônimo |
+| `/v1/anonymous-sessions/validate` | `POST` | Validar token e expiração da sessão |
+| `/v1/anonymous-sessions/{id}/revoke` | `PATCH` | Revogar sessão (`ROLE_ADMIN`) |
+| `/v1/anonymous-sessions/{id}` | `GET` | Consultar sessão (`ROLE_ADMIN`) |
 
 ## Requisitos
 
@@ -102,6 +142,8 @@ O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. Ainda
 | Entidade | Campos principais | Responsabilidade |
 | --- | --- | --- |
 | `users` | `id`, `email`, `password_hash`, `enabled` | Credenciais e estado da conta. |
+| `owners` | `id`, `kind`, `user_id`, `active_snapshot_id`, `revision`, `expires_at` | Identidade proprietária de dados; `user_id` é opcional e único. `active_snapshot_id` aponta para o snapshot aprovado quando o modelo de snapshots existir. |
+| `anonymous_sessions` | `id`, `owner_id`, `token_hash`, `expires_at`, `revoked_at` | Sessão anônima com token armazenado como hash e expiração/revogação no servidor; cada owner tem no máximo uma sessão. |
 | `roles` | `id`, `name` | Papéis de acesso, como `ADMIN` e `USER`. |
 | `user_roles` | `user_id`, `role_id` | Associação muitos-para-muitos entre usuários e papéis. |
 | `cv_templates` | `id`, `name`, `content`, `version` | Templates Typst versionados para apresentação; os fatos aprovados do Currículo Base são o Ground Truth. |
@@ -111,6 +153,8 @@ O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. Ainda
 ```mermaid
 erDiagram
     USERS ||--o{ USER_ROLES : possui
+    USERS o|--o| OWNER : identifica
+    OWNERS ||--o| ANONYMOUS_SESSIONS : "1:0..1 — identifica"
     ROLES ||--o{ USER_ROLES : atribui
     USERS ||--o{ CV_METADATA : cria
     CV_TEMPLATES ||--o{ CV_METADATA : origina
@@ -171,6 +215,8 @@ pnpm dev
 | Web | `http://localhost:5173` |
 | API | `http://localhost:8080` |
 | Health check | `http://localhost:8080/actuator/health` |
+| OpenAPI (JSON) | `http://localhost:8080/v3/api-docs` |
+| Swagger UI | `http://localhost:8080/swagger-ui.html` |
 
 Para iniciar apenas uma aplicação:
 
@@ -205,8 +251,8 @@ Essas credenciais existem apenas para o ambiente local. Variáveis de ambiente e
 ## Próximos passos
 
 - [ ] Versionar o template base Typst para apresentação e definir a extração, revisão e persistência do Currículo Base como Ground Truth.
-- [ ] Implementar `POST /api/cv/generate` para ingestão de texto ou URL.
+- [ ] Implementar `POST /v1/cv/generate` para ingestão de texto ou URL.
 - [ ] Adicionar extração de requisitos com OpenAI e fallback Ollama.
 - [ ] Implementar a geração de PDF/Markdown, persistência com PostgreSQL/Flyway e armazenamento no MinIO.
-- [ ] Incluir JWT/RBAC, documentação OpenAPI, testes unitários, de integração e de contrato.
+- [ ] Documentar os futuros endpoints de domínio no OpenAPI, adicionar testes de integração e de contrato e implementar renovação/revogação de tokens.
 - [ ] Integrar os artefatos gerados ao vault e preparar CI/CD com GitHub Actions.
