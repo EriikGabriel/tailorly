@@ -9,7 +9,7 @@ Esta pasta contém a API HTTP do Tailorly. Ela já oferece cadastro de usuários
 | Contas | Cadastro, consulta, alteração de email, desativação, senha com BCrypt e roles persistidas | Recuperação de senha e exclusão de conta |
 | Acesso | Login com JWT Bearer HS256, autorização por conta e `ROLE_ADMIN` | Refresh token, logout e revogação individual de JWT |
 | Sessões anônimas | Registros de owner e sessão, validação de expiração e revogação administrativa | Emissão de token pelo servidor, cotas, limpeza automática e migração para conta |
-| Currículo Base | Campo `activeSnapshotId` no owner, sem modelo de snapshot | Upload, extração/OCR, fatos com evidência, revisão, versões e ativação do Ground Truth |
+| Currículo Base | Entidades JPA para documentos, versões, execuções de extração e páginas; campo `activeSnapshotId` no owner, sem modelo de snapshot | Upload, execução de extração/OCR, fatos com evidência, revisão e ativação do Ground Truth |
 | Geração | Nenhum endpoint | Ingestão de vaga, template Typst, PDF/Markdown e histórico |
 | Infraestrutura | PostgreSQL via JPA, OpenAPI, Swagger UI e Actuator | Flyway, storage de arquivos e observabilidade ampliada |
 
@@ -18,12 +18,26 @@ O MinIO sobe pelo Compose do monorepo, mas esta API ainda não lê nem grava arq
 ## Tecnologias e estrutura
 
 - Java 21, Spring Boot 3.5, Spring Web, Validation, Security, OAuth2 Resource Server e Spring Data JPA.
-- PostgreSQL para `users`, `roles`, `user_roles`, `owners` e `anonymous_sessions`.
+- PostgreSQL via JPA para `users`, `roles`, `user_roles`, `owners`, `anonymous_sessions`, `stored_objects`, `base_documents`, `base_versions`, `extraction_runs` e `extracted_pages` (as cinco últimas tabelas ainda não têm fluxo de API).
 - Springdoc para OpenAPI/Swagger UI e Actuator para saúde.
-- Pacotes em `src/main/java/com/tailorly/api`: `user`, `role`, `owner`, `session` e `shared` (configuração, segurança, erros e handlers).
+- Pacotes em `src/main/java/com/tailorly/api`: `user`, `role`, `owner`, `session`, `objects`, `base`, `extraction` e `shared` (configuração, segurança, erros e handlers).
 - Mensagens em inglês e português em `src/main/resources`; testes em `src/test`.
 
 Os endpoints de negócio começam com `/v1`. Actuator e documentação usam os caminhos próprios das ferramentas.
+
+Os metadados de storage podem ser registrados e consultados em `/api/stored-objects` (também disponível sob `/v1/stored-objects`). O cadastro exige `ownerId`, `purpose`, `storageKey`, `contentHash`, `mimeType` e `sizeBytes`; `expiresAt` é opcional e `deletionStatus` assume `ACTIVE` quando omitido. Essas operações exigem autenticação e só permitem acesso ao owner da própria conta ou a administradores.
+
+Documentos recebidos podem ser registrados em `POST /api/base-documents` (também disponível sob `/v1/base-documents`) com `ownerId`, `originalObjectId`, `contentHash`, `originalFilename` e `pageCount` opcional. O objeto original deve pertencer ao mesmo owner, e o hash não pode ser repetido dentro desse owner.
+
+Também é possível consultar documentos por owner em `GET /api/base-documents/owner/{ownerId}` ou por hash em `GET /api/base-documents/hash/{contentHash}`. A consulta global por hash exige administrador e retorna conflito quando o hash aparece em mais de um owner.
+
+Versões de documentos são criadas por `POST /api/base-versions` (ou `/v1/base-versions`) com `ownerId`, `documentId`, `versionNumber` e `status`. O documento precisa pertencer ao owner, e o número da versão é único dentro do owner.
+
+Uma versão pode ser consultada em `GET /api/base-versions/{id}`, ter o status alterado em `PATCH /api/base-versions/{id}/status` e avançar sua revisão em `PATCH /api/base-versions/{id}/increment-review-revision`.
+
+Execuções de extração são registradas em `POST /api/extraction-runs` (ou `/v1/extraction-runs`) com `baseVersionId`, `pipelineFingerprint`, `pipelineVersions`, `status` e `outputObjectId` opcional. Elas podem ser consultadas, ter status alterado ou ser marcadas como falhas pelos endpoints correspondentes. O owner da versão controla o acesso.
+
+Páginas extraídas são registradas em `POST /api/extracted-pages` (ou `/v1/extracted-pages`) com `extractionRunId`, método, objeto de texto e hash. Elas podem ser consultadas por ID, por execução ou por hash de texto; a busca global por hash exige administrador e um resultado único.
 
 ## Executar localmente
 
@@ -164,7 +178,9 @@ As chaves de mensagem são centralizadas em `shared/exception/ErrorCodes.java`. 
 
 ## Persistência e fluxo alvo de currículo
 
-As entidades existentes são `User`, `Role`, `Owner` e `AnonymousSession`. `users` guarda o hash BCrypt da senha e o estado `enabled`; `user_roles` relaciona as roles; `owners` guarda tipo, vínculo opcional com a conta, revisão, expiração e o UUID do snapshot ativo; `anonymous_sessions` guarda hash de token, expiração e revogação. O histórico de currículos e os arquivos ainda não são persistidos por esta API.
+As entidades `ExtractionRun` (`extraction_runs`) e `ExtractedPage` (`extracted_pages`) modelam execuções e páginas extraídas. Cada versão pode ter várias execuções, e cada execução pode ter várias páginas. `pipeline_versions` é um objeto JSON armazenado como `jsonb` no PostgreSQL. O objeto de saída da execução é opcional e exclusivo; o objeto de texto de cada página é obrigatório e exclusivo. Os vínculos são navegáveis nos dois sentidos. `StoredObject.owner` é obrigatório, e `Owner` expõe suas coleções de objetos, documentos e versões. Ainda não há endpoints, execução de OCR ou gravação dos resultados de extração; este acréscimo implementa somente os mapeamentos JPA.
+
+As entidades existentes são `User`, `Role`, `Owner`, `AnonymousSession`, `StoredObject`, `BaseDocument` e `BaseVersion`. `users` guarda o hash BCrypt da senha e o estado `enabled`; `user_roles` relaciona as roles; `owners` guarda tipo, vínculo opcional com a conta, revisão, expiração e o UUID do snapshot ativo; `anonymous_sessions` guarda hash de token, expiração e revogação. `stored_objects` modela metadados de storage; cada `base_documents` exige um objeto original, e cada objeto pode ser original de no máximo um documento (`original_object_id` único). O hash do documento é único por owner. Cada documento pode originar várias `base_versions`, que usam número único por owner. Ainda não há fluxo que grave essas três últimas entidades ou os bytes dos arquivos, nem persistência de fatos revisados ou currículos gerados.
 
 O fluxo futuro parte do **Currículo Base revisado como fonte dos fatos**: upload com hash por conta ou sessão → extração/OCR com evidência → revisão de fatos e pendências por versão → ativação atômica de uma versão aprovada → geração a partir de um snapshot imutável e da vaga. Templates Typst devem formatar os fatos; vagas e fontes secundárias não devem criar fatos pessoais. Versões candidatas não devem substituir a versão ativa antes da revisão. Reenvios idênticos podem reaproveitar extração no mesmo escopo, com reavaliação de fatos sensíveis ao tempo. Exclusão deverá abranger também texto, fatos, pendências e artefatos gerados que contenham dados pessoais. Esses comportamentos **não estão implementados** nesta API.
 

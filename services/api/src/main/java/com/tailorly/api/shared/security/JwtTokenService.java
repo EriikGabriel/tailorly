@@ -40,6 +40,11 @@ public class JwtTokenService {
         .build();
     String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(
         JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
-    return new LoginResponse(accessToken, "Bearer", expiresAt, user);
+    return LoginResponse.builder()
+        .accessToken(accessToken)
+        .tokenType("Bearer")
+        .expiresAt(expiresAt)
+        .user(user)
+        .build();
   }
 }

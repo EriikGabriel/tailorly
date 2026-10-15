@@ -1,18 +1,25 @@
 package com.tailorly.api.owner;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
+import com.tailorly.api.base.BaseDocument;
+import com.tailorly.api.base.BaseVersion;
+import com.tailorly.api.objects.StoredObject;
 import com.tailorly.api.session.AnonymousSession;
 import com.tailorly.api.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -63,5 +70,20 @@ public class Owner {
   @ToString.Exclude
   @OneToOne(mappedBy = "owner")
   private AnonymousSession anonymousSession;
+
+  @Builder.Default
+  @ToString.Exclude
+  @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+  private Set<StoredObject> storedObjects = new HashSet<>();
+
+  @Builder.Default
+  @ToString.Exclude
+  @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+  private Set<BaseDocument> baseDocuments = new HashSet<>();
+
+  @Builder.Default
+  @ToString.Exclude
+  @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+  private Set<BaseVersion> baseVersions = new HashSet<>();
 
 }
