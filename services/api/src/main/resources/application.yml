@@ -12,6 +12,10 @@ spring:
     url: jdbc:postgresql://localhost:5432/tailorly_api_db
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
+  servlet:
+    multipart:
+      max-file-size: 7MB
+      max-request-size: 8MB
   jpa:
     hibernate:
       ddl-auto: update
@@ -29,6 +33,13 @@ management:
       probes:
         enabled: true
 tailorly:
+  storage:
+    endpoint: ${TAILORLY_STORAGE_ENDPOINT:http://localhost:3900}
+    region: ${TAILORLY_STORAGE_REGION:garage}
+    bucket: ${TAILORLY_STORAGE_BUCKET:tailorly-private}
+    access-key: ${TAILORLY_STORAGE_ACCESS_KEY:}
+    secret-key: ${TAILORLY_STORAGE_SECRET_KEY:}
+    path-style: ${TAILORLY_STORAGE_PATH_STYLE:true}
   security:
     admin-emails: ${TAILORLY_ADMIN_EMAILS:}
     jwt:

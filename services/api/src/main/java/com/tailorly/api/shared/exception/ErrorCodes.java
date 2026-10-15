@@ -55,6 +55,10 @@ public final class ErrorCodes {
     public static final String HASH_NOT_UNIQUE = "error.base_document.hash_not_unique";
     public static final String ORIGINAL_OBJECT_OWNER_MISMATCH = "error.base_document.original_object_owner_mismatch";
     public static final String INVALID_PAGE_COUNT = "error.base_document.invalid_page_count";
+    public static final String INVALID_PDF = "error.base_document.invalid_pdf";
+    public static final String FILE_TOO_LARGE = "error.base_document.file_too_large";
+    public static final String ACCOUNT_OWNER_REQUIRED = "error.base_document.account_owner_required";
+    public static final String ORIGINAL_OBJECT_MISSING = "error.base_document.original_object_missing";
 
     private BaseDocument() {
     }

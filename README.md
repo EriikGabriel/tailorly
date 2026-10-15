@@ -2,7 +2,7 @@
 
 Monorepo para gerar currículos personalizados para cada vaga. O produto recebe uma descrição ou URL de oportunidade, extrai os requisitos, adapta um currículo a partir de um template versionado e disponibiliza os artefatos para download e acompanhamento no Second Brain.
 
-> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator, autenticação JWT e os serviços locais de PostgreSQL e MinIO já existem. O fluxo completo de sessões anônimas, o domínio de geração de currículos e integrações externas ainda estão planejados.
+> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator, autenticação JWT e os serviços locais de PostgreSQL e Garage já existem. O fluxo completo de sessões anônimas, o domínio de geração de currículos e integrações externas ainda estão planejados.
 
 ## Objetivo e escopo
 
@@ -23,11 +23,11 @@ flowchart LR
     Api --> Template[Template Typst\nversionado]
     Template --> Pdf[Compilação e PDF]
     Api --> Db[(PostgreSQL)]
-    Api --> Storage[(MinIO ou disco local)]
+    Api --> Storage[(Garage via S3)]
     Storage --> Vault[Second Brain\nB03 Resources/CVs]
 ```
 
-Os blocos de parsing, LLM, templates, PDF, storage e vault representam a arquitetura planejada. Hoje a API já implementa contas, JWT, owners e registros básicos de sessões anônimas; ingestão e geração de currículos ainda não estão disponíveis.
+Os blocos de parsing, LLM, templates, PDF e vault representam a arquitetura planejada. Hoje a API já implementa contas, JWT, owners, registros básicos de sessões anônimas e upload de PDFs para contas no Garage; extração, revisão e geração de currículos ainda não estão disponíveis.
 
 ## Estrutura do repositório
 
@@ -35,7 +35,7 @@ Os blocos de parsing, LLM, templates, PDF, storage e vault representam a arquite
 | --- | --- | --- |
 | `apps/web` | Interface React para criação, edição, prévia e download de currículos. | Scaffold disponível |
 | `services/api` | API HTTP e orquestração do fluxo de geração. | Scaffold disponível |
-| `compose.yaml` | PostgreSQL 17 e MinIO para desenvolvimento local. | Disponível |
+| `compose.yaml` | PostgreSQL 17 e Garage para desenvolvimento local. | Disponível |
 | `turbo.json` | Orquestra tarefas do monorepo. | Disponível |
 | `pnpm-workspace.yaml` | Define os workspaces `apps/*` e `services/*`. | Disponível |
 
@@ -67,7 +67,7 @@ A documentação detalhada da implementação Spring Boot está em [`services/ap
 | Saúde | Spring Actuator com `health` e `info` expostos | Métricas e logs estruturados |
 | Acesso web | CORS, JWT Bearer e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente e renovação de tokens |
 | Parsing de páginas | Dependência Jsoup já incluída | Extração de vagas por URL |
-| Dados e arquivos | PostgreSQL via Spring Data JPA; MinIO disponível no Compose, ainda sem integração com a API | Flyway e adaptadores de storage |
+| Dados e arquivos | PostgreSQL via Spring Data JPA; upload de PDFs para contas no Garage via S3 | Flyway, extração/OCR e revisão dos fatos |
 
 O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. A especificação OpenAPI está em `http://localhost:8080/v3/api-docs` e a interface Swagger UI em `http://localhost:8080/swagger-ui.html`. A API inclui operações de usuários, owners e sessões anônimas. Cadastro (`POST /v1/auth/register` e o caminho existente `POST /v1/users`), login (`POST /v1/auth/login`), saúde, documentação e criação/validação de sessões anônimas são públicos; consulta e revogação de sessões exigem `ROLE_ADMIN`. O login valida email e senha e retorna `accessToken`, `tokenType: Bearer`, `expiresAt` e os dados públicos do usuário. Nas chamadas protegidas, envie `Authorization: Bearer <accessToken>`. O token é assinado com HS256, expira após uma hora e inclui o ID do usuário como sujeito. A API consulta a conta e as roles atuais em cada chamada protegida; contas desativadas perdem acesso imediatamente. Como a autenticação usa apenas o cabeçalho Bearer, não há cookie de login nem token CSRF. Ainda não há refresh token, logout ou revogação individual de JWTs.
 
@@ -136,7 +136,7 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | RNF04 | Usabilidade | Oferecer uma interface clara para envio da vaga, revisão e download do resultado. | Média |
 | RNF05 | Manutenibilidade | Manter responsabilidades separadas, templates versionados, migrações e testes automatizados. | Média |
 | RNF06 | Compatibilidade | Suportar as versões atuais dos principais navegadores. | Média |
-| RNF07 | Resiliência | Usar Ollama como alternativa quando o provedor remoto de LLM falhar e storage local quando MinIO não estiver disponível. | Média |
+| RNF07 | Resiliência | Usar Ollama como alternativa quando o provedor remoto de LLM falhar e definir recuperação para indisponibilidade do storage S3. | Média |
 | RNF08 | Observabilidade | Expor saúde da aplicação e evoluir para métricas e logs JSON. | Média |
 
 ## Modelo de dados planejado
@@ -150,7 +150,7 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | `user_roles` | `user_id`, `role_id` | Associação muitos-para-muitos entre usuários e papéis. |
 | `cv_templates` | `id`, `name`, `content`, `version` | Templates Typst versionados para apresentação; os fatos aprovados do Currículo Base são o Ground Truth. |
 | `cv_metadata` | `id`, `filename`, `created_at`, `status`, `owner_id`, `template_id` | Histórico e situação de cada currículo gerado. |
-| `file_storage` | `id`, `file_path`, `cv_metadata_id` | Referência do artefato no MinIO ou armazenamento local. |
+| `file_storage` | `id`, `file_path`, `cv_metadata_id` | Modelo planejado de referência a artefatos em storage S3. |
 
 ```mermaid
 erDiagram
@@ -200,7 +200,7 @@ Além de `users`, templates e artefatos gerados, o domínio precisará represent
 | Node.js | 22.18.0 ou superior (ou 24.11.0 ou superior) |
 | pnpm | 10.9.0 (gerenciado pelo Corepack) |
 | Java | 21 |
-| Docker Compose | Opcional, necessário para PostgreSQL e MinIO locais |
+| Docker Compose | Opcional, necessário para PostgreSQL e Garage locais |
 
 ## Desenvolvimento
 
@@ -230,14 +230,19 @@ pnpm --filter @tailorly/api dev
 Para disponibilizar os serviços de apoio locais:
 
 ```bash
+bash services/api/init-garage-env.sh
 docker compose up -d
 ```
+
+O script cria `services/api/.env.garage` com credenciais de desenvolvimento não versionadas e um token para a Garage UI. O Garage inicia em modo de nó único, cria o bucket privado `tailorly-private` e expõe apenas a API S3 local. A interface visual de terceiros fica em `http://127.0.0.1:3909` e usa `GARAGE_ADMIN_TOKEN` do mesmo arquivo para login; consulte as [instruções da API](services/api/README.md#interface-visual-do-garage). Configure a API com as variáveis de ambiente descritas no [README da API](services/api/README.md#executar-localmente). Esta configuração não migra objetos de um volume antigo do MinIO.
+
+Se a porta `5432` do host estiver ocupada, inicie com `TAILORLY_POSTGRES_PORT=5433 docker compose up -d` e use `jdbc:postgresql://localhost:5433/tailorly` na API. Com `sudo`, execute `sudo env TAILORLY_POSTGRES_PORT=5433 docker compose up -d`.
 
 | Serviço | Endereço | Credenciais de desenvolvimento |
 | --- | --- | --- |
 | PostgreSQL | `localhost:5432/tailorly` | usuário `tailorly`, senha `tailorly` |
-| MinIO API | `http://localhost:9000` | usuário `tailorly`, senha `tailorly-dev-password` |
-| MinIO Console | `http://localhost:9001` | mesmas credenciais do MinIO |
+| Garage S3 API | `http://localhost:3900` | chave e segredo em `services/api/.env.garage` |
+| Garage UI | `http://127.0.0.1:3909` | `GARAGE_ADMIN_TOKEN` em `services/api/.env.garage` |
 
 Essas credenciais existem apenas para o ambiente local. Variáveis de ambiente e segredos de produção não devem ser versionados.
 
@@ -255,6 +260,6 @@ Essas credenciais existem apenas para o ambiente local. Variáveis de ambiente e
 - [ ] Versionar o template base Typst para apresentação e definir a extração, revisão e persistência do Currículo Base como Ground Truth.
 - [ ] Implementar `POST /v1/cv/generate` para ingestão de texto ou URL.
 - [ ] Adicionar extração de requisitos com OpenAI e fallback Ollama.
-- [ ] Implementar a geração de PDF/Markdown, persistência com PostgreSQL/Flyway e armazenamento no MinIO.
+- [ ] Implementar a geração de PDF/Markdown, migrações Flyway e persistência dos artefatos no Garage.
 - [ ] Documentar os futuros endpoints de domínio no OpenAPI, adicionar testes de integração e de contrato e implementar renovação/revogação de tokens.
 - [ ] Integrar os artefatos gerados ao vault e preparar CI/CD com GitHub Actions.
