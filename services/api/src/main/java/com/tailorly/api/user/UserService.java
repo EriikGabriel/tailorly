@@ -7,6 +7,9 @@ import java.util.UUID;
 import com.tailorly.api.role.Role;
 import com.tailorly.api.role.RoleEnum;
 import com.tailorly.api.role.RoleRepository;
+import com.tailorly.api.owner.Owner;
+import com.tailorly.api.owner.OwnerKindEnum;
+import com.tailorly.api.owner.OwnerRepository;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
@@ -29,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
+  private final OwnerRepository ownerRepository;
   private final AdminEmailPolicy adminEmailPolicy;
   private final PasswordEncoder passwordEncoder;
 
@@ -52,6 +56,11 @@ public class UserService {
         .build();
 
     User savedUser = userRepository.save(user);
+    ownerRepository.save(Owner.builder()
+        .kind(OwnerKindEnum.KIND_ACCOUNT)
+        .user(savedUser)
+        .revision(0)
+        .build());
 
     return UserResponse.from(savedUser);
   }

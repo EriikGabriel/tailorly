@@ -104,7 +104,7 @@ function RouteComponent() {
                 const selected = event.target.files?.[0];
                 event.target.value = "";
                 if (!selected) return;
-                selectFile(selected, "pdf");
+                selectFile(selected);
               }}
             />
             <Button

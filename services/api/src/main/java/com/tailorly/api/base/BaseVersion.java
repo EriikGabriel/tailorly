@@ -70,6 +70,7 @@ public class BaseVersion {
   private Instant createdAt;
 
   @ToString.Exclude
+  @Builder.Default
   @OneToMany(mappedBy = "baseVersion", fetch = FetchType.LAZY)
   private Set<ExtractionRun> extractionRuns = new HashSet<>();
 }

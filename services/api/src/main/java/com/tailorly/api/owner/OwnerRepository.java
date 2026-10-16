@@ -13,6 +13,8 @@ import java.util.Optional;
 
 @Repository
 public interface OwnerRepository extends JpaRepository<Owner, UUID> {
+  Optional<Owner> findByUserId(UUID userId);
+
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select o from Owner o where o.id = :id")
   Optional<Owner> findByIdForUpdate(@Param("id") UUID id);

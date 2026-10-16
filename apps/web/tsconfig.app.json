@@ -20,6 +20,7 @@
       "@pages/*": ["./src/pages/*"],
       "@lib/*": ["./src/lib/*"],
       "@hooks/*": ["./src/hooks/*"],
+      "@queries/*": ["./src/queries/*"],
       "@app/*": ["./src/pages/_app/*"],
       "@@types/*": ["./src/types/*"],
       "@/*": ["./src/*"]

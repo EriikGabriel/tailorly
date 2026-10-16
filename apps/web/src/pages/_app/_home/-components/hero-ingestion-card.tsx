@@ -63,7 +63,7 @@ export function HeroIngestionCard() {
   return (
     <article className="w-full overflow-hidden rounded-xl border border-primary-200 bg-card shadow-[0_12px_16px_rgb(62_39_35/8%),0_2px_3px_rgb(62_39_35/4%)]">
       <div className="px-5 pt-5 sm:px-7">
-        <div className="p">
+        <div className="p-1">
           <div className="flex flex-col flex-wrap items-start justify-between">
             <h2
               id="base-cv-heading"

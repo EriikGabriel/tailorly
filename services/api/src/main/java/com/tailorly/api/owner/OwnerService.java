@@ -41,10 +41,14 @@ public class OwnerService {
       if (!authenticated) {
         throw new AccessDeniedException(ErrorCodes.Owner.ACCOUNT_AUTH_REQUIRED);
       }
-      user = userRepository.findByEmail(authentication.getName())
+      user = userRepository.findByEmailForUpdate(authentication.getName())
           .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.User.NOT_FOUND));
       if (request.userId() != null && !request.userId().equals(user.getId())) {
         throw new AccessDeniedException(ErrorCodes.Owner.ACCOUNT_MISMATCH);
+      }
+      var existingOwner = ownerRepository.findByUserId(user.getId());
+      if (existingOwner.isPresent()) {
+        return OwnerResponse.from(existingOwner.get());
       }
     }
 

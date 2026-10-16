@@ -4,14 +4,15 @@ import java.util.List;
 import java.util.UUID;
 
 import com.tailorly.api.user.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 @Builder
 public record UserResponse(
-    UUID id,
-    String email,
-    boolean enabled,
-    List<String> roles
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String email,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean enabled,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<String> roles
 ) {
   public static UserResponse from(User user) {
     return UserResponse.builder()

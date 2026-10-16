@@ -1,5 +1,6 @@
 package com.tailorly.api.shared.security;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import com.tailorly.api.role.Role;
 import com.tailorly.api.role.RoleEnum;
+import com.tailorly.api.owner.dto.OwnerResponse;
 import com.tailorly.api.shared.config.SecurityConfiguration;
 import com.tailorly.api.user.User;
 import com.tailorly.api.user.UserController;
@@ -29,7 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@WebMvcTest({UserController.class, AuthenticationController.class})
+@WebMvcTest({UserController.class, AuthenticationController.class, CurrentAccountController.class})
 @Import({SecurityConfiguration.class, LocalizedSecurityErrorHandler.class, JwtTokenService.class})
 @TestPropertySource(properties = {
     "tailorly.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
@@ -51,6 +53,9 @@ class BearerSecurityTest {
 
   @MockitoBean
   private UserService userService;
+
+  @MockitoBean
+  private CurrentAccountService currentAccountService;
 
   @Test
   void loginChecksPasswordAndReturnsSignedToken() throws Exception {
@@ -104,5 +109,32 @@ class BearerSecurityTest {
     user.setEnabled(false);
     mvc.perform(get("/v1/users/{id}", id).header("Authorization", "Bearer " + token))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void currentAccountRequiresBearerAndReturnsOwnerContext() throws Exception {
+    UUID userId = UUID.randomUUID();
+    UUID ownerId = UUID.randomUUID();
+    User user = User.builder()
+        .id(userId)
+        .email("person@example.com")
+        .enabled(true)
+        .roles(Set.of(Role.builder().name(RoleEnum.ROLE_USER).build()))
+        .build();
+    UserResponse userResponse = new UserResponse(
+        userId, user.getEmail(), true, List.of("ROLE_USER"));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(currentAccountService.findOrCreate(any())).thenReturn(
+        new CurrentAccountResponse(
+            userResponse,
+            new OwnerResponse(ownerId, "account", userId, null, 0, null)));
+    String token = jwtTokenService.issue(userResponse).accessToken();
+
+    mvc.perform(get("/v1/me"))
+        .andExpect(status().isUnauthorized());
+    mvc.perform(get("/v1/me").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.user.id").value(userId.toString()))
+        .andExpect(jsonPath("$.owner.id").value(ownerId.toString()));
   }
 }

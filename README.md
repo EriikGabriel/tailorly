@@ -47,12 +47,16 @@ Os blocos de parsing, LLM, templates, PDF e vault representam a arquitetura plan
 | Estilos e componentes | Tailwind CSS 4, Base UI e componentes locais |
 | Roteamento | TanStack Router, com geração a partir de `apps/web/src/pages` |
 | Dados remotos | TanStack Query; o `QueryClient` é compartilhado no contexto do router |
-| Estado local | Zustand, com sete stores em `apps/web/src/stores` e `resetClientState()` para os fluxos de saída e expiração de sessão |
+| Estado local | Zustand, com oito stores em `apps/web/src/stores` e `resetClientState()` para os fluxos de saída e expiração de sessão |
 | Integração local | Proxy de `/v1` para `http://localhost:8080` |
+
+O botão de conta no cabeçalho oferece cadastro, login e logout. A sessão JWT é
+mantida somente em memória no frontend e, portanto, termina ao recarregar a
+página; persistência ou renovação de sessão ainda não foram implementadas.
 
 A home fica em `apps/web/src/pages/_app/_home/index.tsx` e corresponde a `/`; rotas dinâmicas usam `$id.tsx`; e `pages/__root.tsx` define o layout raiz. O prefixo de arquivo `_app` não aparece na URL. O arquivo `apps/web/src/routeTree.gen.ts` é gerado pelo plugin do TanStack Router e não deve ser alterado manualmente.
 
-**A documentação completa do frontend está em `apps/web/README.md`**: rotas, design system e tokens, as seis dimensões de revisão, regras de pendências, as sete stores e suas guardas de contexto, fluxo da revisão rápida, e o inventário de testes. Ela substitui os READMEs internos que existiam em `src/stores/` e `src/pages/_app/base/`.
+**A documentação completa do frontend está em `apps/web/README.md`**: rotas, design system e tokens, as seis dimensões de revisão, regras de pendências, as oito stores e suas guardas de contexto, fluxo da revisão rápida, e o inventário de testes. Ela substitui os READMEs internos que existiam em `src/stores/` e `src/pages/_app/base/`.
 
 Os ícones da interface usam `@react-zero-ui/icon-sprite` (Lucide e Tabler). O `prebuild` de `apps/web` executa `zero-icons`, que gera `public/icons.svg` apenas com os ícones importados; o Vite inclui esse sprite no build. Em desenvolvimento, a biblioteca renderiza os SVGs diretamente. O `components.json` usa `lucide` para o gerador shadcn; componentes adicionados por ele devem trocar os imports gerados para `@react-zero-ui/icon-sprite`.
 
@@ -67,7 +71,7 @@ A documentação detalhada da implementação Spring Boot está em [`services/ap
 | Saúde | Spring Actuator com `health` e `info` expostos | Métricas e logs estruturados |
 | Acesso web | CORS, JWT Bearer e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente e renovação de tokens |
 | Parsing de páginas | Dependência Jsoup já incluída | Extração de vagas por URL |
-| Dados e arquivos | PostgreSQL via Spring Data JPA; upload de PDFs para contas no Garage via S3 | Flyway, extração/OCR e revisão dos fatos |
+| Dados e arquivos | PostgreSQL com migrations Flyway; upload de PDFs para contas no Garage via S3 | Extração/OCR e revisão dos fatos |
 
 O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. A especificação OpenAPI está em `http://localhost:8080/v3/api-docs` e a interface Swagger UI em `http://localhost:8080/swagger-ui.html`. A API inclui operações de usuários, owners e sessões anônimas. Cadastro (`POST /v1/auth/register` e o caminho existente `POST /v1/users`), login (`POST /v1/auth/login`), saúde, documentação e criação/validação de sessões anônimas são públicos; consulta e revogação de sessões exigem `ROLE_ADMIN`. O login valida email e senha e retorna `accessToken`, `tokenType: Bearer`, `expiresAt` e os dados públicos do usuário. Nas chamadas protegidas, envie `Authorization: Bearer <accessToken>`. O token é assinado com HS256, expira após uma hora e inclui o ID do usuário como sujeito. A API consulta a conta e as roles atuais em cada chamada protegida; contas desativadas perdem acesso imediatamente. Como a autenticação usa apenas o cabeçalho Bearer, não há cookie de login nem token CSRF. Ainda não há refresh token, logout ou revogação individual de JWTs.
 
@@ -102,6 +106,7 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | --- | --- | --- |
 | `/v1/auth/register` | `POST` | Cadastrar usuário (`email`, `password`); retorna `201` e dados públicos. `/v1/users` continua disponível. |
 | `/v1/auth/login` | `POST` | Validar `email` e `password`; retorna JWT Bearer, expiração e dados públicos ou `401`. |
+| `/v1/me` | `GET` | Consultar o usuário autenticado e seu owner único; cria o owner para contas antigas quando necessário. |
 | `/v1/owners` | `POST` | Criar owner (`kind`, `userId` opcional e `activeSnapshotId` opcional) |
 | `/v1/owners/{id}` | `GET` | Consultar owner |
 | `/v1/owners/{id}/active-snapshot` | `PATCH` | Atualizar ou limpar o snapshot ativo |
@@ -234,7 +239,7 @@ bash services/api/init-garage-env.sh
 docker compose up -d
 ```
 
-O script cria `services/api/.env.garage` com credenciais de desenvolvimento não versionadas e um token para a Garage UI. O Garage inicia em modo de nó único, cria o bucket privado `tailorly-private` e expõe apenas a API S3 local. A interface visual de terceiros fica em `http://127.0.0.1:3909` e usa `GARAGE_ADMIN_TOKEN` do mesmo arquivo para login; consulte as [instruções da API](services/api/README.md#interface-visual-do-garage). Configure a API com as variáveis de ambiente descritas no [README da API](services/api/README.md#executar-localmente). Esta configuração não migra objetos de um volume antigo do MinIO.
+O script cria `services/api/.env.garage` com credenciais de desenvolvimento não versionadas e um token para a Garage UI. O Garage inicia em modo de nó único, cria o bucket privado `tailorly-private` e expõe apenas a API S3 local. A interface visual de terceiros fica em `http://127.0.0.1:3909` e usa `GARAGE_ADMIN_TOKEN` do mesmo arquivo para login; consulte as [instruções da API](services/api/README.md#interface-visual-do-garage). O script `dev` da API ativa o perfil Spring `local`, já alinhado às credenciais do PostgreSQL no Compose. Esta configuração não migra objetos de um volume antigo do MinIO.
 
 Se a porta `5432` do host estiver ocupada, inicie com `TAILORLY_POSTGRES_PORT=5433 docker compose up -d` e use `jdbc:postgresql://localhost:5433/tailorly` na API. Com `sudo`, execute `sudo env TAILORLY_POSTGRES_PORT=5433 docker compose up -d`.
 
@@ -254,12 +259,19 @@ Essas credenciais existem apenas para o ambiente local. Variáveis de ambiente e
 | `pnpm test` | Executa a suíte de testes do monorepo. |
 | `pnpm lint` | Executa as verificações de lint. |
 | `pnpm check` | Executa as checagens configuradas para os workspaces. |
+| `pnpm api:generate` | Regenera tipos e funções HTTP TypeScript a partir do snapshot OpenAPI versionado. |
+| `pnpm api:sync` | Com a API ativa, atualiza o snapshot OpenAPI e executa o Orval. |
+
+O contrato consumido pelo frontend fica em `services/api/openapi/tailorly.json`.
+Use `pnpm api:generate` no trabalho cotidiano e `pnpm api:sync` sempre que um
+endpoint ou DTO do backend mudar. O código em `apps/web/src/lib/api/generated`
+é gerado e não deve ser editado manualmente.
 
 ## Próximos passos
 
 - [ ] Versionar o template base Typst para apresentação e definir a extração, revisão e persistência do Currículo Base como Ground Truth.
 - [ ] Implementar `POST /v1/cv/generate` para ingestão de texto ou URL.
 - [ ] Adicionar extração de requisitos com OpenAI e fallback Ollama.
-- [ ] Implementar a geração de PDF/Markdown, migrações Flyway e persistência dos artefatos no Garage.
+- [ ] Implementar a geração de PDF/Markdown e persistência dos artefatos no Garage.
 - [ ] Documentar os futuros endpoints de domínio no OpenAPI, adicionar testes de integração e de contrato e implementar renovação/revogação de tokens.
 - [ ] Integrar os artefatos gerados ao vault e preparar CI/CD com GitHub Actions.

@@ -3,16 +3,17 @@ package com.tailorly.api.extraction.dto;
 import java.util.UUID;
 
 import com.tailorly.api.extraction.ExtractedPage;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 @Builder
 public record ExtractedPageResponse(
-    UUID id,
-    UUID extractionRunId,
-    Integer pageNumber,
-    String extractionMethod,
-    UUID textObjectId,
-    String textHash
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID extractionRunId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"integer", "null"}) Integer pageNumber,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String extractionMethod,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID textObjectId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String textHash
 ) {
   public static ExtractedPageResponse from(ExtractedPage page) {
     return ExtractedPageResponse.builder()

@@ -1,3 +1,4 @@
+import { useAuthStore } from "./auth-store";
 import { useBaseCvStore } from "./base-cv-store";
 import { useJobDraftStore } from "./job-draft-store";
 import { usePresentationStore } from "./presentation-store";
@@ -5,6 +6,7 @@ import { useWorkspaceStore } from "./workspace-store";
 
 /** Clear UI data when leaving an account/session. Server deletion is separate. */
 export function resetClientState() {
+  useAuthStore.getState().clearSession();
   useBaseCvStore.getState().reset();
   useJobDraftStore.getState().reset();
   usePresentationStore.getState().reset();

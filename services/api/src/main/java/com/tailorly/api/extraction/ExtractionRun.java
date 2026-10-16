@@ -72,6 +72,7 @@ public class ExtractionRun {
   private String errorCode;
 
   @ToString.Exclude
+  @Builder.Default
   @OneToMany(mappedBy = "extractionRun", fetch = FetchType.LAZY)
   private Set<ExtractedPage> pages = new HashSet<>();
 }

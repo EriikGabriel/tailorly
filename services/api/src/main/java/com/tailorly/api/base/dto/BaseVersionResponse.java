@@ -4,17 +4,18 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.tailorly.api.base.BaseVersion;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 @Builder
 public record BaseVersionResponse(
-    UUID id,
-    UUID ownerId,
-    UUID documentId,
-    int versionNumber,
-    String status,
-    int reviewRevision,
-    Instant createdAt
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID ownerId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID documentId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int versionNumber,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String status,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int reviewRevision,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant createdAt
 ) {
   public static BaseVersionResponse from(BaseVersion version) {
     return BaseVersionResponse.builder()

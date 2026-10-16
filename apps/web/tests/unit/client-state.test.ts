@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
+import { useAuthStore as auth } from "../../src/stores/auth-store";
 import { useBaseCvStore as base } from "../../src/stores/base-cv-store";
 import { useDocumentViewerStore as viewer } from "../../src/stores/document-viewer-store";
 import { useJobDraftStore as job } from "../../src/stores/job-draft-store";
@@ -23,6 +24,18 @@ const issues: ReviewIssue[] = [
   },
 ];
 beforeEach(resetClientState);
+
+test("session reset removes the in-memory authentication token", () => {
+  auth.getState().setSession({
+    accessToken: "test-token",
+    expiresAt: "2030-01-01T00:00:00Z",
+  });
+
+  resetClientState();
+
+  assert.equal(auth.getState().accessToken, null);
+  assert.equal(auth.getState().expiresAt, null);
+});
 
 test("a shared selection retains drafts, step and zoom when read by another consumer", () => {
   const file = pdf();
@@ -79,7 +92,15 @@ test("invalid and empty selections preserve the existing file and draft", () => 
     .getState()
     .setIdentity(base.getState().selectionId, { name: "Preservado" });
   assert.equal(base.getState().selectFile(new File([], "empty.pdf")), false);
-  assert.equal(base.getState().selectFile(pdf("not-a-pdf.docx"), "pdf"), false);
+  assert.equal(base.getState().selectFile(pdf("not-a-pdf.docx")), false);
+  assert.equal(
+    base
+      .getState()
+      .selectFile(
+        new File([new Uint8Array(7 * 1024 * 1024 + 1)], "oversized.pdf"),
+      ),
+    false,
+  );
   assert.equal(base.getState().file, file);
   assert.equal(review.getState().draft.identity.name, "Preservado");
   assert.ok(base.getState().error);

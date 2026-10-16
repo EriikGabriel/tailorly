@@ -1,0 +1,15 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/tailorly}
+    username: ${DATABASE_USERNAME:tailorly}
+    password: ${DATABASE_PASSWORD:tailorly}
+
+tailorly:
+  security:
+    jwt:
+      # Chave conhecida e exclusiva do perfil local. Outros perfis continuam
+      # exigindo TAILORLY_JWT_SECRET.
+      secret: ${TAILORLY_JWT_SECRET:dGFpbG9ybHktbG9jYWwtZGV2ZWxvcG1lbnQta2V5ISE=}

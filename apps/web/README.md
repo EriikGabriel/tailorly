@@ -5,8 +5,9 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 
 > **Estado atual:** fundação visual e de estado de interface. A home, a
 > auditoria do Currículo Base (`/base`) e a revisão rápida estão implementadas
-> como **prévias locais**: nada é enviado, não há extração, OCR, persistência,
-> autenticação nem geração real. `/cvs` e `/generator` são placeholders.
+> como **prévias locais**: nada é enviado, não há extração, OCR, persistência
+> dos rascunhos nem geração real. Login, cadastro e logout de contas estão
+> disponíveis no cabeçalho; `/cvs` e `/generator` são placeholders.
 
 > **Regra de leitura:** este README separa sempre o **fluxo alvo** (descrito no
 > README do monorepo) da **implementação atual**. Uma funcionalidade marcada
@@ -42,6 +43,8 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 | `pnpm test:e2e` | Teste de navegador vinculado ao RF16. Ver §11. |
 | `pnpm test:e2e:ui` | Modo interativo do Playwright para TDD. |
 | `pnpm test` | Executa stores e Playwright. |
+| `pnpm api:generate` | Gera os tipos e as funções `fetch` com Orval a partir do snapshot versionado. |
+| `pnpm api:sync` | Atualiza o snapshot pela API local e então executa a geração. |
 
 ---
 
@@ -62,21 +65,22 @@ src/
 │       ├── cvs/index.tsx       # "/cvs"     — placeholder
 │       └── generator/index.tsx # "/generator" — placeholder
 ├── components/
-│   ├── header.tsx, page-placeholder.tsx
+│   ├── header.tsx, account-access.tsx, page-placeholder.tsx
 │   └── ui/                     # design system vendorizado
 │       ├── badge.tsx, noise-texture.tsx
 │       └── animate/            # Animate UI — ver §5
-├── stores/                     # 7 stores Zustand + resetClientState
+├── stores/                     # 8 stores Zustand + resetClientState
 ├── types/                      # review.ts, review-model.ts
 ├── utils/review-issues.ts      # regras de seleção e completude de pendências
 ├── data/review-preview.ts      # fixtures de demonstração
 ├── hooks/                      # use-auto-height, use-controlled-state,
 │                               # use-data-state, use-is-in-view
+├── queries/                    # integrações TanStack Query por recurso da API
 ├── lib/                        # query-client, utils (re-export de cn), get-strict-context
 └── assets/tailorly-logo.svg
 
 scripts/test-stores.mjs         # runner da suíte unitária de estado
-tests/unit/client-state.test.ts # 8 testes unitários de estado do cliente
+tests/unit/client-state.test.ts # 9 testes unitários de estado do cliente
 tests/e2e/                      # jornadas de interface com Playwright
 ```
 
@@ -96,6 +100,7 @@ alias, atualize os três.
 | `@pages/*` | `src/pages/*` |
 | `@lib/*` | `src/lib/*` |
 | `@hooks/*` | `src/hooks/*` |
+| `@queries/*` | `src/queries/*` |
 | `@app/*` | `src/pages/_app/*` |
 | `@@types/*` | `src/types/*` |
 | `@/*` | `src/*` |
@@ -348,7 +353,7 @@ cabeçalhos da revisão rápida.
 
 ## 6. Estado compartilhado da interface
 
-Sete stores Zustand, sempre consumidas por seletor de propriedade. O estado
+Oito stores Zustand, sempre consumidas por seletor de propriedade. O estado
 sobrevive à navegação entre rotas na mesma aba, **sem persistência**: recarregar
 ou fechar a aba descarta tudo.
 
@@ -357,6 +362,7 @@ persistente nem fonte de cotas.
 
 | Store | Estado | Responsabilidade |
 | --- | --- | --- |
+| `useAuthStore` | `accessToken`, `expiresAt` | Sessão autenticada somente em memória; recarregar a página encerra a sessão cliente |
 | `useBaseCvStore` | `file`, `selectionId`, `error` | Arquivo compartilhado entre home e `/base`, identificação local da seleção, validação de formato/vazio, erro |
 | `useReviewDraftStore` | `sourceId`, `draft`, `activeStep`, `expandedRecords` | Rascunhos das seis dimensões, etapa ativa, cartões expandidos — ligados a `sourceId` |
 | `useQuickReviewStore` | `open`, `contextKey`, `issues`, `preview`, `answers`, `submittedPreview` | Abertura, pendências, respostas e snapshot da prévia, vinculados a `contextKey` |
@@ -367,12 +373,11 @@ persistente nem fonte de cotas.
 
 ### Seleção de arquivo
 
-`selectFile(file, format = "document")` devolve `boolean`:
+`selectFile(file)` devolve `boolean`:
 
-- **Formato.** `format: "pdf"` aceita só `/\.pdf$/i`; o padrão aceita
-  `/\.(pdf|doc|docx)$/i`. O seletor de `/base` usa `"pdf"`; o da home usa o
-  padrão.
+- **Formato.** Aceita apenas nomes terminados em `.pdf`, alinhado ao upload atualmente disponível na API.
 - **Arquivo vazio** (`size === 0`) é rejeitado.
+- **Tamanho.** Arquivos acima de 7 MiB são rejeitados antes do envio.
 - **Erro de seleção não apaga o arquivo anterior** — apenas grava `error`.
 - **Mesma referência** (`file === get().file`) apenas limpa o erro e retorna
   `true`, preservando rascunhos. **Isto não é deduplicação por hash.**
@@ -382,8 +387,7 @@ persistente nem fonte de cotas.
   version or a content hash."*
 - `selectFile(null)` remove: zera `file` e `selectionId` e reaplica as limpezas.
 
-DOC/DOCX são aceitos pela home e compartilhados, mas **somente PDFs têm
-visualização local**.
+DOC/DOCX permanecem parte do fluxo alvo, mas ainda não são aceitos porque a API não possui parser para esses formatos.
 
 ### Guardas de contexto obsoleto
 
@@ -427,7 +431,8 @@ referência.
 
 ### `resetClientState()`
 
-Em `src/stores/reset-client-state.ts`. Reseta, nesta ordem: `useBaseCvStore`
+Em `src/stores/reset-client-state.ts`. Limpa primeiro `useAuthStore` e então
+reseta `useBaseCvStore`
 (que em cascata limpa rascunhos, revisão rápida e visualizador),
 `useJobDraftStore`, `usePresentationStore`, `useWorkspaceStore`. Depois remove
 duas chaves **legadas** de `sessionStorage` —
@@ -435,9 +440,10 @@ duas chaves **legadas** de `sessionStorage` —
 implementação com drafts por componente. O `try/catch` existe porque o navegador
 pode negar acesso ao storage; a memória é limpa de todo modo.
 
-Deve ser chamado pelos futuros fluxos de saída, troca de conta e expiração de
-sessão. **Autenticação e TTL no servidor ainda não existem**: a função **não**
-representa exclusão de arquivos ou artefatos no servidor.
+É chamado pelo fluxo cliente de saída e deve ser reutilizado em troca de conta
+e expiração. O logout atual é local porque a API ainda não revoga um JWT
+individualmente; a função **não** representa exclusão de arquivos ou artefatos
+no servidor.
 
 ### Estado que é deliberadamente local
 
@@ -536,8 +542,7 @@ Fica **fora** do seletor de etapas e permanece montado ao alternar a etapa.
 - O switch **"Bounding Boxes de IA"** fica `checked={false} disabled`, pois não
   existem coordenadas de evidência.
 - Link "Abrir PDF em outra aba" com `rel="noopener noreferrer"`.
-- Sem arquivo: ação de seleção e zoom desabilitado. Com DOC/DOCX: mensagem de
-  que a visualização local é só para PDF.
+- Sem arquivo: ação de seleção e zoom desabilitado.
 - Rodapé "Cofre Factual Fechado": *"Nenhum fato, empresa, número ou métrica
   além deste documento será inventado ou inferido pela inteligência."*
 
@@ -614,18 +619,19 @@ Ou seja: a suíte de stores usa `node:test` e `node:assert/strict` nativos e
 transpila via o TypeScript do próprio projeto. A suíte de navegador usa
 `@playwright/test` como dependência de desenvolvimento.
 
-`tests/unit/client-state.test.ts` tem **8 testes**, com `beforeEach(resetClientState)`:
+`tests/unit/client-state.test.ts` tem **9 testes**, com `beforeEach(resetClientState)`:
 
 | # | Teste | O que fixa |
 | --- | --- | --- |
-| 1 | Seleção compartilhada preserva rascunhos, etapa e zoom | Consumidores diferentes leem o mesmo estado; reselecionar a **mesma** referência não limpa |
-| 2 | Trocar a fonte reseta dados dependentes e rejeita atualizações obsoletas | Drafts, expandidos, etapa, respostas e zoom voltam ao padrão; `setIdentity` com id antigo é **ignorado**; vaga e preferências **preservadas** |
-| 3 | Seleções inválidas e vazias preservam arquivo e rascunho | Arquivo vazio e DOCX no modo `pdf` retornam `false`, não apagam o arquivo, gravam `error` |
-| 4 | Remover arquivo limpa rascunhos, revisão rápida e visualizador | `selectionId` e `file` viram `null`; `open` fecha |
-| 5 | Mudança de vaga invalida revisão rápida sem apagar o draft do Currículo Base | `revision` incrementa, respostas zeram, identidade preservada |
-| 6 | Revisão rápida mantém respostas ao remontar e rejeita issues antigas/desconhecidas | Reconfigurar com a **mesma** chave preserva; trocar de chave zera; `setAnswer` com chave ou id inválido é ignorado |
-| 7 | Reset de sessão limpa todos os contextos e restaura padrões | Preferências voltam a `pt-BR` com LinkedIn ativo; workspace volta a `editor` |
-| 8 | Visualizador impõe zoom suportado e ignora valores numéricos inválidos | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"` |
+| 1 | Reset de sessão remove a autenticação em memória | Token e expiração voltam a `null` |
+| 2 | Seleção compartilhada preserva rascunhos, etapa e zoom | Consumidores diferentes leem o mesmo estado; reselecionar a **mesma** referência não limpa |
+| 3 | Trocar a fonte reseta dados dependentes e rejeita atualizações obsoletas | Drafts, expandidos, etapa, respostas e zoom voltam ao padrão; `setIdentity` com id antigo é **ignorado**; vaga e preferências **preservadas** |
+| 4 | Seleções inválidas e vazias preservam arquivo e rascunho | Arquivo vazio, DOCX e PDF acima de 7 MiB retornam `false`, não apagam o arquivo e gravam `error` |
+| 5 | Remover arquivo limpa rascunhos, revisão rápida e visualizador | `selectionId` e `file` viram `null`; `open` fecha |
+| 6 | Mudança de vaga invalida revisão rápida sem apagar o draft do Currículo Base | `revision` incrementa, respostas zeram, identidade preservada |
+| 7 | Revisão rápida mantém respostas ao remontar e rejeita issues antigas/desconhecidas | Reconfigurar com a **mesma** chave preserva; trocar de chave zera; `setAnswer` com chave ou id inválido é ignorado |
+| 8 | Reset de sessão limpa todos os contextos e restaura padrões | Preferências voltam a `pt-BR` com LinkedIn ativo; workspace volta a `editor` |
+| 9 | Visualizador impõe zoom suportado e ignora valores numéricos inválidos | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"` |
 
 **Toda mudança nas stores ou em `reset-client-state.ts` precisa vir acompanhada
 de um teste aqui.**
@@ -660,7 +666,7 @@ comportamento:
 - versões candidatas, ativação atômica do Ground Truth, snapshot aprovado;
 - hash de conteúdo e deduplicação por reenvio idêntico;
 - salvamento remoto, aprovação, download, geração de PDF/Markdown;
-- autenticação, sessão anônima, TTL, cotas no servidor;
+- recuperação de senha; sessão anônima completa, TTL e cotas no servidor;
 - integração com o vault (Second Brain), Notion, Obsidian;
 - persistência em `localStorage`/`sessionStorage` (só restam as duas chaves
   legadas, removidas em `resetClientState`);
@@ -669,6 +675,28 @@ comportamento:
 Dados remotos devem entrar pela integração de **TanStack Query** já montada em
 `src/lib/query-client.ts` e injetada no contexto do router. Estas stores **não**
 promovem rascunhos a Ground Truth nem habilitam geração real.
+
+Os contratos e as funções HTTP sem hooks são gerados pelo Orval em
+`src/lib/api/generated`. O arquivo `src/lib/api/client.ts` é o mutator comum:
+adiciona `Accept-Language`, aceita `accessToken`, envia o Bearer e normaliza
+erros como `ApiClientError`. Passe o token nas opções da função gerada, por
+exemplo `currentAccountCurrent({ accessToken })`. Essas funções podem ser
+usadas diretamente em `queryFn` e `mutationFn`, sem impor chaves, cache ou
+política de retry.
+
+`src/queries/authentication.ts` executa login, consulta `/v1/me`, preenche o
+cache da conta e só então grava a sessão em memória. `current-account.ts` lê o
+Bearer da store, não executa sem token, encaminha cancelamento ao `fetch` e
+expõe tanto a conta quanto o `ownerId`. O logout limpa a sessão, os estados de
+interface e o cache remoto. O diálogo de conta em
+`src/components/account-access.tsx` oferece login, cadastro com confirmação de
+senha e logout; depois do cadastro, autentica a nova conta automaticamente.
+
+O Orval lê `../../services/api/openapi/tailorly.json`. Com a API ativa em
+`http://localhost:8080`, rode `pnpm api:sync` quando controllers ou DTOs
+mudarem. Para apenas reproduzir os arquivos gerados a partir do snapshot já
+versionado, rode `pnpm api:generate`. Não edite `src/lib/api/generated`
+manualmente.
 
 Ao implementar, mantenha este README e o `AGENTS.md` sincronizados com o
 comportamento efetivo e marque claramente o que segue planejado.

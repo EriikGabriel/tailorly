@@ -14,7 +14,7 @@ export function BaseCvPicker() {
   function selectFiles(files: FileList | null) {
     if (!files?.length) return;
     if (files.length !== 1) {
-      setError("Selecione um único arquivo PDF, DOC ou DOCX.");
+      setError("Selecione um único arquivo PDF.");
       return;
     }
     setError(null);
@@ -26,7 +26,7 @@ export function BaseCvPicker() {
       <input
         id="base-cv-file"
         type="file"
-        accept=".pdf,.doc,.docx"
+        accept=".pdf,application/pdf"
         aria-label="Selecionar currículo base"
         aria-describedby={error ? "base-cv-error" : undefined}
         className="peer sr-only"
@@ -156,7 +156,7 @@ function Picker({ selectFiles }: PickerProps) {
       <span className="text-sm font-semibold text-primary-950">
         Arraste seu currículo aqui ou clique para selecionar
       </span>
-      <span className="text-xs text-on-surface-variant">PDF, DOC ou DOCX</span>
+      <span className="text-xs text-on-surface-variant">PDF de até 7 MiB</span>
     </label>
   );
 }

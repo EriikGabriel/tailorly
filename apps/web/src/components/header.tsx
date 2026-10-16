@@ -4,7 +4,8 @@ import {
   HighlightItem,
 } from "@animate/primitives/effects/highlight";
 import tailorlyLogo from "@assets/tailorly-logo.svg";
-import { Bell, UserRound } from "@react-zero-ui/icon-sprite";
+import { AccountAccess } from "@components/account-access";
+import { Bell } from "@react-zero-ui/icon-sprite";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useReducedMotion } from "motion/react";
 
@@ -90,14 +91,7 @@ export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
           >
             <Bell className="size-5" />
           </Button>
-          <Button
-            aria-label="Perfil"
-            type="button"
-            className="size-10 rounded-xl"
-            onClick={onProfileClick}
-          >
-            <UserRound className="size-6" />
-          </Button>
+          <AccountAccess onProfileClick={onProfileClick} />
         </div>
       </div>
     </header>

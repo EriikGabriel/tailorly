@@ -9,11 +9,13 @@
   "private": true,
   "packageManager": "pnpm@10.9.0",
   "scripts": {
-    "dev": "turbo dev --parallel",
+    "dev": "turbo dev",
     "build": "turbo build",
     "test": "turbo test",
     "lint": "biome check",
-    "check": "biome check"
+    "check": "biome check",
+    "api:generate": "pnpm --filter @tailorly/web api:generate",
+    "api:sync": "pnpm --filter @tailorly/web api:sync"
   },
   "devDependencies": {
     "turbo": "^2.5.8",

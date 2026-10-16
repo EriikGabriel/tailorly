@@ -15,7 +15,10 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
-    "test:e2e:install": "playwright install chromium"
+    "test:e2e:install": "playwright install chromium",
+    "api:openapi": "node scripts/sync-openapi.mjs",
+    "api:generate": "orval --config orval.config.ts && biome check --write src/lib/api/generated",
+    "api:sync": "pnpm run api:openapi && pnpm run api:generate"
   },
   "dependencies": {
     "@base-ui-components/react": "1.0.0-rc.0",
@@ -48,6 +51,7 @@
     "@types/node": "^26.6.2",
     "@types/react": "^19.1.17",
     "@types/react-dom": "^19.1.11",
+    "orval": "^8.43.0",
     "typescript": "~5.8.3"
   }
 }

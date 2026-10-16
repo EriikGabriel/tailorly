@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "./mvnw spring-boot:run",
+    "dev": "./mvnw spring-boot:run -Dspring-boot.run.profiles=local",
     "build": "./mvnw clean package",
     "test": "./mvnw test",
     "lint": "./mvnw test",

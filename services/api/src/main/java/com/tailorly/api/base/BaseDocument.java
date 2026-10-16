@@ -71,6 +71,7 @@ public class BaseDocument {
   private Instant createdAt;
 
   @ToString.Exclude
+  @Builder.Default
   @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
   private Set<BaseVersion> versions = new HashSet<>();
 }

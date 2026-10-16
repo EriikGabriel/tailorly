@@ -4,15 +4,16 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.tailorly.api.session.AnonymousSession;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 @Builder
 public record AnonymousSessionResponse(
-    UUID id,
-    UUID ownerId,
-    Instant expiresAt,
-    Instant revokedAt,
-    boolean valid
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID ownerId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant expiresAt,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) Instant revokedAt,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean valid
 ) {
   public static AnonymousSessionResponse from(AnonymousSession session, Instant now) {
     boolean valid = session.getRevokedAt() == null && session.getExpiresAt().isAfter(now);

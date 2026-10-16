@@ -5,19 +5,20 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.tailorly.api.extraction.ExtractionRun;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 @Builder
 public record ExtractionRunResponse(
-    UUID id,
-    UUID baseVersionId,
-    String pipelineFingerprint,
-    Map<String, Object> pipelineVersions,
-    UUID outputObjectId,
-    String status,
-    Instant startedAt,
-    Instant finishedAt,
-    String errorCode
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID baseVersionId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String pipelineFingerprint,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Map<String, Object> pipelineVersions,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) UUID outputObjectId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String status,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant startedAt,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) Instant finishedAt,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) String errorCode
 ) {
   public static ExtractionRunResponse from(ExtractionRun run) {
     return ExtractionRunResponse.builder()

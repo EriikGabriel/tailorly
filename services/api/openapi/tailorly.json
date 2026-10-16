@@ -1,0 +1,1915 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "description": "API HTTP do Tailorly. Endpoints de domínio ainda estão planejados.",
+    "title": "Tailorly API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/v1/anonymous-sessions": {
+      "post": {
+        "operationId": "anonymousSessionCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAnonymousSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousSessionResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "AnonymousSession"
+        ]
+      }
+    },
+    "/v1/anonymous-sessions/validate": {
+      "post": {
+        "operationId": "anonymousSessionValidate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateAnonymousSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousSessionValidationResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AnonymousSession"
+        ]
+      }
+    },
+    "/v1/anonymous-sessions/{id}": {
+      "get": {
+        "operationId": "anonymousSessionFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousSessionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AnonymousSession"
+        ]
+      }
+    },
+    "/v1/anonymous-sessions/{id}/revoke": {
+      "patch": {
+        "operationId": "anonymousSessionRevoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousSessionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AnonymousSession"
+        ]
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "operationId": "authenticationLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/v1/auth/register": {
+      "post": {
+        "operationId": "authenticationRegister",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/v1/base-documents/hash/{contentHash}": {
+      "get": {
+        "operationId": "baseDocumentFindByContentHash",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contentHash",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseDocumentResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "BaseDocument"
+        ]
+      }
+    },
+    "/v1/base-documents/owner/{ownerId}": {
+      "get": {
+        "operationId": "baseDocumentFindByOwnerId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BaseDocumentResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "BaseDocument"
+        ]
+      }
+    },
+    "/v1/base-documents/upload": {
+      "post": {
+        "operationId": "baseDocumentUpload",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseDocumentUploadResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "BaseDocument"
+        ]
+      }
+    },
+    "/v1/base-documents/{id}": {
+      "get": {
+        "operationId": "baseDocumentFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseDocumentResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "BaseDocument"
+        ]
+      }
+    },
+    "/v1/base-versions": {
+      "post": {
+        "operationId": "baseVersionCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBaseVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseVersionResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "BaseVersion"
+        ]
+      }
+    },
+    "/v1/base-versions/{id}": {
+      "get": {
+        "operationId": "baseVersionFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseVersionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "BaseVersion"
+        ]
+      }
+    },
+    "/v1/base-versions/{id}/increment-review-revision": {
+      "patch": {
+        "operationId": "baseVersionIncrementReviewRevision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseVersionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "BaseVersion"
+        ]
+      }
+    },
+    "/v1/base-versions/{id}/status": {
+      "patch": {
+        "operationId": "baseVersionUpdateStatus",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBaseVersionStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseVersionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "BaseVersion"
+        ]
+      }
+    },
+    "/v1/extracted-pages": {
+      "post": {
+        "operationId": "extractedPageCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExtractedPageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractedPageResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "ExtractedPage"
+        ]
+      }
+    },
+    "/v1/extracted-pages/hash/{textHash}": {
+      "get": {
+        "operationId": "extractedPageFindByTextHash",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "textHash",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractedPageResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ExtractedPage"
+        ]
+      }
+    },
+    "/v1/extracted-pages/run/{extractionRunId}": {
+      "get": {
+        "operationId": "extractedPageFindAllByRunId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "extractionRunId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExtractedPageResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ExtractedPage"
+        ]
+      }
+    },
+    "/v1/extracted-pages/{id}": {
+      "get": {
+        "operationId": "extractedPageFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractedPageResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ExtractedPage"
+        ]
+      }
+    },
+    "/v1/extraction-runs": {
+      "post": {
+        "operationId": "extractionRunCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExtractionRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionRunResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "ExtractionRun"
+        ]
+      }
+    },
+    "/v1/extraction-runs/{id}": {
+      "get": {
+        "operationId": "extractionRunFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionRunResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ExtractionRun"
+        ]
+      }
+    },
+    "/v1/extraction-runs/{id}/fail": {
+      "patch": {
+        "operationId": "extractionRunFail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FailExtractionRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionRunResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ExtractionRun"
+        ]
+      }
+    },
+    "/v1/extraction-runs/{id}/status": {
+      "patch": {
+        "operationId": "extractionRunUpdateStatus",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExtractionRunStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionRunResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ExtractionRun"
+        ]
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "currentAccountCurrent",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentAccountResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CurrentAccount"
+        ]
+      }
+    },
+    "/v1/owners": {
+      "post": {
+        "operationId": "ownerCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOwnerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "Owner"
+        ]
+      }
+    },
+    "/v1/owners/{id}": {
+      "get": {
+        "operationId": "ownerFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Owner"
+        ]
+      }
+    },
+    "/v1/owners/{id}/active-snapshot": {
+      "patch": {
+        "operationId": "ownerUpdateActiveSnapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateActiveSnapshotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Owner"
+        ]
+      }
+    },
+    "/v1/owners/{id}/increment-revision": {
+      "patch": {
+        "operationId": "ownerIncrementRevision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Owner"
+        ]
+      }
+    },
+    "/v1/stored-objects": {
+      "post": {
+        "operationId": "storedObjectCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoredObjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredObjectResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "StoredObject"
+        ]
+      }
+    },
+    "/v1/stored-objects/owner/{ownerId}": {
+      "get": {
+        "operationId": "storedObjectFindAllByOwnerId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoredObjectResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "StoredObject"
+        ]
+      }
+    },
+    "/v1/stored-objects/{id}": {
+      "get": {
+        "operationId": "storedObjectFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredObjectResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "StoredObject"
+        ]
+      }
+    },
+    "/v1/stored-objects/{id}/deletion-status": {
+      "patch": {
+        "operationId": "storedObjectUpdateDeletionStatus",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeletionStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredObjectResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "StoredObject"
+        ]
+      }
+    },
+    "/v1/users": {
+      "get": {
+        "operationId": "userGetAllUsers",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      },
+      "post": {
+        "operationId": "userCreateUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/v1/users/by-email": {
+      "get": {
+        "operationId": "userGetUserByEmail",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/v1/users/{id}": {
+      "get": {
+        "operationId": "userGetUserById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      },
+      "put": {
+        "operationId": "userUpdateUser",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/v1/users/{id}/disable": {
+      "patch": {
+        "operationId": "userDisableUser",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnonymousSessionResponse": {
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revokedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "valid": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expiresAt",
+          "id",
+          "ownerId",
+          "revokedAt",
+          "valid"
+        ]
+      },
+      "AnonymousSessionValidationResponse": {
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "valid": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expiresAt",
+          "ownerId",
+          "valid"
+        ]
+      },
+      "BaseDocumentResponse": {
+        "type": "object",
+        "properties": {
+          "contentHash": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "originalFilename": {
+            "type": "string"
+          },
+          "originalObjectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pageCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        },
+        "required": [
+          "contentHash",
+          "createdAt",
+          "id",
+          "originalFilename",
+          "originalObjectId",
+          "ownerId",
+          "pageCount"
+        ]
+      },
+      "BaseDocumentUploadResponse": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/BaseDocumentResponse"
+          },
+          "reused": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "document",
+          "reused"
+        ]
+      },
+      "BaseVersionResponse": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reviewRevision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "createdAt",
+          "documentId",
+          "id",
+          "ownerId",
+          "reviewRevision",
+          "status",
+          "versionNumber"
+        ]
+      },
+      "CreateAnonymousSessionRequest": {
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tokenHash": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expiresAt",
+          "ownerId",
+          "tokenHash"
+        ]
+      },
+      "CreateBaseVersionRequest": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "versionNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "documentId",
+          "ownerId",
+          "status"
+        ]
+      },
+      "CreateExtractedPageRequest": {
+        "type": "object",
+        "properties": {
+          "extractionMethod": {
+            "type": "string",
+            "minLength": 1
+          },
+          "extractionRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "textHash": {
+            "type": "string",
+            "minLength": 1
+          },
+          "textObjectId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "extractionMethod",
+          "extractionRunId",
+          "textHash",
+          "textObjectId"
+        ]
+      },
+      "CreateExtractionRunRequest": {
+        "type": "object",
+        "properties": {
+          "baseVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outputObjectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pipelineFingerprint": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pipelineVersions": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "baseVersionId",
+          "pipelineFingerprint",
+          "pipelineVersions",
+          "status"
+        ]
+      },
+      "CreateOwnerRequest": {
+        "type": "object",
+        "properties": {
+          "activeSnapshotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "CreateStoredObjectRequest": {
+        "type": "object",
+        "properties": {
+          "contentHash": {
+            "type": "string",
+            "minLength": 1
+          },
+          "deletionStatus": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mimeType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "storageKey": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "contentHash",
+          "mimeType",
+          "ownerId",
+          "purpose",
+          "sizeBytes",
+          "storageKey"
+        ]
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "CurrentAccountResponse": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "$ref": "#/components/schemas/OwnerResponse"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "required": [
+          "owner",
+          "user"
+        ]
+      },
+      "ExtractedPageResponse": {
+        "type": "object",
+        "properties": {
+          "extractionMethod": {
+            "type": "string"
+          },
+          "extractionRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pageNumber": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "textHash": {
+            "type": "string"
+          },
+          "textObjectId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "extractionMethod",
+          "extractionRunId",
+          "id",
+          "pageNumber",
+          "textHash",
+          "textObjectId"
+        ]
+      },
+      "ExtractionRunResponse": {
+        "type": "object",
+        "properties": {
+          "baseVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outputObjectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "pipelineFingerprint": {
+            "type": "string"
+          },
+          "pipelineVersions": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "baseVersionId",
+          "errorCode",
+          "finishedAt",
+          "id",
+          "outputObjectId",
+          "pipelineFingerprint",
+          "pipelineVersions",
+          "startedAt",
+          "status"
+        ]
+      },
+      "FailExtractionRunRequest": {
+        "type": "object",
+        "properties": {
+          "errorCode": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "errorCode"
+        ]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresAt",
+          "tokenType",
+          "user"
+        ]
+      },
+      "OwnerResponse": {
+        "type": "object",
+        "properties": {
+          "activeSnapshotId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "activeSnapshotId",
+          "expiresAt",
+          "id",
+          "kind",
+          "revision",
+          "userId"
+        ]
+      },
+      "StoredObjectResponse": {
+        "type": "object",
+        "properties": {
+          "contentHash": {
+            "type": "string"
+          },
+          "deletionStatus": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "storageKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "contentHash",
+          "deletionStatus",
+          "expiresAt",
+          "id",
+          "mimeType",
+          "ownerId",
+          "purpose",
+          "sizeBytes",
+          "storageKey"
+        ]
+      },
+      "UpdateActiveSnapshotRequest": {
+        "type": "object",
+        "properties": {
+          "activeSnapshotId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateBaseVersionStatusRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "UpdateDeletionStatusRequest": {
+        "type": "object",
+        "properties": {
+          "deletionStatus": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "deletionStatus"
+        ]
+      },
+      "UpdateExtractionRunStatusRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "email",
+          "enabled",
+          "id",
+          "roles"
+        ]
+      },
+      "ValidateAnonymousSessionRequest": {
+        "type": "object",
+        "properties": {
+          "tokenHash": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tokenHash"
+        ]
+      }
+    }
+  }
+}

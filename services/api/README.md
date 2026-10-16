@@ -6,12 +6,12 @@ Esta pasta contém a API HTTP do Tailorly. Ela oferece cadastro de usuários, lo
 
 | Área | Implementado | Ainda planejado |
 | --- | --- | --- |
-| Contas | Cadastro, consulta, alteração de email, desativação, senha com BCrypt e roles persistidas | Recuperação de senha e exclusão de conta |
+| Contas | Cadastro com owner provisionado, contexto autenticado em `/v1/me`, consulta, alteração de email, desativação, senha com BCrypt e roles persistidas | Recuperação de senha e exclusão de conta |
 | Acesso | Login com JWT Bearer HS256, autorização por conta e `ROLE_ADMIN` | Refresh token, logout e revogação individual de JWT |
 | Sessões anônimas | Registros de owner e sessão, validação de expiração e revogação administrativa | Emissão de token pelo servidor, cotas, limpeza automática e migração para conta |
 | Currículo Base | Entidades JPA para documentos, versões, execuções de extração e páginas; upload de PDF para conta com deduplicação por owner; campo `activeSnapshotId` no owner, sem modelo de snapshot | Upload anônimo, execução de extração/OCR, fatos com evidência, revisão e ativação do Ground Truth |
 | Geração | Nenhum endpoint | Ingestão de vaga, template Typst, PDF/Markdown e histórico |
-| Infraestrutura | PostgreSQL via JPA, armazenamento privado via API S3, OpenAPI, Swagger UI e Actuator | Flyway, limpeza de arquivos e observabilidade ampliada |
+| Infraestrutura | PostgreSQL via JPA e migrations Flyway, armazenamento privado via API S3, OpenAPI, Swagger UI e Actuator | Limpeza de arquivos e observabilidade ampliada |
 
 O upload grava PDFs no Garage local pelo protocolo S3. A dependência Jsoup também está presente, mas ainda não há extração de vagas por URL.
 
@@ -24,6 +24,8 @@ O upload grava PDFs no Garage local pelo protocolo S3. A dependência Jsoup tamb
 - Mensagens em inglês e português em `src/main/resources`; testes em `src/test`.
 
 Os endpoints de negócio começam com `/v1`. Actuator e documentação usam os caminhos próprios das ferramentas.
+
+`GET /v1/me` exige Bearer e devolve juntos o usuário autenticado e seu owner. Novos cadastros criam o owner na mesma transação; para contas antigas sem owner, a primeira chamada a `/v1/me` o cria sob bloqueio da conta. Assim o frontend não precisa persistir um `ownerId` separado nem chamar `POST /v1/owners` após cada login.
 
 Os metadados de storage podem ser registrados e consultados em `/api/stored-objects` (também disponível sob `/v1/stored-objects`). O cadastro exige `ownerId`, `purpose`, `storageKey`, `contentHash`, `mimeType` e `sizeBytes`; `expiresAt` é opcional e `deletionStatus` assume `ACTIVE` quando omitido. Essas operações exigem autenticação e só permitem acesso ao owner da própria conta ou a administradores.
 
@@ -77,18 +79,13 @@ curl --fail http://127.0.0.1:3909/health
 
 Abra `http://127.0.0.1:3909`, entre com o valor de `GARAGE_ADMIN_TOKEN` em `.env.garage` e navegue em `tailorly-private/owners/{ownerId}/originals/`. O script preserva as credenciais S3 existentes e acrescenta o token administrativo se necessário. O painel e a API S3 só são publicados em `127.0.0.1`; a API administrativa do Garage (`3903`) fica acessível apenas na rede interna do Compose. O login com esse token concede administração completa do Garage, inclusive alteração e exclusão de objetos, então não compartilhe o arquivo `.env.garage`. A interface exibe as chaves dos objetos, não os nomes originais dos PDFs guardados como metadados no PostgreSQL.
 
-Depois carregue as credenciais geradas e configure a API:
+Depois carregue as credenciais geradas e inicie a API:
 
 ```bash
 set -a
 source .env.garage
 set +a
-export DATABASE_USERNAME=tailorly
-export DATABASE_PASSWORD=tailorly
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/tailorly
-export TAILORLY_JWT_SECRET="$(openssl rand -base64 32)"
-
-./mvnw spring-boot:run
+pnpm dev
 ```
 
 O volume antigo `tailorly_minio-data`, caso exista, não é importado pelo Garage nem removido pelo Compose. Migre os objetos e confira as referências `storageKey` no banco antes de desativar o storage antigo; não presuma que trocar o serviço migra os PDFs. O armazenamento de originais continua privado.
@@ -110,11 +107,13 @@ curl --fail-with-body --show-error --silent \
 
 O segundo comando deve imprimir `garage-ok`. Remova o objeto de teste com o mesmo `curl`, usando `-X DELETE` e a mesma URL. Para testar o endpoint da API, use um PDF próprio com `POST /v1/base-documents/upload`, Bearer e `ownerId` de uma conta autenticada; o upload anônimo ainda não está implementado.
 
-O Compose cria o banco **`tailorly`**. Já o valor padrão de `spring.datasource.url` em `application.yml` aponta para **`tailorly_api_db`**; por isso o exemplo define `SPRING_DATASOURCE_URL`. Outra opção é criar `tailorly_api_db` no servidor e usar o valor padrão.
+O comando `pnpm dev` ativa o perfil Spring `local`, que usa por padrão o banco
+**`tailorly`** e as credenciais do Compose. Para usar outra instância, sobrescreva
+`SPRING_DATASOURCE_URL`, `DATABASE_USERNAME` e `DATABASE_PASSWORD`.
 
 Gere a chave JWT uma vez para o ambiente e mantenha seu valor entre reinicializações: trocar a chave invalida todos os tokens emitidos antes. Não a grave no repositório. A configuração exige uma chave Base64 com pelo menos 32 bytes decodificados. A URL do emissor usa `http://localhost:8080` por padrão; fora do ambiente local, defina `TAILORLY_JWT_ISSUER` com a URL pública da API.
 
-Também é possível iniciar pelo workspace do monorepo, com as mesmas variáveis de ambiente:
+Também é possível iniciar pelo workspace do monorepo:
 
 ```bash
 pnpm --filter @tailorly/api dev
@@ -124,10 +123,10 @@ pnpm --filter @tailorly/api dev
 
 | Variável | Uso | Valor padrão |
 | --- | --- | --- |
-| `DATABASE_USERNAME` | Usuário do PostgreSQL | Obrigatória |
-| `DATABASE_PASSWORD` | Senha do PostgreSQL | Obrigatória |
-| `SPRING_DATASOURCE_URL` | URL JDBC; necessária para usar o Compose sem criar outro banco | `jdbc:postgresql://localhost:5432/tailorly_api_db` |
-| `TAILORLY_JWT_SECRET` | Chave Base64 para assinar e validar JWTs | Obrigatória |
+| `DATABASE_USERNAME` | Usuário do PostgreSQL | Obrigatória; `tailorly` no perfil `local` |
+| `DATABASE_PASSWORD` | Senha do PostgreSQL | Obrigatória; `tailorly` no perfil `local` |
+| `SPRING_DATASOURCE_URL` | URL JDBC do PostgreSQL | `jdbc:postgresql://localhost:5432/tailorly_api_db`; no perfil `local`, `jdbc:postgresql://localhost:5432/tailorly` |
+| `TAILORLY_JWT_SECRET` | Chave Base64 para assinar e validar JWTs | Obrigatória; o perfil `local` possui uma chave exclusiva de desenvolvimento |
 | `TAILORLY_JWT_ISSUER` | Emissor (`iss`) aceito pela API | `http://localhost:8080` |
 | `TAILORLY_ADMIN_EMAILS` | Emails administrativos separados por vírgula | Lista vazia |
 | `TAILORLY_STORAGE_ENDPOINT` | Endpoint S3 do Garage ou R2 | `http://localhost:3900` |
@@ -136,14 +135,15 @@ pnpm --filter @tailorly/api dev
 | `TAILORLY_STORAGE_ACCESS_KEY` / `TAILORLY_STORAGE_SECRET_KEY` | Credenciais S3; se omitidas, usa a cadeia padrão do SDK | Vazias |
 | `TAILORLY_STORAGE_PATH_STYLE` | Endereçamento por caminho para Garage/R2 | `true` |
 
-O JWT expira após uma hora (`tailorly.security.jwt.ttl: PT1H`). O JPA usa `ddl-auto: update` e mostra SQL em desenvolvimento; ainda não existem migrações Flyway. O CORS permite `http://localhost:5173` para `/v1/**`. O Vite do frontend encaminha `/v1` para `http://localhost:8080` no ambiente local.
+O JWT expira após uma hora (`tailorly.security.jwt.ttl: PT1H`). O Flyway aplica as migrations de `src/main/resources/db/migration` e o JPA usa `ddl-auto: validate`. `baseline-on-migrate` permite adotar o Flyway em bancos locais anteriormente criados pelo Hibernate: esses bancos são marcados na versão 1 e recebem as migrations posteriores. O CORS permite `http://localhost:5173` para `/v1/**`. O Vite do frontend encaminha `/v1` para `http://localhost:8080` no ambiente local.
 
 ## Autenticação e autorização
 
 1. `POST /v1/auth/register` cria um usuário. `POST /v1/users` também cadastra e permanece disponível.
 2. `POST /v1/auth/login` valida email e senha pelo Spring Security e devolve `accessToken`, `tokenType`, `expiresAt` e `user`.
-3. O cliente envia `Authorization: Bearer <accessToken>` em cada chamada protegida. HTTP Basic não está habilitado.
-4. A API valida assinatura HS256, emissor e expiração. O `sub` do JWT é o UUID da conta; a conta e suas roles são consultadas no banco em cada requisição protegida. Uma conta desativada perde acesso imediatamente.
+3. `GET /v1/me` devolve o usuário e o owner da conta, criando o owner para contas antigas quando necessário.
+4. O cliente envia `Authorization: Bearer <accessToken>` em cada chamada protegida. HTTP Basic não está habilitado.
+5. A API valida assinatura HS256, emissor e expiração. O `sub` do JWT é o UUID da conta; a conta e suas roles são consultadas no banco em cada requisição protegida. Uma conta desativada perde acesso imediatamente.
 
 O token não é guardado em cookie pela API. A configuração atual é stateless e desabilita CSRF; não existe endpoint `/v1/csrf`. Ainda não há refresh token, logout nem revogação individual de um JWT antes de sua expiração.
 
@@ -194,6 +194,7 @@ O email de cadastro deve ser válido; a senha deve ter de 8 a 128 caracteres. Lo
 | --- | --- | --- |
 | `POST /v1/auth/register` | Público | Cadastrar conta; corpo `email`, `password`; retorna `201` e `UserResponse`. |
 | `POST /v1/auth/login` | Público | Validar credenciais; retorna JWT e `UserResponse`. |
+| `GET /v1/me` | Conta autenticada | Retornar `user` e o owner único da conta; provisiona owner ausente para contas antigas. |
 | `POST /v1/users` | Público | Caminho de cadastro também disponível. |
 | `GET /v1/users` | Admin | Listar contas. |
 | `GET /v1/users/by-email?email=...` | Admin | Consultar por email. |
@@ -244,6 +245,25 @@ O fluxo alvo parte do **Currículo Base revisado como fonte dos fatos**: upload 
 Veja a [decisão de produto no README principal](../../README.md#decisão-de-produto-currículo-base-como-ground-truth) para os invariantes completos.
 
 ## Comandos de desenvolvimento
+
+### Contrato OpenAPI e cliente web
+
+O Springdoc publica somente rotas `/v1/**` em `/v3/api-docs`. Os IDs das
+operações são estáveis e derivam do controller e do método Java, porque o Orval
+usa esses IDs para nomear as funções TypeScript. O snapshot consumido pelo
+frontend fica em `openapi/tailorly.json`.
+
+Depois de alterar um controller ou DTO, inicie a API e rode na raiz do
+monorepo:
+
+```bash
+pnpm api:sync
+```
+
+Esse comando baixa o contrato, remove a URL do servidor usada na exportação e
+regenera `apps/web/src/lib/api/generated`. Para gerar novamente sem a API
+ativa, usando o snapshot existente, rode `pnpm api:generate`. Os arquivos
+gerados são artefatos versionados; não os edite manualmente.
 
 Na pasta `services/api`:
 

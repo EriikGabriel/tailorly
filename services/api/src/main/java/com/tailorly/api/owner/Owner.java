@@ -39,7 +39,7 @@ import org.hibernate.annotations.Check;
 @Entity
 @Check(
     name = "chk_owners_kind_user",
-    constraints = "kind = 'KIND_ACCOUNT' "
+    constraints = "(kind = 'KIND_ACCOUNT' AND user_id IS NOT NULL) "
         + "OR (kind = 'KIND_ANONYMOUS' AND user_id IS NULL)"
 )
 @Table(name = "owners")

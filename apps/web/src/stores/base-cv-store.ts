@@ -7,30 +7,33 @@ interface BaseCvState {
   file: File | null;
   selectionId: string | null;
   error: string | null;
-  selectFile: (file: File | null, format?: "pdf" | "document") => boolean;
+  selectFile: (file: File | null) => boolean;
   setError: (error: string | null) => void;
   reset: () => void;
 }
+
+export const MAX_BASE_CV_BYTES = 7 * 1024 * 1024;
 
 export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
   file: null,
   selectionId: null,
   error: null,
-  selectFile: (file, format = "document") => {
-    const accepted = format === "pdf" ? /\.pdf$/i : /\.(pdf|doc|docx)$/i;
-    if (file && (!accepted.test(file.name) || file.size === 0)) {
-      set({
-        error:
-          format === "pdf"
-            ? "Selecione um arquivo PDF que não esteja vazio."
-            : "Selecione um arquivo PDF, DOC ou DOCX que não esteja vazio.",
-      });
+  selectFile: (file) => {
+    if (file && (!/\.pdf$/i.test(file.name) || file.size === 0)) {
+      set({ error: "Selecione um arquivo PDF que não esteja vazio." });
       return false;
     }
+
+    if (file && file.size > MAX_BASE_CV_BYTES) {
+      set({ error: "O PDF deve ter no máximo 7 MiB." });
+      return false;
+    }
+
     if (file === get().file) {
       set({ error: null });
       return true;
     }
+
     // A local selection ID is not a Ground Truth version or a content hash.
     const selectionId = file ? crypto.randomUUID() : null;
     useReviewDraftStore.getState().resetForSource(selectionId);
