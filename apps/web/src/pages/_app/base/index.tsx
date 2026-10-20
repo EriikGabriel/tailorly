@@ -1,5 +1,6 @@
 import { Button } from "@animate/buttons/button";
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
+import { useSelectBaseDocumentFile } from "@queries/base-document";
 import {
   CircleCheck,
   FileText,
@@ -9,6 +10,7 @@ import {
   Shield,
   ShieldCheck,
 } from "@react-zero-ui/icon-sprite";
+import { useAuthStore } from "@stores/auth-store";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useReducedMotion } from "motion/react";
@@ -22,8 +24,21 @@ export const Route = createFileRoute("/_app/base/")({
 
 function RouteComponent() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { file, error, selectFile } = useBaseCvStore();
+  const { file, error, selectionId, uploadedSelectionId } = useBaseCvStore();
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const { selectFile, upload } = useSelectBaseDocumentFile();
   const reducedMotion = useReducedMotion();
+  const uploadPending =
+    file !== null && upload.variables === file && upload.isPending;
+  const fileStatus = uploadPending
+    ? "Enviando PDF..."
+    : file && !accessToken
+      ? "Prévia local • entre na sua conta para enviar"
+      : file && selectionId && uploadedSelectionId === selectionId
+        ? "PDF enviado • ainda não processado"
+        : file
+          ? "Prévia local • ainda não enviado"
+          : "Aguardando Currículo Base";
 
   return (
     <main className="min-h-[calc(100dvh-4rem)] px-4 py-6 sm:px-8 lg:px-16">
@@ -63,7 +78,7 @@ function RouteComponent() {
               aria-hidden="true"
               className="size-2.5 rounded-full bg-on-tertiary-container"
             />
-            Aguardando Currículo Base
+            {fileStatus}
           </span>
         </div>
         <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
@@ -111,9 +126,7 @@ function RouteComponent() {
               className="h-auto min-h-12 gap-1 rounded-xl bg-card px-6 py-3.5 text-label-md font-semibold text-primary-950 hover:bg-surface-container-high has-[>svg]:px-6"
             >
               <FileUp aria-hidden="true" className="size-4" />
-              {file
-                ? "Substituir PDF / Re-upload"
-                : "Selecionar Currículo Base"}
+              {file ? "Selecionar outro PDF" : "Selecionar Currículo Base"}
             </Button>
             <Button
               disabled
@@ -126,7 +139,7 @@ function RouteComponent() {
           </div>
         </div>
         <AutoHeight
-          deps={[file, error]}
+          deps={[file, error, fileStatus]}
           transition={reducedMotion ? { duration: 0 } : undefined}
         >
           <div className="space-y-4 pt-1">
@@ -143,7 +156,7 @@ function RouteComponent() {
                 </p>
                 <p className="text-body-sm">
                   {file
-                    ? `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(file.size / 1024)} KB • Prévia local, sem envio`
+                    ? `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(file.size / 1024)} KB • ${fileStatus}`
                     : "Selecione seu currículo em PDF"}
                 </p>
               </GovernanceCard>

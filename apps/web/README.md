@@ -42,7 +42,7 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 | `pnpm check` | `biome check` (formatação + lint) |
 | `pnpm test:stores` | Suite de estado do cliente. Ver §11. |
 | `pnpm test:e2e:install` | Instala Chromium para Playwright. |
-| `pnpm test:e2e` | Teste de navegador vinculado ao RF16. Ver §11. |
+| `pnpm test:e2e` | Testes de navegador para RF09 e RF16. Ver §11. |
 | `pnpm test:e2e:ui` | Modo interativo do Playwright para TDD. |
 | `pnpm test` | Executa stores e Playwright. |
 | `pnpm api:generate` | Gera os tipos e as funções `fetch` com Orval a partir do snapshot versionado. |
@@ -82,7 +82,7 @@ src/
 └── assets/tailorly-logo.svg
 
 scripts/test-stores.mjs         # runner da suíte unitária de estado
-tests/unit/client-state.test.ts # 10 testes unitários de estado do cliente
+tests/unit/client-state.test.ts # 11 testes unitários de estado do cliente
 tests/e2e/                      # jornadas de interface com Playwright
 ```
 
@@ -365,7 +365,7 @@ persistente nem fonte de cotas.
 | Store | Estado | Responsabilidade |
 | --- | --- | --- |
 | `useAuthStore` | `accessToken`, `expiresAt` | JWT em `sessionStorage` para sobreviver ao reload da mesma aba; expiração e logout removem o token |
-| `useBaseCvStore` | `file`, `selectionId`, `error` | Arquivo compartilhado entre home e `/base`, identificação local da seleção, validação de formato/vazio, erro |
+| `useBaseCvStore` | `file`, `selectionId`, `uploadedSelectionId`, `error` | Seleção local, ID do upload atual e guarda contra respostas atrasadas; não lista histórico remoto |
 | `useReviewDraftStore` | `sourceId`, `draft`, `activeStep`, `expandedRecords` | Rascunhos das seis dimensões, etapa ativa, cartões expandidos — ligados a `sourceId` |
 | `useQuickReviewStore` | `open`, `contextKey`, `issues`, `preview`, `answers`, `submittedPreview` | Abertura, pendências, respostas e snapshot da prévia, vinculados a `contextKey` |
 | `useJobDraftStore` | `mode`, `jobUrl`, `jobText`, `revision`, `savedAt` | URL/texto da vaga, modo de entrada, revisão e horário da última ação de salvar (em memória) |
@@ -387,17 +387,20 @@ persistente nem fonte de cotas.
   **limpa** rascunhos, respostas rápidas, cartões expandidos e zoom. O
   comentário no código é explícito: *"A local selection ID is not a Ground Truth
   version or a content hash."*
-- `selectFile(null)` remove: zera `file` e `selectionId` e reaplica as limpezas.
+- `selectFile(null)` remove a prévia local: zera `file` e `selectionId`, preserva a seleção de documento remoto e reaplica as limpezas. Não exclui o PDF no servidor.
 
 DOC/DOCX permanecem parte do fluxo alvo, mas ainda não são aceitos porque a API não possui parser para esses formatos.
 
-Na home, um PDF válido é selecionado para prévia local. Se houver JWT, a mutation
-`useUploadBaseDocument` consulta o owner da conta por `/v1/me` e envia o PDF a
-`POST /v1/base-documents/upload`. O cartão distingue prévia local, envio,
-sucesso e falha, e mostra o erro devolvido pela API quando o envio falha.
-Sem conta, não tenta o upload; a API ainda não aceita
-upload anônimo. O envio armazena o original, mas não cria uma versão aprovada
-nem executa extração.
+Na home e em `/base`, um PDF válido é selecionado para prévia local. Com JWT, o
+hook compartilhado consulta o owner por `/v1/me` e envia o PDF a
+`POST /v1/base-documents/upload`. O ID retornado fica na store apenas como
+seleção de interface; `GET /v1/base-documents/owner/{ownerId}` recupera a lista
+de metadados da conta. A interface mantém apenas o arquivo atual e não lista o
+histórico de PDFs enviados. A troca em `/base` usa o mesmo envio da home. O
+cartão distingue prévia local, envio, sucesso e falha e mostra erros da API.
+Sem conta, não tenta o upload; a API ainda não aceita upload anônimo. O envio
+armazena o original, mas não cria versão, não executa extração e não aprova
+Ground Truth. Trocar a seleção local não apaga documentos remotos.
 
 ### Guardas de contexto obsoleto
 
@@ -509,9 +512,9 @@ do seu arquivo. As respostas ficam apenas como rascunho de interface."*
 | `RecentCVSection` | "Últimos Currículos Gerados" com três entradas **de demonstração** codificadas em `const recentCVs` e o link "Ver todos (18)". |
 | `SecondBrainSection` | Integração Notion/Obsidian apresentada como **recurso extra e opcional**; o botão secundário é "Continuar apenas com Currículo Base". |
 
-`BaseCvPicker` aceita **um único** arquivo (`.pdf`, `.doc`, `.docx`) por input
-ou arraste, com contador de profundidade para o estado de arraste. O arquivo
-selecionado mostra o selo "Prévia local • ainda não processado".
+`BaseCvPicker` aceita **um único** PDF por input ou arraste, com contador de
+profundidade para o estado de arraste. Mostra separadamente a seleção local e
+o arquivo atual; o selo acompanha o resultado do upload.
 
 > **Desvio de invariante conhecido.** `RecentCVSection` apresenta três
 > currículos fictícios — com "96% ATS Match", empresa e data — como se fossem
@@ -533,9 +536,9 @@ Interface derivada dos nós do Figma Tailorly, usando os tokens do projeto,
 ### Cabeçalho
 
 Trilha de navegação (`Início / Currículo Base / Auditoria & Curadoria do
-Ground Truth`), selo "Aguardando Currículo Base", título "Auditoria & Curadoria
+Ground Truth`), selo com o estado do envio, título "Auditoria & Curadoria
 dos Fatos do Currículo Base", input de PDF e três `GovernanceCard`:
-**Arquivo mestre** (nome e tamanho, "Prévia local, sem envio"), **Índice de
+**Arquivo mestre** (arquivo local ou nome do PDF enviado, sempre identificado como não processado), **Índice de
 confiabilidade** ("Ainda não avaliado", barra vazia) e **Protocolo de
 integridade** ("Aguardando revisão", "Nenhum fato confirmado"). Um
 `aria-live="polite"` em `sr-only` anuncia a seleção.
@@ -630,20 +633,21 @@ Ou seja: a suíte de stores usa `node:test` e `node:assert/strict` nativos e
 transpila via o TypeScript do próprio projeto. A suíte de navegador usa
 `@playwright/test` como dependência de desenvolvimento.
 
-`tests/unit/client-state.test.ts` tem **10 testes**, com `beforeEach(resetClientState)`:
+`tests/unit/client-state.test.ts` tem **11 testes**, com `beforeEach(resetClientState)`:
 
 | # | Teste | O que fixa |
 | --- | --- | --- |
 | 1 | Reset de sessão remove a autenticação | Token e expiração voltam a `null` |
 | 2 | Login sobrevive ao reload enquanto válido | Restaura o JWT salvo; descarta e remove um token expirado |
 | 3 | Seleção compartilhada preserva rascunhos, etapa e zoom | Consumidores diferentes leem o mesmo estado; reselecionar a **mesma** referência não limpa |
-| 4 | Trocar a fonte reseta dados dependentes e rejeita atualizações obsoletas | Drafts, expandidos, etapa, respostas e zoom voltam ao padrão; `setIdentity` com id antigo é **ignorado**; vaga e preferências **preservadas** |
-| 5 | Seleções inválidas e vazias preservam arquivo e rascunho | Arquivo vazio, DOCX e PDF acima de 7 MiB retornam `false`, não apagam o arquivo e gravam `error` |
-| 6 | Remover arquivo limpa rascunhos, revisão rápida e visualizador | `selectionId` e `file` viram `null`; `open` fecha |
-| 7 | Mudança de vaga invalida revisão rápida sem apagar o draft do Currículo Base | `revision` incrementa, respostas zeram, identidade preservada |
-| 8 | Revisão rápida mantém respostas ao remontar e rejeita issues antigas/desconhecidas | Reconfigurar com a **mesma** chave preserva; trocar de chave zera; `setAnswer` com chave ou id inválido é ignorado |
-| 9 | Reset de sessão limpa todos os contextos e restaura padrões | Preferências voltam a `pt-BR` com LinkedIn ativo; workspace volta a `editor` |
-| 10 | Visualizador impõe zoom suportado e ignora valores numéricos inválidos | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"` |
+| 4 | ID do upload acompanha a seleção local | Resposta antiga não substitui o documento atual; logout limpa o estado de interface |
+| 5 | Trocar a fonte reseta dados dependentes e rejeita atualizações obsoletas | Drafts, expandidos, etapa, respostas e zoom voltam ao padrão; `setIdentity` com id antigo é **ignorado**; vaga e preferências **preservadas** |
+| 6 | Seleções inválidas e vazias preservam arquivo e rascunho | Arquivo vazio, DOCX e PDF acima de 7 MiB retornam `false`, não apagam o arquivo e gravam `error` |
+| 7 | Remover arquivo limpa rascunhos, revisão rápida e visualizador | `selectionId` e `file` viram `null`; `open` fecha |
+| 8 | Mudança de vaga invalida revisão rápida sem apagar o draft do Currículo Base | `revision` incrementa, respostas zeram, identidade preservada |
+| 9 | Revisão rápida mantém respostas ao remontar e rejeita issues antigas/desconhecidas | Reconfigurar com a **mesma** chave preserva; trocar de chave zera; `setAnswer` com chave ou id inválido é ignorado |
+| 10 | Reset de sessão limpa todos os contextos e restaura padrões | Preferências voltam a `pt-BR` com LinkedIn ativo; workspace volta a `editor` |
+| 11 | Visualizador impõe zoom suportado e ignora valores numéricos inválidos | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"` |
 
 **Toda mudança nas stores ou em `reset-client-state.ts` precisa vir acompanhada
 de um teste aqui.**
@@ -651,8 +655,10 @@ de um teste aqui.**
 ### Playwright e TDD baseado nos requisitos
 
 `playwright.config.ts` configura Chromium, inicia um Vite isolado na porta 4173
-e retém trace/screenshot em falhas. `tests/e2e/quick-review.spec.ts` contém um
-único teste de comportamento para **RF16**: bloqueio da continuidade enquanto
+e retém trace/screenshot em falhas. `tests/e2e/base-document-upload.spec.ts`
+usa respostas simuladas da API para verificar o upload e a troca de PDF em
+`/base`; não comprova gravação real no Garage. `tests/e2e/quick-review.spec.ts`
+verifica **RF16**: bloqueio da continuidade enquanto
 uma correção é vazia, inválida ou igual ao original, e liberação após respostas
 válidas. O teste opera a interface existente, com documento sintético e dados
 de revisão explicitamente fictícios. Não comprova aprovação remota nem geração.

@@ -6,8 +6,10 @@ import { useReviewDraftStore } from "./review-draft-store";
 interface BaseCvState {
   file: File | null;
   selectionId: string | null;
+  uploadedSelectionId: string | null;
   error: string | null;
   selectFile: (file: File | null) => boolean;
+  setUploadedDocument: (file: File) => void;
   setError: (error: string | null) => void;
   reset: () => void;
 }
@@ -17,6 +19,7 @@ export const MAX_BASE_CV_BYTES = 7 * 1024 * 1024;
 export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
   file: null,
   selectionId: null,
+  uploadedSelectionId: null,
   error: null,
   selectFile: (file) => {
     if (file && (!/\.pdf$/i.test(file.name) || file.size === 0)) {
@@ -39,14 +42,25 @@ export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
     useReviewDraftStore.getState().resetForSource(selectionId);
     useQuickReviewStore.getState().reset();
     useDocumentViewerStore.getState().reset();
-    set({ file, selectionId, error: null });
+    set({ file, selectionId, uploadedSelectionId: null, error: null });
     return true;
+  },
+  setUploadedDocument: (file) => {
+    if (get().file !== file) return;
+    set({
+      uploadedSelectionId: get().selectionId,
+    });
   },
   setError: (error) => set({ error }),
   reset: () => {
     useReviewDraftStore.getState().resetForSource(null);
     useQuickReviewStore.getState().reset();
     useDocumentViewerStore.getState().reset();
-    set({ file: null, selectionId: null, error: null });
+    set({
+      file: null,
+      selectionId: null,
+      uploadedSelectionId: null,
+      error: null,
+    });
   },
 }));

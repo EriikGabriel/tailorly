@@ -99,6 +99,21 @@ test("a seleção compartilhada preserva rascunhos, etapa e zoom entre component
   assert.equal(viewer.getState().zoom, 125);
 });
 
+test("o ID do upload acompanha a seleção e ignora respostas atrasadas", () => {
+  const file = pdf();
+  base.getState().selectFile(file);
+  const firstSelection = base.getState().selectionId;
+  base.getState().setUploadedDocument(file);
+  assert.equal(base.getState().uploadedSelectionId, firstSelection);
+
+  base.getState().selectFile(pdf("next.pdf"));
+  base.getState().setUploadedDocument(file);
+  assert.equal(base.getState().uploadedSelectionId, null);
+
+  resetClientState();
+  assert.equal(base.getState().uploadedSelectionId, null);
+});
+
 test("trocar o currículo base limpa dados dependentes e rejeita atualizações antigas", () => {
   base.getState().selectFile(pdf());
   const oldId = base.getState().selectionId;

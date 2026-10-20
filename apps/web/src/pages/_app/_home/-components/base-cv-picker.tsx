@@ -1,5 +1,5 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
-import { useUploadBaseDocument } from "@queries/base-document";
+import { useSelectBaseDocumentFile } from "@queries/base-document";
 import { FileText, FileUp, RefreshCw } from "@react-zero-ui/icon-sprite";
 import { useAuthStore } from "@stores/auth-store";
 import { useBaseCvStore } from "@stores/base-cv-store";
@@ -9,14 +9,22 @@ import { useRef, useState } from "react";
 export function BaseCvPicker() {
   const reducedMotion = useReducedMotion();
   const accessToken = useAuthStore((state) => state.accessToken);
-  const { file, error, selectFile: onFileChange, setError } = useBaseCvStore();
-  const uploadBaseDocument = useUploadBaseDocument();
+  const {
+    file,
+    error,
+    selectionId,
+    uploadedSelectionId,
+    selectFile: onFileChange,
+    setError,
+  } = useBaseCvStore();
+  const { selectFile, upload: uploadBaseDocument } =
+    useSelectBaseDocumentFile();
   const currentUpload = file !== null && uploadBaseDocument.variables === file;
   const fileStatus = !accessToken
     ? "Prévia local • entre na sua conta para enviar"
     : currentUpload && uploadBaseDocument.isPending
       ? "Enviando PDF..."
-      : currentUpload && uploadBaseDocument.isSuccess
+      : selectionId && uploadedSelectionId === selectionId
         ? "Arquivo enviado • ainda não processado"
         : currentUpload && uploadBaseDocument.isError
           ? "Falha no envio • prévia local"
@@ -29,20 +37,7 @@ export function BaseCvPicker() {
       return;
     }
 
-    const file = files[0];
-    if (!onFileChange(file) || !accessToken) return;
-
-    uploadBaseDocument.mutate(file, {
-      onError: (error) => {
-        if (useBaseCvStore.getState().file !== file) return;
-
-        setError(
-          error instanceof TypeError
-            ? "Não foi possível conectar à API para enviar o arquivo."
-            : error.message,
-        );
-      },
-    });
+    selectFile(files[0]);
   }
 
   return (

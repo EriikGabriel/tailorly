@@ -8,7 +8,7 @@ Esta pasta separa os testes pelo nível em que exercitam a aplicação:
 - `requirements.md`: mapa entre critérios de produto e cobertura.
 
 Os testes de navegador iniciam o Vite automaticamente em
-`http://127.0.0.1:4173`; não precisam da API para o exemplo atual. A porta deve
+`http://127.0.0.1:4173`; o teste de upload simula as respostas da API. A porta deve
 estar livre.
 
 ## Executar
@@ -17,7 +17,7 @@ Na pasta `apps/web`:
 
 ```bash
 pnpm test:e2e:install       # instalar Chromium, uma vez após instalar/atualizar
-pnpm test:e2e              # executar o único exemplo no Chromium
+pnpm test:e2e              # executar os cenários no Chromium
 pnpm test:e2e --grep @RF16  # filtrar pelo requisito
 pnpm test:e2e:ui           # modo interativo para acompanhar o ciclo TDD
 pnpm test:e2e:headed       # executar com janela do navegador
@@ -41,7 +41,12 @@ observável, à camada e ao teste. Os IDs seguem a nota do Tailorly no second
 brain. Ao iniciar um comportamento novo, atualize primeiro o critério de aceite
 local e mantenha-o coerente com a especificação do produto.
 
-O único exemplo implementado está em
+O cenário de upload em [e2e/base-document-upload.spec.ts](e2e/base-document-upload.spec.ts)
+cobre a integração da interface com um contrato simulado: envio na home e troca
+do PDF em `/base`. Ele não verifica
+o Garage nem a implementação do servidor.
+
+O cenário de revisão rápida está em
 [e2e/quick-review.spec.ts](e2e/quick-review.spec.ts): **RF16**, gate da revisão
 rápida. Ele navega na aplicação, seleciona um PDF sintético, informa uma vaga
 fictícia, abre o diálogo e confirma uma das duas pendências. Depois verifica:
