@@ -37,17 +37,17 @@ export function ValidateDialog({
   requiresFullReview = false,
 }: ValidateDialogProps = {}) {
   const navigate = useNavigate();
-  const file = useBaseCvStore((state) => state.file);
-  const selectionId = useBaseCvStore((state) => state.selectionId);
-  const jobRevision = useJobDraftStore((state) => state.revision);
-  const onSaveDraft = useJobDraftStore((state) => state.saveDraft);
-  const open = useQuickReviewStore((state) => state.open);
-  const onOpenChange = useQuickReviewStore((state) => state.setOpen);
-  const storedContext = useQuickReviewStore((state) => state.contextKey);
-  const storedAnswers = useQuickReviewStore((state) => state.answers);
-  const configure = useQuickReviewStore((state) => state.configure);
-  const setAnswer = useQuickReviewStore((state) => state.setAnswer);
-  const savePreview = useQuickReviewStore((state) => state.savePreview);
+  const { file, selectionId } = useBaseCvStore();
+  const { revision: jobRevision, saveDraft: onSaveDraft } = useJobDraftStore();
+  const {
+    open,
+    setOpen: onOpenChange,
+    contextKey: storedContext,
+    answers: storedAnswers,
+    configure,
+    setAnswer,
+    savePreview,
+  } = useQuickReviewStore();
   const preview = issues === undefined;
   const allIssues = issues ?? previewReviewIssues;
   const contextKey = JSON.stringify([

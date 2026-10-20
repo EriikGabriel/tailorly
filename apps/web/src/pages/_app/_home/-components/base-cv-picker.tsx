@@ -1,15 +1,26 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
+import { useUploadBaseDocument } from "@queries/base-document";
 import { FileText, FileUp, RefreshCw } from "@react-zero-ui/icon-sprite";
+import { useAuthStore } from "@stores/auth-store";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
 
 export function BaseCvPicker() {
   const reducedMotion = useReducedMotion();
-  const file = useBaseCvStore((state) => state.file);
-  const error = useBaseCvStore((state) => state.error);
-  const onFileChange = useBaseCvStore((state) => state.selectFile);
-  const setError = useBaseCvStore((state) => state.setError);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const { file, error, selectFile: onFileChange, setError } = useBaseCvStore();
+  const uploadBaseDocument = useUploadBaseDocument();
+  const currentUpload = file !== null && uploadBaseDocument.variables === file;
+  const fileStatus = !accessToken
+    ? "Prévia local • entre na sua conta para enviar"
+    : currentUpload && uploadBaseDocument.isPending
+      ? "Enviando PDF..."
+      : currentUpload && uploadBaseDocument.isSuccess
+        ? "Arquivo enviado • ainda não processado"
+        : currentUpload && uploadBaseDocument.isError
+          ? "Falha no envio • prévia local"
+          : "Prévia local • ainda não enviado";
 
   function selectFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -17,8 +28,21 @@ export function BaseCvPicker() {
       setError("Selecione um único arquivo PDF.");
       return;
     }
-    setError(null);
-    onFileChange(files[0]);
+
+    const file = files[0];
+    if (!onFileChange(file) || !accessToken) return;
+
+    uploadBaseDocument.mutate(file, {
+      onError: (error) => {
+        if (useBaseCvStore.getState().file !== file) return;
+
+        setError(
+          error instanceof TypeError
+            ? "Não foi possível conectar à API para enviar o arquivo."
+            : error.message,
+        );
+      },
+    });
   }
 
   return (
@@ -37,7 +61,7 @@ export function BaseCvPicker() {
       />
 
       <AutoHeight
-        deps={[file, error]}
+        deps={[file, error, fileStatus]}
         transition={reducedMotion ? { duration: 0 } : undefined}
         className="peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-900"
       >
@@ -45,6 +69,7 @@ export function BaseCvPicker() {
           {file ? (
             <FilePreview
               file={file}
+              status={fileStatus}
               onFileChange={onFileChange}
               setError={setError}
             />
@@ -69,18 +94,27 @@ export function BaseCvPicker() {
 
 interface FilePreviewProps {
   file: File;
+  status: string;
   onFileChange: (file: File | null) => void;
   setError: (error: string | null) => void;
 }
 
-function FilePreview({ file, onFileChange, setError }: FilePreviewProps) {
+function FilePreview({
+  file,
+  status,
+  onFileChange,
+  setError,
+}: FilePreviewProps) {
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-outline-variant/40 bg-surface-container-low p-3">
       <div className="flex min-w-0 items-start gap-3">
         <FileText className="mt-0.5 size-5 shrink-0 text-primary-900" />
         <div className="flex min-w-0 flex-1 flex-col">
-          <span className="mb-2 w-fit rounded-full border border-secondary-200 bg-secondary-container/40 px-2 text-[10px] font-semibold leading-4 tracking-[0.3px] text-secondary-800">
-            Prévia local • ainda não processado
+          <span
+            role="status"
+            className="mb-2 w-fit rounded-full border border-secondary-200 bg-secondary-container/40 px-2 text-[10px] font-semibold leading-4 tracking-[0.3px] text-secondary-800"
+          >
+            {status}
           </span>
           <p
             className="truncate text-sm font-semibold text-primary-950"

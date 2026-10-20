@@ -24,14 +24,15 @@ export function ReviewWorkspace({
 }: {
   onSelectFile: () => void;
 }) {
-  const sourceId = useReviewDraftStore((state) => state.sourceId);
-  const activeStep = useReviewDraftStore((state) => state.activeStep);
-  const setActiveStep = useReviewDraftStore((state) => state.setActiveStep);
-  const draft = useReviewDraftStore((state) => state.draft);
-  const setIdentity = useReviewDraftStore((state) => state.setIdentity);
-  const setCollection = useReviewDraftStore((state) => state.setCollection);
-  const preferences = usePresentationStore((state) => state.preferences);
-  const setPreferences = usePresentationStore((state) => state.setPreferences);
+  const {
+    sourceId,
+    activeStep,
+    setActiveStep,
+    draft,
+    setIdentity,
+    setCollection,
+  } = useReviewDraftStore();
+  const { preferences, setPreferences } = usePresentationStore();
   const reducedMotion = useReducedMotion();
 
   function collection(key: DraftCollection): CollectionProps {

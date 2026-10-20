@@ -32,13 +32,9 @@ export function ReviewDraftCollection({
   subtitleKey?: string;
   evidence?: boolean;
 }) {
-  const sourceId = useReviewDraftStore((state) => state.sourceId);
-  const expandedId = useReviewDraftStore(
-    (state) => state.expandedRecords[collectionKey] ?? null,
-  );
-  const setExpandedRecord = useReviewDraftStore(
-    (state) => state.setExpandedRecord,
-  );
+  const { sourceId, expandedRecords, setExpandedRecord } =
+    useReviewDraftStore();
+  const expandedId = expandedRecords[collectionKey] ?? null;
   const setExpandedId = (id: string | null) =>
     setExpandedRecord(sourceId, collectionKey, id);
   const id = useId();

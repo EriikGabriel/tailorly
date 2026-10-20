@@ -18,8 +18,7 @@ export function MasterDocumentPanel({
   onSelectFile: () => void;
 }) {
   const file = useBaseCvStore((state) => state.file);
-  const zoom = useDocumentViewerStore((state) => state.zoom);
-  const setZoom = useDocumentViewerStore((state) => state.setZoom);
+  const { zoom, setZoom } = useDocumentViewerStore();
   const isPdf = Boolean(file && /\.pdf$/i.test(file.name));
   const [preview, setPreview] = useState<{ file: File; url: string } | null>(
     null,

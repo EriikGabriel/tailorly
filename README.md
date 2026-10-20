@@ -50,9 +50,11 @@ Os blocos de parsing, LLM, templates, PDF e vault representam a arquitetura plan
 | Estado local | Zustand, com oito stores em `apps/web/src/stores` e `resetClientState()` para os fluxos de saída e expiração de sessão |
 | Integração local | Proxy de `/v1` para `http://localhost:8080` |
 
-O botão de conta no cabeçalho oferece cadastro, login e logout. A sessão JWT é
-mantida somente em memória no frontend e, portanto, termina ao recarregar a
-página; persistência ou renovação de sessão ainda não foram implementadas.
+O botão de conta no cabeçalho oferece cadastro, login e logout. O frontend
+guarda o JWT em `sessionStorage` para manter o login ao recarregar a mesma aba,
+desde que o token ainda seja válido. O logout e respostas `401` da consulta de
+conta limpam esse estado. O token expira após uma hora; renovação de sessão
+ainda não foi implementada.
 
 A home fica em `apps/web/src/pages/_app/_home/index.tsx` e corresponde a `/`; rotas dinâmicas usam `$id.tsx`; e `pages/__root.tsx` define o layout raiz. O prefixo de arquivo `_app` não aparece na URL. O arquivo `apps/web/src/routeTree.gen.ts` é gerado pelo plugin do TanStack Router e não deve ser alterado manualmente.
 
@@ -209,7 +211,10 @@ Além de `users`, templates e artefatos gerados, o domínio precisará represent
 
 ## Desenvolvimento
 
-Instale as dependências e inicie os dois workspaces:
+Instale as dependências. Para executar a API local, crie antes
+`services/api/.env.garage` e inicie os serviços de apoio conforme as instruções
+abaixo; o script `dev` da API carrega as credenciais S3 desse arquivo. Depois
+inicie os dois workspaces:
 
 ```bash
 corepack enable

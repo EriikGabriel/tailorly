@@ -79,20 +79,27 @@ curl --fail http://127.0.0.1:3909/health
 
 Abra `http://127.0.0.1:3909`, entre com o valor de `GARAGE_ADMIN_TOKEN` em `.env.garage` e navegue em `tailorly-private/owners/{ownerId}/originals/`. O script preserva as credenciais S3 existentes e acrescenta o token administrativo se necessário. O painel e a API S3 só são publicados em `127.0.0.1`; a API administrativa do Garage (`3903`) fica acessível apenas na rede interna do Compose. O login com esse token concede administração completa do Garage, inclusive alteração e exclusão de objetos, então não compartilhe o arquivo `.env.garage`. A interface exibe as chaves dos objetos, não os nomes originais dos PDFs guardados como metadados no PostgreSQL.
 
-Depois carregue as credenciais geradas e inicie a API:
+Depois inicie a API:
+
+```bash
+pnpm dev
+```
+
+O script `dev` carrega de `.env.garage` somente
+`TAILORLY_STORAGE_ACCESS_KEY` e `TAILORLY_STORAGE_SECRET_KEY` para o processo da
+API e falha com uma instrução clara se o arquivo ou as chaves estiverem
+ausentes. Reinicie a API após gerar ou alterar o arquivo. Em outros comandos
+Maven ou ao executar o JAR diretamente, configure essas variáveis no ambiente.
+
+O volume antigo `tailorly_minio-data`, caso exista, não é importado pelo Garage nem removido pelo Compose. Migre os objetos e confira as referências `storageKey` no banco antes de desativar o storage antigo; não presuma que trocar o serviço migra os PDFs. O armazenamento de originais continua privado.
+
+Para conferir o S3 sem enviar um currículo real, carregue `.env.garage` no
+terminal que executará o `curl` e depois envie um objeto de teste:
 
 ```bash
 set -a
 source .env.garage
 set +a
-pnpm dev
-```
-
-O volume antigo `tailorly_minio-data`, caso exista, não é importado pelo Garage nem removido pelo Compose. Migre os objetos e confira as referências `storageKey` no banco antes de desativar o storage antigo; não presuma que trocar o serviço migra os PDFs. O armazenamento de originais continua privado.
-
-Para conferir o S3 sem enviar um currículo real, depois de carregar `.env.garage` como acima, execute:
-
-```bash
 printf 'garage-ok\n' > /tmp/tailorly-garage-smoke.txt
 curl --fail-with-body --show-error --silent \
   --aws-sigv4 'aws:amz:garage:s3' \

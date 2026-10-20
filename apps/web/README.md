@@ -5,9 +5,11 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 
 > **Estado atual:** fundação visual e de estado de interface. A home, a
 > auditoria do Currículo Base (`/base`) e a revisão rápida estão implementadas
-> como **prévias locais**: nada é enviado, não há extração, OCR, persistência
-> dos rascunhos nem geração real. Login, cadastro e logout de contas estão
-> disponíveis no cabeçalho; `/cvs` e `/generator` são placeholders.
+> como **prévias locais**. Na home, selecionar um PDF envia o original para a
+> API quando há uma conta autenticada; sem conta, a seleção fica apenas como
+> prévia local. Não há extração, OCR, persistência dos rascunhos nem geração
+> real. Login, cadastro e logout de contas estão disponíveis no cabeçalho;
+> `/cvs` e `/generator` são placeholders.
 
 > **Regra de leitura:** este README separa sempre o **fluxo alvo** (descrito no
 > README do monorepo) da **implementação atual**. Uma funcionalidade marcada
@@ -23,7 +25,7 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 | Estilo | Tailwind CSS 4 (config CSS-first em `src/styles.css`) |
 | Roteamento | TanStack Router 1.x, rotas por arquivo em `src/pages` |
 | Dados remotos | TanStack Query 5; `QueryClient` único no contexto do router |
-| Estado local | Zustand 5, seletores por propriedade |
+| Estado local | Zustand 5, leituras por seletor ou por desestruturação da store |
 | Primitivos de UI | Base UI (`@base-ui/react`) e Animate UI vendorizado |
 | Ícones | `@react-zero-ui/icon-sprite` (Lucide + Tabler) |
 | Movimento | `motion` (Motion for React) |
@@ -80,7 +82,7 @@ src/
 └── assets/tailorly-logo.svg
 
 scripts/test-stores.mjs         # runner da suíte unitária de estado
-tests/unit/client-state.test.ts # 9 testes unitários de estado do cliente
+tests/unit/client-state.test.ts # 10 testes unitários de estado do cliente
 tests/e2e/                      # jornadas de interface com Playwright
 ```
 
@@ -115,7 +117,7 @@ não aparece na URL, e o `_home` também não.
 
 | URL | Arquivo | Estado |
 | --- | --- | --- |
-| `/` | `src/pages/_app/_home/index.tsx` | Funcional (prévia local) |
+| `/` | `src/pages/_app/_home/index.tsx` | Prévia local; upload do PDF para contas |
 | `/base` | `src/pages/_app/base/index.tsx` | Funcional (sem extração) |
 | `/cvs` | `src/pages/_app/cvs/index.tsx` | Placeholder ("Meus Currículos") |
 | `/generator` | `src/pages/_app/generator/index.tsx` | Placeholder ("Gerador") |
@@ -362,7 +364,7 @@ persistente nem fonte de cotas.
 
 | Store | Estado | Responsabilidade |
 | --- | --- | --- |
-| `useAuthStore` | `accessToken`, `expiresAt` | Sessão autenticada somente em memória; recarregar a página encerra a sessão cliente |
+| `useAuthStore` | `accessToken`, `expiresAt` | JWT em `sessionStorage` para sobreviver ao reload da mesma aba; expiração e logout removem o token |
 | `useBaseCvStore` | `file`, `selectionId`, `error` | Arquivo compartilhado entre home e `/base`, identificação local da seleção, validação de formato/vazio, erro |
 | `useReviewDraftStore` | `sourceId`, `draft`, `activeStep`, `expandedRecords` | Rascunhos das seis dimensões, etapa ativa, cartões expandidos — ligados a `sourceId` |
 | `useQuickReviewStore` | `open`, `contextKey`, `issues`, `preview`, `answers`, `submittedPreview` | Abertura, pendências, respostas e snapshot da prévia, vinculados a `contextKey` |
@@ -388,6 +390,14 @@ persistente nem fonte de cotas.
 - `selectFile(null)` remove: zera `file` e `selectionId` e reaplica as limpezas.
 
 DOC/DOCX permanecem parte do fluxo alvo, mas ainda não são aceitos porque a API não possui parser para esses formatos.
+
+Na home, um PDF válido é selecionado para prévia local. Se houver JWT, a mutation
+`useUploadBaseDocument` consulta o owner da conta por `/v1/me` e envia o PDF a
+`POST /v1/base-documents/upload`. O cartão distingue prévia local, envio,
+sucesso e falha, e mostra o erro devolvido pela API quando o envio falha.
+Sem conta, não tenta o upload; a API ainda não aceita
+upload anônimo. O envio armazena o original, mas não cria uma versão aprovada
+nem executa extração.
 
 ### Guardas de contexto obsoleto
 
@@ -431,7 +441,8 @@ referência.
 
 ### `resetClientState()`
 
-Em `src/stores/reset-client-state.ts`. Limpa primeiro `useAuthStore` e então
+Em `src/stores/reset-client-state.ts`. Limpa primeiro `useAuthStore`, inclusive
+o JWT em `sessionStorage`, e então
 reseta `useBaseCvStore`
 (que em cascata limpa rascunhos, revisão rápida e visualizador),
 `useJobDraftStore`, `usePresentationStore`, `useWorkspaceStore`. Depois remove
@@ -619,19 +630,20 @@ Ou seja: a suíte de stores usa `node:test` e `node:assert/strict` nativos e
 transpila via o TypeScript do próprio projeto. A suíte de navegador usa
 `@playwright/test` como dependência de desenvolvimento.
 
-`tests/unit/client-state.test.ts` tem **9 testes**, com `beforeEach(resetClientState)`:
+`tests/unit/client-state.test.ts` tem **10 testes**, com `beforeEach(resetClientState)`:
 
 | # | Teste | O que fixa |
 | --- | --- | --- |
-| 1 | Reset de sessão remove a autenticação em memória | Token e expiração voltam a `null` |
-| 2 | Seleção compartilhada preserva rascunhos, etapa e zoom | Consumidores diferentes leem o mesmo estado; reselecionar a **mesma** referência não limpa |
-| 3 | Trocar a fonte reseta dados dependentes e rejeita atualizações obsoletas | Drafts, expandidos, etapa, respostas e zoom voltam ao padrão; `setIdentity` com id antigo é **ignorado**; vaga e preferências **preservadas** |
-| 4 | Seleções inválidas e vazias preservam arquivo e rascunho | Arquivo vazio, DOCX e PDF acima de 7 MiB retornam `false`, não apagam o arquivo e gravam `error` |
-| 5 | Remover arquivo limpa rascunhos, revisão rápida e visualizador | `selectionId` e `file` viram `null`; `open` fecha |
-| 6 | Mudança de vaga invalida revisão rápida sem apagar o draft do Currículo Base | `revision` incrementa, respostas zeram, identidade preservada |
-| 7 | Revisão rápida mantém respostas ao remontar e rejeita issues antigas/desconhecidas | Reconfigurar com a **mesma** chave preserva; trocar de chave zera; `setAnswer` com chave ou id inválido é ignorado |
-| 8 | Reset de sessão limpa todos os contextos e restaura padrões | Preferências voltam a `pt-BR` com LinkedIn ativo; workspace volta a `editor` |
-| 9 | Visualizador impõe zoom suportado e ignora valores numéricos inválidos | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"` |
+| 1 | Reset de sessão remove a autenticação | Token e expiração voltam a `null` |
+| 2 | Login sobrevive ao reload enquanto válido | Restaura o JWT salvo; descarta e remove um token expirado |
+| 3 | Seleção compartilhada preserva rascunhos, etapa e zoom | Consumidores diferentes leem o mesmo estado; reselecionar a **mesma** referência não limpa |
+| 4 | Trocar a fonte reseta dados dependentes e rejeita atualizações obsoletas | Drafts, expandidos, etapa, respostas e zoom voltam ao padrão; `setIdentity` com id antigo é **ignorado**; vaga e preferências **preservadas** |
+| 5 | Seleções inválidas e vazias preservam arquivo e rascunho | Arquivo vazio, DOCX e PDF acima de 7 MiB retornam `false`, não apagam o arquivo e gravam `error` |
+| 6 | Remover arquivo limpa rascunhos, revisão rápida e visualizador | `selectionId` e `file` viram `null`; `open` fecha |
+| 7 | Mudança de vaga invalida revisão rápida sem apagar o draft do Currículo Base | `revision` incrementa, respostas zeram, identidade preservada |
+| 8 | Revisão rápida mantém respostas ao remontar e rejeita issues antigas/desconhecidas | Reconfigurar com a **mesma** chave preserva; trocar de chave zera; `setAnswer` com chave ou id inválido é ignorado |
+| 9 | Reset de sessão limpa todos os contextos e restaura padrões | Preferências voltam a `pt-BR` com LinkedIn ativo; workspace volta a `editor` |
+| 10 | Visualizador impõe zoom suportado e ignora valores numéricos inválidos | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"` |
 
 **Toda mudança nas stores ou em `reset-client-state.ts` precisa vir acompanhada
 de um teste aqui.**
@@ -658,7 +670,7 @@ registra cobertura parcial e critérios futuros sem adicionar toda a suíte.
 Nada abaixo está implementado no frontend. Tratar como especificação, não como
 comportamento:
 
-- envio de arquivo, OCR, extração de texto e extração de fatos;
+- upload anônimo, OCR, extração de texto e extração de fatos;
 - pendências geradas por extração real (as atuais são fixture de demonstração);
 - evidência com origem no documento, consulta ao OCR, coordenadas de bounding box;
 - estados de revisão `pendente` / `confirmado` / `corrigido` / `omitido`
@@ -668,8 +680,9 @@ comportamento:
 - salvamento remoto, aprovação, download, geração de PDF/Markdown;
 - recuperação de senha; sessão anônima completa, TTL e cotas no servidor;
 - integração com o vault (Second Brain), Notion, Obsidian;
-- persistência em `localStorage`/`sessionStorage` (só restam as duas chaves
-  legadas, removidas em `resetClientState`);
+- persistência dos rascunhos em `localStorage`/`sessionStorage` (o JWT usa
+  `sessionStorage`; as duas chaves legadas de rascunho são removidas em
+  `resetClientState`);
 - `POST /v1/cv/generate` e qualquer outro endpoint de domínio.
 
 Dados remotos devem entrar pela integração de **TanStack Query** já montada em

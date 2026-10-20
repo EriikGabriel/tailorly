@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
-import { useAuthStore as auth } from "../../src/stores/auth-store";
+import {
+  useAuthStore as auth,
+  readStoredSession,
+} from "../../src/stores/auth-store";
 import { useBaseCvStore as base } from "../../src/stores/base-cv-store";
 import { useDocumentViewerStore as viewer } from "../../src/stores/document-viewer-store";
 import { useJobDraftStore as job } from "../../src/stores/job-draft-store";
@@ -25,7 +28,7 @@ const issues: ReviewIssue[] = [
 ];
 beforeEach(resetClientState);
 
-test("session reset removes the in-memory authentication token", () => {
+test("limpar a sessão remove o token de autenticação", () => {
   auth.getState().setSession({
     accessToken: "test-token",
     expiresAt: "2030-01-01T00:00:00Z",
@@ -37,7 +40,52 @@ test("session reset removes the in-memory authentication token", () => {
   assert.equal(auth.getState().expiresAt, null);
 });
 
-test("a shared selection retains drafts, step and zoom when read by another consumer", () => {
+test("a sessão válida pode ser recuperada no reload e a expirada é descartada", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => values.delete(key),
+  };
+  const previousStorage = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "sessionStorage",
+  );
+  Object.defineProperty(globalThis, "sessionStorage", {
+    configurable: true,
+    value: storage,
+  });
+
+  try {
+    const expiresAt = new Date(Date.now() + 60_000).toISOString();
+    auth.getState().setSession({ accessToken: "test-token", expiresAt });
+    assert.deepEqual(readStoredSession(), {
+      accessToken: "test-token",
+      expiresAt,
+    });
+    auth.getState().clearSession();
+    assert.equal(storage.getItem("tailorly:auth-session"), null);
+
+    storage.setItem(
+      "tailorly:auth-session",
+      JSON.stringify({
+        accessToken: "expired-token",
+        expiresAt: new Date(Date.now() - 60_000).toISOString(),
+      }),
+    );
+    assert.equal(readStoredSession(), null);
+    assert.equal(storage.getItem("tailorly:auth-session"), null);
+  } finally {
+    auth.getState().clearSession();
+    if (previousStorage) {
+      Object.defineProperty(globalThis, "sessionStorage", previousStorage);
+    } else {
+      delete (globalThis as { sessionStorage?: Storage }).sessionStorage;
+    }
+  }
+});
+
+test("a seleção compartilhada preserva rascunhos, etapa e zoom entre componentes", () => {
   const file = pdf();
   base.getState().selectFile(file);
   const sourceId = base.getState().selectionId;
@@ -51,7 +99,7 @@ test("a shared selection retains drafts, step and zoom when read by another cons
   assert.equal(viewer.getState().zoom, 125);
 });
 
-test("replacing the source resets dependent data and rejects stale source updates", () => {
+test("trocar o currículo base limpa dados dependentes e rejeita atualizações antigas", () => {
   base.getState().selectFile(pdf());
   const oldId = base.getState().selectionId;
   review.getState().setIdentity(oldId, { name: "Original" });
@@ -85,7 +133,7 @@ test("replacing the source resets dependent data and rejects stale source update
   assert.equal(presentation.getState().preferences.language, "en-US");
 });
 
-test("invalid and empty selections preserve the existing file and draft", () => {
+test("arquivos inválidos ou vazios preservam o arquivo e o rascunho atuais", () => {
   const file = pdf();
   base.getState().selectFile(file);
   review
@@ -106,7 +154,7 @@ test("invalid and empty selections preserve the existing file and draft", () => 
   assert.ok(base.getState().error);
 });
 
-test("removing a file clears its drafts, quick review and viewer state", () => {
+test("remover o arquivo limpa rascunhos, revisão rápida e visualizador", () => {
   base.getState().selectFile(pdf());
   review
     .getState()
@@ -126,7 +174,7 @@ test("removing a file clears its drafts, quick review and viewer state", () => {
   assert.equal(viewer.getState().zoom, "fit");
 });
 
-test("job changes invalidate quick review without erasing the base CV draft", () => {
+test("alterar a vaga invalida a revisão rápida sem apagar o rascunho do currículo base", () => {
   base.getState().selectFile(pdf());
   review
     .getState()
@@ -142,7 +190,7 @@ test("job changes invalidate quick review without erasing the base CV draft", ()
   assert.equal(review.getState().draft.identity.name, "Preservado");
 });
 
-test("quick review keeps answers on remount but rejects old or unknown issues", () => {
+test("a revisão rápida preserva respostas ao remontar e rejeita pendências antigas ou desconhecidas", () => {
   quick.getState().configure("a", issues, true);
   quick.getState().setAnswer("a", "current", { choice: "yes", correction: "" });
   quick.getState().savePreview("a");
@@ -156,7 +204,7 @@ test("quick review keeps answers on remount but rejects old or unknown issues", 
   assert.equal(quick.getState().submittedPreview, null);
 });
 
-test("session reset clears all contexts and restores independent preference defaults", () => {
+test("limpar a sessão apaga os contextos e restaura as preferências padrão", () => {
   base.getState().selectFile(pdf());
   job.getState().setJobText("Dados de uma sessão anterior");
   job.getState().saveDraft();
@@ -175,7 +223,7 @@ test("session reset clears all contexts and restores independent preference defa
   assert.equal(workspace.getState().activeView, "editor");
 });
 
-test("viewer enforces supported zoom and ignores invalid numeric values", () => {
+test("o visualizador limita o zoom e ignora valores numéricos inválidos", () => {
   viewer.getState().setZoom(500);
   assert.equal(viewer.getState().zoom, 200);
   viewer.getState().setZoom(1);

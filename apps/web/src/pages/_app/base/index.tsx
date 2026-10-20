@@ -22,9 +22,7 @@ export const Route = createFileRoute("/_app/base/")({
 
 function RouteComponent() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const file = useBaseCvStore((state) => state.file);
-  const error = useBaseCvStore((state) => state.error);
-  const selectFile = useBaseCvStore((state) => state.selectFile);
+  const { file, error, selectFile } = useBaseCvStore();
   const reducedMotion = useReducedMotion();
 
   return (

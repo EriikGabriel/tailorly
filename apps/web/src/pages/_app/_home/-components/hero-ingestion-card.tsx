@@ -33,13 +33,8 @@ const quickTests = [
 ] as const;
 
 export function HeroIngestionCard() {
-  const mode = useJobDraftStore((state) => state.mode);
-  const jobUrl = useJobDraftStore((state) => state.jobUrl);
-  const jobText = useJobDraftStore((state) => state.jobText);
-  const setMode = useJobDraftStore((state) => state.setMode);
-  const setJobUrl = useJobDraftStore((state) => state.setJobUrl);
-  const setJobText = useJobDraftStore((state) => state.setJobText);
-  const saveDraft = useJobDraftStore((state) => state.saveDraft);
+  const { mode, jobUrl, jobText, setMode, setJobUrl, setJobText, saveDraft } =
+    useJobDraftStore();
   const baseCv = useBaseCvStore((state) => state.file);
   const setReviewOpen = useQuickReviewStore((state) => state.setOpen);
   const hasJob =
