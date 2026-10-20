@@ -14,6 +14,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Resolve o usuário autenticado e seu owner único, usado por {@code GET /v1/me}.
+ *
+ * <p>Contas antigas criadas antes do provisionamento automático de owner não têm um
+ * registro em {@code owners}; {@link #findOrCreate} cria o owner sob bloqueio da conta
+ * ({@code findByEmailForUpdate}) na primeira chamada, para que o frontend nunca precise
+ * persistir um {@code ownerId} separado nem chamar {@code POST /v1/owners} após o login.</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class CurrentAccountService {

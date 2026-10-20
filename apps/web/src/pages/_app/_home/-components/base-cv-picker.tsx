@@ -25,7 +25,7 @@ export function BaseCvPicker() {
     : currentUpload && uploadBaseDocument.isPending
       ? "Enviando PDF..."
       : selectionId && uploadedSelectionId === selectionId
-        ? "Arquivo enviado • ainda não processado"
+        ? "Arquivo enviado"
         : currentUpload && uploadBaseDocument.isError
           ? "Falha no envio • prévia local"
           : "Prévia local • ainda não enviado";

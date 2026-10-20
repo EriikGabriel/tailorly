@@ -81,7 +81,7 @@ test("RF09: envia PDF na home e reutiliza o fluxo em /base após reload", {
     .getByLabel("Selecionar currículo base")
     .setInputFiles("tests/fixtures/curriculo-exemplo.pdf");
   await expect(
-    page.getByText("Arquivo enviado • ainda não processado"),
+    page.getByText("Arquivo enviado", { exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(page.getByLabel("Selecionar currículo base")).toBeVisible();
@@ -94,7 +94,7 @@ test("RF09: envia PDF na home e reutiliza o fluxo em /base após reload", {
     buffer: Buffer.concat([nextPdf, Buffer.from("\n% novo arquivo")]),
   });
   await expect(
-    page.getByText("PDF enviado • ainda não processado", { exact: true }),
+    page.getByText("PDF enviado", { exact: true }),
   ).toBeVisible();
   expect(uploads).toBe(2);
 });

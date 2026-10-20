@@ -3,9 +3,9 @@ package com.tailorly.api.objects;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.tailorly.api.base.BaseDocument;
-import com.tailorly.api.extraction.ExtractedPage;
-import com.tailorly.api.extraction.ExtractionRun;
+import com.tailorly.api.base.document.BaseDocument;
+import com.tailorly.api.extraction.page.ExtractedPage;
+import com.tailorly.api.extraction.run.ExtractionRun;
 import com.tailorly.api.owner.Owner;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,6 +30,12 @@ import lombok.ToString;
 @ToString
 @Builder
 @Entity
+/**
+ * Metadados de um objeto gravado no storage privado (S3/Garage): PDF original, texto extraído
+ * de uma página ou saída de uma execução. Os campos {@code baseDocument}, {@code extractionRun}
+ * e {@code extractedPage} são o lado inverso das relações 1:1 com essas entidades; nem todo
+ * {@code StoredObject} precisa ter uma delas preenchida.
+ */
 @Table(name = "stored_objects")
 public class StoredObject {
   @Id

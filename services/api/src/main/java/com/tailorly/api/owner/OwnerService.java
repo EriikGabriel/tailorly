@@ -18,12 +18,23 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Criação e consulta de owners. Na prática, a maioria das contas nunca chama {@link #create}
+ * diretamente: cadastro e {@code GET /v1/me} provisionam o owner automaticamente (veja
+ * {@link com.tailorly.api.shared.security.CurrentAccountService}). Esta rota continua
+ * disponível sobretudo para criar owners anônimos antes de uma sessão.
+ */
 @Service
 @RequiredArgsConstructor
 public class OwnerService {
   private final OwnerRepository ownerRepository;
   private final UserRepository userRepository;
 
+  /**
+   * Cria um owner. Para {@code KIND_ACCOUNT}, exige autenticação e é idempotente: se a conta
+   * já tiver um owner, devolve o existente em vez de criar outro (cada usuário tem no máximo
+   * um owner). Para {@code KIND_ANONYMOUS}, não aceita {@code userId}.
+   */
   @Transactional
   public OwnerResponse create(CreateOwnerRequest request) {
     OwnerKindEnum kind = parseKind(request.kind());

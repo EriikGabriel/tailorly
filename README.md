@@ -27,14 +27,14 @@ flowchart LR
     Storage --> Vault[Second Brain\nB03 Resources/CVs]
 ```
 
-Os blocos de parsing, LLM, templates, PDF e vault representam a arquitetura planejada. Hoje a API já implementa contas, JWT, owners, registros básicos de sessões anônimas e upload de PDFs para contas no Garage; extração, revisão e geração de currículos ainda não estão disponíveis.
+Os blocos de LLM, templates, geração de PDF e vault representam a arquitetura planejada. Hoje a API implementa contas, JWT, owners, registros básicos de sessões anônimas, upload no Garage e extração de texto por página com fallback para Tesseract local; revisão de fatos e geração de currículos ainda não estão disponíveis.
 
 ## Estrutura do repositório
 
 | Caminho | Papel | Estado |
 | --- | --- | --- |
 | `apps/web` | Interface React para seleção do Currículo Base, revisão em prévia, conta e fluxo de geração planejado. | Interface e upload autenticado parciais; geração e download reais pendentes |
-| `services/api` | API HTTP e orquestração do fluxo de geração. | Autenticação, upload de PDF e versões candidatas implementados; extração, revisão e geração pendentes |
+| `services/api` | API HTTP e orquestração do fluxo de geração. | Autenticação, upload, versões candidatas e extração seletiva inicial; revisão e geração pendentes |
 | `compose.yaml` | PostgreSQL 17 e Garage para desenvolvimento local. | Disponível |
 | `turbo.json` | Orquestra tarefas do monorepo. | Disponível |
 | `pnpm-workspace.yaml` | Define os workspaces `apps/*` e `services/*`. | Disponível |
@@ -73,7 +73,7 @@ A documentação detalhada da implementação Spring Boot está em [`services/ap
 | Saúde | Spring Actuator com `health` e `info` expostos | Métricas e logs estruturados |
 | Acesso web | CORS, JWT Bearer e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente e renovação de tokens |
 | Parsing de páginas | Dependência Jsoup já incluída | Extração de vagas por URL |
-| Dados e arquivos | PostgreSQL com migrations Flyway; upload de PDFs para contas no Garage via S3 e criação de versões candidatas | Extração/OCR e revisão dos fatos |
+| Dados e arquivos | PostgreSQL/Flyway; PDFs e textos por página no Garage; fila de extração PDFBox/OCR seletivo | Progresso da extração na UI e revisão dos fatos |
 
 O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. A especificação OpenAPI está em `http://localhost:8080/v3/api-docs` e a interface Swagger UI em `http://localhost:8080/swagger-ui.html`. A API inclui operações de usuários, owners e sessões anônimas. Cadastro (`POST /v1/auth/register` e o caminho existente `POST /v1/users`), login (`POST /v1/auth/login`), saúde, documentação e criação/validação de sessões anônimas são públicos; consulta e revogação de sessões exigem `ROLE_ADMIN`. O login valida email e senha e retorna `accessToken`, `tokenType: Bearer`, `expiresAt` e os dados públicos do usuário. Nas chamadas protegidas, envie `Authorization: Bearer <accessToken>`. O token é assinado com HS256, expira após uma hora e inclui o ID do usuário como sujeito. A API consulta a conta e as roles atuais em cada chamada protegida; contas desativadas perdem acesso imediatamente. Como a autenticação usa apenas o cabeçalho Bearer, não há cookie de login nem token CSRF. Ainda não há refresh token, logout ou revogação individual de JWTs.
 
@@ -109,7 +109,7 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | `/v1/auth/register` | `POST` | Cadastrar usuário (`email`, `password`); retorna `201` e dados públicos. `/v1/users` continua disponível. |
 | `/v1/auth/login` | `POST` | Validar `email` e `password`; retorna JWT Bearer, expiração e dados públicos ou `401`. |
 | `/v1/me` | `GET` | Consultar o usuário autenticado e seu owner único; cria o owner para contas antigas quando necessário. |
-| `/v1/base-documents/upload` | `POST` | Receber PDF de uma conta autenticada, gravar no Garage e criar ou recuperar a versão candidata pelo hash dentro do owner; ainda não inicia extração. |
+| `/v1/base-documents/upload` | `POST` | Receber PDF da conta, gravar no Garage, criar ou recuperar a versão e enfileirar/reutilizar a extração. |
 | `/v1/owners` | `POST` | Criar owner (`kind`, `userId` opcional e `activeSnapshotId` opcional) |
 | `/v1/owners/{id}` | `GET` | Consultar owner |
 | `/v1/owners/{id}/active-snapshot` | `PATCH` | Atualizar ou limpar o snapshot ativo |
@@ -275,13 +275,13 @@ endpoint ou DTO do backend mudar. O código em `apps/web/src/lib/api/generated`
 
 ## Próximos passos
 
-**Ponto de partida:** cadastro, login JWT, `/v1/me`, owner de conta, upload autenticado de PDF no Garage, deduplicação do documento por hash e versão candidata criada pelo servidor já funcionam. Home e `/base` enviam o PDF e mostram o status do arquivo atual; a seleção local e a prévia desaparecem ao recarregar, enquanto a revisão rápida ainda usa dados de demonstração. As rotas de execuções e páginas registram metadados, sem executar o processamento. Nenhum documento enviado se torna Ground Truth automaticamente.
+**Ponto de partida:** cadastro, login JWT, `/v1/me`, upload autenticado no Garage, deduplicação e versão candidata já funcionam. O upload enfileira extração real de texto por página, com OCR seletivo via Tesseract quando instalado. Home e `/base` mostram o estado do upload e ainda não acompanham a execução; a seleção local desaparece ao recarregar. A revisão rápida usa demonstrações. Texto extraído não se torna Ground Truth automaticamente.
 
-**Próxima entrega recomendada: processar o PDF no servidor.** A sequência abaixo separa a implementação existente do trabalho necessário para chegar à geração real:
+**Próxima entrega recomendada: integrar o andamento da extração à interface e iniciar fatos/evidências do MER 2.** A sequência abaixo separa a implementação existente do trabalho necessário para chegar à geração real:
 
 1. [x] **Fechar o ciclo do documento no frontend.** Home e `/base` usam o mesmo fluxo autenticado e mostram o status do upload atual. A interface não lista documentos antigos nem oferece prévia remota; o estado local desaparece ao recarregar.
-2. [x] **Criar a versão candidata no backend.** O upload cria ou recupera a versão no escopo do owner, com status `CANDIDATE` e numeração definidos pelo servidor. Reenvio idêntico reutiliza a mesma versão e marca revisão temporal pendente; o snapshot ativo anterior não é alterado. As rotas que aceitavam número e status livres foram removidas. O reaproveitamento efetivo de OCR e fatos dependerá das próximas etapas, pois esses dados ainda não são produzidos.
-3. [ ] **Processar o PDF no servidor.** Extrair texto diretamente quando possível e aplicar OCR apenas onde necessário. Persistir páginas, evidências de origem, falhas e versões do pipeline usando as entidades de extração já existentes; expor o andamento para a interface. Não colocar credenciais de OCR ou LLM no navegador.
+2. [x] **Criar a versão candidata no backend.** O upload cria ou recupera a versão no escopo do owner, com status e numeração definidos pelo servidor. Reenvio idêntico reutiliza versão e execução compatível e marca revisão temporal pendente; o snapshot ativo não é alterado. Fatos e reavaliação temporal continuam pendentes.
+3. [ ] **Processar o PDF no servidor.** Backend inicial implementado: fila persistente, PDFBox por página, OCR seletivo com Tesseract local, textos no Garage, hashes, métodos, falhas e reutilização por pipeline. Falta integrar o andamento à interface, validar o OCR real com fixtures representativas e aprimorar a análise de layout. O Tesseract e seus modelos precisam ser instalados separadamente; veja o [guia da API](services/api/README.md#extração-seletiva-de-pdf). Fatos e evidências por campo ainda dependem do MER 2.
 4. [ ] **Modelar fatos e revisão reais.** Persistir fatos com evidência, pendências e respostas vinculados à versão candidata, com estados `pendente`, `confirmado`, `corrigido` e `omitido`. Trocar as fixtures da revisão rápida e os rascunhos de `/base` por dados da API. Um reprocessamento não pode sobrescrever silenciosamente correções da pessoa.
 5. [ ] **Aprovar e ativar o Ground Truth.** Criar um snapshot imutável dos fatos revisados e ativá-lo atomicamente após resolver as pendências obrigatórias, desativando o anterior na mesma operação. Validar no servidor que há no máximo um snapshot ativo por owner; o campo `activeSnapshotId` e sua rota atuais ainda não garantem isso. A geração só pode consumir um snapshot aprovado.
 6. [ ] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** Emitir e autenticar a sessão no servidor; habilitar upload e processamento por owner anônimo com limites de tamanho, páginas, requisições e gerações, TTL e limpeza dos dados temporários. Oferecer migração do snapshot revisado para uma conta antes da expiração, sem repetir OCR. Os endpoints atuais de sessão apenas registram e validam dados fornecidos pelo chamador.

@@ -16,22 +16,20 @@ import type {
   BaseDocumentUploadResponse,
   BaseVersionResponse,
   CreateAnonymousSessionRequest,
-  CreateExtractedPageRequest,
   CreateExtractionRunRequest,
   CreateOwnerRequest,
   CreateStoredObjectRequest,
   CreateUserRequest,
   CurrentAccountResponse,
   ExtractedPageResponse,
+  ExtractedPageTextResponse,
   ExtractionRunResponse,
-  FailExtractionRunRequest,
   LoginRequest,
   LoginResponse,
   OwnerResponse,
   StoredObjectResponse,
   UpdateActiveSnapshotRequest,
   UpdateDeletionStatusRequest,
-  UpdateExtractionRunStatusRequest,
   UpdateUserRequest,
   UserGetUserByEmailParams,
   UserResponse,
@@ -332,46 +330,6 @@ export const baseVersionFindById = async (
   });
 };
 
-export const getExtractedPageCreateUrl = () => {
-  return `/v1/extracted-pages`;
-};
-
-export const extractedPageCreate = async (
-  createExtractedPageRequest: CreateExtractedPageRequest,
-  options?: Parameters<typeof apiRequest>[1],
-): Promise<ExtractedPageResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<
-      string | readonly string[] | undefined
-    >(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-  return apiRequest<ExtractedPageResponse>(getExtractedPageCreateUrl(), {
-    ...options,
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...getHeaders(options?.headers),
-    },
-    body: JSON.stringify(createExtractedPageRequest),
-  });
-};
-
 export const getExtractedPageFindByTextHashUrl = (textHash: string) => {
   return `/v1/extracted-pages/hash/${encodeURIComponent(String(textHash))}`;
 };
@@ -420,6 +378,23 @@ export const extractedPageFindById = async (
   });
 };
 
+export const getExtractedPageReadTextUrl = (id: string) => {
+  return `/v1/extracted-pages/${encodeURIComponent(String(id))}/text`;
+};
+
+export const extractedPageReadText = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<ExtractedPageTextResponse> => {
+  return apiRequest<ExtractedPageTextResponse>(
+    getExtractedPageReadTextUrl(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export const getExtractionRunCreateUrl = () => {
   return `/v1/extraction-runs`;
 };
@@ -460,6 +435,23 @@ export const extractionRunCreate = async (
   });
 };
 
+export const getExtractionRunFindByVersionUrl = (baseVersionId: string) => {
+  return `/v1/extraction-runs/version/${encodeURIComponent(String(baseVersionId))}`;
+};
+
+export const extractionRunFindByVersion = async (
+  baseVersionId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<ExtractionRunResponse[]> => {
+  return apiRequest<ExtractionRunResponse[]>(
+    getExtractionRunFindByVersionUrl(baseVersionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export const getExtractionRunFindByIdUrl = (id: string) => {
   return `/v1/extraction-runs/${encodeURIComponent(String(id))}`;
 };
@@ -472,91 +464,6 @@ export const extractionRunFindById = async (
     ...options,
     method: "GET",
   });
-};
-
-export const getExtractionRunFailUrl = (id: string) => {
-  return `/v1/extraction-runs/${encodeURIComponent(String(id))}/fail`;
-};
-
-export const extractionRunFail = async (
-  id: string,
-  failExtractionRunRequest: FailExtractionRunRequest,
-  options?: Parameters<typeof apiRequest>[1],
-): Promise<ExtractionRunResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<
-      string | readonly string[] | undefined
-    >(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-  return apiRequest<ExtractionRunResponse>(getExtractionRunFailUrl(id), {
-    ...options,
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...getHeaders(options?.headers),
-    },
-    body: JSON.stringify(failExtractionRunRequest),
-  });
-};
-
-export const getExtractionRunUpdateStatusUrl = (id: string) => {
-  return `/v1/extraction-runs/${encodeURIComponent(String(id))}/status`;
-};
-
-export const extractionRunUpdateStatus = async (
-  id: string,
-  updateExtractionRunStatusRequest: UpdateExtractionRunStatusRequest,
-  options?: Parameters<typeof apiRequest>[1],
-): Promise<ExtractionRunResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<
-      string | readonly string[] | undefined
-    >(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-  return apiRequest<ExtractionRunResponse>(
-    getExtractionRunUpdateStatusUrl(id),
-    {
-      ...options,
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...getHeaders(options?.headers),
-      },
-      body: JSON.stringify(updateExtractionRunStatusRequest),
-    },
-  );
 };
 
 export const getCurrentAccountCurrentUrl = () => {

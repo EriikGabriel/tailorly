@@ -5,14 +5,7 @@
  * API HTTP do Tailorly. Endpoints de domínio ainda estão planejados.
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateExtractionRunRequestPipelineVersions } from "./createExtractionRunRequestPipelineVersions";
 
 export interface CreateExtractionRunRequest {
   baseVersionId: string;
-  outputObjectId?: string;
-  /** @minLength 1 */
-  pipelineFingerprint: string;
-  pipelineVersions: CreateExtractionRunRequestPipelineVersions;
-  /** @minLength 1 */
-  status: string;
 }

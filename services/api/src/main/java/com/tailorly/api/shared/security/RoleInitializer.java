@@ -12,6 +12,12 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Garante, a cada inicialização da aplicação, que {@code ROLE_USER} e {@code ROLE_ADMIN}
+ * existam e que todo usuário tenha ao menos {@code ROLE_USER}, além de conceder
+ * {@code ROLE_ADMIN} a quem estiver em {@link AdminEmailPolicy}. Apenas adiciona roles; nunca
+ * remove uma role já persistida, mesmo que o e-mail saia da lista de administradores.
+ */
 @Component
 @RequiredArgsConstructor
 public class RoleInitializer implements ApplicationRunner {

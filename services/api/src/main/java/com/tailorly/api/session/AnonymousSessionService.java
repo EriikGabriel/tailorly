@@ -17,6 +17,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Registro, validação e revogação de sessões anônimas.
+ *
+ * <p>O token em si é emitido e verificado fora deste serviço: aqui só chega o
+ * {@code tokenHash} já calculado, nunca o token em texto plano. Cada owner anônimo tem no
+ * máximo uma sessão ({@link #create} rejeita um segundo registro) e a expiração da sessão
+ * também atualiza {@code owner.expiresAt}, para que a limpeza de dados temporários possa se
+ * basear no próprio owner.</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class AnonymousSessionService {
@@ -49,6 +58,7 @@ public class AnonymousSessionService {
     return AnonymousSessionResponse.from(sessionRepository.save(session), Instant.now());
   }
 
+  /** Válida apenas se a sessão existir, não tiver sido revogada e ainda não tiver expirado. */
   @Transactional(readOnly = true)
   public AnonymousSessionValidationResponse validate(String tokenHash) {
     return sessionRepository.findByTokenHash(tokenHash)

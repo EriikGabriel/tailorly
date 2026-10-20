@@ -23,6 +23,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+/**
+ * Traduz exceções de domínio, validação e autenticação lançadas por controllers/services em
+ * respostas {@link ApiError} consistentes e localizadas via {@code Accept-Language}
+ * ({@code en} padrão, {@code pt-BR} disponível). Complementa
+ * {@link com.tailorly.api.shared.security.LocalizedSecurityErrorHandler}, que trata as mesmas
+ * situações quando a rejeição ocorre antes de chegar a um controller.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -167,12 +174,13 @@ public class GlobalExceptionHandler {
     );
   }
 
+  /** Fallback para qualquer exceção não tratada pelos handlers acima; nunca vaza detalhes internos. */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiError> handleUnexpected(
       Exception ex,
       HttpServletRequest request
   ) {
-    // Registre ex no logger para investigação.
+    // TODO: registrar `ex` em um logger estruturado para investigação (RNF08).
     return buildError(
         HttpStatus.INTERNAL_SERVER_ERROR,
         localize(ErrorCodes.UNEXPECTED),

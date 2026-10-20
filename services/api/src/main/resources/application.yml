@@ -40,6 +40,12 @@ springdoc:
   swagger-ui:
     display-operation-id: true
 tailorly:
+  extraction:
+    enabled: ${TAILORLY_EXTRACTION_ENABLED:true}
+    tesseract-command: ${TAILORLY_TESSERACT_COMMAND:tesseract}
+    ocr-languages: ${TAILORLY_OCR_LANGUAGES:por+eng}
+    ocr-revision: ${TAILORLY_OCR_REVISION:local-1}
+    poll-delay-ms: 2000
   storage:
     endpoint: ${TAILORLY_STORAGE_ENDPOINT:http://localhost:3900}
     region: ${TAILORLY_STORAGE_REGION:garage}

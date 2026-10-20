@@ -363,36 +363,6 @@
         ]
       }
     },
-    "/v1/extracted-pages": {
-      "post": {
-        "operationId": "extractedPageCreate",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateExtractedPageRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExtractedPageResponse"
-                }
-              }
-            },
-            "description": "Created"
-          }
-        },
-        "tags": [
-          "ExtractedPage"
-        ]
-      }
-    },
     "/v1/extracted-pages/hash/{textHash}": {
       "get": {
         "operationId": "extractedPageFindByTextHash",
@@ -488,6 +458,37 @@
         ]
       }
     },
+    "/v1/extracted-pages/{id}/text": {
+      "get": {
+        "operationId": "extractedPageReadText",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractedPageTextResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ExtractedPage"
+        ]
+      }
+    },
     "/v1/extraction-runs": {
       "post": {
         "operationId": "extractionRunCreate",
@@ -502,7 +503,7 @@
           "required": true
         },
         "responses": {
-          "201": {
+          "202": {
             "content": {
               "*/*": {
                 "schema": {
@@ -510,7 +511,41 @@
                 }
               }
             },
-            "description": "Created"
+            "description": "Accepted"
+          }
+        },
+        "tags": [
+          "ExtractionRun"
+        ]
+      }
+    },
+    "/v1/extraction-runs/version/{baseVersionId}": {
+      "get": {
+        "operationId": "extractionRunFindByVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "baseVersionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExtractionRunResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
           }
         },
         "tags": [
@@ -532,88 +567,6 @@
             }
           }
         ],
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExtractionRunResponse"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "ExtractionRun"
-        ]
-      }
-    },
-    "/v1/extraction-runs/{id}/fail": {
-      "patch": {
-        "operationId": "extractionRunFail",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FailExtractionRunRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExtractionRunResponse"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "ExtractionRun"
-        ]
-      }
-    },
-    "/v1/extraction-runs/{id}/status": {
-      "patch": {
-        "operationId": "extractionRunUpdateStatus",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateExtractionRunStatusRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "content": {
@@ -1292,66 +1245,16 @@
           "tokenHash"
         ]
       },
-      "CreateExtractedPageRequest": {
-        "type": "object",
-        "properties": {
-          "extractionMethod": {
-            "type": "string",
-            "minLength": 1
-          },
-          "extractionRunId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "textHash": {
-            "type": "string",
-            "minLength": 1
-          },
-          "textObjectId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "extractionMethod",
-          "extractionRunId",
-          "textHash",
-          "textObjectId"
-        ]
-      },
       "CreateExtractionRunRequest": {
         "type": "object",
         "properties": {
           "baseVersionId": {
             "type": "string",
             "format": "uuid"
-          },
-          "outputObjectId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "pipelineFingerprint": {
-            "type": "string",
-            "minLength": 1
-          },
-          "pipelineVersions": {
-            "type": "object",
-            "additionalProperties": {}
-          },
-          "status": {
-            "type": "string",
-            "minLength": 1
           }
         },
         "required": [
-          "baseVersionId",
-          "pipelineFingerprint",
-          "pipelineVersions",
-          "status"
+          "baseVersionId"
         ]
       },
       "CreateOwnerRequest": {
@@ -1490,6 +1393,22 @@
           "textObjectId"
         ]
       },
+      "ExtractedPageTextResponse": {
+        "type": "object",
+        "properties": {
+          "pageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pageId",
+          "text"
+        ]
+      },
       "ExtractionRunResponse": {
         "type": "object",
         "properties": {
@@ -1529,7 +1448,10 @@
             "additionalProperties": {}
           },
           "startedAt": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "status": {
@@ -1546,18 +1468,6 @@
           "pipelineVersions",
           "startedAt",
           "status"
-        ]
-      },
-      "FailExtractionRunRequest": {
-        "type": "object",
-        "properties": {
-          "errorCode": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "errorCode"
         ]
       },
       "LoginRequest": {
@@ -1716,18 +1626,6 @@
         },
         "required": [
           "deletionStatus"
-        ]
-      },
-      "UpdateExtractionRunStatusRequest": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "status"
         ]
       },
       "UpdateUserRequest": {

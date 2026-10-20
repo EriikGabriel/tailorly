@@ -9,7 +9,7 @@ Esta pasta contém a API HTTP do Tailorly. Ela oferece cadastro de usuários, lo
 | Contas | Cadastro com owner provisionado, contexto autenticado em `/v1/me`, consulta, alteração de email, desativação, senha com BCrypt e roles persistidas | Recuperação de senha e exclusão de conta |
 | Acesso | Login com JWT Bearer HS256, autorização por conta e `ROLE_ADMIN` | Refresh token, logout e revogação individual de JWT |
 | Sessões anônimas | Registros de owner e sessão, validação de expiração e revogação administrativa | Emissão de token pelo servidor, cotas, limpeza automática e migração para conta |
-| Currículo Base | Entidades JPA para documentos, versões, execuções de extração e páginas; upload de PDF para conta com deduplicação por owner e versão candidata automática; campo `activeSnapshotId` no owner, sem modelo de snapshot | Upload anônimo, execução de extração/OCR, fatos com evidência, revisão e ativação do Ground Truth |
+| Currículo Base | Upload por conta, deduplicação, versão candidata, fila persistente e extração PDFBox/Tesseract por página | Upload anônimo, progresso na UI, fatos com evidência, revisão e ativação do Ground Truth |
 | Geração | Nenhum endpoint | Ingestão de vaga, template Typst, PDF/Markdown e histórico |
 | Infraestrutura | PostgreSQL via JPA e migrations Flyway, armazenamento privado via API S3, OpenAPI, Swagger UI e Actuator | Limpeza de arquivos e observabilidade ampliada |
 
@@ -20,8 +20,8 @@ O upload grava PDFs no Garage local pelo protocolo S3. A dependência Jsoup tamb
 - Java 21, Spring Boot 3.5, Spring Web, Validation, Security, OAuth2 Resource Server e Spring Data JPA.
 - PostgreSQL via JPA para `users`, `roles`, `user_roles`, `owners`, `anonymous_sessions`, `stored_objects`, `base_documents`, `base_versions`, `extraction_runs` e `extracted_pages`.
 - Springdoc para OpenAPI/Swagger UI e Actuator para saúde.
-- Pacotes em `src/main/java/com/tailorly/api`: `user`, `role`, `owner`, `session`, `objects`, `base`, `extraction` e `shared` (configuração, segurança, erros e handlers).
-- Mensagens em inglês e português em `src/main/resources`; testes em `src/test`.
+- Pacotes em `src/main/java/com/tailorly/api`, organizados por domínio de negócio: `user`, `role`, `owner`, `session`, `objects` (com `objects/storage` para o adaptador S3) e `shared` (`config`, `security`, `exception`, `handler`). `base` e `extraction` são divididos em subpacotes por agregado: `base/document` e `base/version`; `extraction/run`, `extraction/page` e `extraction/processing` (PDFBox/OCR), com `ExtractionQueue`/`ExtractionWorker` na raiz de `extraction` por coordenarem os dois agregados. Cada pacote tem um `package-info.java` com a responsabilidade do domínio.
+- Mensagens em inglês e português em `src/main/resources`; testes em `src/test`, espelhando a mesma estrutura de pacotes do código principal.
 
 Os endpoints de negócio começam com `/v1`. Actuator e documentação usam os caminhos próprios das ferramentas.
 
@@ -33,7 +33,7 @@ O cadastro de documento apenas por metadados permanece disponível como operaç�
 
 `POST /v1/base-documents/upload` (também `/api/base-documents/upload`) recebe `multipart/form-data` com `ownerId` e `file`. Exige Bearer e owner de conta pertencente ao usuário. A API valida um PDF não vazio de até 7 MiB, calcula SHA-256 dos bytes e procura um documento com o mesmo hash **no mesmo owner**. Um arquivo novo é gravado no bucket privado em `owners/{ownerId}/originals/{uuid}.pdf` e registrado em `stored_objects` e `base_documents`. Ainda na transação do upload, a API cria a versão `CANDIDATE` com próximo número do owner ou recupera a versão existente do mesmo documento. A resposta `201` inclui `document`, `reused`, `version` e `versionReused`. O nome original serve apenas como metadado; não define a chave do objeto. O upload não executa OCR nem aprova um snapshot. A requisição multipart completa tem limite de 8 MiB para incluir campos e cabeçalhos.
 
-O owner é bloqueado durante a operação para serializar uploads da mesma conta. Reenvio idêntico reutiliza documento e versão, sem alterar status, revisão ou snapshot ativo; marca `temporalReviewRequired: true` para que fatos sensíveis ao tempo sejam reavaliados quando a revisão real existir. A versão existente conserva suas execuções de extração vinculadas; ainda não há OCR ou fatos a reaproveitar na implementação atual. Versões legadas criadas pelas antigas rotas podem existir em duplicidade para um documento; o upload recupera a de maior número e não cria outra.
+O owner é bloqueado durante a operação para serializar uploads da mesma conta. Reenvio idêntico reutiliza documento, versão e execução compatível; marca `temporalReviewRequired: true` para a futura revisão dos fatos temporais. O snapshot ativo não é alterado. Versões legadas duplicadas podem existir; o upload recupera a de maior número sem criar outra. Ainda não existem fatos revisáveis persistidos.
 
 Se o banco registrar um documento idêntico mas o original não existir no storage, a rota retorna `409` em vez de reutilizar metadados sem arquivo. Uma falha na transação de registro dispara uma tentativa de remover o arquivo recém-enviado; a API registra no log caso essa compensação falhe.
 
@@ -43,9 +43,36 @@ Também é possível consultar documentos por owner em `GET /api/base-documents/
 
 Uma versão pode ser consultada em `GET /api/base-versions/{id}` (ou `/v1/base-versions/{id}`). As rotas públicas de criação, alteração livre de status e incremento de revisão foram removidas: número e status da candidata pertencem ao servidor. As próximas etapas devem definir transições de processamento, revisão e aprovação com validação no domínio.
 
-Execuções de extração são registradas em `POST /api/extraction-runs` (ou `/v1/extraction-runs`) com `baseVersionId`, `pipelineFingerprint`, `pipelineVersions`, `status` e `outputObjectId` opcional. Elas podem ser consultadas, ter status alterado ou ser marcadas como falhas pelos endpoints correspondentes. O owner da versão controla o acesso.
+O upload enfileira automaticamente uma extração na mesma transação do documento/versão. `POST /v1/extraction-runs` aceita somente `{ "baseVersionId": "..." }` e retorna `202` com uma execução nova ou reutilizada. Use essa operação para tentar novamente após uma falha. Fingerprint, versões do pipeline, status e resultados são definidos pelo servidor. As rotas de alteração livre de status e de registro manual de páginas foram removidas.
 
-Páginas extraídas são registradas em `POST /api/extracted-pages` (ou `/v1/extracted-pages`) com `extractionRunId`, método, objeto de texto e hash. Elas podem ser consultadas por ID, por execução ou por hash de texto; a busca global por hash exige administrador e um resultado único.
+Consulte `GET /v1/extraction-runs/version/{baseVersionId}` para as execuções, da mais recente à mais antiga; `GET /v1/extraction-runs/{id}` para o status; `GET /v1/extracted-pages/run/{extractionRunId}` para páginas e métodos; e `GET /v1/extracted-pages/{id}/text` para texto UTF-8. Todas exigem acesso ao owner. Os aliases `/api` continuam disponíveis.
+
+### Extração seletiva de PDF
+
+O worker consulta a fila no PostgreSQL a cada 2 segundos. Ele reserva uma execução com `FOR UPDATE SKIP LOCKED` em uma transação curta, lê o PDF do Garage e processa fora da transação. PDFBox 3.0.8 extrai o texto de cada página; páginas com menos de 40 caracteres visíveis, proporção baixa de letras/números ou caracteres inválidos passam por renderização a 300 DPI e Tesseract. O método persistido é `DIRECT` ou `OCR`. Texto nativo curto é preservado quando o OCR retorna vazio. Não há extração de fatos ou aprovação nesta etapa.
+
+Os estados da execução são `QUEUED`, `PROCESSING`, `COMPLETED` e `FAILED`. A versão candidata passa para `EXTRACTED` somente após a publicação de todas as páginas; status de versões já ativas e o ponteiro do snapshot não são alterados. Falhas de OCR não publicam um documento parcialmente concluído. Páginas vazias podem coexistir com páginas úteis; um documento totalmente sem texto falha com `PDF_NO_TEXT`.
+
+Os textos são gravados em `owners/{ownerId}/extractions/{runId}/pages/{pageNumber}.txt`. A transação final registra objetos, hashes e páginas, atualiza `pageCount` e conclui a execução atomicamente. Se houver falha, os objetos parciais recebem uma tentativa de limpeza; falhas de limpeza ou perda de conexão durante o commit exigem reconciliação operacional. Ainda não existe um coletor automático de objetos órfãos.
+
+Execuções enfileiradas sobrevivem ao reinício. Execuções `PROCESSING` há mais de 10 minutos são marcadas `FAILED` com `WORKER_TIMEOUT` quando o worker consulta a fila novamente; uma nova solicitação permite tentar outra vez. Uma execução tardia não pode publicar resultados depois de expirada. Não há retry automático ilimitado. Uma fila criada com outra configuração do pipeline falha com `PIPELINE_CHANGED`, permitindo uma nova solicitação com a configuração atual.
+
+O hash do pipeline inclui extrator, política de qualidade, normalização, limites, resolução e configuração/revisão do OCR. Dentro da mesma versão, uma execução `QUEUED`, `PROCESSING` ou `COMPLETED` com esse hash é reutilizada. Lock do owner e índice único parcial impedem duplicação concorrente; registros legados de metadados não são consumidos pelo worker. Os fatos e sua revisão temporal continuam pendentes do MER 2.
+
+Para OCR local, instale o executável **Tesseract 5** e os modelos de português (`por`) e inglês (`eng`) no ambiente em que a API executa. Confira com `tesseract --version` e `tesseract --list-langs`. A dependência Maven do PDFBox não instala o Tesseract. PDFs digitais com texto suficiente funcionam sem ele; páginas que exigem OCR falham com `OCR_UNAVAILABLE` quando o executável não existe, ou `OCR_FAILED` quando os modelos/configuração impedem a execução.
+
+| Variável | Padrão | Uso |
+| --- | --- | --- |
+| `TAILORLY_EXTRACTION_ENABLED` | `true` | Ativar o worker; `false` conserva a fila sem processá-la. |
+| `TAILORLY_TESSERACT_COMMAND` | `tesseract` | Caminho do executável local. |
+| `TAILORLY_OCR_LANGUAGES` | `por+eng` | Modelos de idioma instalados. |
+| `TAILORLY_OCR_REVISION` | `local-1` | Identificador do binário/modelos; alterar ao atualizar Tesseract ou traineddata para invalidar o cache. |
+
+Limites iniciais: PDF de até 7 MiB e 20 páginas, renderização de até 20 milhões de pixels por página, texto de até 250 mil caracteres por página, timeout de OCR de 30 segundos e prazo de 3 minutos verificado entre páginas. O parser PDFBox roda no processo Java; esse prazo não interrompe uma chamada ao parser que esteja travada. Para produção, ainda falta isolamento do parser em processo/container com limite rígido de memória e tempo. PDFs criptografados são rejeitados.
+
+A seleção é uma heurística por página: texto extraível suficiente pode coexistir com uma imagem contendo outros textos. Esta primeira versão não detecta automaticamente todos esses casos nem reconstrói a ordem de leitura de colunas. Não fornece confiança factual ou coordenadas de evidência; essas melhorias dependem de análise de layout e do MER 2. O frontend mostra o sucesso do upload, mas ainda não consulta o progresso da extração.
+
+Os testes unitários geram PDFs sintéticos digitais, escaneados e mistos; o OCR nesses testes é simulado. O teste `ExtractionPersistenceTest` usa PostgreSQL real e só é habilitado com `TAILORLY_TEST_DATABASE_URL`, `TAILORLY_TEST_DATABASE_USER` e `TAILORLY_TEST_DATABASE_PASSWORD`, apontando para um banco descartável. Execute `./mvnw -Dtest=ExtractionPersistenceTest test` para validar migrations, concorrência, isolamento por owner, timeout e rollback.
 
 ## Executar localmente
 
@@ -244,11 +271,11 @@ As chaves de mensagem são centralizadas em `shared/exception/ErrorCodes.java`. 
 
 ## Persistência e fluxo alvo de currículo
 
-As entidades `ExtractionRun` (`extraction_runs`) e `ExtractedPage` (`extracted_pages`) modelam execuções e páginas extraídas. Cada versão pode ter várias execuções, e cada execução pode ter várias páginas. `pipeline_versions` é um objeto JSON armazenado como `jsonb` no PostgreSQL. O objeto de saída da execução é opcional e exclusivo; o objeto de texto de cada página é obrigatório e exclusivo. Os vínculos são navegáveis nos dois sentidos. `StoredObject.owner` é obrigatório, e `Owner` expõe suas coleções de objetos, documentos e versões. Esses registros de extração possuem endpoints de metadados, mas ainda não há execução de OCR ou gravação dos resultados da extração no storage.
+As entidades `ExtractionRun` e `ExtractedPage` persistem as execuções reais do worker e os textos por página. `pipeline_versions` guarda a configuração em `jsonb`; cada página aponta para um objeto de texto privado no Garage. Execuções antigas permanecem vinculadas à versão. O resultado atual contém texto, hash e método por página; fatos estruturados e evidências por campo ainda não existem.
 
 `users` guarda o hash BCrypt da senha e o estado `enabled`; `user_roles` relaciona as roles; `owners` guarda tipo, vínculo opcional com a conta, revisão, expiração e o UUID do snapshot ativo; `anonymous_sessions` guarda hash de token, expiração e revogação. `stored_objects` modela metadados de storage; cada `base_documents` exige um objeto original, e cada objeto pode ser original de no máximo um documento (`original_object_id` único). O hash do documento é único por owner. O upload cria no máximo uma nova `base_versions` por documento; versões legadas duplicadas podem continuar presentes. A numeração é única por owner. Ainda não há persistência de fatos revisados ou currículos gerados.
 
-O fluxo alvo parte do **Currículo Base revisado como fonte dos fatos**: upload com hash por conta ou sessão → extração/OCR com evidência → revisão de fatos e pendências por versão → ativação atômica de uma versão aprovada → geração a partir de um snapshot imutável e da vaga. Templates Typst devem formatar os fatos; vagas e fontes secundárias não devem criar fatos pessoais. Versões candidatas não devem substituir a versão ativa antes da revisão. O upload, a deduplicação de documentos e a criação ou reutilização de versões por conta estão implementados; o reaproveitamento efetivo de OCR/fatos, a reavaliação temporal e o restante do fluxo **não estão implementados**. Também faltam autenticação segura para visitantes, TTL e limpeza do storage anônimo, migração para conta, exclusão de originais/textos/fatos/pendências/artefatos derivados e retenção configurável para contas. Não prometa exclusão completa a partir do `deletionStatus` atual.
+O fluxo alvo parte do **Currículo Base revisado como fonte dos fatos**: upload → extração/OCR → fatos e revisão → snapshot aprovado → geração. Upload, deduplicação, versões e extração seletiva inicial estão implementados. Fatos, reavaliação temporal, snapshots e geração continuam planejados. Também faltam autenticação segura para visitantes, TTL, migração, exclusão abrangente e retenção configurável. Não prometa exclusão completa a partir do `deletionStatus` atual.
 
 Veja a [decisão de produto no README principal](../../README.md#decisão-de-produto-currículo-base-como-ground-truth) para os invariantes completos.
 
@@ -281,4 +308,4 @@ Na pasta `services/api`:
 ./mvnw clean package
 ```
 
-No workspace, `pnpm --filter @tailorly/api test`, `check` e `build` executam os comandos Maven equivalentes. Os testes atuais cobrem cadastro/login, assinatura e expiração do JWT, acesso Bearer e upload/deduplicação/compensação em caso de rollback com mocks. Ainda não há testes de integração com PostgreSQL/Garage ou contrato HTTP completo.
+No workspace, `pnpm --filter @tailorly/api test`, `check` e `build` executam os comandos Maven equivalentes. Há testes de autenticação, upload, versões, extração seletiva e compensação com mocks, além do teste PostgreSQL opcional descrito acima. Ainda falta uma suíte integrada com Garage e OCR real.

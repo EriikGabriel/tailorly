@@ -43,6 +43,16 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+/**
+ * Configuração central de autenticação e autorização: sessões stateless, login com
+ * {@code AuthenticationProvider} baseado em BCrypt e validação de Bearer JWT via
+ * {@code oauth2ResourceServer}.
+ *
+ * <p>{@link #jwtAuthenticationConverter()} é o ponto mais sensível: a cada requisição
+ * autenticada, ele consulta o usuário pelo id no sujeito do token e confirma que a conta ainda
+ * está {@code enabled}, para que uma desativação tenha efeito imediato mesmo com um token
+ * ainda dentro da validade — o JWT em si não é revogado, apenas deixa de autorizar.</p>
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -51,6 +61,7 @@ public class SecurityConfiguration {
   private final UserRepository userRepository;
   private final LocalizedSecurityErrorHandler securityErrorHandler;
 
+  /** Regras de autorização por rota; veja a classe para as regras de JWT e senha. */
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     return http
@@ -82,6 +93,10 @@ public class SecurityConfiguration {
         .build();
   }
 
+  /**
+   * Converte um JWT validado em uma {@link Authentication} com as roles atuais do usuário,
+   * rejeitando tokens de contas desativadas ou removidas.
+   */
   @Bean
   public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
     return token -> {

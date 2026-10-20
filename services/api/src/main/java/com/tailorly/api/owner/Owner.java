@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import com.tailorly.api.base.BaseDocument;
-import com.tailorly.api.base.BaseVersion;
+import com.tailorly.api.base.document.BaseDocument;
+import com.tailorly.api.base.version.BaseVersion;
 import com.tailorly.api.objects.StoredObject;
 import com.tailorly.api.session.AnonymousSession;
 import com.tailorly.api.user.User;
@@ -42,6 +42,13 @@ import org.hibernate.annotations.Check;
     constraints = "(kind = 'KIND_ACCOUNT' AND user_id IS NOT NULL) "
         + "OR (kind = 'KIND_ANONYMOUS' AND user_id IS NULL)"
 )
+/**
+ * Identidade proprietária de dados: uma conta autenticada ({@code KIND_ACCOUNT}) ou uma sessão
+ * anônima ({@code KIND_ANONYMOUS}). O check constraint garante que contas sempre tenham
+ * {@code user} e sessões anônimas nunca tenham. {@code activeSnapshotId} aponta para a versão
+ * do Currículo Base aprovada como Ground Truth ativo (fluxo ainda planejado); {@code revision}
+ * é incrementado atomicamente a cada mudança relevante do owner.
+ */
 @Table(name = "owners")
 public class Owner {
   @Id

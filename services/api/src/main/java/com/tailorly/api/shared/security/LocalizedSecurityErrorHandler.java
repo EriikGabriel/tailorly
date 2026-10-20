@@ -21,6 +21,12 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.LocaleResolver;
 
+/**
+ * Responde {@code 401}/{@code 403} como JSON localizado (via {@code Accept-Language}) quando o
+ * filtro de segurança rejeita a requisição antes de chegar a um controller. Complementa
+ * {@link com.tailorly.api.shared.handler.GlobalExceptionHandler}, que trata exceções lançadas
+ * dentro de controllers/services já autenticados.
+ */
 @Component
 @RequiredArgsConstructor
 public class LocalizedSecurityErrorHandler

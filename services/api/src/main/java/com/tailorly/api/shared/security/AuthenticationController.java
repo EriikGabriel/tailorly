@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Cadastro e login públicos. {@link #login} delega a validação de credenciais ao
+ * {@link AuthenticationManager} (que usa o {@code AuthenticationProvider} configurado em
+ * {@link com.tailorly.api.shared.config.SecurityConfiguration}) e, se válido, emite o JWT com
+ * {@link JwtTokenService}.
+ */
 @RestController
 @RequestMapping("/v1/auth")
 @RequiredArgsConstructor

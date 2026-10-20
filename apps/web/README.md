@@ -399,8 +399,9 @@ uma resposta atrasada altere seu status. A interface não lista o
 histórico de PDFs enviados. A troca em `/base` usa o mesmo envio da home. O
 cartão distingue prévia local, envio, sucesso e falha e mostra erros da API.
 Sem conta, não tenta o upload; a API ainda não aceita upload anônimo. O envio
-armazena o original e cria ou recupera a versão; não executa extração nem aprova
-Ground Truth. Trocar a seleção local não apaga documentos remotos.
+armazena o original, cria ou recupera a versão e enfileira extração no servidor.
+O frontend ainda não consulta o andamento dessa execução; o selo confirma apenas
+o upload. A extração não aprova Ground Truth. Trocar a seleção local não apaga documentos remotos.
 
 ### Guardas de contexto obsoleto
 
@@ -538,7 +539,7 @@ Interface derivada dos nós do Figma Tailorly, usando os tokens do projeto,
 Trilha de navegação (`Início / Currículo Base / Auditoria & Curadoria do
 Ground Truth`), selo com o estado do envio, título "Auditoria & Curadoria
 dos Fatos do Currículo Base", input de PDF e três `GovernanceCard`:
-**Arquivo mestre** (arquivo local ou nome do PDF enviado, sempre identificado como não processado), **Índice de
+**Arquivo mestre** (arquivo local ou nome do PDF enviado, com estado do upload), **Índice de
 confiabilidade** ("Ainda não avaliado", barra vazia) e **Protocolo de
 integridade** ("Aguardando revisão", "Nenhum fato confirmado"). Um
 `aria-live="polite"` em `sr-only` anuncia a seleção.

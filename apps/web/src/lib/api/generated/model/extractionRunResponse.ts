@@ -18,6 +18,7 @@ export interface ExtractionRunResponse {
   outputObjectId: string | null;
   pipelineFingerprint: string;
   pipelineVersions: ExtractionRunResponsePipelineVersions;
-  startedAt: string;
+  /** @nullable */
+  startedAt: string | null;
   status: string;
 }

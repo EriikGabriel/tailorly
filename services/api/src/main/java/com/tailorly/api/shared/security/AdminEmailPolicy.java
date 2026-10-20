@@ -8,6 +8,12 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * Lista de e-mails de administradores locais, configurada por {@code TAILORLY_ADMIN_EMAILS}
+ * (separados por vírgula). Usada por {@link RoleInitializer} na inicialização para conceder
+ * {@code ROLE_ADMIN} a contas existentes ou recém-criadas cujo e-mail esteja na lista; nunca
+ * remove roles já persistidas.
+ */
 @Component
 public class AdminEmailPolicy {
   private final Set<String> adminEmails;

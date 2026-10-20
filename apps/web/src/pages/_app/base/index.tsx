@@ -35,7 +35,7 @@ function RouteComponent() {
     : file && !accessToken
       ? "Prévia local • entre na sua conta para enviar"
       : file && selectionId && uploadedSelectionId === selectionId
-        ? "PDF enviado • ainda não processado"
+        ? "PDF enviado"
         : file
           ? "Prévia local • ainda não enviado"
           : "Aguardando Currículo Base";
