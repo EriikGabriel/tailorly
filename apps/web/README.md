@@ -387,19 +387,19 @@ persistente nem fonte de cotas.
   **limpa** rascunhos, respostas rápidas, cartões expandidos e zoom. O
   comentário no código é explícito: *"A local selection ID is not a Ground Truth
   version or a content hash."*
-- `selectFile(null)` remove a prévia local: zera `file` e `selectionId`, preserva a seleção de documento remoto e reaplica as limpezas. Não exclui o PDF no servidor.
+- `selectFile(null)` remove a prévia local: zera `file` e `selectionId` e reaplica as limpezas. Não exclui o PDF no servidor.
 
 DOC/DOCX permanecem parte do fluxo alvo, mas ainda não são aceitos porque a API não possui parser para esses formatos.
 
 Na home e em `/base`, um PDF válido é selecionado para prévia local. Com JWT, o
 hook compartilhado consulta o owner por `/v1/me` e envia o PDF a
-`POST /v1/base-documents/upload`. O ID retornado fica na store apenas como
-seleção de interface; `GET /v1/base-documents/owner/{ownerId}` recupera a lista
-de metadados da conta. A interface mantém apenas o arquivo atual e não lista o
+`POST /v1/base-documents/upload`. A API devolve documento e versão candidata
+ou reutilizada; a store guarda apenas o ID da seleção local para evitar que
+uma resposta atrasada altere seu status. A interface não lista o
 histórico de PDFs enviados. A troca em `/base` usa o mesmo envio da home. O
 cartão distingue prévia local, envio, sucesso e falha e mostra erros da API.
 Sem conta, não tenta o upload; a API ainda não aceita upload anônimo. O envio
-armazena o original, mas não cria versão, não executa extração e não aprova
+armazena o original e cria ou recupera a versão; não executa extração nem aprova
 Ground Truth. Trocar a seleção local não apaga documentos remotos.
 
 ### Guardas de contexto obsoleto

@@ -15,6 +15,7 @@ public record BaseVersionResponse(
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int versionNumber,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String status,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int reviewRevision,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean temporalReviewRequired,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant createdAt
 ) {
   public static BaseVersionResponse from(BaseVersion version) {
@@ -25,6 +26,7 @@ public record BaseVersionResponse(
         .versionNumber(version.getVersionNumber())
         .status(version.getStatus())
         .reviewRevision(version.getReviewRevision())
+        .temporalReviewRequired(version.isTemporalReviewRequired())
         .createdAt(version.getCreatedAt())
         .build();
   }

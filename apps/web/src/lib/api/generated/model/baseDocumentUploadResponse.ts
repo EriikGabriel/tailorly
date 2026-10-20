@@ -6,8 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { BaseDocumentResponse } from "./baseDocumentResponse";
+import type { BaseVersionResponse } from "./baseVersionResponse";
 
 export interface BaseDocumentUploadResponse {
   document: BaseDocumentResponse;
   reused: boolean;
+  version: BaseVersionResponse;
+  versionReused: boolean;
 }

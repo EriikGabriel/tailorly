@@ -13,5 +13,6 @@ export interface BaseVersionResponse {
   ownerId: string;
   reviewRevision: number;
   status: string;
+  temporalReviewRequired: boolean;
   versionNumber: number;
 }

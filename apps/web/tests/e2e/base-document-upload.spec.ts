@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
-test("RF09: recupera o PDF enviado após reload e usa o mesmo upload em /base", {
+test("RF09: envia PDF na home e reutiliza o fluxo em /base após reload", {
   tag: "@RF09",
   annotation: {
     type: "requirement",
@@ -61,6 +61,17 @@ test("RF09: recupera o PDF enviado após reload e usa o mesmo upload em /base", 
           createdAt: new Date().toISOString(),
         },
         reused: false,
+        version: {
+          id: `55555555-5555-5555-5555-${String(uploads).padStart(12, "0")}`,
+          ownerId,
+          documentId: `33333333-3333-3333-3333-${String(uploads).padStart(12, "0")}`,
+          versionNumber: uploads,
+          status: "CANDIDATE",
+          reviewRevision: 0,
+          temporalReviewRequired: true,
+          createdAt: new Date().toISOString(),
+        },
+        versionReused: false,
       },
     });
   });
@@ -83,7 +94,7 @@ test("RF09: recupera o PDF enviado após reload e usa o mesmo upload em /base", 
     buffer: Buffer.concat([nextPdf, Buffer.from("\n% novo arquivo")]),
   });
   await expect(
-    page.getByText("PDF enviado • ainda não processado"),
+    page.getByText("PDF enviado • ainda não processado", { exact: true }),
   ).toBeVisible();
   expect(uploads).toBe(2);
 });

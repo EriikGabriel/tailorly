@@ -332,36 +332,6 @@
         ]
       }
     },
-    "/v1/base-versions": {
-      "post": {
-        "operationId": "baseVersionCreate",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateBaseVersionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseVersionResponse"
-                }
-              }
-            },
-            "description": "Created"
-          }
-        },
-        "tags": [
-          "BaseVersion"
-        ]
-      }
-    },
     "/v1/base-versions/{id}": {
       "get": {
         "operationId": "baseVersionFindById",
@@ -376,78 +346,6 @@
             }
           }
         ],
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseVersionResponse"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "BaseVersion"
-        ]
-      }
-    },
-    "/v1/base-versions/{id}/increment-review-revision": {
-      "patch": {
-        "operationId": "baseVersionIncrementReviewRevision",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseVersionResponse"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "BaseVersion"
-        ]
-      }
-    },
-    "/v1/base-versions/{id}/status": {
-      "patch": {
-        "operationId": "baseVersionUpdateStatus",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateBaseVersionStatusRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "content": {
@@ -1312,11 +1210,19 @@
           },
           "reused": {
             "type": "boolean"
+          },
+          "version": {
+            "$ref": "#/components/schemas/BaseVersionResponse"
+          },
+          "versionReused": {
+            "type": "boolean"
           }
         },
         "required": [
           "document",
-          "reused"
+          "reused",
+          "version",
+          "versionReused"
         ]
       },
       "BaseVersionResponse": {
@@ -1345,6 +1251,9 @@
           "status": {
             "type": "string"
           },
+          "temporalReviewRequired": {
+            "type": "boolean"
+          },
           "versionNumber": {
             "type": "integer",
             "format": "int32"
@@ -1357,6 +1266,7 @@
           "ownerId",
           "reviewRevision",
           "status",
+          "temporalReviewRequired",
           "versionNumber"
         ]
       },
@@ -1380,32 +1290,6 @@
           "expiresAt",
           "ownerId",
           "tokenHash"
-        ]
-      },
-      "CreateBaseVersionRequest": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string",
-            "minLength": 1
-          },
-          "versionNumber": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "required": [
-          "documentId",
-          "ownerId",
-          "status"
         ]
       },
       "CreateExtractedPageRequest": {
@@ -1821,18 +1705,6 @@
             "format": "uuid"
           }
         }
-      },
-      "UpdateBaseVersionStatusRequest": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "status"
-        ]
       },
       "UpdateDeletionStatusRequest": {
         "type": "object",

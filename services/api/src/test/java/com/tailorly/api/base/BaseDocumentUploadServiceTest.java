@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +39,7 @@ class BaseDocumentUploadServiceTest {
   @Mock OwnerRepository ownerRepository;
   @Mock OwnerAccessService ownerAccessService;
   @Mock BaseDocumentRepository documentRepository;
+  @Mock BaseVersionService versionService;
   @Mock StoredObjectRepository objectRepository;
   @Mock ObjectStorage storage;
   @InjectMocks BaseDocumentUploadService service;
@@ -70,10 +72,16 @@ class BaseDocumentUploadServiceTest {
       document.setId(UUID.randomUUID());
       return document;
     });
+    when(versionService.findOrCreateForUpload(any())).thenAnswer(invocation -> {
+      BaseDocument document = invocation.getArgument(0);
+      return versionSelection(document, false);
+    });
 
     var response = service.upload(ownerId, file);
 
     assertFalse(response.reused());
+    assertFalse(response.versionReused());
+    assertEquals(BaseVersionService.CANDIDATE, response.version().status());
     assertEquals(ownerId, response.document().ownerId());
     var key = org.mockito.ArgumentCaptor.forClass(String.class);
     verify(storage).put(key.capture(), eq(pdf), eq("application/pdf"));
@@ -98,12 +106,15 @@ class BaseDocumentUploadServiceTest {
     when(documentRepository.findByOwnerIdAndContentHash(eq(ownerId), any()))
         .thenReturn(Optional.of(document));
     when(storage.exists(object.getStorageKey())).thenReturn(true);
+    when(versionService.findOrCreateForUpload(document)).thenReturn(versionSelection(document, true));
 
     var response = service.upload(ownerId, file);
 
     assertTrue(response.reused());
+    assertTrue(response.versionReused());
     assertEquals(document.getId(), response.document().id());
     verify(storage, never()).put(any(), any(), any());
+    verify(versionService).findOrCreateForUpload(document);
   }
 
   @Test
@@ -121,5 +132,19 @@ class BaseDocumentUploadServiceTest {
 
     assertThrows(ResourceAlreadyExistsException.class, () -> service.upload(ownerId, file));
     verify(storage, never()).put(any(), any(), any());
+    verify(versionService, never()).findOrCreateForUpload(any());
+  }
+
+  private BaseVersionService.VersionSelection versionSelection(BaseDocument document, boolean reused) {
+    BaseVersion version = BaseVersion.builder()
+        .id(UUID.randomUUID())
+        .owner(owner)
+        .document(document)
+        .versionNumber(1)
+        .status(BaseVersionService.CANDIDATE)
+        .temporalReviewRequired(true)
+        .createdAt(Instant.now())
+        .build();
+    return new BaseVersionService.VersionSelection(version, reused);
   }
 }

@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import com.tailorly.api.base.dto.BaseDocumentResponse;
 import com.tailorly.api.base.dto.BaseDocumentUploadResponse;
+import com.tailorly.api.base.dto.BaseVersionResponse;
 import com.tailorly.api.objects.StoredObject;
 import com.tailorly.api.objects.StoredObjectRepository;
 import com.tailorly.api.objects.storage.ObjectStorage;
@@ -39,6 +40,7 @@ public class BaseDocumentUploadService {
   private final OwnerRepository ownerRepository;
   private final OwnerAccessService ownerAccessService;
   private final BaseDocumentRepository documentRepository;
+  private final BaseVersionService versionService;
   private final StoredObjectRepository objectRepository;
   private final ObjectStorage storage;
 
@@ -67,10 +69,7 @@ public class BaseDocumentUploadService {
       if (!storage.exists(existing.get().getOriginalObject().getStorageKey())) {
         throw new ResourceAlreadyExistsException(ErrorCodes.BaseDocument.ORIGINAL_OBJECT_MISSING);
       }
-      return BaseDocumentUploadResponse.builder()
-          .document(BaseDocumentResponse.from(existing.get()))
-          .reused(true)
-          .build();
+      return response(existing.get(), true);
     }
 
     String key = "owners/" + ownerId + "/originals/" + UUID.randomUUID() + ".pdf";
@@ -107,9 +106,16 @@ public class BaseDocumentUploadService {
         .build();
     documentRepository.saveAndFlush(document);
 
+    return response(document, false);
+  }
+
+  private BaseDocumentUploadResponse response(BaseDocument document, boolean reused) {
+    var selection = versionService.findOrCreateForUpload(document);
     return BaseDocumentUploadResponse.builder()
         .document(BaseDocumentResponse.from(document))
-        .reused(false)
+        .reused(reused)
+        .version(BaseVersionResponse.from(selection.version()))
+        .versionReused(selection.reused())
         .build();
   }
 

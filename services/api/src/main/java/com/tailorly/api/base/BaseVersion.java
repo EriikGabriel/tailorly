@@ -65,6 +65,9 @@ public class BaseVersion {
   @Column(name = "review_revision", nullable = false)
   private int reviewRevision;
 
+  @Column(name = "temporal_review_required", nullable = false)
+  private boolean temporalReviewRequired;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
