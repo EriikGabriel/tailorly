@@ -33,8 +33,8 @@ Os blocos de parsing, LLM, templates, PDF e vault representam a arquitetura plan
 
 | Caminho | Papel | Estado |
 | --- | --- | --- |
-| `apps/web` | Interface React para criação, edição, prévia e download de currículos. | Scaffold disponível |
-| `services/api` | API HTTP e orquestração do fluxo de geração. | Scaffold disponível |
+| `apps/web` | Interface React para seleção do Currículo Base, revisão em prévia, conta e fluxo de geração planejado. | Interface e upload autenticado parciais; geração e download reais pendentes |
+| `services/api` | API HTTP e orquestração do fluxo de geração. | Autenticação, metadados e upload de PDF implementados; extração, revisão e geração pendentes |
 | `compose.yaml` | PostgreSQL 17 e Garage para desenvolvimento local. | Disponível |
 | `turbo.json` | Orquestra tarefas do monorepo. | Disponível |
 | `pnpm-workspace.yaml` | Define os workspaces `apps/*` e `services/*`. | Disponível |
@@ -109,6 +109,7 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | `/v1/auth/register` | `POST` | Cadastrar usuário (`email`, `password`); retorna `201` e dados públicos. `/v1/users` continua disponível. |
 | `/v1/auth/login` | `POST` | Validar `email` e `password`; retorna JWT Bearer, expiração e dados públicos ou `401`. |
 | `/v1/me` | `GET` | Consultar o usuário autenticado e seu owner único; cria o owner para contas antigas quando necessário. |
+| `/v1/base-documents/upload` | `POST` | Receber PDF de uma conta autenticada, gravar no Garage e deduplicar pelo hash dentro do owner; ainda não cria versão nem inicia extração. |
 | `/v1/owners` | `POST` | Criar owner (`kind`, `userId` opcional e `activeSnapshotId` opcional) |
 | `/v1/owners/{id}` | `GET` | Consultar owner |
 | `/v1/owners/{id}/active-snapshot` | `PATCH` | Atualizar ou limpar o snapshot ativo |
@@ -130,7 +131,7 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | RF04 | Exportação | Disponibilizar o currículo em PDF e Markdown. | Média | Planejado |
 | RF05 | Metadados e histórico | Salvar autoria, data, status, template e referência do arquivo gerado. | Média | Planejado |
 | RF06 | Integração com Second Brain | Copiar/registrar artefatos em `B03 Resources/CVs/` e criar link para uso no Obsidian. | Alta | Planejado |
-| RF07 | Acesso e autenticação | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta | Planejado |
+| RF07 | Acesso e autenticação | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta | Parcial: conta e papéis implementados; uso anônimo pendente |
 | RF08 | Due diligence de empresas | Consolidar sinais públicos para apoiar a decisão de candidatura, com fatores e fontes rastreáveis. | A definir | Backlog |
 
 ### Requisitos não funcionais
@@ -274,9 +275,18 @@ endpoint ou DTO do backend mudar. O código em `apps/web/src/lib/api/generated`
 
 ## Próximos passos
 
-- [ ] Versionar o template base Typst para apresentação e definir a extração, revisão e persistência do Currículo Base como Ground Truth.
-- [ ] Implementar `POST /v1/cv/generate` para ingestão de texto ou URL.
-- [ ] Adicionar extração de requisitos com OpenAI e fallback Ollama.
-- [ ] Implementar a geração de PDF/Markdown e persistência dos artefatos no Garage.
-- [ ] Documentar os futuros endpoints de domínio no OpenAPI, adicionar testes de integração e de contrato e implementar renovação/revogação de tokens.
-- [ ] Integrar os artefatos gerados ao vault e preparar CI/CD com GitHub Actions.
+**Ponto de partida:** cadastro, login JWT, `/v1/me`, owner de conta, upload autenticado de PDF no Garage e deduplicação do documento por hash dentro do owner já funcionam. O frontend envia o arquivo pela home, mas guarda apenas a seleção local para a prévia; a tela `/base` e a revisão rápida ainda usam rascunhos e dados de demonstração. As rotas atuais de versões, execuções e páginas registram metadados, sem executar o processamento. Nenhum documento enviado se torna Ground Truth automaticamente.
+
+**Próxima entrega recomendada: conectar o upload à versão candidata.** A sequência abaixo separa a implementação existente do trabalho necessário para chegar à geração real:
+
+1. [ ] **Fechar o ciclo do documento no frontend.** Guardar o ID retornado pelo upload, consultar documentos do owner ao recarregar e mostrar separadamente seleção local, envio concluído e processamento. Fazer a troca de PDF em `/base` usar o mesmo fluxo autenticado da home. A seleção em Zustand continua sendo apenas estado de interface.
+2. [ ] **Criar a versão candidata no backend.** Após o upload, criar ou recuperar uma versão associada ao documento sob controle do servidor, com status e numeração definidos pelo servidor. Reenvio idêntico da mesma conta deve reutilizar documento, extração e fatos existentes, sem duplicar versões ou OCR; fatos sensíveis ao tempo ainda precisam de nova avaliação. A versão ativa anterior permanece válida durante todo o processamento e a revisão. As rotas atuais de criação e alteração de status de versões não impõem esse ciclo por si só.
+3. [ ] **Processar o PDF no servidor.** Extrair texto diretamente quando possível e aplicar OCR apenas onde necessário. Persistir páginas, evidências de origem, falhas e versões do pipeline usando as entidades de extração já existentes; expor o andamento para a interface. Não colocar credenciais de OCR ou LLM no navegador.
+4. [ ] **Modelar fatos e revisão reais.** Persistir fatos com evidência, pendências e respostas vinculados à versão candidata, com estados `pendente`, `confirmado`, `corrigido` e `omitido`. Trocar as fixtures da revisão rápida e os rascunhos de `/base` por dados da API. Um reprocessamento não pode sobrescrever silenciosamente correções da pessoa.
+5. [ ] **Aprovar e ativar o Ground Truth.** Criar um snapshot imutável dos fatos revisados e ativá-lo atomicamente após resolver as pendências obrigatórias, desativando o anterior na mesma operação. Validar no servidor que há no máximo um snapshot ativo por owner; o campo `activeSnapshotId` e sua rota atuais ainda não garantem isso. A geração só pode consumir um snapshot aprovado.
+6. [ ] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** Emitir e autenticar a sessão no servidor; habilitar upload e processamento por owner anônimo com limites de tamanho, páginas, requisições e gerações, TTL e limpeza dos dados temporários. Oferecer migração do snapshot revisado para uma conta antes da expiração, sem repetir OCR. Os endpoints atuais de sessão apenas registram e validam dados fornecidos pelo chamador.
+7. [ ] **Implementar vaga e geração.** Receber texto ou URL, extrair requisitos e versionar a vaga; usar OpenAI ou Ollama conforme a política definida. Versionar o template Typst e criar `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga, sem refazer OCR nem acrescentar fatos pessoais. Gerar PDF/Markdown, persistir artefatos no Garage e disponibilizar download e histórico reais.
+8. [ ] **Fechar o ciclo dos dados.** Implementar desativação e exclusão efetiva de originais, texto, fatos, pendências e artefatos derivados, com política de retenção para contas. Cobrir as transições do fluxo com testes de API, contrato e interface.
+9. [ ] **Preparar operação e integrações.** Definir renovação ou revogação de tokens, integrar os artefatos gerados ao Second Brain/vault quando habilitado e preparar CI/CD com GitHub Actions.
+
+Após alterar endpoints ou DTOs, execute `pnpm api:sync` com a API ativa para atualizar o contrato OpenAPI e o cliente gerado. Atualize os READMEs da web e da API conforme cada etapa passar de planejada a implementada.
