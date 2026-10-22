@@ -96,6 +96,34 @@ public final class ErrorCodes {
     }
   }
 
+  public static final class FactRecord {
+    public static final String NOT_FOUND = "error.fact_record.not_found";
+    public static final String INVALID_DISPLAY_ORDER = "error.fact_record.invalid_display_order";
+
+    private FactRecord() {
+    }
+  }
+
+  public static final class Fact {
+    public static final String NOT_FOUND = "error.fact.not_found";
+    public static final String RECORD_VERSION_MISMATCH = "error.fact.record_version_mismatch";
+    public static final String EXTRACTION_VERSION_MISMATCH = "error.fact.extraction_version_mismatch";
+    public static final String INVALID_REVIEW_STATE = "error.fact.invalid_review_state";
+    public static final String INVALID_CONFIRMATION = "error.fact.invalid_confirmation";
+    public static final String INVALID_CORRECTION = "error.fact.invalid_correction";
+
+    private Fact() {
+    }
+  }
+
+  public static final class FactEvidence {
+    public static final String NOT_FOUND = "error.fact_evidence.not_found";
+    public static final String PAGE_VERSION_MISMATCH = "error.fact_evidence.page_version_mismatch";
+
+    private FactEvidence() {
+    }
+  }
+
   public static final class Security {
     public static final String AUTHENTICATION_REQUIRED = "error.security.authentication_required";
     public static final String ACCESS_DENIED = "error.security.access_denied";

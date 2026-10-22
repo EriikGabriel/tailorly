@@ -7,6 +7,10 @@ import java.util.UUID;
 
 import com.tailorly.api.base.document.BaseDocument;
 import com.tailorly.api.extraction.run.ExtractionRun;
+import com.tailorly.api.base.fact.group.FactRecord;
+import com.tailorly.api.base.review.ReviewIssue;
+import com.tailorly.api.base.review.ReviewDecision;
+import com.tailorly.api.base.snapshot.GtSnapshot;
 import com.tailorly.api.owner.Owner;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -88,4 +92,24 @@ public class BaseVersion {
   @Builder.Default
   @OneToMany(mappedBy = "baseVersion", fetch = FetchType.LAZY)
   private Set<ExtractionRun> extractionRuns = new HashSet<>();
+
+  @ToString.Exclude
+  @Builder.Default
+  @OneToMany(mappedBy = "baseVersion", fetch = FetchType.LAZY)
+  private Set<FactRecord> factRecords = new HashSet<>();
+
+  @ToString.Exclude
+  @Builder.Default
+  @OneToMany(mappedBy = "baseVersion", fetch = FetchType.LAZY)
+  private Set<ReviewIssue> reviewIssues = new HashSet<>();
+
+  @ToString.Exclude
+  @Builder.Default
+  @OneToMany(mappedBy = "baseVersion", fetch = FetchType.LAZY)
+  private Set<ReviewDecision> reviewDecisions = new HashSet<>();
+
+  @ToString.Exclude
+  @Builder.Default
+  @OneToMany(mappedBy = "baseVersion", fetch = FetchType.LAZY)
+  private Set<GtSnapshot> snapshots = new HashSet<>();
 }

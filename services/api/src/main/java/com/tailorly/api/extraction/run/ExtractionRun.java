@@ -9,6 +9,7 @@ import java.util.UUID;
 import com.tailorly.api.base.version.BaseVersion;
 import com.tailorly.api.extraction.page.ExtractedPage;
 import com.tailorly.api.objects.StoredObject;
+import com.tailorly.api.base.fact.Fact;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -91,4 +92,9 @@ public class ExtractionRun {
   @Builder.Default
   @OneToMany(mappedBy = "extractionRun", fetch = FetchType.LAZY)
   private Set<ExtractedPage> pages = new HashSet<>();
+
+  @ToString.Exclude
+  @Builder.Default
+  @OneToMany(mappedBy = "extractionRun", fetch = FetchType.LAZY)
+  private Set<Fact> facts = new HashSet<>();
 }

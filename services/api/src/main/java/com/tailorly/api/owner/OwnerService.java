@@ -3,6 +3,7 @@ package com.tailorly.api.owner;
 import java.util.Locale;
 import java.util.UUID;
 
+import com.tailorly.api.base.snapshot.GtSnapshotRepository;
 import com.tailorly.api.owner.dto.CreateOwnerRequest;
 import com.tailorly.api.owner.dto.OwnerResponse;
 import com.tailorly.api.shared.exception.BadRequestException;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OwnerService {
   private final OwnerRepository ownerRepository;
+  private final GtSnapshotRepository gtSnapshotRepository;
   private final UserRepository userRepository;
 
   /**
@@ -80,7 +82,13 @@ public class OwnerService {
 
   @Transactional
   public OwnerResponse updateActiveSnapshot(UUID id, UUID activeSnapshotId) {
-    getOwner(id);
+    Owner owner = ownerRepository.findByIdForUpdate(id)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
+    assertCanAccess(owner);
+    if (activeSnapshotId != null
+        && gtSnapshotRepository.findByIdAndOwnerId(activeSnapshotId, id).isEmpty()) {
+      throw new ResourceNotFoundException(ErrorCodes.BaseVersion.NOT_FOUND);
+    }
     if (ownerRepository.updateActiveSnapshot(id, activeSnapshotId) == 0) {
       throw new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND);
     }
@@ -99,6 +107,11 @@ public class OwnerService {
   private Owner getOwner(UUID id) {
     Owner owner = ownerRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
+    assertCanAccess(owner);
+    return owner;
+  }
+
+  private void assertCanAccess(Owner owner) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (owner.getKind() != OwnerKindEnum.KIND_ACCOUNT
         || authentication == null
@@ -108,7 +121,6 @@ public class OwnerService {
         || !owner.getUser().getEmail().equals(authentication.getName())) {
       throw new AccessDeniedException(ErrorCodes.Owner.ACCESS_DENIED);
     }
-    return owner;
   }
 
   private OwnerKindEnum parseKind(String kind) {

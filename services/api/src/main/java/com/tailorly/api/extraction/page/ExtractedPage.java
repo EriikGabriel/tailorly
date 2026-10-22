@@ -4,6 +4,9 @@ import java.util.UUID;
 
 import com.tailorly.api.extraction.run.ExtractionRun;
 import com.tailorly.api.objects.StoredObject;
+import com.tailorly.api.base.fact.evidence.FactEvidence;
+import java.util.HashSet;
+import java.util.Set;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,6 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -57,4 +61,9 @@ public class ExtractedPage {
 
   @Column(name = "text_hash", nullable = false)
   private String textHash;
+
+  @Builder.Default
+  @ToString.Exclude
+  @OneToMany(mappedBy = "extractedPage", fetch = FetchType.LAZY)
+  private Set<FactEvidence> evidence = new HashSet<>();
 }

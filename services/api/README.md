@@ -9,7 +9,7 @@ Esta pasta contém a API HTTP do Tailorly. Ela oferece cadastro de usuários, lo
 | Contas | Cadastro com owner provisionado, contexto autenticado em `/v1/me`, consulta, alteração de email, desativação, senha com BCrypt e roles persistidas | Recuperação de senha e exclusão de conta |
 | Acesso | Login com JWT Bearer HS256, autorização por conta e `ROLE_ADMIN` | Refresh token, logout e revogação individual de JWT |
 | Sessões anônimas | Registros de owner e sessão, validação de expiração e revogação administrativa | Emissão de token pelo servidor, cotas, limpeza automática e migração para conta |
-| Currículo Base | Upload por conta, deduplicação, versão candidata, fila persistente e extração PDFBox/Tesseract por página | Upload anônimo, progresso na UI, fatos com evidência, revisão e ativação do Ground Truth |
+| Currículo Base | Upload por conta, deduplicação, versão candidata, fila persistente, extração PDFBox/Tesseract por página, modelo relacional e endpoints de registros, fatos e evidências | Upload anônimo, progresso na UI, extração estruturada automática, aprovação do snapshot e ativação via fluxo de aprovação |
 | Geração | Nenhum endpoint | Ingestão de vaga, template Typst, PDF/Markdown e histórico |
 | Infraestrutura | PostgreSQL via JPA e migrations Flyway, armazenamento privado via API S3, OpenAPI, Swagger UI e Actuator | Limpeza de arquivos e observabilidade ampliada |
 
@@ -18,9 +18,9 @@ O upload grava PDFs no Garage local pelo protocolo S3. A dependência Jsoup tamb
 ## Tecnologias e estrutura
 
 - Java 21, Spring Boot 3.5, Spring Web, Validation, Security, OAuth2 Resource Server e Spring Data JPA.
-- PostgreSQL via JPA para `users`, `roles`, `user_roles`, `owners`, `anonymous_sessions`, `stored_objects`, `base_documents`, `base_versions`, `extraction_runs` e `extracted_pages`.
+- PostgreSQL via JPA para contas, owners, documentos, extrações, registros/fatos/evidências, revisão e snapshots do Ground Truth.
 - Springdoc para OpenAPI/Swagger UI e Actuator para saúde.
-- Pacotes em `src/main/java/com/tailorly/api`, organizados por domínio de negócio: `user`, `role`, `owner`, `session`, `objects` (com `objects/storage` para o adaptador S3) e `shared` (`config`, `security`, `exception`, `handler`). `base` e `extraction` são divididos em subpacotes por agregado: `base/document` e `base/version`; `extraction/run`, `extraction/page` e `extraction/processing` (PDFBox/OCR), com `ExtractionQueue`/`ExtractionWorker` na raiz de `extraction` por coordenarem os dois agregados. Cada pacote tem um `package-info.java` com a responsabilidade do domínio.
+- Pacotes em `src/main/java/com/tailorly/api`, organizados por domínio de negócio: `user`, `role`, `owner`, `session`, `objects` (com `objects/storage` para o adaptador S3) e `shared` (`config`, `security`, `exception`, `handler`). `base` e `extraction` são divididos em subpacotes por agregado: `base/document`, `base/version`, `base/fact` (com `group` e `evidence`), `base/review` e `base/snapshot`; `extraction/run`, `extraction/page` e `extraction/processing` (PDFBox/OCR), com `ExtractionQueue`/`ExtractionWorker` na raiz de `extraction` por coordenarem os dois agregados. Cada pacote tem um `package-info.java` com a responsabilidade do domínio.
 - Mensagens em inglês e português em `src/main/resources`; testes em `src/test`, espelhando a mesma estrutura de pacotes do código principal.
 
 Os endpoints de negócio começam com `/v1`. Actuator e documentação usam os caminhos próprios das ferramentas.
@@ -33,7 +33,7 @@ O cadastro de documento apenas por metadados permanece disponível como operaç�
 
 `POST /v1/base-documents/upload` (também `/api/base-documents/upload`) recebe `multipart/form-data` com `ownerId` e `file`. Exige Bearer e owner de conta pertencente ao usuário. A API valida um PDF não vazio de até 7 MiB, calcula SHA-256 dos bytes e procura um documento com o mesmo hash **no mesmo owner**. Um arquivo novo é gravado no bucket privado em `owners/{ownerId}/originals/{uuid}.pdf` e registrado em `stored_objects` e `base_documents`. Ainda na transação do upload, a API cria a versão `CANDIDATE` com próximo número do owner ou recupera a versão existente do mesmo documento. A resposta `201` inclui `document`, `reused`, `version` e `versionReused`. O nome original serve apenas como metadado; não define a chave do objeto. O upload não executa OCR nem aprova um snapshot. A requisição multipart completa tem limite de 8 MiB para incluir campos e cabeçalhos.
 
-O owner é bloqueado durante a operação para serializar uploads da mesma conta. Reenvio idêntico reutiliza documento, versão e execução compatível; marca `temporalReviewRequired: true` para a futura revisão dos fatos temporais. O snapshot ativo não é alterado. Versões legadas duplicadas podem existir; o upload recupera a de maior número sem criar outra. Ainda não existem fatos revisáveis persistidos.
+O owner é bloqueado durante a operação para serializar uploads da mesma conta. Reenvio idêntico reutiliza documento, versão e execução compatível; marca `temporalReviewRequired: true` para revisão dos fatos temporais. O snapshot ativo não é alterado. Versões legadas duplicadas podem existir; o upload recupera a de maior número sem criar outra. As tabelas de fatos, evidências, revisão e snapshots estão modeladas, mas a extração estruturada e as operações de revisão/aprovação ainda não estão implementadas.
 
 Se o banco registrar um documento idêntico mas o original não existir no storage, a rota retorna `409` em vez de reutilizar metadados sem arquivo. Uma falha na transação de registro dispara uma tentativa de remover o arquivo recém-enviado; a API registra no log caso essa compensação falhe.
 
@@ -57,7 +57,7 @@ Os textos são gravados em `owners/{ownerId}/extractions/{runId}/pages/{pageNumb
 
 Execuções enfileiradas sobrevivem ao reinício. Execuções `PROCESSING` há mais de 10 minutos são marcadas `FAILED` com `WORKER_TIMEOUT` quando o worker consulta a fila novamente; uma nova solicitação permite tentar outra vez. Uma execução tardia não pode publicar resultados depois de expirada. Não há retry automático ilimitado. Uma fila criada com outra configuração do pipeline falha com `PIPELINE_CHANGED`, permitindo uma nova solicitação com a configuração atual.
 
-O hash do pipeline inclui extrator, política de qualidade, normalização, limites, resolução e configuração/revisão do OCR. Dentro da mesma versão, uma execução `QUEUED`, `PROCESSING` ou `COMPLETED` com esse hash é reutilizada. Lock do owner e índice único parcial impedem duplicação concorrente; registros legados de metadados não são consumidos pelo worker. Os fatos e sua revisão temporal continuam pendentes do MER 2.
+O hash do pipeline inclui extrator, política de qualidade, normalização, limites, resolução e configuração/revisão do OCR. Dentro da mesma versão, uma execução `QUEUED`, `PROCESSING` ou `COMPLETED` com esse hash é reutilizada. Lock do owner e índice único parcial impedem duplicação concorrente; registros legados de metadados não são consumidos pelo worker. As entidades e migrations do MER 2 já persistem fatos, evidências, pendências, decisões, snapshots e itens; o worker ainda não produz fatos e não há serviços/endpoints para revisão ou aprovação.
 
 Para OCR local, instale o executável **Tesseract 5** e os modelos de português (`por`) e inglês (`eng`) no ambiente em que a API executa. Confira com `tesseract --version` e `tesseract --list-langs`. A dependência Maven do PDFBox não instala o Tesseract. PDFs digitais com texto suficiente funcionam sem ele; páginas que exigem OCR falham com `OCR_UNAVAILABLE` quando o executável não existe, ou `OCR_FAILED` quando os modelos/configuração impedem a execução.
 
@@ -243,6 +243,18 @@ O email de cadastro deve ser válido; a senha deve ter de 8 a 128 caracteres. Lo
 | `POST /v1/anonymous-sessions/validate` | Público | Validar `tokenHash`; retorna `valid`, e, se válido, `ownerId` e `expiresAt`. |
 | `POST /v1/base-documents/upload` | Conta proprietária ou admin | Enviar PDF e criar ou recuperar sua versão; multipart `ownerId`, `file`. |
 | `GET /v1/base-versions/{id}` | Conta proprietária ou admin | Consultar versão e marca de revisão temporal pendente. |
+| `POST /v1/fact-records` | Conta proprietária ou admin | Criar agrupador; corpo `baseVersionId`, `category`, `displayOrder`. Alias `/api/fact-records`. |
+| `GET /v1/fact-records/{id}` | Conta proprietária ou admin | Consultar agrupador. Alias `/api/fact-records/{id}`. |
+| `GET /v1/fact-records/version/{baseVersionId}` | Conta proprietária ou admin | Listar agrupadores da versão. Alias `/api/fact-records/version/{baseVersionId}`. |
+| `PATCH /v1/fact-records/{id}/display-order` | Conta proprietária ou admin | Atualizar `displayOrder`. Alias `/api/fact-records/{id}/display-order`. |
+| `POST /v1/facts` | Conta proprietária ou admin | Criar fato vinculado a registro e execução opcional. Alias `/api/facts`. |
+| `GET /v1/facts/{id}` | Conta proprietária ou admin | Consultar fato. Alias `/api/facts/{id}`. |
+| `PATCH /v1/facts/{id}/review-state` | Conta proprietária ou admin | Alterar para `pendente`, `confirmado`, `corrigido` ou `omitido` e registrar decisão. Alias `/api/facts/{id}/review-state`. |
+| `PATCH /v1/facts/{id}/confirm` | Conta proprietária ou admin | Confirmar valor revisado ou, se ausente, o extraído. Alias `/api/facts/{id}/confirm`. |
+| `POST /v1/fact-evidence` | Conta proprietária ou admin | Criar evidência; a página precisa pertencer à versão do fato. Alias `/api/fact-evidence`. |
+| `GET /v1/fact-evidence/{id}` | Conta proprietária ou admin | Consultar evidência. Alias `/api/fact-evidence/{id}`. |
+| `GET /v1/fact-evidence/fact/{factId}` | Conta proprietária ou admin | Listar evidências do fato. Alias `/api/fact-evidence/fact/{factId}`. |
+| `PATCH /v1/fact-evidence/{id}/locator` | Conta proprietária ou admin | Atualizar `sourceLocator`. Alias `/api/fact-evidence/{id}/locator`. |
 | `GET /v1/anonymous-sessions/{id}` | Admin | Consultar sessão. |
 | `PATCH /v1/anonymous-sessions/{id}/revoke` | Admin | Revogar sessão. |
 
@@ -250,7 +262,7 @@ O email de cadastro deve ser válido; a senha deve ter de 8 a 128 caracteres. Lo
 
 ### Owners e sessões anônimas: limites atuais
 
-Um owner é uma identidade de propriedade de dados: `kind` pode ser `account` ou `anonymous`. Um owner de conta é ligado ao usuário autenticado; `userId`, quando enviado, precisa corresponder à conta. O campo `activeSnapshotId` aceita um UUID, mas **ainda não há entidade de snapshot nem validação de fatos aprovados**. Atualizá-lo não ativa um Ground Truth real.
+Um owner é uma identidade de propriedade de dados: `kind` pode ser `account` ou `anonymous`. Um owner de conta é ligado ao usuário autenticado; `userId`, quando enviado, precisa corresponder à conta. `activeSnapshotId` referencia um snapshot persistido; a migration valida que ele pertence ao mesmo owner, e a rota bloqueia alterações concorrentes e rejeita snapshots de outro owner. A rota ainda não executa revisão nem aprovação; só snapshots inseridos por um fluxo confiável devem ser tratados como aprovados.
 
 O registro de sessão anônima guarda um `tokenHash` e uma data `expiresAt` **fornecidos pelo chamador**. A validação verifica a expiração e a revogação, mas a API ainda não emite o token, não define o prazo de vida no servidor, não aplica cotas e não remove automaticamente registros expirados. Criar ou validar esse registro não autentica o visitante para as rotas protegidas. Portanto, esse conjunto de endpoints ainda não constitui o fluxo anônimo completo descrito no README do monorepo.
 
@@ -271,11 +283,11 @@ As chaves de mensagem são centralizadas em `shared/exception/ErrorCodes.java`. 
 
 ## Persistência e fluxo alvo de currículo
 
-As entidades `ExtractionRun` e `ExtractedPage` persistem as execuções reais do worker e os textos por página. `pipeline_versions` guarda a configuração em `jsonb`; cada página aponta para um objeto de texto privado no Garage. Execuções antigas permanecem vinculadas à versão. O resultado atual contém texto, hash e método por página; fatos estruturados e evidências por campo ainda não existem.
+As entidades `ExtractionRun` e `ExtractedPage` persistem as execuções reais do worker e os textos por página. `pipeline_versions` guarda a configuração em `jsonb`; cada página aponta para um objeto de texto privado no Garage. Execuções antigas permanecem vinculadas à versão. A migration V5 adiciona `fact_records`, `facts`, `fact_evidence`, `review_issues`, `review_decisions`, `gt_snapshots` e `gt_snapshot_items`, com as relações JPA e repositórios correspondentes. Os endpoints de `fact-records`, `facts` e `fact-evidence` criam e consultam registros, alteram ordem/localizador e registram decisões ao mudar o estado de revisão. Estados aceitos: `pendente`, `confirmado`, `corrigido` e `omitido`. A API valida acesso ao owner, versão da extração e página de evidência. O JSON de valores e localizadores é armazenado em `jsonb`; a FK do snapshot ativo também exige correspondência de owner. O pipeline atual ainda não extrai fatos automaticamente, e não há API de aprovação de snapshots ou geração baseada em snapshot.
 
-`users` guarda o hash BCrypt da senha e o estado `enabled`; `user_roles` relaciona as roles; `owners` guarda tipo, vínculo opcional com a conta, revisão, expiração e o UUID do snapshot ativo; `anonymous_sessions` guarda hash de token, expiração e revogação. `stored_objects` modela metadados de storage; cada `base_documents` exige um objeto original, e cada objeto pode ser original de no máximo um documento (`original_object_id` único). O hash do documento é único por owner. O upload cria no máximo uma nova `base_versions` por documento; versões legadas duplicadas podem continuar presentes. A numeração é única por owner. Ainda não há persistência de fatos revisados ou currículos gerados.
+`users` guarda o hash BCrypt da senha e o estado `enabled`; `user_roles` relaciona as roles; `owners` guarda tipo, vínculo opcional com a conta, revisão, expiração e o UUID do snapshot ativo; `anonymous_sessions` guarda hash de token, expiração e revogação. `stored_objects` modela metadados de storage; cada `base_documents` exige um objeto original, e cada objeto pode ser original de no máximo um documento (`original_object_id` único). O hash do documento é único por owner. O upload cria no máximo uma nova `base_versions` por documento; versões legadas duplicadas podem continuar presentes. A numeração é única por owner. A migration V5 persiste fatos agrupados por versão, evidências por página, pendências e decisões de revisão e snapshots aprovados com seus itens congelados. Existem operações de revisão de fatos, mas aprovação de snapshot e geração ainda não existem.
 
-O fluxo alvo parte do **Currículo Base revisado como fonte dos fatos**: upload → extração/OCR → fatos e revisão → snapshot aprovado → geração. Upload, deduplicação, versões e extração seletiva inicial estão implementados. Fatos, reavaliação temporal, snapshots e geração continuam planejados. Também faltam autenticação segura para visitantes, TTL, migração, exclusão abrangente e retenção configurável. Não prometa exclusão completa a partir do `deletionStatus` atual.
+O fluxo alvo parte do **Currículo Base revisado como fonte dos fatos**: upload → extração/OCR → fatos e revisão → snapshot aprovado → geração. Upload, deduplicação, versões, extração seletiva inicial e operações HTTP de registros, fatos, evidências e revisão estão implementados. A extração estruturada automática, aprovação do snapshot e geração seguem planejadas. Também faltam autenticação segura para visitantes, TTL, migração, exclusão abrangente e retenção configurável. Não prometa exclusão completa a partir do `deletionStatus` atual.
 
 Veja a [decisão de produto no README principal](../../README.md#decisão-de-produto-currículo-base-como-ground-truth) para os invariantes completos.
 

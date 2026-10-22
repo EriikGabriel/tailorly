@@ -7,6 +7,8 @@ import java.util.UUID;
 
 import com.tailorly.api.base.document.BaseDocument;
 import com.tailorly.api.base.version.BaseVersion;
+import com.tailorly.api.base.review.ReviewDecision;
+import com.tailorly.api.base.snapshot.GtSnapshot;
 import com.tailorly.api.objects.StoredObject;
 import com.tailorly.api.session.AnonymousSession;
 import com.tailorly.api.user.User;
@@ -21,6 +23,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -68,6 +71,11 @@ public class Owner {
   @Column(name = "active_snapshot_id")
   private UUID activeSnapshotId;
 
+  @ToString.Exclude
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "active_snapshot_id", insertable = false, updatable = false)
+  private GtSnapshot activeSnapshot;
+
   @Column(name = "revision", nullable = false)
   private int revision;
 
@@ -92,5 +100,15 @@ public class Owner {
   @ToString.Exclude
   @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
   private Set<BaseVersion> baseVersions = new HashSet<>();
+
+  @Builder.Default
+  @ToString.Exclude
+  @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+  private Set<GtSnapshot> snapshots = new HashSet<>();
+
+  @Builder.Default
+  @ToString.Exclude
+  @OneToMany(mappedBy = "actorOwner", fetch = FetchType.LAZY)
+  private Set<ReviewDecision> reviewDecisions = new HashSet<>();
 
 }
