@@ -2,6 +2,7 @@ package com.tailorly.api.base.fact.evidence;
 
 import java.util.List;
 import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 
 import com.tailorly.api.base.fact.Fact;
 import com.tailorly.api.base.fact.FactRepository;
@@ -11,6 +12,7 @@ import com.tailorly.api.base.fact.evidence.dto.UpdateEvidenceLocatorRequest;
 import com.tailorly.api.extraction.page.ExtractedPage;
 import com.tailorly.api.extraction.page.ExtractedPageRepository;
 import com.tailorly.api.owner.OwnerAccessService;
+import com.tailorly.api.objects.storage.ObjectStorage;
 import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
@@ -25,6 +27,7 @@ public class FactEvidenceService {
   private final FactRepository factRepository;
   private final ExtractedPageRepository pageRepository;
   private final OwnerAccessService access;
+  private final ObjectStorage storage;
 
   @Transactional
   public FactEvidenceResponse create(CreateFactEvidenceRequest request) {
@@ -37,6 +40,10 @@ public class FactEvidenceService {
         || (fact.getExtractionRun() != null
         && !fact.getExtractionRun().getId().equals(page.getExtractionRun().getId()))) {
       throw new BadRequestException(ErrorCodes.FactEvidence.PAGE_VERSION_MISMATCH);
+    }
+    String pageText = new String(storage.get(page.getTextObject().getStorageKey()), StandardCharsets.UTF_8);
+    if (!pageText.contains(request.sourceExcerpt())) {
+      throw new BadRequestException(ErrorCodes.FactEvidence.EXCERPT_NOT_IN_SOURCE);
     }
     return FactEvidenceResponse.from(evidenceRepository.save(FactEvidence.builder()
         .fact(fact)

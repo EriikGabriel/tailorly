@@ -2,8 +2,10 @@ package com.tailorly.api.base.fact.dto;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.List;
 
 import com.tailorly.api.base.fact.Fact;
+import com.tailorly.api.base.fact.evidence.dto.FactEvidenceResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -18,7 +20,8 @@ public record FactResponse(
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String origin,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String reviewState,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) Instant confirmedAt,
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) Instant revalidateAfter
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) Instant revalidateAfter,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<FactEvidenceResponse> evidence
 ) {
   public static FactResponse from(Fact fact) {
     return FactResponse.builder()
@@ -32,6 +35,7 @@ public record FactResponse(
         .reviewState(fact.getReviewState())
         .confirmedAt(fact.getConfirmedAt())
         .revalidateAfter(fact.getRevalidateAfter())
+        .evidence(fact.getEvidence().stream().map(FactEvidenceResponse::from).toList())
         .build();
   }
 }

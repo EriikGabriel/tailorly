@@ -27,14 +27,14 @@ flowchart LR
     Storage --> Vault[Second Brain\nB03 Resources/CVs]
 ```
 
-Os blocos de LLM, templates, geração de PDF e vault representam a arquitetura planejada. Hoje a API implementa contas, JWT, owners, registros básicos de sessões anônimas, upload no Garage e extração de texto por página com fallback para Tesseract local; revisão de fatos e geração de currículos ainda não estão disponíveis.
+Os blocos de LLM, templates, geração de PDF e vault representam a arquitetura planejada. Hoje a API implementa contas, JWT, upload no Garage, extração por página com OCR seletivo e persistência/revisão manual de fatos por versão candidata. A extração semântica automática de fatos, aprovação de snapshots e geração de currículos ainda não estão disponíveis.
 
 ## Estrutura do repositório
 
 | Caminho | Papel | Estado |
 | --- | --- | --- |
-| `apps/web` | Interface React para seleção do Currículo Base, revisão em prévia, conta e fluxo de geração planejado. | Interface e upload autenticado parciais; geração e download reais pendentes |
-| `services/api` | API HTTP e orquestração do fluxo de geração. | Autenticação, upload, versões candidatas e extração seletiva inicial; revisão e geração pendentes |
+| `apps/web` | Interface React para upload, revisão de fatos por candidata, conta e fluxo de geração planejado. | Upload e revisão persistida parciais; geração e download reais pendentes |
+| `services/api` | API HTTP e orquestração do fluxo de geração. | Autenticação, upload, extração seletiva e revisão manual persistida; extração semântica e geração pendentes |
 | `compose.yaml` | PostgreSQL 17 e Garage para desenvolvimento local. | Disponível |
 | `turbo.json` | Orquestra tarefas do monorepo. | Disponível |
 | `pnpm-workspace.yaml` | Define os workspaces `apps/*` e `services/*`. | Disponível |
@@ -282,7 +282,7 @@ endpoint ou DTO do backend mudar. O código em `apps/web/src/lib/api/generated`
 1. [x] **Fechar o ciclo do documento no frontend.** Home e `/base` usam o mesmo fluxo autenticado e mostram o status do upload atual. A interface não lista documentos antigos nem oferece prévia remota; o estado local desaparece ao recarregar.
 2. [x] **Criar a versão candidata no backend.** O upload cria ou recupera a versão no escopo do owner, com status e numeração definidos pelo servidor. Reenvio idêntico reutiliza versão e execução compatível e marca revisão temporal pendente; o snapshot ativo não é alterado. Fatos e reavaliação temporal continuam pendentes.
 3. [ ] **Processar o PDF no servidor.** Backend inicial implementado: fila persistente, PDFBox por página, OCR seletivo com Tesseract local, textos no Garage, hashes, métodos, falhas e reutilização por pipeline. A interface acompanha o status sem percentual por página; a análise nativa agora separa artigos/colunas e suprime texto sobreposto. Há um teste OCR real opcional com uma página escaneada representativa, executado quando Tesseract 5 e `eng` estão instalados. A detecção de texto misto e a reconstrução geral de layouts continuam limitadas. O Tesseract e seus modelos precisam ser instalados separadamente; veja o [guia da API](services/api/README.md#extração-seletiva-de-pdf). Fatos e evidências por campo ainda dependem do MER 2.
-4. [ ] **Modelar fatos e revisão reais.** Persistir fatos com evidência, pendências e respostas vinculados à versão candidata, com estados `pendente`, `confirmado`, `corrigido` e `omitido`. Trocar as fixtures da revisão rápida e os rascunhos de `/base` por dados da API. Um reprocessamento não pode sobrescrever silenciosamente correções da pessoa.
+4. [x] **Persistir fatos e revisão por candidata.** A API armazena fatos, evidências de páginas extraídas, pendências e decisões auditadas com os estados `pendente`, `confirmado`, `corrigido` e `omitido`. `/base` permite criar e revisar fatos reais; a revisão rápida carrega e responde pendências da API. O texto do PDF ainda não é classificado automaticamente em fatos; novos processamentos de texto não alteram os fatos revisados existentes.
 5. [ ] **Aprovar e ativar o Ground Truth.** Criar um snapshot imutável dos fatos revisados e ativá-lo atomicamente após resolver as pendências obrigatórias, desativando o anterior na mesma operação. Validar no servidor que há no máximo um snapshot ativo por owner; o campo `activeSnapshotId` e sua rota atuais ainda não garantem isso. A geração só pode consumir um snapshot aprovado.
 6. [ ] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** Emitir e autenticar a sessão no servidor; habilitar upload e processamento por owner anônimo com limites de tamanho, páginas, requisições e gerações, TTL e limpeza dos dados temporários. Oferecer migração do snapshot revisado para uma conta antes da expiração, sem repetir OCR. Os endpoints atuais de sessão apenas registram e validam dados fornecidos pelo chamador.
 7. [ ] **Implementar vaga e geração.** Receber texto ou URL, extrair requisitos e versionar a vaga; usar OpenAI ou Ollama conforme a política definida. Versionar o template Typst e criar `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga, sem refazer OCR nem acrescentar fatos pessoais. Gerar PDF/Markdown, persistir artefatos no Garage e disponibilizar download e histórico reais.

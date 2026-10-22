@@ -8,7 +8,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface FactRepository extends JpaRepository<Fact, UUID> {
-  List<Fact> findAllByRecordId(UUID recordId);
+  List<Fact> findAllByFactRecord_Id(UUID recordId);
+
+  List<Fact> findAllByFactRecord_IdOrderByFieldKeyAsc(UUID recordId);
 
   List<Fact> findAllByExtractionRunId(UUID extractionRunId);
 }

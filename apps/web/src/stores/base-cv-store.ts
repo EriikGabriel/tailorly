@@ -7,9 +7,10 @@ interface BaseCvState {
   file: File | null;
   selectionId: string | null;
   uploadedSelectionId: string | null;
+  baseVersionId: string | null;
   error: string | null;
   selectFile: (file: File | null) => boolean;
-  setUploadedDocument: (file: File) => void;
+  setUploadedDocument: (file: File, baseVersionId?: string) => void;
   setError: (error: string | null) => void;
   reset: () => void;
 }
@@ -20,6 +21,7 @@ export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
   file: null,
   selectionId: null,
   uploadedSelectionId: null,
+  baseVersionId: null,
   error: null,
   selectFile: (file) => {
     if (file && (!/\.pdf$/i.test(file.name) || file.size === 0)) {
@@ -42,13 +44,14 @@ export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
     useReviewDraftStore.getState().resetForSource(selectionId);
     useQuickReviewStore.getState().reset();
     useDocumentViewerStore.getState().reset();
-    set({ file, selectionId, uploadedSelectionId: null, error: null });
+    set({ file, selectionId, uploadedSelectionId: null, baseVersionId: null, error: null });
     return true;
   },
-  setUploadedDocument: (file) => {
+  setUploadedDocument: (file, baseVersionId) => {
     if (get().file !== file) return;
     set({
       uploadedSelectionId: get().selectionId,
+      baseVersionId: baseVersionId ?? null,
     });
   },
   setError: (error) => set({ error }),
@@ -60,6 +63,7 @@ export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
       file: null,
       selectionId: null,
       uploadedSelectionId: null,
+      baseVersionId: null,
       error: null,
     });
   },

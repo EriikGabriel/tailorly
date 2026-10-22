@@ -4,5 +4,5 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 
 @Builder
-public record UpdateFactReviewStateRequest(@NotBlank String reviewState) {
+public record UpdateFactReviewStateRequest(@NotBlank String reviewState, Object reviewedValue) {
 }

@@ -6,6 +6,8 @@ import java.util.UUID;
 import com.tailorly.api.base.fact.group.dto.CreateFactRecordRequest;
 import com.tailorly.api.base.fact.group.dto.FactRecordResponse;
 import com.tailorly.api.base.fact.group.dto.UpdateDisplayOrderRequest;
+import com.tailorly.api.base.fact.FactRepository;
+import com.tailorly.api.base.fact.dto.FactResponse;
 import com.tailorly.api.base.version.BaseVersion;
 import com.tailorly.api.base.version.BaseVersionRepository;
 import com.tailorly.api.owner.OwnerAccessService;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class FactRecordService {
   private final FactRecordRepository records;
+  private final FactRepository facts;
   private final BaseVersionRepository versions;
   private final OwnerAccessService access;
 
@@ -26,18 +29,19 @@ public class FactRecordService {
   public FactRecordResponse create(CreateFactRecordRequest request) {
     BaseVersion version = getVersion(request.baseVersionId());
     access.assertCanAccess(version.getOwner());
-    return FactRecordResponse.from(records.save(FactRecord.builder()
+    FactRecord record = records.save(FactRecord.builder()
         .baseVersion(version)
         .category(request.category().trim())
         .displayOrder(request.displayOrder())
-        .build()));
+        .build());
+    return response(record);
   }
 
   @Transactional(readOnly = true)
   public FactRecordResponse findById(UUID id) {
     FactRecord factRecord = findFactRecord(id);
     access.assertCanAccess(factRecord.getBaseVersion().getOwner());
-    return FactRecordResponse.from(factRecord);
+    return response(factRecord);
   }
 
   @Transactional(readOnly = true)
@@ -45,7 +49,7 @@ public class FactRecordService {
     BaseVersion version = getVersion(versionId);
     access.assertCanAccess(version.getOwner());
     return records.findAllByBaseVersionIdOrderByDisplayOrderAsc(versionId).stream()
-        .map(FactRecordResponse::from).toList();
+        .map(this::response).toList();
   }
 
   @Transactional
@@ -53,7 +57,12 @@ public class FactRecordService {
     FactRecord factRecord = findFactRecord(id);
     access.assertCanAccess(factRecord.getBaseVersion().getOwner());
     factRecord.setDisplayOrder(request.displayOrder());
-    return FactRecordResponse.from(records.save(factRecord));
+    return response(records.save(factRecord));
+  }
+
+  private FactRecordResponse response(FactRecord record) {
+    return FactRecordResponse.from(record, facts.findAllByFactRecord_IdOrderByFieldKeyAsc(record.getId())
+        .stream().map(FactResponse::from).toList());
   }
 
   private FactRecord findFactRecord(UUID id) {

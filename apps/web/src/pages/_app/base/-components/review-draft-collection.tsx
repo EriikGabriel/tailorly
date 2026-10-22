@@ -99,7 +99,7 @@ export function ReviewDraftCollection({
                       </span>
                     )}
                     <span className="mt-1 inline-block rounded-full bg-secondary-container px-2 py-0.5 text-xs font-semibold text-on-secondary-container">
-                      Rascunho local • não validado
+                      Rascunho • não validado
                     </span>
                   </span>
                   <ChevronDown

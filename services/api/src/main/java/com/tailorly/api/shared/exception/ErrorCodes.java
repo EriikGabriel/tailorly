@@ -119,6 +119,7 @@ public final class ErrorCodes {
   public static final class FactEvidence {
     public static final String NOT_FOUND = "error.fact_evidence.not_found";
     public static final String PAGE_VERSION_MISMATCH = "error.fact_evidence.page_version_mismatch";
+    public static final String EXCERPT_NOT_IN_SOURCE = "error.fact_evidence.excerpt_not_in_source";
 
     private FactEvidence() {
     }

@@ -34,6 +34,11 @@ public class FactController {
     return service.findById(id);
   }
 
+  @GetMapping("/record/{recordId}")
+  public java.util.List<FactResponse> findByRecord(@PathVariable UUID recordId) {
+    return service.findByRecord(recordId);
+  }
+
   @PatchMapping("/{id}/review-state")
   public FactResponse updateReviewState(
       @PathVariable UUID id,

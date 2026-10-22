@@ -18,9 +18,9 @@ import { useBaseCvStore } from "@stores/base-cv-store";
 import { useJobDraftStore } from "@stores/job-draft-store";
 import { useQuickReviewStore } from "@stores/quick-review-store";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { previewReviewIssues } from "@/data/review-preview";
-import type { ReviewAnswer, ReviewCategory, ReviewIssue } from "@/types/review";
+import { useEffect, useMemo, useState } from "react";
+import { useAnswerReviewIssue, useBaseReview } from "@queries/base-review";
+import type { ReviewAnswer, ReviewCategory, ReviewChoice, ReviewIssue } from "@/types/review";
 import {
   isReviewIssueComplete,
   selectQuickReviewIssues,
@@ -37,7 +37,9 @@ export function ValidateDialog({
   requiresFullReview = false,
 }: ValidateDialogProps = {}) {
   const navigate = useNavigate();
-  const { file, selectionId } = useBaseCvStore();
+  const { file, selectionId, baseVersionId } = useBaseCvStore();
+  const review = useBaseReview(baseVersionId ?? undefined);
+  const answerIssue = useAnswerReviewIssue(baseVersionId ?? "");
   const { revision: jobRevision, saveDraft: onSaveDraft } = useJobDraftStore();
   const {
     open,
@@ -46,14 +48,43 @@ export function ValidateDialog({
     answers: storedAnswers,
     configure,
     setAnswer,
-    savePreview,
   } = useQuickReviewStore();
-  const preview = issues === undefined;
-  const allIssues = issues ?? previewReviewIssues;
+  const [error, setError] = useState<string | null>(null);
+  const apiIssues = useMemo(() => {
+    const supportedCategories = new Set<ReviewCategory>([
+      "identity", "employment", "projects", "education", "skills", "languages", "presentation",
+    ]);
+    return (review.issues.data ?? [])
+      .filter((issue) => issue.status === "PENDING" && issue.fact)
+      .map((issue): ReviewIssue => {
+        const configured = issue.questionAndChoices ?? {};
+        const rawChoices = Array.isArray(configured.choices)
+          ? configured.choices
+          : ["confirmado", "corrigido", "omitido"];
+        const choices: ReviewChoice[] = rawChoices.flatMap((raw): ReviewChoice[] => {
+          if (raw === "confirmado") return [{ value: raw, label: "Confirmar fato", result: "confirmed" }];
+          if (raw === "corrigido") return [{ value: raw, label: "Corrigir fato", result: "corrected", correction: { label: "Valor correto", type: "text" } }];
+          if (raw === "omitido") return [{ value: raw, label: "Omitir fato", result: "omitted" }];
+          return [];
+        });
+        const value = issue.fact?.reviewedValue ?? issue.fact?.extractedValue;
+        return {
+          id: issue.id,
+          category: supportedCategories.has(issue.category as ReviewCategory) ? issue.category as ReviewCategory : "identity",
+          type: "metric",
+          question: typeof configured.question === "string" ? configured.question : "Revise este fato extraído.",
+          evidence: issue.fact?.evidence[0]?.sourceExcerpt ?? (typeof value === "string" ? value : undefined),
+          motivation: issue.reason,
+          choices,
+        };
+      });
+  }, [review.issues.data]);
+  const preview = false;
+  const allIssues = issues ?? apiIssues;
   const contextKey = JSON.stringify([
     selectionId,
     jobRevision,
-    preview,
+    baseVersionId,
     allIssues,
     requiresFullReview,
   ]);
@@ -75,19 +106,43 @@ export function ValidateDialog({
     setAnswer(contextKey, id, answer);
   }
 
-  function finishReview() {
+  async function finishReview() {
     if (needsFullReview || !reviewComplete || storedContext !== contextKey)
       return;
+    if (!baseVersionId) {
+      setError("Envie o Currículo Base com uma conta autenticada para salvar as respostas.");
+      return;
+    }
+    setError(null);
+    try {
+      for (const issue of quickIssues) {
+        const answer = answers[issue.id];
+        const choice = issue.choices.find((item) => item.value === answer.choice);
+        if (!choice) continue;
+        const reviewState = choice.result === "confirmed"
+          ? "confirmado"
+          : choice.result === "corrected"
+            ? "corrigido"
+            : "omitido";
+        await answerIssue.mutateAsync({
+          id: issue.id,
+          answer: {
+            reviewState,
+            ...(choice.result === "corrected" ? { reviewedValue: answer.correction } : {}),
+          },
+        });
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível salvar as respostas.");
+      return;
+    }
     onSaveDraft();
-    savePreview(contextKey);
     onOpenChange(false);
     navigate({ to: "/generator" });
   }
 
   const count = quickIssues.length;
-  const heading = preview
-    ? "Prévia da revisão de currículo"
-    : count === 0
+  const heading = count === 0
       ? "Tudo pronto para gerar"
       : `Confirme ${count} ${count === 1 ? "informação" : "informações"} antes de gerar`;
 
@@ -115,14 +170,10 @@ export function ValidateDialog({
                   {heading}
                 </DialogTitle>
                 <span className="w-fit rounded-full border bg-white px-3 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.3px] text-tertiary">
-                  {preview
-                    ? `${count} exemplos de revisão`
-                    : `${count} dúvidas para revisar`}
+                  {`${count} pendências para revisar`}
                 </span>
                 <DialogDescription className="text-sm leading-5 text-on-surface-variant">
-                  {preview
-                    ? "Demonstração com dados fictícios, não extraídos do seu arquivo. As respostas ficam apenas como rascunho de interface."
-                    : "Revise as pendências desta seleção antes de continuar."}
+                  "Pendências persistidas na versão candidata do Currículo Base. As respostas são registradas na API."
                 </DialogDescription>
               </div>
               <Button
@@ -176,11 +227,14 @@ export function ValidateDialog({
                 onAnswerChange={updateAnswer}
               />
             ))}
+            {review.issues.isLoading && <p role="status">Carregando pendências…</p>}
+            {review.issues.isError && <p role="alert">Não foi possível carregar as pendências desta versão.</p>}
             {count === 0 && !needsFullReview && (
               <p className="text-sm text-on-surface-variant">
-                Não há informações a confirmar nesta versão.
+                {baseVersionId ? "Não há pendências reais nesta versão candidata." : "Envie o Currículo Base autenticado para carregar pendências reais."}
               </p>
             )}
+            {error && <p role="alert" className="text-sm text-error">{error}</p>}
           </div>
 
           <div className="flex shrink-0 flex-col gap-3 bg-surface-container-low border-t border-outline-variant/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
@@ -219,7 +273,7 @@ export function ValidateDialog({
                 <Button
                   type="button"
                   onClick={finishReview}
-                  disabled={!reviewComplete}
+                  disabled={!reviewComplete || !baseVersionId || review.issues.isLoading || answerIssue.isPending}
                   className="rounded-xl bg-primary-900 px-6! py-6 text-sm font-semibold text-primary-foreground hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40"
                   disableZoom
                 >

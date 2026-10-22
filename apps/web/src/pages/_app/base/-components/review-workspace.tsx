@@ -8,7 +8,16 @@ import { AutoHeight } from "@animate/primitives/effects/auto-height";
 import { ArrowLeft, ArrowRight } from "@react-zero-ui/icon-sprite";
 import { usePresentationStore } from "@stores/presentation-store";
 import { useReviewDraftStore } from "@stores/review-draft-store";
+import { useBaseCvStore } from "@stores/base-cv-store";
+import {
+  useBaseReview,
+  useCreateFact,
+  useCreateFactRecord,
+  useUpdateFactReviewState,
+} from "@queries/base-review";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useState } from "react";
+import { createReviewDraft } from "@@types/review-model";
 import { EducationReviewStep } from "../-steps/education-review-step";
 import { ExperienceReviewStep } from "../-steps/experience-review-step";
 import { IdentityReviewStep } from "../-steps/identity-review-step";
@@ -32,8 +41,112 @@ export function ReviewWorkspace({
     setIdentity,
     setCollection,
   } = useReviewDraftStore();
+  const baseVersionId = useBaseCvStore((state) => state.baseVersionId);
+  const review = useBaseReview(baseVersionId ?? undefined);
+  const createRecord = useCreateFactRecord(baseVersionId ?? "");
+  const createFact = useCreateFact(baseVersionId ?? "");
+  const updateFact = useUpdateFactReviewState(baseVersionId ?? "");
+  const hydrateFromApi = useReviewDraftStore((state) => state.hydrateFromApi);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const { preferences, setPreferences } = usePresentationStore();
   const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (!review.records.isSuccess || !sourceId) return;
+    const hydrated = createReviewDraft();
+    for (const record of review.records.data) {
+      if (record.category === "identity") {
+        for (const fact of record.facts) {
+          if (fact.reviewState !== "omitido") {
+            hydrated.identity[fact.fieldKey] = String(fact.reviewedValue ?? fact.extractedValue ?? "");
+          }
+        }
+        continue;
+      }
+      if (!["experience", "projects", "degrees", "certifications", "languages", "technologies"].includes(record.category)) continue;
+      const collection = record.category as DraftCollection;
+      const rowValues = new Map<number, Record<string, string>>();
+      for (const fact of record.facts) {
+        if (fact.reviewState === "omitido") continue;
+        const match = /^(\\d+):(.*)$/.exec(fact.fieldKey);
+        const index = match ? Number(match[1]) : 0;
+        const key = match ? match[2] : fact.fieldKey;
+        const values = rowValues.get(index) ?? {};
+        values[key] = String(fact.reviewedValue ?? fact.extractedValue ?? "");
+        rowValues.set(index, values);
+      }
+      hydrated[collection] = [...rowValues.entries()].sort(([left], [right]) => left - right)
+        .map(([index, fields]) => ({ id: `${record.id}-${index}`, fields }));
+    }
+    hydrateFromApi(sourceId, hydrated);
+  }, [hydrateFromApi, review.records.data, review.records.isSuccess, sourceId]);
+
+  async function saveDraft() {
+    if (!baseVersionId) {
+      setSaveError("Envie o Currículo Base com uma conta autenticada para salvar os fatos.");
+      return;
+    }
+    if (review.records.isLoading) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const groups: { category: string; fields: Record<string, string> }[] = [];
+      if (Object.values(draft.identity).some(Boolean) || review.records.data?.some((item) => item.category === "identity")) {
+        groups.push({ category: "identity", fields: draft.identity });
+      }
+      const collections: DraftCollection[] = ["experience", "projects", "degrees", "certifications", "languages", "technologies"];
+      for (const collectionKey of collections) {
+        const fields: Record<string, string> = {};
+        draft[collectionKey].forEach((record, index) => {
+          for (const [key, value] of Object.entries(record.fields)) {
+            if (value.trim()) fields[`${index}:${key}`] = value.trim();
+          }
+        });
+        if (Object.keys(fields).length || review.records.data?.some((item) => item.category === collectionKey)) {
+          groups.push({ category: collectionKey, fields });
+        }
+      }
+
+      for (const group of groups) {
+        let record = review.records.data?.find((item) => item.category === group.category);
+        if (!record) {
+          record = await createRecord.mutateAsync({
+            baseVersionId,
+            category: group.category,
+            displayOrder: groups.indexOf(group),
+          });
+        }
+        const existing = new Map(record.facts.map((fact) => [fact.fieldKey, fact]));
+        for (const [fieldKey, value] of Object.entries(group.fields)) {
+          const fact = existing.get(fieldKey);
+          if (!fact) {
+            await createFact.mutateAsync({
+              recordId: record.id,
+              fieldKey,
+              reviewedValue: value,
+              origin: "manual_entry",
+              reviewState: "pendente",
+            });
+            continue;
+          }
+          const currentValue = String(fact.reviewedValue ?? fact.extractedValue ?? "");
+          if (currentValue !== value) {
+            await updateFact.mutateAsync({ id: fact.id, reviewState: "corrigido", reviewedValue: value });
+          }
+        }
+        for (const fact of record.facts) {
+          if (fact.reviewState !== "omitido" && !(fact.fieldKey in group.fields)) {
+            await updateFact.mutateAsync({ id: fact.id, reviewState: "omitido" });
+          }
+        }
+      }
+    } catch (cause) {
+      setSaveError(cause instanceof Error ? cause.message : "Não foi possível salvar os fatos.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function collection(key: DraftCollection): CollectionProps {
     return {
@@ -134,7 +247,14 @@ export function ReviewWorkspace({
               <ArrowRight aria-hidden="true" className="size-4" />
             </Button>
           </nav>
-          {activeStep === "preferences" && <ReviewCompletionCard />}
+          {activeStep === "preferences" && (
+            <ReviewCompletionCard
+              onSave={saveDraft}
+              saving={saving}
+              disabled={!baseVersionId || review.records.isLoading}
+              error={saveError}
+            />
+          )}
         </div>
       </div>
     </>

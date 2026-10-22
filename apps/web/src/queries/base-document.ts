@@ -35,7 +35,7 @@ export function useUploadBaseDocument() {
         result.document,
       );
       if (useAuthStore.getState().accessToken === accessToken) {
-        useBaseCvStore.getState().setUploadedDocument(file);
+        useBaseCvStore.getState().setUploadedDocument(file, result.version.id);
       }
 
       queryClient.invalidateQueries({

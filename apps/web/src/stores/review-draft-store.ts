@@ -15,6 +15,7 @@ interface ReviewDraftState {
   expandedRecords: Partial<Record<DraftCollection, string | null>>;
   setActiveStep: (step: ReviewStepId) => void;
   setIdentity: (sourceId: string | null, fields: DraftFields) => void;
+  hydrateFromApi: (sourceId: string | null, draft: ReviewDraft) => void;
   setCollection: (
     sourceId: string | null,
     collection: DraftCollection,
@@ -39,6 +40,14 @@ export const useReviewDraftStore = create<ReviewDraftState>()((set) => ({
     set((state) =>
       sourceId === state.sourceId
         ? { draft: { ...state.draft, identity } }
+        : state,
+    ),
+  hydrateFromApi: (sourceId, draft) =>
+    set((state) =>
+      sourceId === state.sourceId &&
+      Object.values(state.draft.identity).every((value) => !value) &&
+      Object.values(state.draft).filter(Array.isArray).every((records) => records.length === 0)
+        ? { draft }
         : state,
     ),
   setCollection: (sourceId, collection, records) =>

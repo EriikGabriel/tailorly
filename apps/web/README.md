@@ -3,15 +3,14 @@
 Interface React do Tailorly: ingestão do Currículo Base, auditoria dos fatos em
 seis dimensões, revisão rápida de pendências e preparação para a geração.
 
-> **Estado atual:** fundação visual e de estado de interface. A home, a
-> auditoria do Currículo Base (`/base`) e a revisão rápida estão implementadas
-> como **prévias locais**. Na home, selecionar um PDF envia o original para a
-> API quando há uma conta autenticada; sem conta, a seleção fica apenas como
-> prévia local. Após o upload autenticado, home e `/base` acompanham a fila de
-> extração e mostram conclusão ou falha consultando a API. O frontend não
-> recebe progresso percentual ou por página. OCR, persistência dos rascunhos e geração
-> real. Login, cadastro e logout de contas estão disponíveis no cabeçalho;
-> `/cvs` e `/generator` são placeholders.
+> **Estado atual:** fundação visual e de estado de interface. A home envia o PDF
+> para a API quando há uma conta autenticada; sem conta, a seleção fica apenas
+> como prévia local. Home e `/base` acompanham a extração. `/base` carrega fatos,
+> cria fatos manuais pendentes, permite confirmá-los, corrigi-los ou omiti-los e
+> vincula evidências a páginas do texto extraído. A revisão rápida carrega e
+> salva pendências reais da versão candidata. A API ainda não classifica o texto
+> do PDF em fatos automaticamente; preferências editoriais permanecem locais e
+> `/cvs` e `/generator` são placeholders. Login, cadastro e logout estão no cabeçalho.
 
 > **Regra de leitura:** este README separa sempre o **fluxo alvo** (descrito no
 > README do monorepo) da **implementação atual**. Uma funcionalidade marcada
@@ -63,9 +62,8 @@ src/
 │   ├── __root.tsx              # layout raiz: TooltipProvider, HeadContent, Header, Outlet
 │   └── _app/                   # prefixo de rota omitido na URL
 │       ├── _home/index.tsx     # "/"        — hero, etapas, recentes, Second Brain
-│       ├── base/               # "/base"    — auditoria do Currículo Base
-│       │   ├── -components/    # 9 componentes da auditoria
-│       │   └── -steps/         # 6 etapas, uma por dimensão
+│       ├── base/               # "/base"    — revisão de fatos da versão candidata
+│       │   └── -components/base-fact-review.tsx — fatos, evidências e decisões da API
 │       ├── cvs/index.tsx       # "/cvs"     — placeholder
 │       └── generator/index.tsx # "/generator" — placeholder
 ├── components/
@@ -76,7 +74,7 @@ src/
 ├── stores/                     # 8 stores Zustand + resetClientState
 ├── types/                      # review.ts, review-model.ts
 ├── utils/review-issues.ts      # regras de seleção e completude de pendências
-├── data/review-preview.ts      # fixtures de demonstração
+├── data/review-preview.ts      # dados antigos de demonstração, não usados pela revisão
 ├── hooks/                      # use-auto-height, use-controlled-state,
 │                               # use-data-state, use-is-in-view
 ├── queries/                    # integrações TanStack Query por recurso da API
@@ -420,7 +418,7 @@ Dois mecanismos independentes impedem callbacks atrasados de sujar o rascunho at
   respostas sobrevivem a remontagens.
 
 `ValidateDialog` monta a `contextKey` como
-`JSON.stringify([selectionId, jobRevision, preview, allIssues, requiresFullReview])`
+`JSON.stringify([selectionId, jobRevision, baseVersionId, allIssues, requiresFullReview])`
 e, em cada render, só usa as respostas armazenadas se
 `storedContext === contextKey`; caso contrário trata como `{}`.
 
@@ -472,10 +470,10 @@ A **URL de objeto da prévia** é recurso do visualizador: criada quando
 o `File` permanece na store. O painel compara `preview?.file === file` para nunca
 exibir o documento anterior enquanto a URL substituta é criada.
 
-**Textos, definições de campos e fixtures são dados estáticos**, não stores
-mutáveis. `src/data/review-preview.ts` guarda duas pendências de demonstração
-com o comentário *"Explicit demonstration data, never extracted from the selected
-document"*.
+As categorias de fatos e rótulos são dados estáticos. `src/data/review-preview.ts`
+permanece como fixture antiga, mas `ValidateDialog` não a usa: as pendências vêm
+da API. `/base` lê e grava fatos na API; não classifica automaticamente o texto
+OCR em identidade, experiência ou outros tipos de fato.
 
 ---
 
@@ -485,8 +483,9 @@ document"*.
    **URL** / **Texto** da vaga. O botão "Gerar currículo sob medida" só habilita
    com vaga **e** Currículo Base presentes; ao clicar chama `saveDraft()` e abre
    a revisão.
-2. Sem `issues` prop, `ValidateDialog` usa `previewReviewIssues` — é o modo
-   demonstração.
+2. `ValidateDialog` carrega pendências reais da versão candidata via
+   `/v1/review-issues/version/{baseVersionId}`. Sem versão autenticada, não mostra
+   exemplos pessoais nem permite salvar respostas.
 3. `configure(contextKey, allIssues, preview)` roda em `useEffect`.
 4. `selectQuickReviewIssues` recorta para até 3 pendências / 2 categorias.
 5. Se sobraram pendências (`needsFullReview`), o diálogo **não** oferece
@@ -498,11 +497,10 @@ document"*.
    input simples). Valor inválido mostra "Informe um valor válido e diferente do
    original."
 7. "Continuar para prévia" só habilita com todas as pendências completas;
-   então salva, fecha e navega para `/generator`.
+   então grava cada resposta na API, fecha e navega para `/generator`.
 
-Rótulos do modo demonstração no diálogo: "Prévia da revisão de currículo",
-`"N exemplos de revisão"`, e *"Demonstração com dados fictícios, não extraídos
-do seu arquivo. As respostas ficam apenas como rascunho de interface."*
+Sem versão autenticada, o diálogo informa que não há dados reais para revisar e
+mantém a continuação desabilitada; não exibe fixtures como fatos da pessoa.
 
 ---
 

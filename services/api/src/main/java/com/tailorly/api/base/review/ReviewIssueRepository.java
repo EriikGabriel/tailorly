@@ -10,6 +10,8 @@ import org.springframework.stereotype.Repository;
 public interface ReviewIssueRepository extends JpaRepository<ReviewIssue, UUID> {
   List<ReviewIssue> findAllByBaseVersionIdOrderById(UUID baseVersionId);
 
+  List<ReviewIssue> findAllByBaseVersionIdAndStatusOrderById(UUID baseVersionId, String status);
+
   List<ReviewIssue> findAllByBaseVersionIdAndBlockingTrueAndStatusIn(
       UUID baseVersionId, List<String> statuses);
 }
