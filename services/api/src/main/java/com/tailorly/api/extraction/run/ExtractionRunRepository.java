@@ -22,7 +22,7 @@ public interface ExtractionRunRepository extends JpaRepository<ExtractionRun, UU
 
   @Query(value = """
       select * from extraction_runs
-      where status = 'QUEUED' and pipeline_versions->>'implementation' = 'selective-pdf-v1'
+      where status = 'QUEUED'
       order by created_at, id limit 1 for update skip locked
       """, nativeQuery = true)
   Optional<ExtractionRun> findNextQueued();
@@ -35,7 +35,6 @@ public interface ExtractionRunRepository extends JpaRepository<ExtractionRun, UU
   @Query(value = """
       update extraction_runs set status = 'FAILED', error_code = 'WORKER_TIMEOUT', finished_at = :now
       where status = 'PROCESSING' and started_at < :cutoff
-        and pipeline_versions->>'implementation' = 'selective-pdf-v1'
       """, nativeQuery = true)
   int expireStalled(@Param("cutoff") Instant cutoff, @Param("now") Instant now);
 }

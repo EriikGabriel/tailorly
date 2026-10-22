@@ -15,6 +15,7 @@ import { useBaseCvStore } from "@stores/base-cv-store";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useReducedMotion } from "motion/react";
 import { useRef } from "react";
+import { ExtractionProgress } from "./-components/extraction-progress";
 import { GovernanceCard } from "./-components/governance-card";
 import { ReviewWorkspace } from "./-components/review-workspace";
 
@@ -198,6 +199,9 @@ function RouteComponent() {
               <p role="alert" className="text-body-sm text-error">
                 {error}
               </p>
+            )}
+            {upload.isSuccess && upload.variables === file && (
+              <ExtractionProgress versionId={upload.data.version.id} />
             )}
           </div>
         </AutoHeight>

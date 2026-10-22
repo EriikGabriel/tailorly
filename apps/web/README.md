@@ -7,7 +7,9 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 > auditoria do Currículo Base (`/base`) e a revisão rápida estão implementadas
 > como **prévias locais**. Na home, selecionar um PDF envia o original para a
 > API quando há uma conta autenticada; sem conta, a seleção fica apenas como
-> prévia local. Não há extração, OCR, persistência dos rascunhos nem geração
+> prévia local. Após o upload autenticado, home e `/base` acompanham a fila de
+> extração e mostram conclusão ou falha consultando a API. O frontend não
+> recebe progresso percentual ou por página. OCR, persistência dos rascunhos e geração
 > real. Login, cadastro e logout de contas estão disponíveis no cabeçalho;
 > `/cvs` e `/generator` são placeholders.
 

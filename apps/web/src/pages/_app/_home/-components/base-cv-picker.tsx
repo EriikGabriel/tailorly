@@ -5,6 +5,7 @@ import { useAuthStore } from "@stores/auth-store";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
+import { ExtractionProgress } from "../../base/-components/extraction-progress";
 
 export function BaseCvPicker() {
   const reducedMotion = useReducedMotion();
@@ -80,6 +81,11 @@ export function BaseCvPicker() {
             >
               {error}
             </p>
+          )}
+          {currentUpload && uploadBaseDocument.isSuccess && (
+            <ExtractionProgress
+              versionId={uploadBaseDocument.data.version.id}
+            />
           )}
         </div>
       </AutoHeight>

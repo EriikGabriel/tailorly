@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class PdfExtractor {
-  public static final String IMPLEMENTATION = "selective-pdf-v1";
+  public static final String IMPLEMENTATION = "selective-pdf-v2";
   private final OcrClient ocr;
   private final TextQualityPolicy quality;
 
@@ -41,7 +41,7 @@ public class PdfExtractor {
   /** Versões/parâmetros de cada etapa do pipeline; a chave "ocr" delega ao {@link OcrClient} atual. */
   public Map<String, Object> versions() {
     return Map.of("implementation", IMPLEMENTATION, "pdfbox", "3.0.8",
-        "qualityPolicy", "1", "normalizer", "1", "ocr", ocr.fingerprint(),
+        "qualityPolicy", "2", "normalizer", "1", "ocr", ocr.fingerprint(),
         "dpi", 300, "maxPages", 20, "maxPixels", 20_000_000);
   }
 
@@ -85,6 +85,8 @@ public class PdfExtractor {
         stripper.setStartPage(index + 1);
         stripper.setEndPage(index + 1);
         stripper.setSortByPosition(true);
+        stripper.setShouldSeparateByBeads(true);
+        stripper.setSuppressDuplicateOverlappingText(true);
         String text = quality.normalize(stripper.getText(document));
         String method = "DIRECT";
 

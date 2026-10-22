@@ -1,9 +1,12 @@
 import type { BaseDocumentUploadResponse } from "@lib/api/generated/model";
-import { baseDocumentUpload } from "@lib/api/generated/tailorly";
+import {
+  baseDocumentUpload,
+  extractionRunFindByVersion,
+} from "@lib/api/generated/tailorly";
 import { apiQueryKeys } from "@lib/api/query-keys";
 import { useAuthStore } from "@stores/auth-store";
 import { useBaseCvStore } from "@stores/base-cv-store";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { currentAccountQueryOptions } from "./current-account";
 
 export function useUploadBaseDocument() {
@@ -67,4 +70,25 @@ export function useSelectBaseDocumentFile() {
       return true;
     },
   };
+}
+
+export function useBaseDocumentExtraction(versionId?: string) {
+  const accessToken = useAuthStore((state) => state.accessToken);
+
+  return useQuery({
+    queryKey: apiQueryKeys.extractionRuns.byVersion(versionId ?? ""),
+    queryFn: () => {
+      if (!accessToken || !versionId) {
+        throw new Error("Uma sessão autenticada e versão são necessárias.");
+      }
+      return extractionRunFindByVersion(versionId, { accessToken });
+    },
+    enabled: Boolean(accessToken && versionId),
+    refetchInterval: (query) => {
+      const run = query.state.data?.[0];
+      return run && ["QUEUED", "PROCESSING"].includes(run.status)
+        ? 1500
+        : false;
+    },
+  });
 }

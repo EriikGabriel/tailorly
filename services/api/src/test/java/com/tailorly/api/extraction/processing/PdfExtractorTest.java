@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -16,6 +17,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 
 class PdfExtractorTest {
   private OcrClient ocr;
@@ -96,6 +98,29 @@ class PdfExtractorTest {
     assertNotEquals(first, extractor.fingerprint());
   }
 
+  @Test
+  @DisplayName("OCR local reconhece fixture escaneada representativa quando instalado")
+  void realOcrWhenAvailable() throws Exception {
+    Process languages;
+    try {
+      languages = new ProcessBuilder("tesseract", "--list-langs").start();
+    } catch (java.io.IOException unavailable) {
+      Assumptions.assumeTrue(false, "Tesseract não está instalado neste ambiente");
+      return;
+    }
+    Assumptions.assumeTrue(languages.waitFor(5, java.util.concurrent.TimeUnit.SECONDS));
+    String installed = new String(languages.getInputStream().readAllBytes());
+    Assumptions.assumeTrue(languages.exitValue() == 0 && installed.contains("eng"),
+        "Instale Tesseract 5 e o modelo eng para executar este teste");
+
+    var realExtractor = new PdfExtractor(new TesseractOcrClient("tesseract", "eng", "test"),
+        new TextQualityPolicy());
+    var pages = realExtractor.extract(pdf(true, false));
+    assertEquals("OCR", pages.getFirst().method());
+    assertTrue(pages.getFirst().text().toLowerCase().contains("software engineer"));
+    assertTrue(pages.getFirst().text().toLowerCase().contains("experience"));
+  }
+
   private byte[] pdf(boolean scan, boolean mixed) throws Exception {
     try (PDDocument document = new PDDocument()) {
       if (!scan || mixed) {
@@ -112,15 +137,23 @@ class PdfExtractorTest {
       if (scan) {
         PDPage page = new PDPage();
         document.addPage(page);
-        BufferedImage image = new BufferedImage(600, 100, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = new BufferedImage(1200, 1600, BufferedImage.TYPE_INT_RGB);
         var graphics = image.createGraphics();
         graphics.setColor(Color.WHITE);
-        graphics.fillRect(0, 0, 600, 100);
+        graphics.fillRect(0, 0, 1200, 1600);
         graphics.setColor(Color.BLACK);
-        graphics.drawString("Currículo sintético para teste de OCR", 10, 50);
+        graphics.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 54));
+        graphics.drawString("ALEX MORGAN", 90, 150);
+        graphics.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 32));
+        graphics.drawString("SOFTWARE ENGINEER", 90, 215);
+        graphics.drawString("EXPERIENCE", 90, 370);
+        graphics.drawString("Senior software engineer at Example Labs", 90, 425);
+        graphics.drawString("Built Java services and automated tests", 90, 475);
+        graphics.drawString("EDUCATION", 90, 600);
+        graphics.drawString("BSc Computer Science, Example University", 90, 655);
         graphics.dispose();
         try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
-          stream.drawImage(LosslessFactory.createFromImage(document, image), 30, 600);
+          stream.drawImage(LosslessFactory.createFromImage(document, image), 30, 50, 550, 700);
         }
       }
       ByteArrayOutputStream output = new ByteArrayOutputStream();

@@ -13,4 +13,8 @@ export const apiQueryKeys = {
     detail: (documentId: string) =>
       [...apiQueryKeys.baseDocuments.all, "detail", documentId] as const,
   },
+  extractionRuns: {
+    byVersion: (versionId: string) =>
+      ["extraction-runs", "version", versionId] as const,
+  },
 } as const;
