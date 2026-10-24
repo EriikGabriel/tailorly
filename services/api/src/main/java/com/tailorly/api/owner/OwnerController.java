@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import com.tailorly.api.owner.dto.CreateOwnerRequest;
 import com.tailorly.api.owner.dto.OwnerResponse;
-import com.tailorly.api.owner.dto.UpdateActiveSnapshotRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,14 +31,6 @@ public class OwnerController {
   @GetMapping("/{id}")
   public OwnerResponse findById(@PathVariable UUID id) {
     return ownerService.findById(id);
-  }
-
-  @PatchMapping("/{id}/active-snapshot")
-  public OwnerResponse updateActiveSnapshot(
-      @PathVariable UUID id,
-      @RequestBody UpdateActiveSnapshotRequest request
-  ) {
-    return ownerService.updateActiveSnapshot(id, request.activeSnapshotId());
   }
 
   @PatchMapping("/{id}/increment-revision")

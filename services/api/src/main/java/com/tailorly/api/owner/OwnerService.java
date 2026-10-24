@@ -3,7 +3,6 @@ package com.tailorly.api.owner;
 import java.util.Locale;
 import java.util.UUID;
 
-import com.tailorly.api.base.snapshot.GtSnapshotRepository;
 import com.tailorly.api.owner.dto.CreateOwnerRequest;
 import com.tailorly.api.owner.dto.OwnerResponse;
 import com.tailorly.api.shared.exception.BadRequestException;
@@ -29,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OwnerService {
   private final OwnerRepository ownerRepository;
-  private final GtSnapshotRepository gtSnapshotRepository;
   private final UserRepository userRepository;
 
   /**
@@ -68,7 +66,7 @@ public class OwnerService {
     Owner owner = Owner.builder()
         .kind(kind)
         .user(user)
-        .activeSnapshotId(request.activeSnapshotId())
+        .activeSnapshotId(null)
         .revision(0)
         .build();
 
@@ -77,21 +75,6 @@ public class OwnerService {
 
   @Transactional(readOnly = true)
   public OwnerResponse findById(UUID id) {
-    return OwnerResponse.from(getOwner(id));
-  }
-
-  @Transactional
-  public OwnerResponse updateActiveSnapshot(UUID id, UUID activeSnapshotId) {
-    Owner owner = ownerRepository.findByIdForUpdate(id)
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
-    assertCanAccess(owner);
-    if (activeSnapshotId != null
-        && gtSnapshotRepository.findByIdAndOwnerId(activeSnapshotId, id).isEmpty()) {
-      throw new ResourceNotFoundException(ErrorCodes.BaseVersion.NOT_FOUND);
-    }
-    if (ownerRepository.updateActiveSnapshot(id, activeSnapshotId) == 0) {
-      throw new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND);
-    }
     return OwnerResponse.from(getOwner(id));
   }
 

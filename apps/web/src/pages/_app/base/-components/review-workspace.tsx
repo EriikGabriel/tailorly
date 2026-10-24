@@ -1,23 +1,26 @@
 import {
   type CollectionProps,
+  createReviewDraft,
   type DraftCollection,
   reviewSteps,
 } from "@@types/review-model";
 import { Button } from "@animate/buttons/button";
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
-import { ArrowLeft, ArrowRight } from "@react-zero-ui/icon-sprite";
-import { usePresentationStore } from "@stores/presentation-store";
-import { useReviewDraftStore } from "@stores/review-draft-store";
-import { useBaseCvStore } from "@stores/base-cv-store";
 import {
+  useApproveGroundTruth,
   useBaseReview,
   useCreateFact,
   useCreateFactRecord,
   useUpdateFactReviewState,
 } from "@queries/base-review";
+import { ArrowLeft, ArrowRight } from "@react-zero-ui/icon-sprite";
+import { useBaseCvStore } from "@stores/base-cv-store";
+import { usePresentationStore } from "@stores/presentation-store";
+import { useQuickReviewStore } from "@stores/quick-review-store";
+import { useReviewDraftStore } from "@stores/review-draft-store";
+import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
-import { createReviewDraft } from "@@types/review-model";
 import { EducationReviewStep } from "../-steps/education-review-step";
 import { ExperienceReviewStep } from "../-steps/experience-review-step";
 import { IdentityReviewStep } from "../-steps/identity-review-step";
@@ -46,56 +49,93 @@ export function ReviewWorkspace({
   const createRecord = useCreateFactRecord(baseVersionId ?? "");
   const createFact = useCreateFact(baseVersionId ?? "");
   const updateFact = useUpdateFactReviewState(baseVersionId ?? "");
+  const approveGroundTruth = useApproveGroundTruth(baseVersionId ?? "");
+  const navigate = useNavigate();
+  const setQuickReviewOpen = useQuickReviewStore((state) => state.setOpen);
   const hydrateFromApi = useReviewDraftStore((state) => state.hydrateFromApi);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
   const { preferences, setPreferences } = usePresentationStore();
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (!review.records.isSuccess || !sourceId) return;
+
     const hydrated = createReviewDraft();
+
     for (const record of review.records.data) {
       if (record.category === "identity") {
         for (const fact of record.facts) {
           if (fact.reviewState !== "omitido") {
-            hydrated.identity[fact.fieldKey] = String(fact.reviewedValue ?? fact.extractedValue ?? "");
+            hydrated.identity[fact.fieldKey] = String(
+              fact.reviewedValue ?? fact.extractedValue ?? "",
+            );
           }
         }
+
         continue;
       }
-      if (!["experience", "projects", "degrees", "certifications", "languages", "technologies"].includes(record.category)) continue;
+
+      if (
+        ![
+          "experience",
+          "projects",
+          "degrees",
+          "certifications",
+          "languages",
+          "technologies",
+        ].includes(record.category)
+      )
+        continue;
+
       const collection = record.category as DraftCollection;
       const rowValues = new Map<number, Record<string, string>>();
+
       for (const fact of record.facts) {
         if (fact.reviewState === "omitido") continue;
-        const match = /^(\\d+):(.*)$/.exec(fact.fieldKey);
+        const match = /^(\d+):(.*)$/.exec(fact.fieldKey);
         const index = match ? Number(match[1]) : 0;
         const key = match ? match[2] : fact.fieldKey;
         const values = rowValues.get(index) ?? {};
         values[key] = String(fact.reviewedValue ?? fact.extractedValue ?? "");
         rowValues.set(index, values);
       }
-      hydrated[collection] = [...rowValues.entries()].sort(([left], [right]) => left - right)
+
+      hydrated[collection] = [...rowValues.entries()]
+        .sort(([left], [right]) => left - right)
         .map(([index, fields]) => ({ id: `${record.id}-${index}`, fields }));
     }
+
     hydrateFromApi(sourceId, hydrated);
   }, [hydrateFromApi, review.records.data, review.records.isSuccess, sourceId]);
 
   async function saveDraft() {
     if (!baseVersionId) {
-      setSaveError("Envie o Currículo Base com uma conta autenticada para salvar os fatos.");
-      return;
+      setSaveError(
+        "Envie o Currículo Base com uma conta autenticada para salvar os fatos.",
+      );
+      return false;
     }
-    if (review.records.isLoading) return;
+    if (review.records.isLoading) return false;
     setSaving(true);
     setSaveError(null);
     try {
       const groups: { category: string; fields: Record<string, string> }[] = [];
-      if (Object.values(draft.identity).some(Boolean) || review.records.data?.some((item) => item.category === "identity")) {
+      if (
+        Object.values(draft.identity).some(Boolean) ||
+        review.records.data?.some((item) => item.category === "identity")
+      ) {
         groups.push({ category: "identity", fields: draft.identity });
       }
-      const collections: DraftCollection[] = ["experience", "projects", "degrees", "certifications", "languages", "technologies"];
+      const collections: DraftCollection[] = [
+        "experience",
+        "projects",
+        "degrees",
+        "certifications",
+        "languages",
+        "technologies",
+      ];
       for (const collectionKey of collections) {
         const fields: Record<string, string> = {};
         draft[collectionKey].forEach((record, index) => {
@@ -103,13 +143,18 @@ export function ReviewWorkspace({
             if (value.trim()) fields[`${index}:${key}`] = value.trim();
           }
         });
-        if (Object.keys(fields).length || review.records.data?.some((item) => item.category === collectionKey)) {
+        if (
+          Object.keys(fields).length ||
+          review.records.data?.some((item) => item.category === collectionKey)
+        ) {
           groups.push({ category: collectionKey, fields });
         }
       }
 
       for (const group of groups) {
-        let record = review.records.data?.find((item) => item.category === group.category);
+        let record = review.records.data?.find(
+          (item) => item.category === group.category,
+        );
         if (!record) {
           record = await createRecord.mutateAsync({
             baseVersionId,
@@ -117,7 +162,9 @@ export function ReviewWorkspace({
             displayOrder: groups.indexOf(group),
           });
         }
-        const existing = new Map(record.facts.map((fact) => [fact.fieldKey, fact]));
+        const existing = new Map(
+          record.facts.map((fact) => [fact.fieldKey, fact]),
+        );
         for (const [fieldKey, value] of Object.entries(group.fields)) {
           const fact = existing.get(fieldKey);
           if (!fact) {
@@ -130,22 +177,68 @@ export function ReviewWorkspace({
             });
             continue;
           }
-          const currentValue = String(fact.reviewedValue ?? fact.extractedValue ?? "");
+          const currentValue = String(
+            fact.reviewedValue ?? fact.extractedValue ?? "",
+          );
           if (currentValue !== value) {
-            await updateFact.mutateAsync({ id: fact.id, reviewState: "corrigido", reviewedValue: value });
+            await updateFact.mutateAsync({
+              id: fact.id,
+              reviewState: "corrigido",
+              reviewedValue: value,
+            });
           }
         }
         for (const fact of record.facts) {
-          if (fact.reviewState !== "omitido" && !(fact.fieldKey in group.fields)) {
-            await updateFact.mutateAsync({ id: fact.id, reviewState: "omitido" });
+          if (
+            fact.reviewState !== "omitido" &&
+            !(fact.fieldKey in group.fields)
+          ) {
+            await updateFact.mutateAsync({
+              id: fact.id,
+              reviewState: "omitido",
+            });
           }
         }
       }
+      return true;
     } catch (cause) {
-      setSaveError(cause instanceof Error ? cause.message : "Não foi possível salvar os fatos.");
+      setSaveError(
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível salvar os fatos.",
+      );
+      return false;
     } finally {
       setSaving(false);
     }
+  }
+
+  async function approve() {
+    if (!(await saveDraft())) return;
+    const refreshedIssues = await review.issues.refetch();
+    const unresolved = (refreshedIssues.data ?? []).some(
+      (issue) => issue.blocking && issue.status === "PENDING",
+    );
+    if (unresolved) {
+      reviewPendingIssues();
+      return;
+    }
+    setApprovalError(null);
+    try {
+      await approveGroundTruth.mutateAsync();
+      navigate({ to: "/" });
+    } catch (cause) {
+      setApprovalError(
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível aprovar o Ground Truth.",
+      );
+    }
+  }
+
+  function reviewPendingIssues() {
+    setQuickReviewOpen(true);
+    navigate({ to: "/" });
   }
 
   function collection(key: DraftCollection): CollectionProps {
@@ -250,9 +343,17 @@ export function ReviewWorkspace({
           {activeStep === "preferences" && (
             <ReviewCompletionCard
               onSave={saveDraft}
+              onApprove={approve}
+              onReviewIssues={reviewPendingIssues}
               saving={saving}
-              disabled={!baseVersionId || review.records.isLoading}
-              error={saveError}
+              approving={approveGroundTruth.isPending}
+              disabled={!baseVersionId || review.records.isLoading || saving}
+              error={saveError ?? approvalError}
+              pendingCount={
+                (review.issues.data ?? []).filter(
+                  (issue) => issue.blocking && issue.status === "PENDING",
+                ).length
+              }
             />
           )}
         </div>

@@ -1,5 +1,9 @@
 import { apiRequest } from "@lib/api/client";
-import { extractedPageFindAllByRunId, extractedPageReadText, extractionRunFindByVersion } from "@lib/api/generated/tailorly";
+import {
+  extractedPageFindAllByRunId,
+  extractedPageReadText,
+  extractionRunFindByVersion,
+} from "@lib/api/generated/tailorly";
 import { apiQueryKeys } from "@lib/api/query-keys";
 import { useAuthStore } from "@stores/auth-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,6 +46,25 @@ export type ReviewIssue = {
   fact: BaseFact | null;
 };
 
+export type GroundTruthSnapshot = {
+  id: string;
+  ownerId: string;
+  baseVersionId: string;
+  snapshotNumber: number;
+  approvedReviewRevision: number;
+  contentHash: string;
+  approvedAt: string;
+  schemaVersion: number;
+  active: boolean;
+  items: {
+    id: string;
+    category: string;
+    fieldKey: string;
+    approvedValue: unknown;
+  }[];
+};
+
+// Centraliza as mutações da revisão para invalidar os dados exibidos na tela.
 function useBaseReviewMutation<TInput, TOutput>(
   versionId: string,
   path: (input: TInput) => string,
@@ -74,14 +97,24 @@ export function useBaseReview(versionId?: string) {
   const accessToken = useAuthStore((state) => state.accessToken);
   const runs = useQuery({
     queryKey: apiQueryKeys.extractionRuns.byVersion(versionId ?? ""),
-    queryFn: () => extractionRunFindByVersion(versionId ?? "", { accessToken: accessToken ?? undefined }),
+    queryFn: () =>
+      extractionRunFindByVersion(versionId ?? "", {
+        accessToken: accessToken ?? undefined,
+      }),
     enabled: Boolean(accessToken && versionId),
-    refetchInterval: (query) => query.state.data?.[0] && ["QUEUED", "PROCESSING"].includes(query.state.data[0].status) ? 1500 : false,
+    refetchInterval: (query) =>
+      query.state.data?.[0] &&
+      ["QUEUED", "PROCESSING"].includes(query.state.data[0].status)
+        ? 1500
+        : false,
   });
   const completedRun = runs.data?.find((run) => run.status === "COMPLETED");
   const pages = useQuery({
     queryKey: apiQueryKeys.baseReview.pages(completedRun?.id ?? ""),
-    queryFn: () => extractedPageFindAllByRunId(completedRun?.id ?? "", { accessToken: accessToken ?? undefined }),
+    queryFn: () =>
+      extractedPageFindAllByRunId(completedRun?.id ?? "", {
+        accessToken: accessToken ?? undefined,
+      }),
     enabled: Boolean(accessToken && completedRun),
   });
   const records = useQuery({
@@ -147,7 +180,11 @@ export function useAnswerReviewIssue(versionId: string) {
 
 export function useUpdateFactReviewState(versionId: string) {
   return useBaseReviewMutation<
-    { id: string; reviewState: "corrigido" | "omitido"; reviewedValue?: string },
+    {
+      id: string;
+      reviewState: "corrigido" | "omitido";
+      reviewedValue?: string;
+    },
     BaseFact
   >(
     versionId,
@@ -157,9 +194,35 @@ export function useUpdateFactReviewState(versionId: string) {
   );
 }
 
+export function useApproveGroundTruth(versionId: string) {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const queryClient = useQueryClient();
+
+  return useMutation<GroundTruthSnapshot, Error, void>({
+    mutationFn: () =>
+      apiRequest<GroundTruthSnapshot>(
+        `/v1/gt-snapshots/approve-version/${encodeURIComponent(versionId)}`,
+        { method: "POST", accessToken: accessToken ?? undefined },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: apiQueryKeys.baseReview.records(versionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: apiQueryKeys.baseReview.issues(versionId),
+      });
+    },
+  });
+}
+
 export function useCreateFactEvidence(versionId: string) {
   return useBaseReviewMutation<
-    { factId: string; extractedPageId: string; sourceExcerpt: string; sourceLocator: { pageNumber: number | null } },
+    {
+      factId: string;
+      extractedPageId: string;
+      sourceExcerpt: string;
+      sourceLocator: { pageNumber: number | null };
+    },
     FactEvidence
   >(versionId, () => "/v1/fact-evidence", "POST");
 }
@@ -169,7 +232,10 @@ export function useExtractedPageText(pageId?: string) {
 
   return useQuery({
     queryKey: ["extracted-page-text", pageId ?? ""],
-    queryFn: () => extractedPageReadText(pageId ?? "", { accessToken: accessToken ?? undefined }),
+    queryFn: () =>
+      extractedPageReadText(pageId ?? "", {
+        accessToken: accessToken ?? undefined,
+      }),
     enabled: Boolean(accessToken && pageId),
   });
 }

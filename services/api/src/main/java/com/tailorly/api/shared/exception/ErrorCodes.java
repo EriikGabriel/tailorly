@@ -69,8 +69,19 @@ public final class ErrorCodes {
     public static final String VERSION_ALREADY_EXISTS = "error.base_version.version_already_exists";
     public static final String DOCUMENT_OWNER_MISMATCH = "error.base_version.document_owner_mismatch";
     public static final String INVALID_STATUS = "error.base_version.invalid_status";
+    public static final String REVIEW_PENDING = "error.base_version.review_pending";
+    public static final String NO_APPROVED_FACTS = "error.base_version.no_approved_facts";
+    public static final String DECISION_MISSING = "error.base_version.decision_missing";
 
     private BaseVersion() {
+    }
+  }
+
+  public static final class GtSnapshot {
+    public static final String NOT_FOUND = "error.gt_snapshot.not_found";
+    public static final String NOT_ACTIVE = "error.gt_snapshot.not_active";
+
+    private GtSnapshot() {
     }
   }
 

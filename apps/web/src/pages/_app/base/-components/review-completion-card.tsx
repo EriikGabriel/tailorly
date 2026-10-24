@@ -3,14 +3,22 @@ import { ShieldCheck } from "@react-zero-ui/icon-sprite";
 
 export function ReviewCompletionCard({
   onSave,
+  onApprove,
+  onReviewIssues,
   saving = false,
+  approving = false,
   disabled = false,
   error,
+  pendingCount = 0,
 }: {
   onSave: () => void;
+  onApprove: () => void;
+  onReviewIssues: () => void;
   saving?: boolean;
+  approving?: boolean;
   disabled?: boolean;
   error?: string | null;
+  pendingCount?: number;
 }) {
   return (
     <section
@@ -26,8 +34,8 @@ export function ReviewCompletionCard({
             Auditoria factual aguardando revisão
           </h2>
           <p id="review-completion-description" className="text-body-sm">
-            Salve os fatos revisados na versão candidata do Currículo Base.
-            A aprovação final exige a confirmação das pendências.
+            Salve os fatos revisados na versão candidata do Currículo Base. A
+            aprovação final exige a confirmação das pendências.
           </p>
         </div>
       </div>
@@ -42,14 +50,36 @@ export function ReviewCompletionCard({
           {saving ? "Salvando..." : "Salvar Rascunho da Auditoria"}
         </Button>
         <Button
-          disabled
+          disabled={disabled || approving || pendingCount > 0}
+          onClick={onApprove}
           aria-describedby="review-completion-description"
           className="h-auto min-h-12 whitespace-normal rounded-xl px-6 py-3.5"
         >
-          Aprovar Ground Truth e Voltar ao Início →
+          {approving
+            ? "Aprovando..."
+            : "Aprovar Ground Truth e Voltar ao Início →"}
         </Button>
       </div>
-      {error && <p role="alert" className="text-body-sm text-error">{error}</p>}
+      {pendingCount > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-container-low p-3">
+          <p className="text-body-sm">
+            {pendingCount} pendência(s) obrigatória(s) ainda precisam de
+            resposta.
+          </p>
+          <Button
+            variant="ghost"
+            onClick={onReviewIssues}
+            className="rounded-lg"
+          >
+            Revisar pendências
+          </Button>
+        </div>
+      )}
+      {error && (
+        <p role="alert" className="text-body-sm text-error">
+          {error}
+        </p>
+      )}
     </section>
   );
 }

@@ -284,16 +284,14 @@ Definidos como `const fields: ReviewField[]` dentro de cada arquivo em `-steps/`
 | Idiomas | `language`, `proficiency` |
 | Tecnologias | `name`, `context` |
 
-Registros podem ser **adicionados, editados, recolhidos e removidos**.
-`ReviewDraftCollection` cria o `id` do registro com `crypto.randomUUID()` e
-rotula cada um com "Rascunho local • não validado". Ao remover, o foco volta
-para o botão de adicionar.
+Registros podem ser **adicionados, editados, recolhidos e removidos**. As
+alterações são editadas no workspace e salvas pela ação já existente no cartão
+final. Registros existentes vêm da API; fatos novos ficam pendentes de
+confirmação e alterações em fatos salvos geram decisões auditadas.
 
-Botões desabilitados que existem como especificação de interface: **"Validar
-todos os fatos"** (etapa 3), **"Ver trecho original no OCR"** (quando
-`evidence`), o switch **"Bounding Boxes de IA"**, "Salvar Rascunho da Auditoria"
-e "Aprovar Ground Truth" — todos com `title` explicando que dependem da
-integração com o servidor.
+Ainda são apenas especificações: **"Validar todos os fatos"** (etapa 3),
+**"Ver trecho original no OCR"** e o switch **"Bounding Boxes de IA"**. Salvar
+os fatos e aprovar o snapshot já chamam a API.
 
 ### Modelo de pendência (`src/types/review.ts`)
 
@@ -487,10 +485,10 @@ OCR em identidade, experiência ou outros tipos de fato.
    `/v1/review-issues/version/{baseVersionId}`. Sem versão autenticada, não mostra
    exemplos pessoais nem permite salvar respostas.
 3. `configure(contextKey, allIssues, preview)` roda em `useEffect`.
-4. `selectQuickReviewIssues` recorta para até 3 pendências / 2 categorias.
-5. Se sobraram pendências (`needsFullReview`), o diálogo **não** oferece
-   "Continuar para prévia": manda para `/base`. O botão só aparece quando
-   `quickIssues.length === allIssues.length` e `!requiresFullReview`.
+4. Quando os dados vêm da API, o diálogo inclui todas as pendências reais da
+   candidata; o limite de 3 pendências / 2 categorias só vale para issues de
+   prévia fornecidas explicitamente.
+5. Cada pendência persistida é respondida na API antes de continuar.
 6. Cada pendência é um `ReviewSection` com as escolhas; escolher `corrected`
    revela um `ReviewCorrectionInput` com o controle adequado ao `type` (input
    numérico com stepper, `Select` do Base UI, `ReviewMonthPicker` em popover, ou
@@ -661,8 +659,8 @@ usa respostas simuladas da API para verificar o upload e a troca de PDF em
 `/base`; não comprova gravação real no Garage. `tests/e2e/quick-review.spec.ts`
 verifica **RF16**: bloqueio da continuidade enquanto
 uma correção é vazia, inválida ou igual ao original, e liberação após respostas
-válidas. O teste opera a interface existente, com documento sintético e dados
-de revisão explicitamente fictícios. Não comprova aprovação remota nem geração.
+válidas. O teste opera a interface com respostas simuladas; não comprova a
+aprovação remota nem a geração.
 
 O guia em [tests/README.md](tests/README.md) descreve instalação, execução e o
 ciclo red → green → refactor. O [mapa de requisitos](tests/requirements.md)
@@ -674,17 +672,12 @@ registra cobertura parcial e critérios futuros sem adicionar toda a suíte.
 
 ## 12. O que **não** existe (planejado)
 
-Nada abaixo está implementado no frontend. Tratar como especificação, não como
-comportamento:
+Os pontos abaixo continuam pendentes no frontend ou no fluxo completo:
 
-- upload anônimo, OCR, extração de texto e extração de fatos;
-- pendências geradas por extração real (as atuais são fixture de demonstração);
-- evidência com origem no documento, consulta ao OCR, coordenadas de bounding box;
-- estados de revisão `pendente` / `confirmado` / `corrigido` / `omitido`
-  persistidos — hoje `result` existe só no tipo da escolha, não há ciclo de vida;
-- versões candidatas, ativação atômica do Ground Truth, snapshot aprovado;
-- hash de conteúdo e deduplicação por reenvio idêntico;
-- salvamento remoto, aprovação, download, geração de PDF/Markdown;
+- upload anônimo e extração automática de fatos e evidências pelo pipeline;
+- visualização da evidência sobre o PDF e coordenadas de bounding box;
+- atualização automática do snapshot ativo após uma nova extração;
+- download e geração de PDF/Markdown;
 - recuperação de senha; sessão anônima completa, TTL e cotas no servidor;
 - integração com o vault (Second Brain), Notion, Obsidian;
 - persistência dos rascunhos em `localStorage`/`sessionStorage` (o JWT usa
@@ -692,9 +685,9 @@ comportamento:
   `resetClientState`);
 - `POST /v1/cv/generate` e qualquer outro endpoint de domínio.
 
-Dados remotos devem entrar pela integração de **TanStack Query** já montada em
-`src/lib/query-client.ts` e injetada no contexto do router. Estas stores **não**
-promovem rascunhos a Ground Truth nem habilitam geração real.
+Dados remotos entram pela integração de **TanStack Query** já montada em
+`src/lib/query-client.ts` e injetada no contexto do router. A aprovação persiste
+um snapshot do backend; geração real ainda não está habilitada.
 
 Os contratos e as funções HTTP sem hooks são gerados pelo Orval em
 `src/lib/api/generated`. O arquivo `src/lib/api/client.ts` é o mutator comum:

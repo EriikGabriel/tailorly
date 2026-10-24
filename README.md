@@ -27,7 +27,7 @@ flowchart LR
     Storage --> Vault[Second Brain\nB03 Resources/CVs]
 ```
 
-Os blocos de LLM, templates, geração de PDF e vault representam a arquitetura planejada. Hoje a API implementa contas, JWT, upload no Garage, extração por página com OCR seletivo e persistência/revisão manual de fatos por versão candidata. A extração semântica automática de fatos, aprovação de snapshots e geração de currículos ainda não estão disponíveis.
+Os blocos de LLM, templates, geração de PDF e vault representam a arquitetura planejada. Hoje a API implementa contas, JWT, upload no Garage, extração por página com OCR seletivo, revisão manual de fatos por versão candidata e aprovação atômica de snapshots do Ground Truth. A extração semântica automática de fatos e a geração de currículos ainda não estão disponíveis.
 
 ## Estrutura do repositório
 
@@ -73,7 +73,7 @@ A documentação detalhada da implementação Spring Boot está em [`services/ap
 | Saúde | Spring Actuator com `health` e `info` expostos | Métricas e logs estruturados |
 | Acesso web | CORS, JWT Bearer e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente e renovação de tokens |
 | Parsing de páginas | Dependência Jsoup já incluída | Extração de vagas por URL |
-| Dados e arquivos | PostgreSQL/Flyway; PDFs e textos por página no Garage; fila PDFBox/OCR seletivo e status da extração na UI | Revisão dos fatos |
+| Dados e arquivos | PostgreSQL/Flyway; PDFs e textos por página no Garage; fila PDFBox/OCR seletivo, revisão auditada e snapshots aprovados | Extração semântica de fatos |
 
 O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. A especificação OpenAPI está em `http://localhost:8080/v3/api-docs` e a interface Swagger UI em `http://localhost:8080/swagger-ui.html`. A API inclui operações de usuários, owners e sessões anônimas. Cadastro (`POST /v1/auth/register` e o caminho existente `POST /v1/users`), login (`POST /v1/auth/login`), saúde, documentação e criação/validação de sessões anônimas são públicos; consulta e revogação de sessões exigem `ROLE_ADMIN`. O login valida email e senha e retorna `accessToken`, `tokenType: Bearer`, `expiresAt` e os dados públicos do usuário. Nas chamadas protegidas, envie `Authorization: Bearer <accessToken>`. O token é assinado com HS256, expira após uma hora e inclui o ID do usuário como sujeito. A API consulta a conta e as roles atuais em cada chamada protegida; contas desativadas perdem acesso imediatamente. Como a autenticação usa apenas o cabeçalho Bearer, não há cookie de login nem token CSRF. Ainda não há refresh token, logout ou revogação individual de JWTs.
 
@@ -110,10 +110,11 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | `/v1/auth/login` | `POST` | Validar `email` e `password`; retorna JWT Bearer, expiração e dados públicos ou `401`. |
 | `/v1/me` | `GET` | Consultar o usuário autenticado e seu owner único; cria o owner para contas antigas quando necessário. |
 | `/v1/base-documents/upload` | `POST` | Receber PDF da conta, gravar no Garage, criar ou recuperar a versão e enfileirar/reutilizar a extração. |
-| `/v1/owners` | `POST` | Criar owner (`kind`, `userId` opcional e `activeSnapshotId` opcional) |
+| `/v1/owners` | `POST` | Criar owner (`kind`, `userId` opcional); snapshot ativo só muda pela aprovação |
 | `/v1/owners/{id}` | `GET` | Consultar owner |
-| `/v1/owners/{id}/active-snapshot` | `PATCH` | Atualizar ou limpar o snapshot ativo |
 | `/v1/owners/{id}/increment-revision` | `PATCH` | Incrementar atomicamente a revisão |
+| `/v1/gt-snapshots/approve-version/{baseVersionId}` | `POST` | Validar pendências, congelar fatos auditados e ativar o snapshot atomicamente |
+| `/v1/gt-snapshots/{id}` | `GET` | Consultar snapshot e itens aprovados |
 | `/v1/anonymous-sessions` | `POST` | Criar sessão para owner anônimo |
 | `/v1/anonymous-sessions/validate` | `POST` | Validar token e expiração da sessão |
 | `/v1/anonymous-sessions/{id}/revoke` | `PATCH` | Revogar sessão (`ROLE_ADMIN`) |
@@ -275,15 +276,15 @@ endpoint ou DTO do backend mudar. O código em `apps/web/src/lib/api/generated`
 
 ## Próximos passos
 
-**Ponto de partida:** cadastro, login JWT, `/v1/me`, upload autenticado no Garage, deduplicação e versão candidata já funcionam. O upload enfileira extração real de texto por página, com OCR seletivo via Tesseract quando instalado. Home e `/base` mostram o estado do upload e ainda não acompanham a execução; a seleção local desaparece ao recarregar. A revisão rápida usa demonstrações. Texto extraído não se torna Ground Truth automaticamente.
+**Ponto de partida:** cadastro, login JWT, `/v1/me`, upload autenticado no Garage, deduplicação, extração por página, revisão manual e aprovação atômica do snapshot já funcionam. Texto extraído ainda não se torna fato automaticamente, e gerações reais ainda não existem.
 
-**Próxima entrega recomendada: integrar o andamento da extração à interface e iniciar fatos/evidências do MER 2.** A sequência abaixo separa a implementação existente do trabalho necessário para chegar à geração real:
+**Próxima entrega recomendada: extrair fatos estruturados automaticamente e anexar evidências por campo.** A sequência abaixo separa a implementação existente do trabalho necessário para chegar à geração real:
 
 1. [x] **Fechar o ciclo do documento no frontend.** Home e `/base` usam o mesmo fluxo autenticado e mostram o status do upload atual. A interface não lista documentos antigos nem oferece prévia remota; o estado local desaparece ao recarregar.
 2. [x] **Criar a versão candidata no backend.** O upload cria ou recupera a versão no escopo do owner, com status e numeração definidos pelo servidor. Reenvio idêntico reutiliza versão e execução compatível e marca revisão temporal pendente; o snapshot ativo não é alterado. Fatos e reavaliação temporal continuam pendentes.
 3. [ ] **Processar o PDF no servidor.** Backend inicial implementado: fila persistente, PDFBox por página, OCR seletivo com Tesseract local, textos no Garage, hashes, métodos, falhas e reutilização por pipeline. A interface acompanha o status sem percentual por página; a análise nativa agora separa artigos/colunas e suprime texto sobreposto. Há um teste OCR real opcional com uma página escaneada representativa, executado quando Tesseract 5 e `eng` estão instalados. A detecção de texto misto e a reconstrução geral de layouts continuam limitadas. O Tesseract e seus modelos precisam ser instalados separadamente; veja o [guia da API](services/api/README.md#extração-seletiva-de-pdf). Fatos e evidências por campo ainda dependem do MER 2.
 4. [x] **Persistir fatos e revisão por candidata.** A API armazena fatos, evidências de páginas extraídas, pendências e decisões auditadas com os estados `pendente`, `confirmado`, `corrigido` e `omitido`. `/base` permite criar e revisar fatos reais; a revisão rápida carrega e responde pendências da API. O texto do PDF ainda não é classificado automaticamente em fatos; novos processamentos de texto não alteram os fatos revisados existentes.
-5. [ ] **Aprovar e ativar o Ground Truth.** Criar um snapshot imutável dos fatos revisados e ativá-lo atomicamente após resolver as pendências obrigatórias, desativando o anterior na mesma operação. Validar no servidor que há no máximo um snapshot ativo por owner; o campo `activeSnapshotId` e sua rota atuais ainda não garantem isso. A geração só pode consumir um snapshot aprovado.
+5. [x] **Aprovar e ativar o Ground Truth.** `POST /v1/gt-snapshots/approve-version/{baseVersionId}` exige versão extraída, ao menos um fato confirmado/corrigido e nenhuma pendência bloqueante; congela os valores com hash e referências às decisões e ativa o novo snapshot na mesma transação que substitui o anterior. A rota genérica de alteração de `activeSnapshotId` foi removida. A extração semântica e a geração baseada no snapshot seguem pendentes.
 6. [ ] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** Emitir e autenticar a sessão no servidor; habilitar upload e processamento por owner anônimo com limites de tamanho, páginas, requisições e gerações, TTL e limpeza dos dados temporários. Oferecer migração do snapshot revisado para uma conta antes da expiração, sem repetir OCR. Os endpoints atuais de sessão apenas registram e validam dados fornecidos pelo chamador.
 7. [ ] **Implementar vaga e geração.** Receber texto ou URL, extrair requisitos e versionar a vaga; usar OpenAI ou Ollama conforme a política definida. Versionar o template Typst e criar `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga, sem refazer OCR nem acrescentar fatos pessoais. Gerar PDF/Markdown, persistir artefatos no Garage e disponibilizar download e histórico reais.
 8. [ ] **Fechar o ciclo dos dados.** Implementar desativação e exclusão efetiva de originais, texto, fatos, pendências e artefatos derivados, com política de retenção para contas. Cobrir as transições do fluxo com testes de API, contrato e interface.

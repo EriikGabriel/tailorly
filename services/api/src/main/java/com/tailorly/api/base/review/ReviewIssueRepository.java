@@ -14,4 +14,6 @@ public interface ReviewIssueRepository extends JpaRepository<ReviewIssue, UUID> 
 
   List<ReviewIssue> findAllByBaseVersionIdAndBlockingTrueAndStatusIn(
       UUID baseVersionId, List<String> statuses);
+
+  boolean existsByBaseVersionIdAndBlockingTrueAndStatus(UUID baseVersionId, String status);
 }
