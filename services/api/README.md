@@ -57,7 +57,7 @@ Os textos são gravados em `owners/{ownerId}/extractions/{runId}/pages/{pageNumb
 
 Execuções enfileiradas sobrevivem ao reinício. Execuções `PROCESSING` há mais de 10 minutos são marcadas `FAILED` com `WORKER_TIMEOUT` quando o worker consulta a fila novamente; uma nova solicitação permite tentar outra vez. Uma execução tardia não pode publicar resultados depois de expirada. Não há retry automático ilimitado. Uma fila criada com outra configuração do pipeline falha com `PIPELINE_CHANGED`, permitindo uma nova solicitação com a configuração atual.
 
-O hash do pipeline inclui extrator, política de qualidade, normalização, limites, resolução e configuração/revisão do OCR. Dentro da mesma versão, uma execução `QUEUED`, `PROCESSING` ou `COMPLETED` com esse hash é reutilizada. Lock do owner e índice único parcial impedem duplicação concorrente; registros legados de metadados não são consumidos pelo worker. `RuleBasedCurriculumInterpreter` propõe email e telefone explícitos com página, trecho e offsets como evidência. `AiCurriculumInterpreter` usa OpenAI como primário e Ollama local como fallback quando `TAILORLY_INTERPRETATION_PROVIDER=openai-with-ollama-fallback` (o valor legado `openai` também ativa essa cadeia); configure `TAILORLY_OPENAI_API_KEY` e `TAILORLY_OPENAI_MODEL`, além de manter Ollama disponível localmente. O worker publica as páginas, interpreta o texto, valida as evidências e persiste as propostas como fatos `pendente`, com evidência e pendência bloqueante de revisão. A persistência dos fatos e a conclusão da execução são atômicas; falhas deixam a execução `FAILED`, sem avançar a versão para `EXTRACTED`. O serviço valida a página e o trecho no texto armazenado, recalcula a validade dos offsets e evita duplicar a mesma proposta no mesmo run. A extração semântica não confirma a veracidade dos fatos: a revisão humana continua obrigatória. A interpretação ainda não tem retry automático, limite de custo/tokens nem registro de versão do modelo/prompt. A revisão manual registra decisões versionadas; a aprovação aceita apenas versão `EXTRACTED`, bloqueia pendências obrigatórias, congela fatos confirmados/corrigidos com referência à decisão e troca o snapshot ativo atomicamente. O hash SHA-256 cobre os fatos aprovados ordenados por categoria, ordem e campo.
+O hash do pipeline inclui extrator, política de qualidade, normalização, limites, resolução e configuração/revisão do OCR. Dentro da mesma versão, uma execução `QUEUED`, `PROCESSING` ou `COMPLETED` com esse hash é reutilizada. Lock do owner e índice único parcial impedem duplicação concorrente; registros legados de metadados não são consumidos pelo worker. `RuleBasedCurriculumInterpreter` propõe email e telefone explícitos com página, trecho e offsets como evidência. `AiCurriculumInterpreter` cobre os demais valores de `TAILORLY_INTERPRETATION_PROVIDER`: `remote` (só provedor remoto configurável via `TAILORLY_REMOTE_*`, compatível com OpenAI/Anthropic/DeepSeek/OpenRouter/etc.), `ollama-only` (só Ollama local) e `remote-with-ollama-fallback` (provedor remoto com fallback automático para o Ollama local). O worker publica as páginas, interpreta o texto, valida as evidências e persiste as propostas como fatos `pendente`, com evidência e pendência bloqueante de revisão. A persistência dos fatos e a conclusão da execução são atômicas; falhas deixam a execução `FAILED`, sem avançar a versão para `EXTRACTED`. O serviço valida a página e o trecho no texto armazenado, recalcula a validade dos offsets e evita duplicar a mesma proposta no mesmo run. A extração semântica não confirma a veracidade dos fatos: a revisão humana continua obrigatória. A interpretação ainda não tem retry automático, limite de custo/tokens nem registro de versão do modelo/prompt. A revisão manual registra decisões versionadas; a aprovação aceita apenas versão `EXTRACTED`, bloqueia pendências obrigatórias, congela fatos confirmados/corrigidos com referência à decisão e troca o snapshot ativo atomicamente. O hash SHA-256 cobre os fatos aprovados ordenados por categoria, ordem e campo.
 
 Para OCR local, instale o executável **Tesseract 5** e os modelos de português (`por`) e inglês (`eng`) no ambiente em que a API executa. Confira com `tesseract --version` e `tesseract --list-langs`. A dependência Maven do PDFBox não instala o Tesseract. PDFs digitais com texto suficiente funcionam sem ele; páginas que exigem OCR falham com `OCR_UNAVAILABLE` quando o executável não existe, ou `OCR_FAILED` quando os modelos/configuração impedem a execução.
 
@@ -116,15 +116,19 @@ O arquivo local `.env.local` lista as variáveis por contexto: banco, autentica�
 extração/OCR, interpretação, storage e ferramentas auxiliares/testes. Ele é ignorado
 pelo Git; `.env.example` contém o mesmo modelo sem credenciais reais. O script `dev`
 carrega todas essas variáveis e usa as chaves do `.env.garage` quando as chaves S3
-no `.env.local` estão vazias. Para ativar IA, configure
-`TAILORLY_INTERPRETATION_PROVIDER=openai-with-ollama-fallback`, `TAILORLY_OPENAI_MODEL` e
-`TAILORLY_OPENAI_API_KEY`. Com esse provider, OpenAI é tentado primeiro; em caso de erro,
-a API usa o Ollama local. Instale/inicie o Ollama e baixe o modelo configurado, por exemplo
-`ollama pull qwen3:8b`. `TAILORLY_OLLAMA_ENDPOINT`, `TAILORLY_OLLAMA_MODEL` e
+no `.env.local` estão vazias. `TAILORLY_INTERPRETATION_PROVIDER` aceita quatro valores:
+`rules` (padrão, sem IA), `remote` (só o provedor remoto, sem fallback), `ollama-only`
+(só o Ollama local, sem nenhuma chamada remota) e `remote-with-ollama-fallback`
+(recomendado: tenta o provedor remoto primeiro e cai para o Ollama local em caso de
+erro). Para `remote` ou `remote-with-ollama-fallback`, configure `TAILORLY_REMOTE_MODEL`
+e `TAILORLY_REMOTE_API_KEY`; `TAILORLY_REMOTE_ENDPOINT` aceita qualquer serviço
+compatível com o formato Chat Completions da OpenAI (OpenAI, Anthropic, DeepSeek,
+OpenRouter etc.), não só a própria OpenAI. Para `ollama-only` ou
+`remote-with-ollama-fallback`, instale/inicie o Ollama e baixe o modelo configurado, por
+exemplo `ollama pull qwen3:8b`. `TAILORLY_OLLAMA_ENDPOINT`, `TAILORLY_OLLAMA_MODEL` e
 `TAILORLY_OLLAMA_API_KEY` podem ser ajustados; a chave padrão `ollama` é apenas um valor
-fictício exigido pelo formato compatível. O provider legado `openai` também ativa a cadeia.
-Reinicie a API após alterar o arquivo. Para comandos
-Maven diretos, carregue o arquivo no shell antes de executar. `TAILORLY_POSTGRES_PORT`
+fictício exigido pelo formato compatível. Reinicie a API após alterar o arquivo. Para
+comandos Maven diretos, carregue o arquivo no shell antes de executar. `TAILORLY_POSTGRES_PORT`
 é usado pelo Compose e `TAILORLY_OPENAPI_URL` pela sincronização OpenAPI; esses
 utilitários precisam receber o arquivo no próprio processo.
 

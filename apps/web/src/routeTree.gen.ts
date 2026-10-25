@@ -13,6 +13,7 @@ import { Route as AppHomeIndexRouteImport } from './pages/_app/_home/index'
 import { Route as AppBaseIndexRouteImport } from './pages/_app/base/index'
 import { Route as AppCvsIndexRouteImport } from './pages/_app/cvs/index'
 import { Route as AppGeneratorIndexRouteImport } from './pages/_app/generator/index'
+import { Route as AppProfileIndexRouteImport } from './pages/_app/profile/index'
 
 const AppHomeIndexRoute = AppHomeIndexRouteImport.update({
   id: '/_app/_home/',
@@ -34,18 +35,25 @@ const AppGeneratorIndexRoute = AppGeneratorIndexRouteImport.update({
   path: '/generator/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppProfileIndexRoute = AppProfileIndexRouteImport.update({
+  id: '/_app/profile/',
+  path: '/profile/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppHomeIndexRoute
   '/base/': typeof AppBaseIndexRoute
   '/cvs/': typeof AppCvsIndexRoute
   '/generator/': typeof AppGeneratorIndexRoute
+  '/profile/': typeof AppProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppHomeIndexRoute
   '/base': typeof AppBaseIndexRoute
   '/cvs': typeof AppCvsIndexRoute
   '/generator': typeof AppGeneratorIndexRoute
+  '/profile': typeof AppProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,18 +61,20 @@ export interface FileRoutesById {
   '/_app/base/': typeof AppBaseIndexRoute
   '/_app/cvs/': typeof AppCvsIndexRoute
   '/_app/generator/': typeof AppGeneratorIndexRoute
+  '/_app/profile/': typeof AppProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/base/' | '/cvs/' | '/generator/'
+  fullPaths: '/' | '/base/' | '/cvs/' | '/generator/' | '/profile/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/base' | '/cvs' | '/generator'
+  to: '/' | '/base' | '/cvs' | '/generator' | '/profile'
   id:
     | '__root__'
     | '/_app/_home/'
     | '/_app/base/'
     | '/_app/cvs/'
     | '/_app/generator/'
+    | '/_app/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -72,6 +82,7 @@ export interface RootRouteChildren {
   AppBaseIndexRoute: typeof AppBaseIndexRoute
   AppCvsIndexRoute: typeof AppCvsIndexRoute
   AppGeneratorIndexRoute: typeof AppGeneratorIndexRoute
+  AppProfileIndexRoute: typeof AppProfileIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -104,6 +115,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGeneratorIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/profile/': {
+      id: '/_app/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof AppProfileIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -112,6 +130,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppBaseIndexRoute: AppBaseIndexRoute,
   AppCvsIndexRoute: AppCvsIndexRoute,
   AppGeneratorIndexRoute: AppGeneratorIndexRoute,
+  AppProfileIndexRoute: AppProfileIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

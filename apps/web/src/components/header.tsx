@@ -24,6 +24,10 @@ type HeaderProps = {
 export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
   const activePath = useLocation({ select: (location) => location.pathname });
   const reduceMotion = useReducedMotion();
+  // null when on a non-nav route (e.g. /profile) so the Highlight pill clears instead of staying frozen.
+  const activeNavPath = navigation.some(({ to }) => activePath === to)
+    ? activePath
+    : null;
 
   return (
     <header className="relative z-10 w-full bg-surface/90 shadow-[0_1px_8px_rgb(62_39_35/6%)] backdrop-blur-md">
@@ -54,7 +58,7 @@ export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
             controlledItems
             click={false}
             enabled={!reduceMotion}
-            value={activePath}
+            value={activeNavPath}
             className="rounded-md bg-primary shadow-xs"
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
           >

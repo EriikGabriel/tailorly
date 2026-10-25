@@ -15,10 +15,10 @@ import {
 import { Button } from "@animate/buttons/button";
 import { DialogBackdrop, DialogPortal } from "@animate/primitives/base/dialog";
 import { ApiClientError } from "@lib/api/client";
-import { useLogin, useLogout, useRegister } from "@queries/authentication";
-import { useCurrentAccount } from "@queries/current-account";
+import { useLogin, useRegister } from "@queries/authentication";
 import { UserRound } from "@react-zero-ui/icon-sprite";
 import { useAuthStore } from "@stores/auth-store";
+import { Link } from "@tanstack/react-router";
 import { type SubmitEvent, useState } from "react";
 
 type AuthMode = "login" | "register";
@@ -39,10 +39,8 @@ export function AccountAccess({ onProfileClick }: AccountAccessProps) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [formError, setFormError] = useState<string | null>(null);
   const accessToken = useAuthStore((state) => state.accessToken);
-  const accountQuery = useCurrentAccount();
   const login = useLogin();
   const register = useRegister();
-  const logout = useLogout();
   const pending = login.isPending || register.isPending;
   const requestError = mode === "login" ? login.error : register.error;
 
@@ -97,15 +95,24 @@ export function AccountAccess({ onProfileClick }: AccountAccessProps) {
     }
   }
 
-  function handleLogout() {
-    logout();
-    handleOpenChange(false);
+  if (accessToken) {
+    return (
+      <Button
+        asChild
+        aria-label="Perfil e configurações"
+        className="size-10 rounded-xl"
+      >
+        <Link to="/profile" onClick={onProfileClick}>
+          <UserRound className="size-6" />
+        </Link>
+      </Button>
+    );
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <Button
-        aria-label={accessToken ? "Abrir conta" : "Entrar ou criar conta"}
+        aria-label="Entrar ou criar conta"
         type="button"
         className="size-10 rounded-xl"
         onClick={() => {
@@ -118,74 +125,63 @@ export function AccountAccess({ onProfileClick }: AccountAccessProps) {
       <DialogPortal>
         <DialogBackdrop className="fixed inset-0 z-50 bg-primary-950/65 backdrop-blur-sm" />
         <DialogPopup className="sm:max-w-md">
-          {accessToken ? (
-            <AuthenticatedAccount
-              email={accountQuery.data?.user.email}
-              loading={accountQuery.isPending}
-              error={accountQuery.error}
-              onLogout={handleLogout}
-            />
-          ) : (
-            <>
-              <DialogHeader>
-                <DialogTitle>
-                  {mode === "login" ? "Entrar no Tailorly" : "Criar sua conta"}
-                </DialogTitle>
-                <DialogDescription>
-                  {mode === "login"
-                    ? "Acesse seus currículos e continue de onde parou."
-                    : "Crie uma conta para manter seu histórico e seus currículos."}
-                </DialogDescription>
-              </DialogHeader>
+          <DialogHeader>
+            <DialogTitle>
+              {mode === "login" ? "Entrar no Tailorly" : "Criar sua conta"}
+            </DialogTitle>
+            <DialogDescription>
+              {mode === "login"
+                ? "Acesse seus currículos e continue de onde parou."
+                : "Crie uma conta para manter seu histórico e seus currículos."}
+            </DialogDescription>
+          </DialogHeader>
 
-              <Tabs
-                value={mode}
-                onValueChange={(value) => selectMode(value as AuthMode)}
-                className="gap-3"
+          <Tabs
+            value={mode}
+            onValueChange={(value) => selectMode(value as AuthMode)}
+            className="gap-3"
+          >
+            <TabsList
+              aria-label="Acesso à conta"
+              className="h-auto min-h-11 w-full gap-1 bg-surface-container p-1 **:data-[slot=motion-highlight]:border-0 **:data-[slot=motion-highlight]:bg-card"
+            >
+              <TabsTab
+                value="login"
+                type="button"
+                className="h-9 text-on-surface-variant data-selected:font-semibold data-selected:text-primary-900"
               >
-                <TabsList
-                  aria-label="Acesso à conta"
-                  className="h-auto min-h-11 w-full gap-1 bg-surface-container p-1 **:data-[slot=motion-highlight]:border-0 **:data-[slot=motion-highlight]:bg-card"
-                >
-                  <TabsTab
-                    value="login"
-                    type="button"
-                    className="h-9 text-on-surface-variant data-selected:font-semibold data-selected:text-primary-900"
-                  >
-                    Entrar
-                  </TabsTab>
-                  <TabsTab
-                    value="register"
-                    type="button"
-                    className="h-9 text-on-surface-variant data-selected:font-semibold data-selected:text-primary-900"
-                  >
-                    Cadastrar
-                  </TabsTab>
-                </TabsList>
+                Entrar
+              </TabsTab>
+              <TabsTab
+                value="register"
+                type="button"
+                className="h-9 text-on-surface-variant data-selected:font-semibold data-selected:text-primary-900"
+              >
+                Cadastrar
+              </TabsTab>
+            </TabsList>
 
-                <TabsPanels>
-                  <TabsPanel value="login" className="px-1 py-1">
-                    <AuthForm
-                      mode="login"
-                      pending={pending}
-                      error={requestError}
-                      formError={formError}
-                      onSubmit={(event) => handleSubmit(event, "login")}
-                    />
-                  </TabsPanel>
-                  <TabsPanel value="register" className="px-1 py-1">
-                    <AuthForm
-                      mode="register"
-                      pending={pending}
-                      error={requestError}
-                      formError={formError}
-                      onSubmit={(event) => handleSubmit(event, "register")}
-                    />
-                  </TabsPanel>
-                </TabsPanels>
-              </Tabs>
-            </>
-          )}
+            <TabsPanels>
+              <TabsPanel value="login" className="px-1 py-1">
+                <AuthForm
+                  mode="login"
+                  pending={pending}
+                  error={requestError}
+                  formError={formError}
+                  onSubmit={(event) => handleSubmit(event, "login")}
+                />
+              </TabsPanel>
+              <TabsPanel value="register" className="px-1 py-1">
+                <AuthForm
+                  mode="register"
+                  pending={pending}
+                  error={requestError}
+                  formError={formError}
+                  onSubmit={(event) => handleSubmit(event, "register")}
+                />
+              </TabsPanel>
+            </TabsPanels>
+          </Tabs>
         </DialogPopup>
       </DialogPortal>
     </Dialog>
@@ -264,48 +260,5 @@ function AuthField({ label, ...inputProps }: AuthFieldProps) {
         className="h-11 rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
       />
     </label>
-  );
-}
-
-interface AuthenticatedAccountProps {
-  email: string | undefined;
-  error: unknown;
-  loading: boolean;
-  onLogout: () => void;
-}
-
-function AuthenticatedAccount({
-  email,
-  error,
-  loading,
-  onLogout,
-}: AuthenticatedAccountProps) {
-  return (
-    <>
-      <DialogHeader>
-        <DialogTitle>Sua conta</DialogTitle>
-        <DialogDescription>
-          Sua sessão fica disponível até a página ser recarregada.
-        </DialogDescription>
-      </DialogHeader>
-
-      <div className="rounded-lg border bg-surface-container-low p-4">
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Email
-        </p>
-        <p className="mt-1 break-all font-medium">
-          {loading ? "Carregando..." : (email ?? "Conta autenticada")}
-        </p>
-        {error != null && (
-          <p className="mt-2 text-sm text-destructive" role="alert">
-            {getErrorMessage(error)}
-          </p>
-        )}
-      </div>
-
-      <Button type="button" variant="outline" onClick={onLogout}>
-        Sair
-      </Button>
-    </>
   );
 }

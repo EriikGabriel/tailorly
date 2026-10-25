@@ -102,7 +102,7 @@ public class ExtractionWorker {
       pagesPersisted = true;
 
       stage = "AI_INTERPRETATION_FAILED";
-      List<FactProposal> proposals = interpret(extracted, persistedPages);
+      List<FactProposal> proposals = interpret(work.ownerId(), extracted, persistedPages);
 
       stage = "FACT_FINALIZATION_FAILED";
       int persistedCount = finalization.finalizeExtraction(work.id(), proposals);
@@ -135,7 +135,7 @@ public class ExtractionWorker {
     }
   }
 
-  private List<FactProposal> interpret(List<PdfExtractor.PageText> extracted,
+  private List<FactProposal> interpret(UUID ownerId, List<PdfExtractor.PageText> extracted,
       List<ExtractedPage> persistedPages) {
     if (interpreter == null || persistedPages == null || persistedPages.isEmpty()) {
       throw new IllegalStateException("No interpreter or extracted pages available for interpretation");
@@ -157,7 +157,7 @@ public class ExtractionWorker {
       throw new IllegalStateException("No extracted page text available for interpretation");
     }
 
-    List<FactProposal> proposals = interpreter.interpret(pages);
+    List<FactProposal> proposals = interpreter.interpret(ownerId, pages);
     if (proposals == null) {
       throw new IllegalStateException("Curriculum interpreter returned no result");
     }

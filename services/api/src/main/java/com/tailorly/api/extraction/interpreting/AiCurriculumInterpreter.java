@@ -7,64 +7,73 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tailorly.api.aipreferences.EffectiveAiSettings;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-/** Interprets extracted curriculum text with OpenAI and Ollama as a local fallback. */
+/**
+ * Interpreta o texto extraído do currículo com um provedor de IA (remoto, local via Ollama, ou
+ * remoto com fallback automático para o Ollama local), segundo o {@code provider} resolvido em
+ * {@link EffectiveAiSettings}.
+ *
+ * <p>Estratégia interna de {@link RoutingCurriculumInterpreter} para os providers {@code
+ * remote}, {@code remote-with-ollama-fallback} e {@code ollama-only}; não implementa {@link
+ * CurriculumInterpreter} diretamente porque recebe a configuração já resolvida por owner em vez
+ * de lê-la de propriedades estáticas.</p>
+ */
 @Component
-@ConditionalOnExpression("'${tailorly.interpretation.provider:rules}' matches 'openai|openai-with-ollama-fallback'")
-@EnableConfigurationProperties({OpenAiInterpretationProperties.class, OllamaInterpretationProperties.class})
 @RequiredArgsConstructor
-public class AiCurriculumInterpreter implements CurriculumInterpreter {
-  private static final String OPENAI = "OpenAI";
+public class AiCurriculumInterpreter {
+  private static final String REMOTE = "Remote provider";
   private static final String OLLAMA = "Ollama";
 
   private static final Logger log = LoggerFactory.getLogger(AiCurriculumInterpreter.class);
   private final RestClient restClient = RestClient.create();
   private final ObjectMapper objectMapper;
-  private final OpenAiInterpretationProperties openAiProperties;
-  private final OllamaInterpretationProperties ollamaProperties;
 
-  @Override
-  public List<FactProposal> interpret(List<ExtractedTextPage> pages) {
+  public List<FactProposal> interpret(List<ExtractedTextPage> pages, EffectiveAiSettings settings) {
     // Evita uma chamada externa quando a extração não produziu páginas úteis.
     if (pages == null || pages.isEmpty())
       return List.of();
 
     String prompt = buildPrompt(pages);
+
+    if ("ollama-only".equals(settings.provider()))
+      return interpretWith(prompt, pages, ollamaConfiguration(settings));
+
+    if ("remote".equals(settings.provider()))
+      return interpretWith(prompt, pages, remoteConfiguration(settings));
+
+    // remote-with-ollama-fallback: tenta o provedor remoto e cai para o Ollama local em caso de falha (RNF07).
     try {
-      return interpretWith(prompt, pages, openAiConfiguration());
-    } catch (RuntimeException openAiFailure) {
-      log.warn("OpenAI interpretation failed; trying local Ollama fallback", openAiFailure);
+      return interpretWith(prompt, pages, remoteConfiguration(settings));
+    } catch (RuntimeException remoteFailure) {
+      log.warn("Remote provider interpretation failed; trying local Ollama fallback", remoteFailure);
       try {
-        List<FactProposal> proposals = interpretWith(prompt, pages, ollamaConfiguration());
+        List<FactProposal> proposals = interpretWith(prompt, pages, ollamaConfiguration(settings));
         log.info("Ollama fallback succeeded with {} fact proposals", proposals.size());
         return proposals;
       } catch (RuntimeException ollamaFailure) {
         IllegalStateException combinedFailure = new IllegalStateException(
-            "OpenAI interpretation and local Ollama fallback both failed", ollamaFailure);
+            "Remote provider interpretation and local Ollama fallback both failed", ollamaFailure);
 
-        combinedFailure.addSuppressed(openAiFailure);
+        combinedFailure.addSuppressed(remoteFailure);
         throw combinedFailure;
       }
     }
   }
 
-  private ModelConfiguration openAiConfiguration() {
-    return new ModelConfiguration(OPENAI, openAiProperties.endpoint(), openAiProperties.model(),
-        openAiProperties.apiKey());
+  private ModelConfiguration remoteConfiguration(EffectiveAiSettings settings) {
+    return new ModelConfiguration(REMOTE, settings.remoteEndpoint(), settings.remoteModel(), settings.remoteApiKey());
   }
 
-  private ModelConfiguration ollamaConfiguration() {
-    return new ModelConfiguration(OLLAMA, ollamaProperties.endpoint(), ollamaProperties.model(),
-        ollamaProperties.apiKey());
+  private ModelConfiguration ollamaConfiguration(EffectiveAiSettings settings) {
+    return new ModelConfiguration(OLLAMA, settings.ollamaEndpoint(), settings.ollamaModel(), settings.ollamaApiKey());
   }
 
   private List<FactProposal> interpretWith(String prompt, List<ExtractedTextPage> pages,

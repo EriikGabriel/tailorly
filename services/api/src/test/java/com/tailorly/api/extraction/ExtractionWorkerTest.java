@@ -16,7 +16,7 @@ class ExtractionWorkerTest {
   private final ExtractionQueue queue = mock(ExtractionQueue.class);
   private final PdfExtractor extractor = mock(PdfExtractor.class);
   private final ObjectStorage storage = mock(ObjectStorage.class);
-  private final CurriculumInterpreter interpreter = pages -> List.of();
+  private final CurriculumInterpreter interpreter = (ownerId, pages) -> List.of();
   private final ExtractionFinalizationService finalization = mock(ExtractionFinalizationService.class);
   private final ExtractionWorker worker = new ExtractionWorker(queue, extractor, storage, interpreter, finalization);
   private final ExtractionQueue.Work work = new ExtractionQueue.Work(UUID.randomUUID(), UUID.randomUUID(), "original", "pipeline");
@@ -65,7 +65,7 @@ class ExtractionWorkerTest {
   @Test
   @DisplayName("falha na interpretação impede concluir a extração")
   void interpretationFailureDoesNotComplete() {
-    CurriculumInterpreter failingInterpreter = pages -> {
+    CurriculumInterpreter failingInterpreter = (ownerId, pages) -> {
       throw new IllegalStateException("AI unavailable");
     };
     ExtractionWorker workerWithFailingInterpreter = new ExtractionWorker(queue, extractor, storage,

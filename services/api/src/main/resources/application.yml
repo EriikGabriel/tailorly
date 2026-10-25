@@ -47,11 +47,17 @@ tailorly:
     ocr-revision: ${TAILORLY_OCR_REVISION:local-1}
     poll-delay-ms: 2000
   interpretation:
+    # rules (padrão, sem IA) | remote (só provedor remoto) |
+    # remote-with-ollama-fallback (recomendado: remoto com fallback automático
+    # para o Ollama local) | ollama-only (só o Ollama local, sem chamada remota)
     provider: ${TAILORLY_INTERPRETATION_PROVIDER:rules}
-    openai:
-      endpoint: ${TAILORLY_OPENAI_ENDPOINT:https://api.openai.com/v1/chat/completions}
-      model: ${TAILORLY_OPENAI_MODEL:}
-      api-key: ${TAILORLY_OPENAI_API_KEY:}
+    # Qualquer serviço compatível com o formato Chat Completions da OpenAI
+    # funciona aqui: OpenAI, Anthropic, DeepSeek, OpenRouter etc. Não há
+    # configuração específica por fabricante, só endpoint/modelo/chave.
+    remote:
+      endpoint: ${TAILORLY_REMOTE_ENDPOINT:https://api.openai.com/v1/chat/completions}
+      model: ${TAILORLY_REMOTE_MODEL:}
+      api-key: ${TAILORLY_REMOTE_API_KEY:}
     ollama:
       endpoint: ${TAILORLY_OLLAMA_ENDPOINT:http://127.0.0.1:11434/v1/chat/completions}
       model: ${TAILORLY_OLLAMA_MODEL:qwen3:8b}
@@ -69,3 +75,5 @@ tailorly:
       secret: ${TAILORLY_JWT_SECRET}
       issuer: ${TAILORLY_JWT_ISSUER:http://localhost:8080}
       ttl: PT1H
+    # Criptografa chaves de API de provedores de IA guardadas por conta (ai_preferences).
+    secrets-key: ${TAILORLY_SECRETS_KEY}

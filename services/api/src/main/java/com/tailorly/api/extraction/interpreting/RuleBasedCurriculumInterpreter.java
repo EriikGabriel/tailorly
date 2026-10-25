@@ -5,22 +5,22 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * Extrai somente dados de contato explicitamente presentes no texto da página.
+ * Extrai somente dados de contato explicitamente presentes no texto da página, sem IA.
+ *
+ * <p>Estratégia interna de {@link RoutingCurriculumInterpreter} para o provider {@code rules};
+ * não implementa {@link CurriculumInterpreter} diretamente porque não depende de owner.</p>
  */
 @Component
-@ConditionalOnProperty(name = "tailorly.interpretation.provider", havingValue = "rules", matchIfMissing = true)
-public class RuleBasedCurriculumInterpreter implements CurriculumInterpreter {
+public class RuleBasedCurriculumInterpreter {
   private static final List<Rule> RULES = List.of(
       new Rule("email", Pattern.compile(
           "(?<![\\w.+-])[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}(?![\\w.-])")),
       new Rule("phone", Pattern.compile(
           "(?i)(?:tel(?:efone)?|cel(?:ular)?|phone|mobile)\\s*[:：-]?\\s*(\\+?\\d[0-9() .-]{7,30}\\d)")));
 
-  @Override
   public List<FactProposal> interpret(List<ExtractedTextPage> pages) {
     List<FactProposal> proposals = new ArrayList<>();
     

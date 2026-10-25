@@ -13,3 +13,5 @@ tailorly:
       # Chave conhecida e exclusiva do perfil local. Outros perfis continuam
       # exigindo TAILORLY_JWT_SECRET.
       secret: ${TAILORLY_JWT_SECRET:dGFpbG9ybHktbG9jYWwtZGV2ZWxvcG1lbnQta2V5ISE=}
+    # Idem para a chave de criptografia de segredos; outros perfis exigem TAILORLY_SECRETS_KEY.
+    secrets-key: ${TAILORLY_SECRETS_KEY:tailorly-local-development-secrets-key}
