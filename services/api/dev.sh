@@ -9,6 +9,17 @@ if [[ ! -f .env.garage ]]; then
 fi
 
 source .env.garage
+garage_access_key="${TAILORLY_STORAGE_ACCESS_KEY:-}"
+garage_secret_key="${TAILORLY_STORAGE_SECRET_KEY:-}"
+
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+
+TAILORLY_STORAGE_ACCESS_KEY="${TAILORLY_STORAGE_ACCESS_KEY:-$garage_access_key}"
+TAILORLY_STORAGE_SECRET_KEY="${TAILORLY_STORAGE_SECRET_KEY:-$garage_secret_key}"
 
 if [[ -z "${TAILORLY_STORAGE_ACCESS_KEY:-}" || -z "${TAILORLY_STORAGE_SECRET_KEY:-}" ]]; then
   echo "TAILORLY_STORAGE_ACCESS_KEY and TAILORLY_STORAGE_SECRET_KEY must be set in .env.garage." >&2

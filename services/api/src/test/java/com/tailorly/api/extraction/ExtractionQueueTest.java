@@ -57,7 +57,11 @@ class ExtractionQueueTest {
     ExtractionRun run = ExtractionRun.builder().id(id).baseVersion(version).status("PROCESSING").build();
     when(runs.findForUpdate(id)).thenReturn(Optional.of(run));
     when(objects.save(any())).thenAnswer(i -> i.getArgument(0));
-    queue.complete(id, List.of(new ExtractionQueue.StoredPage(1, "DIRECT", "key", "hash", 100)));
+    when(pages.save(any())).thenAnswer(i -> i.getArgument(0));
+    queue.persistPages(id, List.of(new ExtractionQueue.StoredPage(1, "DIRECT", "key", "hash", 100)));
+    assertEquals("PROCESSING", run.getStatus());
+    when(pages.existsByExtractionRunId(id)).thenReturn(true);
+    queue.complete(id);
     assertEquals("COMPLETED", run.getStatus());
     assertNotNull(run.getFinishedAt());
     assertEquals("ACTIVE", version.getStatus());
@@ -72,7 +76,7 @@ class ExtractionQueueTest {
     UUID id = UUID.randomUUID();
     when(runs.findForUpdate(id)).thenReturn(Optional.of(ExtractionRun.builder().status("FAILED").build()));
     assertThrows(ExtractionFailure.class,
-        () -> queue.complete(id, List.of(new ExtractionQueue.StoredPage(1, "OCR", "key", "hash", 10))));
+        () -> queue.complete(id));
     verifyNoInteractions(objects, pages);
   }
 }

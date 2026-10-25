@@ -2,6 +2,7 @@ package com.tailorly.api.extraction;
 
 import java.time.Instant;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,9 +33,9 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>{@link #claim} expira execuções {@code PROCESSING} há mais de 10 minutos
  *       ({@code WORKER_TIMEOUT}) antes de reservar a próxima da fila com
  *       {@code FOR UPDATE SKIP LOCKED}, permitindo vários workers sem duplicar trabalho.</li>
- *   <li>{@link #complete} só publica páginas se a execução ainda estiver {@code PROCESSING}
- *       (uma execução expirada não pode concluir fora de hora) e avança a versão candidata
- *       para {@code EXTRACTED} sem alterar versões já ativas.</li>
+ *   <li>{@link #persistPages} publica as páginas sem concluir a execução; depois da interpretação
+ *       e persistência dos fatos, {@link #complete} encerra a execução e avança a versão candidata
+ *       para {@code EXTRACTED}, sem alterar versões já ativas.</li>
  *   <li>{@link #fail} e {@link #completed} apoiam a compensação de objetos parciais no
  *       storage feita pelo {@link ExtractionWorker} quando a transação final falha.</li>
  * </ul>
@@ -78,7 +79,7 @@ public class ExtractionQueue {
   }
 
   /**
-   * Publica as páginas extraídas e conclui a execução atomicamente.
+   * Publica as páginas extraídas, mantendo a execução em {@code PROCESSING} para interpretação.
    *
    * <p>Rejeita uma execução que não esteja mais {@code PROCESSING} ({@code EXTRACTION_EXPIRED}),
    * o que impede um worker atrasado de publicar resultados após o timeout de {@link #claim}.
@@ -86,24 +87,37 @@ public class ExtractionQueue {
    * {@code PDF_NO_TEXT} em vez de publicar uma versão sem conteúdo útil.</p>
    */
   @Transactional
-  public void complete(UUID runId, List<StoredPage> results) {
+  public List<ExtractedPage> persistPages(UUID runId, List<StoredPage> results) {
     ExtractionRun run = runs.findForUpdate(runId).orElseThrow();
     if (!"PROCESSING".equals(run.getStatus())) throw new ExtractionFailure("EXTRACTION_EXPIRED");
     if (results.isEmpty()) throw new ExtractionFailure("PDF_NO_TEXT");
 
     var owner = run.getBaseVersion().getOwner();
+
+    List<ExtractedPage> persistedPages = new ArrayList<>();
+
     for (StoredPage result : results) {
       StoredObject object = objects.save(StoredObject.builder().owner(owner)
           .purpose("BASE_EXTRACTED_PAGE_TEXT").storageKey(result.key()).contentHash(result.hash())
           .mimeType("text/plain; charset=utf-8").sizeBytes(result.bytes())
           .expiresAt(owner.getExpiresAt()).deletionStatus("ACTIVE").build());
-      pages.save(ExtractedPage.builder().extractionRun(run).pageNumber(result.number())
-          .extractionMethod(result.method()).textObject(object).textHash(result.hash()).build());
+      persistedPages.add(pages.save(ExtractedPage.builder().extractionRun(run).pageNumber(result.number())
+          .extractionMethod(result.method()).textObject(object).textHash(result.hash()).build()));
     }
 
     run.getBaseVersion().getDocument().setPageCount(results.size());
 
-    // Só avança CANDIDATE -> EXTRACTED; versões já ativas e o snapshot do owner não mudam aqui.
+    return List.copyOf(persistedPages);
+  }
+
+  /** Conclui apenas após interpretação e persistência bem-sucedidas dos fatos. */
+  @Transactional
+  public void complete(UUID runId) {
+    ExtractionRun run = runs.findForUpdate(runId).orElseThrow();
+    if (!"PROCESSING".equals(run.getStatus())) throw new ExtractionFailure("EXTRACTION_EXPIRED");
+    if (!pages.existsByExtractionRunId(runId)) throw new ExtractionFailure("PDF_NO_TEXT");
+
+    // Só avança CANDIDATE -> EXTRACTED depois que o worker finaliza a interpretação.
     if ("CANDIDATE".equals(run.getBaseVersion().getStatus())) {
       run.getBaseVersion().setStatus("EXTRACTED");
     }
@@ -129,6 +143,11 @@ public class ExtractionQueue {
   @Transactional(readOnly = true)
   public boolean completed(UUID runId) {
     return runs.findById(runId).map(run -> "COMPLETED".equals(run.getStatus())).orElse(false);
+  }
+
+  @Transactional(readOnly = true)
+  public boolean hasPersistedPages(UUID runId) {
+    return pages.existsByExtractionRunId(runId);
   }
 
   /** Dados mínimos para o worker processar uma execução fora da transação de reserva. */

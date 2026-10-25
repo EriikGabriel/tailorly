@@ -13,4 +13,6 @@ public interface ExtractedPageRepository extends JpaRepository<ExtractedPage, UU
   List<ExtractedPage> findAllByTextHash(String textHash);
 
   boolean existsByExtractionRunIdAndPageNumber(UUID extractionRunId, Integer pageNumber);
+
+  boolean existsByExtractionRunId(UUID extractionRunId);
 }

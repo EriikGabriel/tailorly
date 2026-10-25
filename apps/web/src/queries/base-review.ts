@@ -109,6 +109,27 @@ export function useBaseReview(versionId?: string) {
         : false,
   });
   const completedRun = runs.data?.find((run) => run.status === "COMPLETED");
+  const latestRun = runs.data?.[0];
+
+  function refetchPendingInterpretation<T extends { length: number }>(query: {
+    state: { data?: T; dataUpdatedAt: number };
+  }) {
+    if (latestRun && ["QUEUED", "PROCESSING"].includes(latestRun.status)) {
+      return 1500;
+    }
+
+    if (
+      latestRun?.status === "COMPLETED" &&
+      query.state.data?.length === 0 &&
+      latestRun.finishedAt &&
+      Date.now() - Date.parse(latestRun.finishedAt) < 60_000
+    ) {
+      return 1500;
+    }
+
+    return false;
+  }
+
   const pages = useQuery({
     queryKey: apiQueryKeys.baseReview.pages(completedRun?.id ?? ""),
     queryFn: () =>
@@ -125,6 +146,7 @@ export function useBaseReview(versionId?: string) {
         { accessToken: accessToken ?? undefined },
       ),
     enabled: Boolean(accessToken && versionId),
+    refetchInterval: refetchPendingInterpretation,
   });
   const issues = useQuery({
     queryKey: apiQueryKeys.baseReview.issues(versionId ?? ""),
@@ -134,6 +156,7 @@ export function useBaseReview(versionId?: string) {
         { accessToken: accessToken ?? undefined },
       ),
     enabled: Boolean(accessToken && versionId),
+    refetchInterval: refetchPendingInterpretation,
   });
 
   return { records, issues, pages };

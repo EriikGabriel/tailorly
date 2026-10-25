@@ -9,13 +9,18 @@ import {
 } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useDocumentViewerStore } from "@stores/document-viewer-store";
-import { useEffect, useState } from "react";
+import { type ComponentProps, useEffect, useState } from "react";
 import { DocumentZoomControls } from "./document-zoom-controls";
+import { ExtractedTextPanel } from "./extracted-text-panel";
 
 export function MasterDocumentPanel({
   onSelectFile,
+  extractedPages,
+  extractionLoading,
 }: {
   onSelectFile: () => void;
+  extractedPages: ComponentProps<typeof ExtractedTextPanel>["pages"];
+  extractionLoading: boolean;
 }) {
   const file = useBaseCvStore((state) => state.file);
   const { zoom, setZoom } = useDocumentViewerStore();
@@ -134,6 +139,8 @@ export function MasterDocumentPanel({
           </Button>
         </div>
       )}
+
+      <ExtractedTextPanel pages={extractedPages} loading={extractionLoading} />
 
       <div className="flex items-center gap-4 rounded-xl bg-surface-container-high p-4">
         <ShieldLock

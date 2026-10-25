@@ -57,7 +57,10 @@ class ExtractionPersistenceTest {
     var work = queue.claim().orElseThrow();
     assertEquals(runId, work.id());
     assertTrue(queue.claim().isEmpty());
-    queue.complete(runId, List.of(new ExtractionQueue.StoredPage(1, "DIRECT", "text/" + runId, "text-hash", 70)));
+    queue.persistPages(runId,
+        List.of(new ExtractionQueue.StoredPage(1, "DIRECT", "text/" + runId, "text-hash", 70)));
+    assertEquals("PROCESSING", runs.findById(runId).orElseThrow().getStatus());
+    queue.complete(runId);
     assertEquals("COMPLETED", runs.findById(runId).orElseThrow().getStatus());
     assertEquals("EXTRACTED", versions.findById(versionId).orElseThrow().getStatus());
     assertEquals(1, pages.findAllByExtractionRunId(runId).size());
@@ -77,7 +80,7 @@ class ExtractionPersistenceTest {
     assertNotEquals(otherRun, retry);
     assertEquals(retry, queue.claim().orElseThrow().id());
     // Falha no segundo insert deve desfazer também o primeiro e a mudança de status.
-    assertThrows(RuntimeException.class, () -> queue.complete(retry, List.of(
+    assertThrows(RuntimeException.class, () -> queue.persistPages(retry, List.of(
         new ExtractionQueue.StoredPage(1, "DIRECT", "partial-a/" + retry, "a", 10),
         new ExtractionQueue.StoredPage(1, "OCR", "partial-b/" + retry, "b", 10))));
     assertEquals("PROCESSING", runs.findById(retry).orElseThrow().getStatus());

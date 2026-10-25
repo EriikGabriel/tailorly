@@ -291,7 +291,11 @@ export function ReviewWorkspace({
     <>
       <ReviewStepper activeStep={activeStep} onStepChange={setActiveStep} />
       <div className="mx-auto mt-6 grid w-full max-w-384 items-start gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <MasterDocumentPanel onSelectFile={onSelectFile} />
+        <MasterDocumentPanel
+          onSelectFile={onSelectFile}
+          extractedPages={review.pages.data ?? []}
+          extractionLoading={review.pages.isLoading}
+        />
         <div className="min-w-0 space-y-4">
           <section
             id="review-active-panel"

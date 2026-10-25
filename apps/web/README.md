@@ -5,7 +5,9 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 
 > **Estado atual:** fundação visual e de estado de interface. A home envia o PDF
 > para a API quando há uma conta autenticada; sem conta, a seleção fica apenas
-> como prévia local. Home e `/base` acompanham a extração. `/base` carrega fatos,
+> como prévia local. Home e `/base` acompanham a extração; em `/base`, o painel
+> recolhível **Texto extraído** permite conferir o resultado bruto por página.
+> `/base` carrega fatos,
 > cria fatos manuais pendentes, permite confirmá-los, corrigi-los ou omiti-los e
 > vincula evidências a páginas do texto extraído. A revisão rápida carrega e
 > salva pendências reais da versão candidata. A API ainda não classifica o texto
@@ -118,7 +120,7 @@ não aparece na URL, e o `_home` também não.
 | URL | Arquivo | Estado |
 | --- | --- | --- |
 | `/` | `src/pages/_app/_home/index.tsx` | Prévia local; upload do PDF para contas |
-| `/base` | `src/pages/_app/base/index.tsx` | Funcional (sem extração) |
+| `/base` | `src/pages/_app/base/index.tsx` | Upload, andamento, texto bruto por página e revisão persistida |
 | `/cvs` | `src/pages/_app/cvs/index.tsx` | Placeholder ("Meus Currículos") |
 | `/generator` | `src/pages/_app/generator/index.tsx` | Placeholder ("Gerador") |
 
@@ -398,8 +400,10 @@ histórico de PDFs enviados. A troca em `/base` usa o mesmo envio da home. O
 cartão distingue prévia local, envio, sucesso e falha e mostra erros da API.
 Sem conta, não tenta o upload; a API ainda não aceita upload anônimo. O envio
 armazena o original, cria ou recupera a versão e enfileira extração no servidor.
-O frontend ainda não consulta o andamento dessa execução; o selo confirma apenas
-o upload. A extração não aprova Ground Truth. Trocar a seleção local não apaga documentos remotos.
+O frontend consulta o andamento enquanto a execução está na fila ou processando
+e, em `/base`, disponibiliza o texto bruto por página após a conclusão. A
+extração não aprova Ground Truth. Trocar a seleção local não apaga documentos
+remotos.
 
 ### Guardas de contexto obsoleto
 

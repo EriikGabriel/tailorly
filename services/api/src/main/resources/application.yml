@@ -9,7 +9,7 @@ spring:
     locale: en
     locale-resolver: accept-header
   datasource:
-    url: jdbc:postgresql://localhost:5432/tailorly_api_db
+    url: jdbc:postgresql://localhost:5432/tailorly
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
   servlet:
@@ -18,8 +18,8 @@ spring:
       max-request-size: 8MB
   jpa:
     hibernate:
-      ddl-auto: validate
-    show-sql: true
+      ddl-auto: create
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -46,6 +46,16 @@ tailorly:
     ocr-languages: ${TAILORLY_OCR_LANGUAGES:por+eng}
     ocr-revision: ${TAILORLY_OCR_REVISION:local-1}
     poll-delay-ms: 2000
+  interpretation:
+    provider: ${TAILORLY_INTERPRETATION_PROVIDER:rules}
+    openai:
+      endpoint: ${TAILORLY_OPENAI_ENDPOINT:https://api.openai.com/v1/chat/completions}
+      model: ${TAILORLY_OPENAI_MODEL:}
+      api-key: ${TAILORLY_OPENAI_API_KEY:}
+    ollama:
+      endpoint: ${TAILORLY_OLLAMA_ENDPOINT:http://127.0.0.1:11434/v1/chat/completions}
+      model: ${TAILORLY_OLLAMA_MODEL:qwen3:8b}
+      api-key: ${TAILORLY_OLLAMA_API_KEY:ollama}
   storage:
     endpoint: ${TAILORLY_STORAGE_ENDPOINT:http://localhost:3900}
     region: ${TAILORLY_STORAGE_REGION:garage}

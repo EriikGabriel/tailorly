@@ -51,13 +51,13 @@ Consulte `GET /v1/extraction-runs/version/{baseVersionId}` para as execuções, 
 
 O worker consulta a fila no PostgreSQL a cada 2 segundos. Ele reserva uma execução com `FOR UPDATE SKIP LOCKED` em uma transação curta, lê o PDF do Garage e processa fora da transação. PDFBox 3.0.8 extrai o texto de cada página; páginas com menos de 40 caracteres visíveis, proporção baixa de letras/números ou caracteres inválidos passam por renderização a 300 DPI e Tesseract. O método persistido é `DIRECT` ou `OCR`. Texto nativo curto é preservado quando o OCR retorna vazio. Não há extração de fatos ou aprovação nesta etapa.
 
-Os estados da execução são `QUEUED`, `PROCESSING`, `COMPLETED` e `FAILED`. A versão candidata passa para `EXTRACTED` somente após a publicação de todas as páginas; o ponteiro do snapshot não é alterado pela extração. Falhas de OCR não publicam um documento parcialmente concluído. Páginas vazias podem coexistir com páginas úteis; um documento totalmente sem texto falha com `PDF_NO_TEXT`.
+Os estados da execução são `QUEUED`, `PROCESSING`, `COMPLETED` e `FAILED`. `PROCESSING` cobre extração/OCR, interpretação e persistência das propostas; a execução só passa a `COMPLETED` e a versão candidata a `EXTRACTED` quando a resposta da IA é válida, as evidências das propostas são verificáveis e os fatos são persistidos. A resposta pode não trazer fatos apoiados pelo texto; quando isso ocorre, o array vazio é válido, mas nenhum fato é criado. Esses estados não significam que os fatos foram confirmados: toda proposta continua pendente de revisão humana. O ponteiro do snapshot não é alterado pela extração. Falhas de OCR ou interpretação deixam a execução `FAILED` e a candidata não extraída; páginas já publicadas são mantidas como evidência técnica. Páginas vazias podem coexistir com páginas úteis; um documento totalmente sem texto falha com `PDF_NO_TEXT`.
 
 Os textos são gravados em `owners/{ownerId}/extractions/{runId}/pages/{pageNumber}.txt`. A transação final registra objetos, hashes e páginas, atualiza `pageCount` e conclui a execução atomicamente. Se houver falha, os objetos parciais recebem uma tentativa de limpeza; falhas de limpeza ou perda de conexão durante o commit exigem reconciliação operacional. Ainda não existe um coletor automático de objetos órfãos.
 
 Execuções enfileiradas sobrevivem ao reinício. Execuções `PROCESSING` há mais de 10 minutos são marcadas `FAILED` com `WORKER_TIMEOUT` quando o worker consulta a fila novamente; uma nova solicitação permite tentar outra vez. Uma execução tardia não pode publicar resultados depois de expirada. Não há retry automático ilimitado. Uma fila criada com outra configuração do pipeline falha com `PIPELINE_CHANGED`, permitindo uma nova solicitação com a configuração atual.
 
-O hash do pipeline inclui extrator, política de qualidade, normalização, limites, resolução e configuração/revisão do OCR. Dentro da mesma versão, uma execução `QUEUED`, `PROCESSING` ou `COMPLETED` com esse hash é reutilizada. Lock do owner e índice único parcial impedem duplicação concorrente; registros legados de metadados não são consumidos pelo worker. O worker ainda não produz fatos automaticamente. A revisão manual registra decisões versionadas; a aprovação aceita apenas versão `EXTRACTED`, bloqueia pendências obrigatórias, congela fatos confirmados/corrigidos com referência à decisão e troca o snapshot ativo atomicamente. O hash SHA-256 cobre os fatos aprovados ordenados por categoria, ordem e campo.
+O hash do pipeline inclui extrator, política de qualidade, normalização, limites, resolução e configuração/revisão do OCR. Dentro da mesma versão, uma execução `QUEUED`, `PROCESSING` ou `COMPLETED` com esse hash é reutilizada. Lock do owner e índice único parcial impedem duplicação concorrente; registros legados de metadados não são consumidos pelo worker. `RuleBasedCurriculumInterpreter` propõe email e telefone explícitos com página, trecho e offsets como evidência. `AiCurriculumInterpreter` usa OpenAI como primário e Ollama local como fallback quando `TAILORLY_INTERPRETATION_PROVIDER=openai-with-ollama-fallback` (o valor legado `openai` também ativa essa cadeia); configure `TAILORLY_OPENAI_API_KEY` e `TAILORLY_OPENAI_MODEL`, além de manter Ollama disponível localmente. O worker publica as páginas, interpreta o texto, valida as evidências e persiste as propostas como fatos `pendente`, com evidência e pendência bloqueante de revisão. A persistência dos fatos e a conclusão da execução são atômicas; falhas deixam a execução `FAILED`, sem avançar a versão para `EXTRACTED`. O serviço valida a página e o trecho no texto armazenado, recalcula a validade dos offsets e evita duplicar a mesma proposta no mesmo run. A extração semântica não confirma a veracidade dos fatos: a revisão humana continua obrigatória. A interpretação ainda não tem retry automático, limite de custo/tokens nem registro de versão do modelo/prompt. A revisão manual registra decisões versionadas; a aprovação aceita apenas versão `EXTRACTED`, bloqueia pendências obrigatórias, congela fatos confirmados/corrigidos com referência à decisão e troca o snapshot ativo atomicamente. O hash SHA-256 cobre os fatos aprovados ordenados por categoria, ordem e campo.
 
 Para OCR local, instale o executável **Tesseract 5** e os modelos de português (`por`) e inglês (`eng`) no ambiente em que a API executa. Confira com `tesseract --version` e `tesseract --list-langs`. A dependência Maven do PDFBox não instala o Tesseract. PDFs digitais com texto suficiente funcionam sem ele; páginas que exigem OCR falham com `OCR_UNAVAILABLE` quando o executável não existe, ou `OCR_FAILED` quando os modelos/configuração impedem a execução.
 
@@ -112,11 +112,21 @@ Depois inicie a API:
 pnpm dev
 ```
 
-O script `dev` carrega de `.env.garage` somente
-`TAILORLY_STORAGE_ACCESS_KEY` e `TAILORLY_STORAGE_SECRET_KEY` para o processo da
-API e falha com uma instrução clara se o arquivo ou as chaves estiverem
-ausentes. Reinicie a API após gerar ou alterar o arquivo. Em outros comandos
-Maven ou ao executar o JAR diretamente, configure essas variáveis no ambiente.
+O arquivo local `.env.local` lista as variáveis por contexto: banco, autenticação,
+extração/OCR, interpretação, storage e ferramentas auxiliares/testes. Ele é ignorado
+pelo Git; `.env.example` contém o mesmo modelo sem credenciais reais. O script `dev`
+carrega todas essas variáveis e usa as chaves do `.env.garage` quando as chaves S3
+no `.env.local` estão vazias. Para ativar IA, configure
+`TAILORLY_INTERPRETATION_PROVIDER=openai-with-ollama-fallback`, `TAILORLY_OPENAI_MODEL` e
+`TAILORLY_OPENAI_API_KEY`. Com esse provider, OpenAI é tentado primeiro; em caso de erro,
+a API usa o Ollama local. Instale/inicie o Ollama e baixe o modelo configurado, por exemplo
+`ollama pull qwen3:8b`. `TAILORLY_OLLAMA_ENDPOINT`, `TAILORLY_OLLAMA_MODEL` e
+`TAILORLY_OLLAMA_API_KEY` podem ser ajustados; a chave padrão `ollama` é apenas um valor
+fictício exigido pelo formato compatível. O provider legado `openai` também ativa a cadeia.
+Reinicie a API após alterar o arquivo. Para comandos
+Maven diretos, carregue o arquivo no shell antes de executar. `TAILORLY_POSTGRES_PORT`
+é usado pelo Compose e `TAILORLY_OPENAPI_URL` pela sincronização OpenAPI; esses
+utilitários precisam receber o arquivo no próprio processo.
 
 O volume antigo `tailorly_minio-data`, caso exista, não é importado pelo Garage nem removido pelo Compose. Migre os objetos e confira as referências `storageKey` no banco antes de desativar o storage antigo; não presuma que trocar o serviço migra os PDFs. O armazenamento de originais continua privado.
 
