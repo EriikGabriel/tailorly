@@ -8,15 +8,19 @@
 
 import { apiRequest } from "../client";
 import type {
+  AiPreferencesResponse,
+  AnonymousMigrationResponse,
   AnonymousSessionResponse,
-  AnonymousSessionValidationResponse,
+  AnonymousSessionStatusResponse,
   BaseDocumentResponse,
   BaseDocumentUploadBody,
   BaseDocumentUploadParams,
   BaseDocumentUploadResponse,
   BaseVersionResponse,
-  CreateAnonymousSessionRequest,
   CreateExtractionRunRequest,
+  CreateFactEvidenceRequest,
+  CreateFactRecordRequest,
+  CreateFactRequest,
   CreateOwnerRequest,
   CreateStoredObjectRequest,
   CreateUserRequest,
@@ -24,65 +28,132 @@ import type {
   ExtractedPageResponse,
   ExtractedPageTextResponse,
   ExtractionRunResponse,
+  FactEvidenceResponse,
+  FactRecordResponse,
+  FactResponse,
+  GtSnapshotResponse,
+  IssuedAnonymousSessionResponse,
   LoginRequest,
   LoginResponse,
+  MigrateAnonymousSessionRequest,
   OwnerResponse,
+  ReviewIssueResponse,
   StoredObjectResponse,
-  UpdateActiveSnapshotRequest,
+  UpdateAiPreferencesRequest,
   UpdateDeletionStatusRequest,
+  UpdateDisplayOrderRequest,
+  UpdateEvidenceLocatorRequest,
+  UpdateFactReviewStateRequest,
   UpdateUserRequest,
   UserGetUserByEmailParams,
   UserResponse,
-  ValidateAnonymousSessionRequest,
 } from "./model";
+export const getAiPreferencesCurrentUrl = () => {
+  return `/v1/ai-preferences`;
+};
+
+export const aiPreferencesCurrent = async (
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<AiPreferencesResponse> => {
+  return apiRequest<AiPreferencesResponse>(getAiPreferencesCurrentUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAiPreferencesUpdateUrl = () => {
+  return `/v1/ai-preferences`;
+};
+
+export const aiPreferencesUpdate = async (
+  updateAiPreferencesRequest: UpdateAiPreferencesRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<AiPreferencesResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<AiPreferencesResponse>(getAiPreferencesUpdateUrl(), {
+    ...options,
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(updateAiPreferencesRequest),
+  });
+};
+
 export const getAnonymousSessionCreateUrl = () => {
   return `/v1/anonymous-sessions`;
 };
 
 export const anonymousSessionCreate = async (
-  createAnonymousSessionRequest: CreateAnonymousSessionRequest,
   options?: Parameters<typeof apiRequest>[1],
-): Promise<AnonymousSessionResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<
-      string | readonly string[] | undefined
-    >(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-  return apiRequest<AnonymousSessionResponse>(getAnonymousSessionCreateUrl(), {
-    ...options,
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...getHeaders(options?.headers),
+): Promise<IssuedAnonymousSessionResponse> => {
+  return apiRequest<IssuedAnonymousSessionResponse>(
+    getAnonymousSessionCreateUrl(),
+    {
+      ...options,
+      method: "POST",
     },
-    body: JSON.stringify(createAnonymousSessionRequest),
+  );
+};
+
+export const getAnonymousSessionEndUrl = () => {
+  return `/v1/anonymous-sessions/current`;
+};
+
+export const anonymousSessionEnd = async (
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<void> => {
+  return apiRequest<void>(getAnonymousSessionEndUrl(), {
+    ...options,
+    method: "DELETE",
   });
 };
 
-export const getAnonymousSessionValidateUrl = () => {
-  return `/v1/anonymous-sessions/validate`;
+export const getAnonymousSessionCurrentUrl = () => {
+  return `/v1/anonymous-sessions/current`;
 };
 
-export const anonymousSessionValidate = async (
-  validateAnonymousSessionRequest: ValidateAnonymousSessionRequest,
+export const anonymousSessionCurrent = async (
   options?: Parameters<typeof apiRequest>[1],
-): Promise<AnonymousSessionValidationResponse> => {
+): Promise<AnonymousSessionStatusResponse> => {
+  return apiRequest<AnonymousSessionStatusResponse>(
+    getAnonymousSessionCurrentUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getAnonymousSessionMigrateUrl = () => {
+  return `/v1/anonymous-sessions/migrate`;
+};
+
+export const anonymousSessionMigrate = async (
+  migrateAnonymousSessionRequest: MigrateAnonymousSessionRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<AnonymousMigrationResponse> => {
   const getHeaders = (
     h?: NonNullable<RequestInit["headers"]>,
   ): Record<string, string | readonly string[]> => {
@@ -104,8 +175,8 @@ export const anonymousSessionValidate = async (
     }
     return headers;
   };
-  return apiRequest<AnonymousSessionValidationResponse>(
-    getAnonymousSessionValidateUrl(),
+  return apiRequest<AnonymousMigrationResponse>(
+    getAnonymousSessionMigrateUrl(),
     {
       ...options,
       method: "POST",
@@ -113,7 +184,7 @@ export const anonymousSessionValidate = async (
         "Content-Type": "application/json",
         ...getHeaders(options?.headers),
       },
-      body: JSON.stringify(validateAnonymousSessionRequest),
+      body: JSON.stringify(migrateAnonymousSessionRequest),
     },
   );
 };
@@ -466,6 +537,387 @@ export const extractionRunFindById = async (
   });
 };
 
+export const getFactEvidenceCreateUrl = () => {
+  return `/v1/fact-evidence`;
+};
+
+export const factEvidenceCreate = async (
+  createFactEvidenceRequest: CreateFactEvidenceRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactEvidenceResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<FactEvidenceResponse>(getFactEvidenceCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(createFactEvidenceRequest),
+  });
+};
+
+export const getFactEvidenceFindByFactIdUrl = (factId: string) => {
+  return `/v1/fact-evidence/fact/${encodeURIComponent(String(factId))}`;
+};
+
+export const factEvidenceFindByFactId = async (
+  factId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactEvidenceResponse[]> => {
+  return apiRequest<FactEvidenceResponse[]>(
+    getFactEvidenceFindByFactIdUrl(factId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getFactEvidenceFindByIdUrl = (id: string) => {
+  return `/v1/fact-evidence/${encodeURIComponent(String(id))}`;
+};
+
+export const factEvidenceFindById = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactEvidenceResponse> => {
+  return apiRequest<FactEvidenceResponse>(getFactEvidenceFindByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getFactEvidenceUpdateLocatorUrl = (id: string) => {
+  return `/v1/fact-evidence/${encodeURIComponent(String(id))}/locator`;
+};
+
+export const factEvidenceUpdateLocator = async (
+  id: string,
+  updateEvidenceLocatorRequest: UpdateEvidenceLocatorRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactEvidenceResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<FactEvidenceResponse>(getFactEvidenceUpdateLocatorUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(updateEvidenceLocatorRequest),
+  });
+};
+
+export const getFactRecordCreateUrl = () => {
+  return `/v1/fact-records`;
+};
+
+export const factRecordCreate = async (
+  createFactRecordRequest: CreateFactRecordRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactRecordResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<FactRecordResponse>(getFactRecordCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(createFactRecordRequest),
+  });
+};
+
+export const getFactRecordFindByVersionUrl = (baseVersionId: string) => {
+  return `/v1/fact-records/version/${encodeURIComponent(String(baseVersionId))}`;
+};
+
+export const factRecordFindByVersion = async (
+  baseVersionId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactRecordResponse[]> => {
+  return apiRequest<FactRecordResponse[]>(
+    getFactRecordFindByVersionUrl(baseVersionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getFactRecordFindByIdUrl = (id: string) => {
+  return `/v1/fact-records/${encodeURIComponent(String(id))}`;
+};
+
+export const factRecordFindById = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactRecordResponse> => {
+  return apiRequest<FactRecordResponse>(getFactRecordFindByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getFactRecordUpdateDisplayOrderUrl = (id: string) => {
+  return `/v1/fact-records/${encodeURIComponent(String(id))}/display-order`;
+};
+
+export const factRecordUpdateDisplayOrder = async (
+  id: string,
+  updateDisplayOrderRequest: UpdateDisplayOrderRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactRecordResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<FactRecordResponse>(
+    getFactRecordUpdateDisplayOrderUrl(id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(options?.headers),
+      },
+      body: JSON.stringify(updateDisplayOrderRequest),
+    },
+  );
+};
+
+export const getFactCreateUrl = () => {
+  return `/v1/facts`;
+};
+
+export const factCreate = async (
+  createFactRequest: CreateFactRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<FactResponse>(getFactCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(createFactRequest),
+  });
+};
+
+export const getFactFindByRecordUrl = (recordId: string) => {
+  return `/v1/facts/record/${encodeURIComponent(String(recordId))}`;
+};
+
+export const factFindByRecord = async (
+  recordId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactResponse[]> => {
+  return apiRequest<FactResponse[]>(getFactFindByRecordUrl(recordId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getFactFindByIdUrl = (id: string) => {
+  return `/v1/facts/${encodeURIComponent(String(id))}`;
+};
+
+export const factFindById = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactResponse> => {
+  return apiRequest<FactResponse>(getFactFindByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getFactConfirmUrl = (id: string) => {
+  return `/v1/facts/${encodeURIComponent(String(id))}/confirm`;
+};
+
+export const factConfirm = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactResponse> => {
+  return apiRequest<FactResponse>(getFactConfirmUrl(id), {
+    ...options,
+    method: "PATCH",
+  });
+};
+
+export const getFactUpdateReviewStateUrl = (id: string) => {
+  return `/v1/facts/${encodeURIComponent(String(id))}/review-state`;
+};
+
+export const factUpdateReviewState = async (
+  id: string,
+  updateFactReviewStateRequest: UpdateFactReviewStateRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<FactResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<FactResponse>(getFactUpdateReviewStateUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(updateFactReviewStateRequest),
+  });
+};
+
+export const getGtSnapshotApproveVersionUrl = (baseVersionId: string) => {
+  return `/v1/gt-snapshots/approve-version/${encodeURIComponent(String(baseVersionId))}`;
+};
+
+export const gtSnapshotApproveVersion = async (
+  baseVersionId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<GtSnapshotResponse> => {
+  return apiRequest<GtSnapshotResponse>(
+    getGtSnapshotApproveVersionUrl(baseVersionId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getGtSnapshotFindByIdUrl = (id: string) => {
+  return `/v1/gt-snapshots/${encodeURIComponent(String(id))}`;
+};
+
+export const gtSnapshotFindById = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<GtSnapshotResponse> => {
+  return apiRequest<GtSnapshotResponse>(getGtSnapshotFindByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export const getCurrentAccountCurrentUrl = () => {
   return `/v1/me`;
 };
@@ -533,15 +985,46 @@ export const ownerFindById = async (
   });
 };
 
-export const getOwnerUpdateActiveSnapshotUrl = (id: string) => {
-  return `/v1/owners/${encodeURIComponent(String(id))}/active-snapshot`;
+export const getOwnerIncrementRevisionUrl = (id: string) => {
+  return `/v1/owners/${encodeURIComponent(String(id))}/increment-revision`;
 };
 
-export const ownerUpdateActiveSnapshot = async (
+export const ownerIncrementRevision = async (
   id: string,
-  updateActiveSnapshotRequest: UpdateActiveSnapshotRequest,
   options?: Parameters<typeof apiRequest>[1],
 ): Promise<OwnerResponse> => {
+  return apiRequest<OwnerResponse>(getOwnerIncrementRevisionUrl(id), {
+    ...options,
+    method: "PATCH",
+  });
+};
+
+export const getReviewIssueFindByVersionUrl = (baseVersionId: string) => {
+  return `/v1/review-issues/version/${encodeURIComponent(String(baseVersionId))}`;
+};
+
+export const reviewIssueFindByVersion = async (
+  baseVersionId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<ReviewIssueResponse[]> => {
+  return apiRequest<ReviewIssueResponse[]>(
+    getReviewIssueFindByVersionUrl(baseVersionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getReviewIssueAnswerUrl = (id: string) => {
+  return `/v1/review-issues/${encodeURIComponent(String(id))}/answer`;
+};
+
+export const reviewIssueAnswer = async (
+  id: string,
+  updateFactReviewStateRequest: UpdateFactReviewStateRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<ReviewIssueResponse> => {
   const getHeaders = (
     h?: NonNullable<RequestInit["headers"]>,
   ): Record<string, string | readonly string[]> => {
@@ -563,28 +1046,14 @@ export const ownerUpdateActiveSnapshot = async (
     }
     return headers;
   };
-  return apiRequest<OwnerResponse>(getOwnerUpdateActiveSnapshotUrl(id), {
+  return apiRequest<ReviewIssueResponse>(getReviewIssueAnswerUrl(id), {
     ...options,
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       ...getHeaders(options?.headers),
     },
-    body: JSON.stringify(updateActiveSnapshotRequest),
-  });
-};
-
-export const getOwnerIncrementRevisionUrl = (id: string) => {
-  return `/v1/owners/${encodeURIComponent(String(id))}/increment-revision`;
-};
-
-export const ownerIncrementRevision = async (
-  id: string,
-  options?: Parameters<typeof apiRequest>[1],
-): Promise<OwnerResponse> => {
-  return apiRequest<OwnerResponse>(getOwnerIncrementRevisionUrl(id), {
-    ...options,
-    method: "PATCH",
+    body: JSON.stringify(updateFactReviewStateRequest),
   });
 };
 

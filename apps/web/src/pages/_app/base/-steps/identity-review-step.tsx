@@ -9,6 +9,11 @@ const identityFields: ReviewField[] = [
     hint: "Use o nome presente no documento.",
   },
   {
+    key: "headline",
+    label: "Cargo / título profissional",
+    hint: "Título exibido no topo do currículo, se houver.",
+  },
+  {
     key: "location",
     label: "Localização geográfica",
     hint: "Cidade, estado e país informados.",
@@ -25,10 +30,18 @@ const identityFields: ReviewField[] = [
     type: "tel",
     hint: "Inclua os códigos de país e região.",
   },
+  {
+    key: "summary",
+    label: "Resumo profissional",
+    type: "textarea",
+    wide: true,
+    hint: "Apenas o texto de apresentação que consta no documento.",
+  },
 ];
 const linkFields: ReviewField[] = [
   { key: "linkedin", label: "LinkedIn", type: "url" },
   { key: "github", label: "GitHub / Portfólio", type: "url" },
+  { key: "website", label: "Site pessoal", type: "url" },
 ];
 
 export function IdentityReviewStep({

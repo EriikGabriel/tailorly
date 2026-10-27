@@ -13,6 +13,7 @@ import { apiQueryKeys } from "@lib/api/query-keys";
 import { useAuthStore } from "@stores/auth-store";
 import { resetClientState } from "@stores/reset-client-state";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 
 interface AccountSessionResult {
@@ -70,9 +71,11 @@ export function useRegister() {
 
 export function useLogout() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   return useCallback(() => {
     resetClientState();
     queryClient.removeQueries();
-  }, [queryClient]);
+    navigate({ to: "/" });
+  }, [queryClient, navigate]);
 }

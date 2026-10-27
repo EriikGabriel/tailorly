@@ -398,7 +398,7 @@ ou reutilizada; a store guarda apenas o ID da seleção local para evitar que
 uma resposta atrasada altere seu status. A interface não lista o
 histórico de PDFs enviados. A troca em `/base` usa o mesmo envio da home. O
 cartão distingue prévia local, envio, sucesso e falha e mostra erros da API.
-Sem conta, não tenta o upload; a API ainda não aceita upload anônimo. O envio
+Sem conta, não tenta o upload: a API já aceita upload por sessão anônima, mas o fluxo de visitante na interface ainda não foi liberado. O envio
 armazena o original, cria ou recupera a versão e enfileira extração no servidor.
 O frontend consulta o andamento enquanto a execução está na fila ou processando
 e, em `/base`, disponibiliza o texto bruto por página após a conclusão. A
@@ -678,11 +678,11 @@ registra cobertura parcial e critérios futuros sem adicionar toda a suíte.
 
 Os pontos abaixo continuam pendentes no frontend ou no fluxo completo:
 
-- upload anônimo e extração automática de fatos e evidências pelo pipeline;
+- fluxo de visitante na interface: criar a sessão anônima, enviar o token e oferecer a migração do snapshot revisado após o login (a API já oferece tudo isso);
 - visualização da evidência sobre o PDF e coordenadas de bounding box;
 - atualização automática do snapshot ativo após uma nova extração;
 - download e geração de PDF/Markdown;
-- recuperação de senha; sessão anônima completa, TTL e cotas no servidor;
+- recuperação de senha;
 - integração com o vault (Second Brain), Notion, Obsidian;
 - persistência dos rascunhos em `localStorage`/`sessionStorage` (o JWT usa
   `sessionStorage`; as duas chaves legadas de rascunho são removidas em

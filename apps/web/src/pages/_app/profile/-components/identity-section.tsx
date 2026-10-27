@@ -1,13 +1,15 @@
 import { IdCard } from "@react-zero-ui/icon-sprite";
-import { useState } from "react";
-import { previewIdentityFields } from "@/data/profile-preview";
+import { useProfileSettingsStore } from "@stores/profile-settings-store";
 import { SectionCard, TextField } from "./section-card";
 
 export function IdentitySection() {
-  const [fields, setFields] = useState(previewIdentityFields);
+  const fields = useProfileSettingsStore((state) => state.identityDraft);
+  const updateIdentity = useProfileSettingsStore(
+    (state) => state.updateIdentity,
+  );
 
   function update<K extends keyof typeof fields>(key: K, value: string) {
-    setFields((prev) => ({ ...prev, [key]: value }));
+    updateIdentity({ [key]: value });
   }
 
   return (

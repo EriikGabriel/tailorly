@@ -1,6 +1,7 @@
 package com.tailorly.api.owner;
 
 import com.tailorly.api.shared.exception.ErrorCodes;
+import com.tailorly.api.session.AnonymousSessionAuthenticationToken;
 import com.tailorly.api.user.User;
 import com.tailorly.api.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,15 @@ public class OwnerAccessService {
     if (authentication == null || !authentication.isAuthenticated()
         || authentication instanceof AnonymousAuthenticationToken) {
       throw new AccessDeniedException(ErrorCodes.Security.AUTHENTICATION_REQUIRED);
+    }
+
+    // Uma sessão anônima só acessa o próprio owner anônimo, nunca o de uma conta.
+    if (authentication instanceof AnonymousSessionAuthenticationToken session) {
+      if (owner.getKind() == OwnerKindEnum.KIND_ANONYMOUS
+          && owner.getId().equals(session.getPrincipal().ownerId())) {
+        return;
+      }
+      throw new AccessDeniedException(ErrorCodes.Owner.ACCESS_DENIED);
     }
 
     if (authentication.getAuthorities().stream()

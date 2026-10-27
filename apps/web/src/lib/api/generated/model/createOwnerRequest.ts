@@ -7,7 +7,6 @@
  */
 
 export interface CreateOwnerRequest {
-  activeSnapshotId?: string;
   /** @minLength 1 */
   kind: string;
   userId?: string;

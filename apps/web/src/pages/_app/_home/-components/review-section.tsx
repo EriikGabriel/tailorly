@@ -74,6 +74,10 @@ const issueTypeMap: Record<
     label: "Dúvida Temporal",
     icon: IconClock,
   },
+  fact: {
+    label: "Dado extraído do seu currículo",
+    icon: IconQuote,
+  },
 };
 
 const categoryIconMap: Record<ReviewCategory, ComponentType<IconProps>> = {
@@ -151,7 +155,17 @@ export function ReviewSection({
           return (
             <div key={issue.id} className="py-3 last:pb-0">
               <p className="text-sm font-semibold">{issue.question}</p>
-              {issue.evidence && (
+              {issue.value && (
+                <p className="mt-2 rounded-lg border border-outline-variant/50 bg-card px-3 py-2 text-sm">
+                  <span className="mr-2 text-xs font-medium text-on-surface-variant">
+                    Valor identificado:
+                  </span>
+                  <span className="break-words font-semibold text-primary-950">
+                    {issue.value}
+                  </span>
+                </p>
+              )}
+              {issue.evidence && issue.evidence.trim() !== issue.value && (
                 <p className="mt-2 flex min-w-0 items-center rounded-lg border bg-card p-2 text-xs leading-5 text-on-surface-variant">
                   <IconQuote
                     className="size-3.5 shrink-0 mr-2 mb-2"

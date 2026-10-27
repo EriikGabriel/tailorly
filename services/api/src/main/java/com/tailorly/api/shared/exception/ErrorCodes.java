@@ -30,12 +30,27 @@ public final class ErrorCodes {
 
   public static final class Session {
     public static final String NOT_FOUND = "error.session.not_found";
-    public static final String OWNER_MUST_BE_ANONYMOUS = "error.session.owner_must_be_anonymous";
-    public static final String EXPIRATION_MUST_BE_FUTURE = "error.session.expiration_must_be_future";
-    public static final String OWNER_ALREADY_HAS_SESSION = "error.session.owner_already_has_session";
-    public static final String TOKEN_ALREADY_EXISTS = "error.session.token_already_exists";
+    public static final String INVALID_TOKEN = "error.session.invalid_token";
+    public static final String RATE_LIMITED = "error.session.rate_limited";
+    public static final String CAPACITY_REACHED = "error.session.capacity_reached";
+    public static final String SESSION_REQUIRED = "error.session.session_required";
 
     private Session() {
+    }
+  }
+
+  public static final class Anonymous {
+    public static final String FILE_TOO_LARGE = "error.anonymous.file_too_large";
+    public static final String PAGE_LIMIT_EXCEEDED = "error.anonymous.page_limit_exceeded";
+    public static final String UPLOAD_LIMIT_REACHED = "error.anonymous.upload_limit_reached";
+    public static final String EXTRACTION_LIMIT_REACHED = "error.anonymous.extraction_limit_reached";
+    public static final String GENERATION_LIMIT_REACHED = "error.anonymous.generation_limit_reached";
+    public static final String NOTHING_TO_MIGRATE = "error.anonymous.nothing_to_migrate";
+    public static final String ACTIVE_SNAPSHOT_EXISTS = "error.anonymous.active_snapshot_exists";
+    public static final String ANONYMOUS_OWNER_CREATION_FORBIDDEN =
+        "error.anonymous.owner_creation_forbidden";
+
+    private Anonymous() {
     }
   }
 
@@ -57,7 +72,6 @@ public final class ErrorCodes {
     public static final String INVALID_PAGE_COUNT = "error.base_document.invalid_page_count";
     public static final String INVALID_PDF = "error.base_document.invalid_pdf";
     public static final String FILE_TOO_LARGE = "error.base_document.file_too_large";
-    public static final String ACCOUNT_OWNER_REQUIRED = "error.base_document.account_owner_required";
     public static final String ORIGINAL_OBJECT_MISSING = "error.base_document.original_object_missing";
 
     private BaseDocument() {

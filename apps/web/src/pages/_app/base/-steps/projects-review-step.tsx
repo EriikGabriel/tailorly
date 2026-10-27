@@ -19,6 +19,7 @@ const fields: ReviewField[] = [
     label: "Métrica e unidade",
     hint: "Inclua apenas números documentados.",
   },
+  { key: "link", label: "Link do projeto", type: "url" },
   {
     key: "source",
     label: "Referência no documento",

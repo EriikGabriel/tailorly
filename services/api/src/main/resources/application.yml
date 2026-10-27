@@ -23,6 +23,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        type:
+          json_format_mapper: com.tailorly.api.shared.config.JacksonJsonValueFormatMapper
   flyway:
     baseline-on-migrate: true
 management:
@@ -47,13 +49,12 @@ tailorly:
     ocr-revision: ${TAILORLY_OCR_REVISION:local-1}
     poll-delay-ms: 2000
   interpretation:
-    # rules (padrão, sem IA) | remote (só provedor remoto) |
-    # remote-with-ollama-fallback (recomendado: remoto com fallback automático
-    # para o Ollama local) | ollama-only (só o Ollama local, sem chamada remota)
+    # rules (padrão, sem IA)
+    # remote (só provedor remoto)
+    # remote-with-ollama-fallback (recomendado: remoto com fallback automático para o Ollama local)
+    # ollama-only (só o Ollama local, sem chamada remota)
     provider: ${TAILORLY_INTERPRETATION_PROVIDER:rules}
-    # Qualquer serviço compatível com o formato Chat Completions da OpenAI
-    # funciona aqui: OpenAI, Anthropic, DeepSeek, OpenRouter etc. Não há
-    # configuração específica por fabricante, só endpoint/modelo/chave.
+    # Qualquer serviço compatível com o formato Chat Completions da OpenAI funciona aqui: OpenAI, Anthropic, DeepSeek, OpenRouter etc. Não há configuração específica por fabricante, só endpoint/modelo/chave.
     remote:
       endpoint: ${TAILORLY_REMOTE_ENDPOINT:https://api.openai.com/v1/chat/completions}
       model: ${TAILORLY_REMOTE_MODEL:}
@@ -62,6 +63,21 @@ tailorly:
       endpoint: ${TAILORLY_OLLAMA_ENDPOINT:http://127.0.0.1:11434/v1/chat/completions}
       model: ${TAILORLY_OLLAMA_MODEL:qwen3:8b}
       api-key: ${TAILORLY_OLLAMA_API_KEY:ollama}
+  # Visitantes sem conta: sessão emitida e autenticada pelo servidor, com dados temporários (TTL) e
+  # limites aplicados no servidor. O processamento usa sempre a IA configurada nas variáveis
+  # tailorly.interpretation.* acima, nunca preferências de conta.
+  anonymous:
+    session-ttl: ${TAILORLY_ANONYMOUS_SESSION_TTL:PT24H}
+    max-file-bytes: ${TAILORLY_ANONYMOUS_MAX_FILE_BYTES:3145728}
+    max-pages: ${TAILORLY_ANONYMOUS_MAX_PAGES:3}
+    max-uploads: ${TAILORLY_ANONYMOUS_MAX_UPLOADS:3}
+    max-extractions: ${TAILORLY_ANONYMOUS_MAX_EXTRACTIONS:3}
+    max-generations: ${TAILORLY_ANONYMOUS_MAX_GENERATIONS:3}
+    requests-per-minute: ${TAILORLY_ANONYMOUS_REQUESTS_PER_MINUTE:60}
+    sessions-per-ip-per-hour: ${TAILORLY_ANONYMOUS_SESSIONS_PER_IP_PER_HOUR:10}
+    max-active-sessions: ${TAILORLY_ANONYMOUS_MAX_ACTIVE_SESSIONS:1000}
+    cleanup-interval: ${TAILORLY_ANONYMOUS_CLEANUP_INTERVAL:PT5M}
+    cleanup-enabled: ${TAILORLY_ANONYMOUS_CLEANUP_ENABLED:true}
   storage:
     endpoint: ${TAILORLY_STORAGE_ENDPOINT:http://localhost:3900}
     region: ${TAILORLY_STORAGE_REGION:garage}

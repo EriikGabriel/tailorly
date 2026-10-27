@@ -59,6 +59,23 @@ public class LocalizedSecurityErrorHandler
     writeError(request, response, HttpStatus.FORBIDDEN, ErrorCodes.Security.ACCESS_DENIED);
   }
 
+  /** Resposta 429 de limite de taxa, com {@code Retry-After} em segundos. */
+  public void tooManyRequests(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      long retryAfterSeconds
+  ) throws IOException {
+    response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
+    writeError(request, response, HttpStatus.TOO_MANY_REQUESTS, ErrorCodes.Session.RATE_LIMITED);
+  }
+
+  /** Resposta 401 para um token de sessão anônima inválido, expirado ou revogado. */
+  public void invalidSessionToken(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer realm=\"Tailorly API\"");
+    writeError(request, response, HttpStatus.UNAUTHORIZED, ErrorCodes.Session.INVALID_TOKEN);
+  }
+
   private void writeError(
       HttpServletRequest request,
       HttpServletResponse response,

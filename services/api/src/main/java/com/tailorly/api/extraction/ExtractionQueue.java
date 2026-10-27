@@ -15,6 +15,7 @@ import com.tailorly.api.extraction.run.ExtractionRun;
 import com.tailorly.api.extraction.run.ExtractionRunRepository;
 import com.tailorly.api.objects.StoredObject;
 import com.tailorly.api.objects.StoredObjectRepository;
+import com.tailorly.api.session.AnonymousQuotaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -47,6 +48,7 @@ public class ExtractionQueue {
   private final ExtractedPageRepository pages;
   private final StoredObjectRepository objects;
   private final PdfExtractor extractor;
+  private final AnonymousQuotaService anonymousQuota;
 
   // Chamadores mantêm o lock do owner até a transação terminar.
   @Transactional(propagation = Propagation.MANDATORY)
@@ -54,9 +56,13 @@ public class ExtractionQueue {
     String fingerprint = extractor.fingerprint();
     return runs.findFirstByBaseVersionIdAndPipelineFingerprintAndStatusIn(version.getId(), fingerprint,
         List.of("QUEUED", "PROCESSING", "COMPLETED"))
-        .orElseGet(() -> runs.saveAndFlush(ExtractionRun.builder().baseVersion(version)
+        .orElseGet(() -> {
+          // Só uma execução nova consome o limite de processamento anônimo; reaproveitar não consome.
+          anonymousQuota.consumeExtraction(version.getOwner());
+          return runs.saveAndFlush(ExtractionRun.builder().baseVersion(version)
             .pipelineFingerprint(fingerprint).pipelineVersions(extractor.versions())
-            .status("QUEUED").build()));
+            .status("QUEUED").build());
+        });
   }
 
   /**

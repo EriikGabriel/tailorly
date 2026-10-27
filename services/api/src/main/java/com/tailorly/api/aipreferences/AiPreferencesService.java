@@ -6,6 +6,7 @@ import com.tailorly.api.aipreferences.dto.AiPreferencesResponse;
 import com.tailorly.api.aipreferences.dto.UpdateAiPreferencesRequest;
 import com.tailorly.api.extraction.interpreting.OllamaInterpretationProperties;
 import com.tailorly.api.extraction.interpreting.RemoteInterpretationProperties;
+import com.tailorly.api.owner.OwnerKindEnum;
 import com.tailorly.api.owner.OwnerRepository;
 import com.tailorly.api.shared.security.SecretEncryptor;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,9 +76,19 @@ public class AiPreferencesService {
   /** Usado pela extração (veja {@code com.tailorly.api.extraction.interpreting}). */
   @Transactional(readOnly = true)
   public EffectiveAiSettings resolveEffectiveSettings(UUID ownerId) {
+    // Visitantes sempre usam a IA definida nas variáveis de ambiente do servidor.
+    if (isAnonymous(ownerId)) {
+      return defaultEffectiveSettings();
+    }
     return repository.findByOwnerId(ownerId)
         .map(this::toEffectiveSettings)
         .orElseGet(this::defaultEffectiveSettings);
+  }
+
+  private boolean isAnonymous(UUID ownerId) {
+    return ownerRepository.findById(ownerId)
+        .map(owner -> owner.getKind() == OwnerKindEnum.KIND_ANONYMOUS)
+        .orElse(false);
   }
 
   private EffectiveAiSettings toEffectiveSettings(AiPreferences preferences) {

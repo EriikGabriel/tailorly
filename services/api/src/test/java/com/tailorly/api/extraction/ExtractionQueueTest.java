@@ -15,6 +15,7 @@ import com.tailorly.api.extraction.run.ExtractionRun;
 import com.tailorly.api.extraction.run.ExtractionRunRepository;
 import com.tailorly.api.objects.StoredObjectRepository;
 import com.tailorly.api.owner.Owner;
+import com.tailorly.api.session.AnonymousQuotaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,9 @@ class ExtractionQueueTest {
   private final ExtractedPageRepository pages = mock(ExtractedPageRepository.class);
   private final StoredObjectRepository objects = mock(StoredObjectRepository.class);
   private final PdfExtractor extractor = mock(PdfExtractor.class);
-  private final ExtractionQueue queue = new ExtractionQueue(runs, pages, objects, extractor);
+  private final AnonymousQuotaService anonymousQuota = mock(AnonymousQuotaService.class);
+  private final ExtractionQueue queue =
+      new ExtractionQueue(runs, pages, objects, extractor, anonymousQuota);
   private BaseVersion version;
 
   @BeforeEach

@@ -1,11 +1,14 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
-import { Cpu, ShieldAlert, Sparkles } from "@react-zero-ui/icon-sprite";
-import { useReducedMotion } from "motion/react";
-import { useState } from "react";
 import {
-  type InterpretationProvider,
-  previewInterpretationSettings,
-} from "@/data/profile-preview";
+  Cpu,
+  RefreshCw,
+  ShieldAlert,
+  Sparkles,
+} from "@react-zero-ui/icon-sprite";
+import { useProfileSettingsStore } from "@stores/profile-settings-store";
+import { useReducedMotion } from "motion/react";
+import { useEffect } from "react";
+import { useAiPreferences } from "@/queries/ai-preferences";
 import { AiConnectionParametersCard } from "./ai-connection-parameters-card";
 import { AiDueDiligencePreviewCard } from "./ai-due-diligence-preview-card";
 import { AiFallbackCard } from "./ai-fallback-card";
@@ -14,10 +17,21 @@ import { AiProviderSelector } from "./ai-provider-selector";
 import { SectionCard } from "./section-card";
 
 export function AiPreferencesSection() {
-  const [provider, setProvider] = useState<InterpretationProvider>(
-    previewInterpretationSettings.provider,
+  const provider = useProfileSettingsStore((state) => state.aiDraft.provider);
+  const updateProvider = useProfileSettingsStore(
+    (state) => state.updateProvider,
+  );
+  const aiLoaded = useProfileSettingsStore((state) => state.aiLoaded);
+  const hydrateAiPreferences = useProfileSettingsStore(
+    (state) => state.hydrateAiPreferences,
   );
   const reduceMotion = useReducedMotion();
+
+  const { data: aiPreferences } = useAiPreferences();
+
+  useEffect(() => {
+    if (aiPreferences) hydrateAiPreferences(aiPreferences);
+  }, [aiPreferences, hydrateAiPreferences]);
 
   const needsRemote =
     provider === "remote" || provider === "remote-with-ollama-fallback";
@@ -36,43 +50,54 @@ export function AiPreferencesSection() {
         </span>
       }
     >
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="flex items-center gap-2 text-title-md font-semibold text-primary-950">
-            <Sparkles aria-hidden="true" className="size-4" />
-            Extração do Currículo Base (Ground Truth) — Ativo
-          </h3>
-          <span className="font-mono text-label-sm font-semibold text-on-surface-variant">
-            tailorly.interpretation.provider
-          </span>
-        </div>
-        <p className="text-body-sm text-on-surface-variant">
-          Define como os fatos são interpretados a partir do texto extraído do
-          seu CV. É a única etapa com IA de fato implementada no backend hoje.
+      {!aiLoaded ? (
+        <p className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low p-4 text-body-sm text-on-surface-variant">
+          <RefreshCw aria-hidden="true" className="size-3.5 animate-spin" />
+          Carregando preferências de IA da sua conta...
         </p>
-        <AiProviderSelector value={provider} onChange={setProvider} />
-      </div>
-
-      <AutoHeight
-        deps={[provider]}
-        transition={reduceMotion ? { duration: 0 } : undefined}
-      >
-        <div className="flex flex-col gap-4 pb-px">
-          {needsRemote && <AiConnectionParametersCard />}
-          {needsOllama && (
-            <AiFallbackCard
-              mode={provider === "ollama-only" ? "primary" : "fallback"}
-            />
-          )}
-          {provider === "rules" && (
-            <p className="rounded-xl border border-outline-variant bg-surface-container-low p-4 text-body-sm text-on-surface-variant">
-              Modo sem IA: a extração usa apenas regras determinísticas. Nenhuma
-              credencial é necessária e o resultado está sempre disponível,
-              mesmo offline ou sem provedores externos configurados.
+      ) : (
+        <>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="flex items-center gap-2 text-title-md font-semibold text-primary-950">
+                <Sparkles aria-hidden="true" className="size-4" />
+                Extração do Currículo Base (Ground Truth) — Ativo
+              </h3>
+              <span className="font-mono text-label-sm font-semibold text-on-surface-variant">
+                tailorly.interpretation.provider
+              </span>
+            </div>
+            <p className="text-body-sm text-on-surface-variant">
+              Define como os fatos são interpretados a partir do texto extraído
+              do seu CV. É a única etapa com IA de fato implementada no backend
+              hoje.
             </p>
-          )}
-        </div>
-      </AutoHeight>
+            <AiProviderSelector value={provider} onChange={updateProvider} />
+          </div>
+
+          <AutoHeight
+            deps={[provider]}
+            transition={reduceMotion ? { duration: 0 } : undefined}
+          >
+            <div className="flex flex-col gap-4 pb-px">
+              {needsRemote && <AiConnectionParametersCard />}
+              {needsOllama && (
+                <AiFallbackCard
+                  mode={provider === "ollama-only" ? "primary" : "fallback"}
+                />
+              )}
+              {provider === "rules" && (
+                <p className="rounded-xl border border-outline-variant bg-surface-container-low p-4 text-body-sm text-on-surface-variant">
+                  Modo sem IA: a extração usa apenas regras determinísticas.
+                  Nenhuma credencial é necessária e o resultado está sempre
+                  disponível, mesmo offline ou sem provedores externos
+                  configurados.
+                </p>
+              )}
+            </div>
+          </AutoHeight>
+        </>
+      )}
 
       <AiGenerationPreviewCard />
       <AiDueDiligencePreviewCard />

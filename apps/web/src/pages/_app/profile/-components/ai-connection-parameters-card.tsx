@@ -10,10 +10,13 @@ import {
   Telescope,
   Waypoints,
 } from "@react-zero-ui/icon-sprite";
+import {
+  isValidHttpUrl,
+  useProfileSettingsStore,
+} from "@stores/profile-settings-store";
 import type { ComponentType } from "react";
 import { useMemo, useState } from "react";
 import {
-  previewInterpretationSettings,
   type RemoteProviderVendor,
   remoteProviderVendors,
 } from "@/data/profile-preview";
@@ -30,17 +33,12 @@ const vendorIcons: Record<
   custom: Cable,
 };
 
-function isValidUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 export function AiConnectionParametersCard() {
-  const [config, setConfig] = useState(previewInterpretationSettings.remote);
+  const config = useProfileSettingsStore((state) => state.aiDraft.remote);
+  const apiKeyConfigured = useProfileSettingsStore(
+    (state) => state.aiDraft.remoteApiKeyConfigured,
+  );
+  const updateRemote = useProfileSettingsStore((state) => state.updateRemote);
   const [revealKey, setRevealKey] = useState(false);
 
   const activeVendor =
@@ -49,11 +47,11 @@ export function AiConnectionParametersCard() {
 
   const validation = useMemo(
     () => ({
-      endpoint: isValidUrl(config.endpoint),
+      endpoint: isValidHttpUrl(config.endpoint),
       model: config.model.trim().length > 0,
-      apiKey: config.apiKey.trim().length > 0,
+      apiKey: config.apiKey.trim().length > 0 || apiKeyConfigured,
     }),
-    [config],
+    [config, apiKeyConfigured],
   );
   const isValid = validation.endpoint && validation.model && validation.apiKey;
   const modelPlaceholder =
@@ -63,10 +61,7 @@ export function AiConnectionParametersCard() {
   function selectVendor(vendorId: RemoteProviderVendor) {
     const vendor = remoteProviderVendors.find((item) => item.id === vendorId);
     if (!vendor) return;
-    setConfig((prev) => ({
-      ...prev,
-      endpoint: vendor.endpoint || prev.endpoint,
-    }));
+    updateRemote({ endpoint: vendor.endpoint || config.endpoint });
   }
 
   return (
@@ -132,9 +127,7 @@ export function AiConnectionParametersCard() {
           <input
             type="url"
             value={config.endpoint}
-            onChange={(event) =>
-              setConfig((prev) => ({ ...prev, endpoint: event.target.value }))
-            }
+            onChange={(event) => updateRemote({ endpoint: event.target.value })}
             className="w-full rounded-lg bg-card px-4 py-2.5 text-body-md text-primary-950 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         </div>
@@ -148,9 +141,7 @@ export function AiConnectionParametersCard() {
           <input
             placeholder={modelPlaceholder}
             value={config.model}
-            onChange={(event) =>
-              setConfig((prev) => ({ ...prev, model: event.target.value }))
-            }
+            onChange={(event) => updateRemote({ model: event.target.value })}
             className="w-full rounded-lg bg-card px-4 py-2.5 text-body-md text-primary-950 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         </div>
@@ -169,14 +160,13 @@ export function AiConnectionParametersCard() {
           <div className="relative">
             <input
               type={revealKey ? "text" : "password"}
-              placeholder="sk-..."
-              value={config.apiKey}
-              onChange={(event) =>
-                setConfig((prev) => ({
-                  ...prev,
-                  apiKey: event.target.value,
-                }))
+              placeholder={
+                apiKeyConfigured
+                  ? "•••••••••••••• (chave já configurada — deixe em branco para manter)"
+                  : "sk-..."
               }
+              value={config.apiKey}
+              onChange={(event) => updateRemote({ apiKey: event.target.value })}
               className="w-full rounded-lg bg-card py-2.5 pr-24 pl-4 text-body-md text-primary-950 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             />
             <button
@@ -197,7 +187,7 @@ export function AiConnectionParametersCard() {
 
       <p className="text-body-sm text-on-surface-variant">
         {isValid
-          ? "Configuração completa. Essas credenciais ficam no backend como variáveis de ambiente (TAILORLY_REMOTE_*); a persistência por conta ainda está planejada."
+          ? "Configuração completa. Essas credenciais são salvas de forma criptografada na sua conta e usadas por padrão, sobrescrevendo a configuração global do servidor."
           : "Preencha endpoint, modelo e chave de API para habilitar a extração via este provedor."}
       </p>
     </div>

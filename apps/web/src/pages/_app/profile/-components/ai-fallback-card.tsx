@@ -4,8 +4,7 @@ import {
   RefreshCw,
   Server,
 } from "@react-zero-ui/icon-sprite";
-import { useState } from "react";
-import { previewInterpretationSettings } from "@/data/profile-preview";
+import { useProfileSettingsStore } from "@stores/profile-settings-store";
 import { FieldLabel } from "./section-card";
 import { useOllamaModels } from "./use-ollama-models";
 
@@ -14,7 +13,8 @@ type AiFallbackCardProps = {
 };
 
 export function AiFallbackCard({ mode }: AiFallbackCardProps) {
-  const [config, setConfig] = useState(previewInterpretationSettings.ollama);
+  const config = useProfileSettingsStore((state) => state.aiDraft.ollama);
+  const updateOllama = useProfileSettingsStore((state) => state.updateOllama);
   const { state, detect } = useOllamaModels();
 
   return (
@@ -48,9 +48,7 @@ export function AiFallbackCard({ mode }: AiFallbackCardProps) {
           <input
             type="url"
             value={config.endpoint}
-            onChange={(event) =>
-              setConfig((prev) => ({ ...prev, endpoint: event.target.value }))
-            }
+            onChange={(event) => updateOllama({ endpoint: event.target.value })}
             className="w-full rounded-lg bg-card px-4 py-2.5 text-body-md text-primary-950 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         </div>
@@ -59,9 +57,7 @@ export function AiFallbackCard({ mode }: AiFallbackCardProps) {
           <FieldLabel>Modelo local (TAILORLY_OLLAMA_MODEL)</FieldLabel>
           <input
             value={config.model}
-            onChange={(event) =>
-              setConfig((prev) => ({ ...prev, model: event.target.value }))
-            }
+            onChange={(event) => updateOllama({ model: event.target.value })}
             className="w-full rounded-lg bg-card px-4 py-2.5 text-body-md text-primary-950 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         </div>
@@ -91,10 +87,7 @@ export function AiFallbackCard({ mode }: AiFallbackCardProps) {
           <p className="text-body-sm text-on-surface-variant">
             Clique em &quot;Detectar&quot; para consultar o Ollama em{" "}
             <span className="font-mono text-primary-950">
-              {previewInterpretationSettings.ollama.endpoint.replace(
-                "/v1/chat/completions",
-                "",
-              )}
+              {config.endpoint.replace("/v1/chat/completions", "")}
             </span>{" "}
             e listar os modelos realmente baixados neste computador.
           </p>
@@ -126,9 +119,7 @@ export function AiFallbackCard({ mode }: AiFallbackCardProps) {
               <button
                 key={model.name}
                 type="button"
-                onClick={() =>
-                  setConfig((prev) => ({ ...prev, model: model.name }))
-                }
+                onClick={() => updateOllama({ model: model.name })}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-label-sm font-semibold transition-colors ${
                   config.model === model.name
                     ? "bg-primary text-primary-foreground"

@@ -115,8 +115,9 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | `/v1/owners/{id}/increment-revision` | `PATCH` | Incrementar atomicamente a revisão |
 | `/v1/gt-snapshots/approve-version/{baseVersionId}` | `POST` | Validar pendências, congelar fatos auditados e ativar o snapshot atomicamente |
 | `/v1/gt-snapshots/{id}` | `GET` | Consultar snapshot e itens aprovados |
-| `/v1/anonymous-sessions` | `POST` | Criar sessão para owner anônimo |
-| `/v1/anonymous-sessions/validate` | `POST` | Validar token e expiração da sessão |
+| `/v1/anonymous-sessions` | `POST` | Emitir sessão anônima (owner, token opaco e TTL gerados no servidor; limitado por IP) |
+| `/v1/anonymous-sessions/current` | `GET`, `DELETE` | Consultar uso, limites e se há snapshot migrável; encerrar a sessão apagando seus dados (token anônimo) |
+| `/v1/anonymous-sessions/migrate` | `POST` | Migrar o snapshot revisado da sessão para a conta autenticada, sem repetir OCR |
 | `/v1/anonymous-sessions/{id}/revoke` | `PATCH` | Revogar sessão (`ROLE_ADMIN`) |
 | `/v1/anonymous-sessions/{id}` | `GET` | Consultar sessão (`ROLE_ADMIN`) |
 
@@ -132,7 +133,7 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | RF04 | Exportação | Disponibilizar o currículo em PDF e Markdown. | Média | Planejado |
 | RF05 | Metadados e histórico | Salvar autoria, data, status, template e referência do arquivo gerado. | Média | Planejado |
 | RF06 | Integração com Second Brain | Copiar/registrar artefatos em `B03 Resources/CVs/` e criar link para uso no Obsidian. | Alta | Planejado |
-| RF07 | Acesso e autenticação | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta | Parcial: conta e papéis implementados; uso anônimo pendente |
+| RF07 | Acesso e autenticação | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta | Parcial: conta, papéis e acesso anônimo no servidor (sessão, limites, TTL, limpeza, migração) implementados; fluxo de visitante no frontend pendente |
 | RF08 | Due diligence de empresas | Consolidar sinais públicos para apoiar a decisão de candidatura, com fatores e fontes rastreáveis. | A definir | Backlog |
 
 ### Requisitos não funcionais
@@ -154,7 +155,7 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | --- | --- | --- |
 | `users` | `id`, `email`, `password_hash`, `enabled` | Credenciais e estado da conta. |
 | `owners` | `id`, `kind`, `user_id`, `active_snapshot_id`, `revision`, `expires_at` | Identidade proprietária de dados; `user_id` é opcional e único. `active_snapshot_id` aponta para o snapshot aprovado quando o modelo de snapshots existir. |
-| `anonymous_sessions` | `id`, `owner_id`, `token_hash`, `expires_at`, `revoked_at` | Sessão anônima com token armazenado como hash e expiração/revogação no servidor; cada owner tem no máximo uma sessão. |
+| `anonymous_sessions` | `id`, `owner_id`, `token_hash`, `expires_at`, `revoked_at`, `created_at`, `uploads_count`, `extractions_count`, `generations_count` | Sessão anônima emitida pelo servidor, com token armazenado só como hash, expiração/revogação e contadores de uso para as cotas; cada owner tem no máximo uma sessão. |
 | `roles` | `id`, `name` | Papéis de acesso, como `ADMIN` e `USER`. |
 | `user_roles` | `user_id`, `role_id` | Associação muitos-para-muitos entre usuários e papéis. |
 | `cv_templates` | `id`, `name`, `content`, `version` | Templates Typst versionados para apresentação; os fatos aprovados do Currículo Base são o Ground Truth. |
@@ -285,7 +286,7 @@ endpoint ou DTO do backend mudar. O código em `apps/web/src/lib/api/generated`
 3. [x] **Processar o PDF no servidor.** Fila persistente, PDFBox por página, OCR seletivo com Tesseract local, textos no Garage, hashes e métodos estão implementados. O worker só marca a execução concluída depois da interpretação IA, validação das evidências e persistência dos fatos; falha de interpretação mantém a versão candidata e execução não concluídas. A interface acompanha o status sem percentual por página; a análise nativa separa artigos/colunas e suprime texto sobreposto. Há um teste OCR real opcional com uma página escaneada representativa, executado quando Tesseract 5 e `eng` estão instalados. A detecção de texto misto e a reconstrução geral de layouts continuam limitadas. Veja o [guia da API](services/api/README.md#extração-seletiva-de-pdf).
 4. [x] **Persistir fatos e revisão por candidata.** A API armazena fatos, evidências de páginas extraídas, pendências e decisões auditadas com os estados `pendente`, `confirmado`, `corrigido` e `omitido`. `AiCurriculumInterpreter` usa OpenAI e Ollama local como fallback; `/base` permite revisar propostas reais. A extração semântica exige saída estruturada com evidência literal, mas não confirma a veracidade dos fatos. A revisão humana continua obrigatória e novos processamentos não sobrescrevem fatos revisados.
 5. [x] **Aprovar e ativar o Ground Truth.** `POST /v1/gt-snapshots/approve-version/{baseVersionId}` exige versão extraída, ao menos um fato confirmado/corrigido e nenhuma pendência bloqueante; congela os valores com hash e referências às decisões e ativa o novo snapshot na mesma transação que substitui o anterior. A rota genérica de alteração de `activeSnapshotId` foi removida. A geração baseada no snapshot segue pendente.
-6. [ ] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** Emitir e autenticar a sessão no servidor; habilitar upload e processamento por owner anônimo com limites de tamanho, páginas, requisições e gerações, TTL e limpeza dos dados temporários. Oferecer migração do snapshot revisado para uma conta antes da expiração, sem repetir OCR. Os endpoints atuais de sessão apenas registram e validam dados fornecidos pelo chamador.
+6. [ ] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** *Servidor concluído:* a sessão é emitida e autenticada pelo servidor (token opaco, só o hash fica no banco); upload e processamento por owner anônimo respeitam limites de tamanho, páginas, uploads, processamentos, gerações (o ponto de aplicação existe; a geração ainda é planejada) e taxa de requisições; os dados têm TTL e são apagados por um job de limpeza; o snapshot revisado pode ser migrado para uma conta antes da expiração sem repetir OCR. O processamento anônimo usa sempre a IA das variáveis de ambiente do servidor. *Pendente:* o fluxo de visitante no frontend (criar a sessão, enviar o token, oferecer a migração após login) e a aplicação do limite de gerações quando existir o endpoint de geração.
 7. [ ] **Implementar vaga e geração.** Receber texto ou URL, extrair requisitos e versionar a vaga; usar OpenAI ou Ollama conforme a política definida. Versionar o template Typst e criar `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga, sem refazer OCR nem acrescentar fatos pessoais. Gerar PDF/Markdown, persistir artefatos no Garage e disponibilizar download e histórico reais.
 8. [ ] **Fechar o ciclo dos dados.** Implementar desativação e exclusão efetiva de originais, texto, fatos, pendências e artefatos derivados, com política de retenção para contas. Cobrir as transições do fluxo com testes de API, contrato e interface.
 9. [ ] **Preparar operação e integrações.** Definir renovação ou revogação de tokens, integrar os artefatos gerados ao Second Brain/vault quando habilitado e preparar CI/CD com GitHub Actions.

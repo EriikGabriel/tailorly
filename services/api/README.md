@@ -1,6 +1,6 @@
 # API Spring Boot do Tailorly
 
-Esta pasta contém a API HTTP do Tailorly. Ela oferece cadastro de usuários, login com JWT, roles, owners, operações básicas de sessões anônimas e upload de PDFs para contas. O fluxo completo de ingestão, revisão e geração descrito no [README do monorepo](../../README.md#decisão-de-produto-currículo-base-como-ground-truth) ainda é o **fluxo alvo**.
+Esta pasta contém a API HTTP do Tailorly. Ela oferece cadastro de usuários, login com JWT, roles, owners, sessões anônimas emitidas e autenticadas pelo servidor (com limites, TTL, limpeza e migração para conta) e upload de PDFs para contas e visitantes. O fluxo completo de ingestão, revisão e geração descrito no [README do monorepo](../../README.md#decisão-de-produto-currículo-base-como-ground-truth) ainda é o **fluxo alvo**.
 
 ## Estado atual
 
@@ -8,8 +8,8 @@ Esta pasta contém a API HTTP do Tailorly. Ela oferece cadastro de usuários, lo
 | --- | --- | --- |
 | Contas | Cadastro com owner provisionado, contexto autenticado em `/v1/me`, consulta, alteração de email, desativação, senha com BCrypt e roles persistidas | Recuperação de senha e exclusão de conta |
 | Acesso | Login com JWT Bearer HS256, autorização por conta e `ROLE_ADMIN` | Refresh token, logout e revogação individual de JWT |
-| Sessões anônimas | Registros de owner e sessão, validação de expiração e revogação administrativa | Emissão de token pelo servidor, cotas, limpeza automática e migração para conta |
-| Currículo Base | Upload por conta, deduplicação, versão candidata, fila persistente, extração PDFBox/Tesseract por página, revisão auditada e aprovação/ativação atômica de snapshots | Upload anônimo e extração estruturada automática |
+| Sessões anônimas | Emissão e autenticação no servidor (token opaco, hash no banco), TTL, cotas de upload/processamento/geração, limite de taxa, limpeza automática, encerramento pelo visitante, migração do snapshot revisado para conta e revogação administrativa | Fluxo de visitante no frontend; aplicação do limite de gerações quando a geração existir |
+| Currículo Base | Upload por conta, deduplicação, versão candidata, fila persistente, extração PDFBox/Tesseract por página, revisão auditada e aprovação/ativação atômica de snapshots | Geração de currículos |
 | Geração | Nenhum endpoint | Ingestão de vaga, template Typst, PDF/Markdown e histórico |
 | Infraestrutura | PostgreSQL via JPA e migrations Flyway, armazenamento privado via API S3, OpenAPI, Swagger UI e Actuator | Limpeza de arquivos e observabilidade ampliada |
 
@@ -249,14 +249,16 @@ O email de cadastro deve ser válido; a senha deve ter de 8 a 128 caracteres. Lo
 | `GET /v1/users/{id}` | Própria conta ou admin | Consultar conta. |
 | `PUT /v1/users/{id}` | Própria conta ou admin | Alterar email; corpo `email`. |
 | `PATCH /v1/users/{id}/disable` | Própria conta ou admin | Desativar conta; retorna `204`. |
-| `POST /v1/owners` | Público na configuração HTTP | Criar owner `anonymous` ou `account`; o tipo `account` exige Bearer da própria conta. |
+| `POST /v1/owners` | Público na configuração HTTP | Criar owner `account` (exige Bearer da própria conta); o tipo `anonymous` é recusado, pois owners anônimos nascem só com a sessão. |
 | `GET /v1/owners/{id}` | Conta proprietária | Consultar owner de conta. |
 | `PATCH /v1/owners/{id}/increment-revision` | Conta proprietária | Incrementar atomicamente `revision`. |
 | `POST /v1/gt-snapshots/approve-version/{baseVersionId}` | Conta proprietária ou admin | Aprovar fatos auditados da versão extraída, gerar snapshot imutável e ativá-lo atomicamente. |
 | `GET /v1/gt-snapshots/{id}` | Conta proprietária ou admin | Consultar snapshot e fatos congelados. |
-| `POST /v1/anonymous-sessions` | Público | Criar sessão para owner anônimo; corpo `ownerId`, `tokenHash`, `expiresAt`. |
-| `POST /v1/anonymous-sessions/validate` | Público | Validar `tokenHash`; retorna `valid`, e, se válido, `ownerId` e `expiresAt`. |
-| `POST /v1/base-documents/upload` | Conta proprietária ou admin | Enviar PDF e criar ou recuperar sua versão; multipart `ownerId`, `file`. |
+| `POST /v1/anonymous-sessions` | Público, limitado por IP | Emitir sessão anônima; sem corpo. Retorna `sessionId`, `ownerId`, `token` (só nesta resposta) e `expiresAt`. Use `Authorization: Bearer <token>`. |
+| `GET /v1/anonymous-sessions/current` | Token anônimo | Consultar `expiresAt`, `usage`, `limits` e `migratable` (há snapshot revisado ativo). |
+| `DELETE /v1/anonymous-sessions/current` | Token anônimo | Encerrar a sessão e apagar na hora todos os dados do visitante; retorna `204`. |
+| `POST /v1/anonymous-sessions/migrate` | Conta autenticada | Migrar o snapshot revisado de uma sessão anônima para a conta; corpo `sessionToken`, `replaceActive`. |
+| `POST /v1/base-documents/upload` | Conta proprietária, sessão anônima proprietária ou admin | Enviar PDF e criar ou recuperar sua versão; multipart `ownerId`, `file`. Visitantes têm limites de tamanho, páginas e quantidade. |
 | `GET /v1/base-versions/{id}` | Conta proprietária ou admin | Consultar versão e marca de revisão temporal pendente. |
 | `POST /v1/fact-records` | Conta proprietária ou admin | Criar agrupador; corpo `baseVersionId`, `category`, `displayOrder`. Alias `/api/fact-records`. |
 | `GET /v1/fact-records/{id}` | Conta proprietária ou admin | Consultar agrupador. Alias `/api/fact-records/{id}`. |
@@ -282,7 +284,32 @@ O email de cadastro deve ser válido; a senha deve ter de 8 a 128 caracteres. Lo
 
 Um owner é uma identidade de propriedade de dados: `kind` pode ser `account` ou `anonymous`. Um owner de conta é ligado ao usuário autenticado; `userId`, quando enviado, precisa corresponder à conta. `activeSnapshotId` só é alterado pelo serviço de aprovação, que bloqueia o owner e a versão, valida decisões e pendências, grava os itens congelados e troca o ponteiro na mesma transação. A chave estrangeira composta impede apontar para snapshot de outro owner.
 
-O registro de sessão anônima guarda um `tokenHash` e uma data `expiresAt` **fornecidos pelo chamador**. A validação verifica a expiração e a revogação, mas a API ainda não emite o token, não define o prazo de vida no servidor, não aplica cotas e não remove automaticamente registros expirados. Criar ou validar esse registro não autentica o visitante para as rotas protegidas. Portanto, esse conjunto de endpoints ainda não constitui o fluxo anônimo completo descrito no README do monorepo.
+### Acesso anônimo
+
+`POST /v1/anonymous-sessions` cria, na mesma transação, um owner `anonymous` e a sessão, e devolve um token opaco (`tlr_anon_…`, 256 bits aleatórios) **uma única vez**; o banco guarda apenas o SHA-256. Cada requisição com `Authorization: Bearer tlr_anon_…` é autenticada pelo servidor (hash, expiração e revogação) e o token nunca é tratado como JWT. O TTL vem de `tailorly.anonymous.session-ttl` e também define `owner.expires_at`, herdado pelo arquivo original e pelos textos extraídos.
+
+**O que uma sessão anônima acessa.** Só as rotas de dados do Currículo Base em `/v1` (upload, versões, execuções, páginas, fatos, evidências, pendências e snapshots), e apenas do próprio owner. Usuários, owners, objetos de storage, `/v1/me`, `/v1/ai-preferences`, a migração e os aliases `/api/*` exigem conta. `OwnerAccessService` nega a uma sessão qualquer owner que não seja o seu.
+
+**Limites aplicados no servidor** (`tailorly.anonymous.*`, variáveis `TAILORLY_ANONYMOUS_*`):
+
+| Limite | Padrão | Resposta ao exceder |
+| --- | --- | --- |
+| Tamanho do PDF (`max-file-bytes`) | 3 MiB | `400` |
+| Páginas do PDF (`max-pages`) | 3 | `400` |
+| Uploads de arquivos distintos (`max-uploads`) | 3 | `429` |
+| Processamentos novos (`max-extractions`) | 3 | `429` |
+| Gerações (`max-generations`) | 3 | `429` (ponto de aplicação pronto; a geração ainda não existe) |
+| Requisições por sessão (`requests-per-minute`) | 60 | `429` com `Retry-After` |
+| Sessões emitidas por IP (`sessions-per-ip-per-hour`) | 10 | `429` |
+| Sessões ativas no total (`max-active-sessions`) | 1000 | `429` |
+
+Os contadores ficam em `anonymous_sessions` e são incrementados de forma atômica, só abaixo do limite. Reenviar o mesmo arquivo reaproveita o documento, a extração e os fatos e **não** consome upload nem processamento. O limite de taxa é em memória e local a cada instância da API; atrás de um proxy reverso configure `server.forward-headers-strategy` para que o IP considerado seja o do cliente.
+
+**IA no processamento anônimo.** Visitantes usam sempre a IA definida nas variáveis `TAILORLY_INTERPRETATION_*` do servidor; preferências de conta nunca se aplicam a eles.
+
+**Limpeza.** O job `AnonymousCleanupJob` (`cleanup-interval`, padrão 5 min; `cleanup-enabled`) apaga os dados das sessões expiradas: objetos do storage, páginas, execuções, fatos, evidências, pendências, decisões, snapshots, a sessão e o owner. O visitante também pode encerrar a sessão com `DELETE /v1/anonymous-sessions/current`. Só owners anônimos podem ser apagados por esse caminho. A revogação administrativa invalida o token, mas os dados só saem na expiração.
+
+**Migração para conta.** `POST /v1/anonymous-sessions/migrate` (conta autenticada, `sessionToken`) move para o owner da conta a cadeia do snapshot revisado ativo: documento, versão, execuções, páginas, fatos, evidências, pendências, decisões e o snapshot. Os objetos são copiados para o prefixo da conta e deixam de expirar. **Nada é reprocessado**: não há novo OCR nem nova extração. Se a conta já tem um Ground Truth ativo, a migração é recusada com `409` a menos que `replaceActive` seja `true`; nesse caso o anterior vira `SUPERSEDED`. Se a conta já tem o mesmo arquivo (mesmo hash), a versão migrada passa a usar esse documento. As demais versões do visitante e a sessão são apagadas depois da migração. Versão e snapshot são renumerados no escopo da conta.
 
 ## Respostas de erro e idioma
 
@@ -294,7 +321,8 @@ Erros da API usam `timestamp`, `status`, `error`, `message`, `details` quando ho
 | `401` | Credenciais de login inválidas, token ausente, inválido ou expirado. |
 | `403` | Conta autenticada tentando acessar recurso de outra conta ou rota de admin. |
 | `404` | Entidade não encontrada. |
-| `409` | Email ou token de sessão anônima já cadastrado. |
+| `409` | Email já cadastrado; conta com Ground Truth ativo na migração sem `replaceActive`. |
+| `429` | Limite de uso ou de taxa do acesso anônimo atingido. |
 | `413` | Requisição multipart acima de 8 MiB; o PDF tem limite de 7 MiB. |
 
 As chaves de mensagem são centralizadas em `shared/exception/ErrorCodes.java`. O formato de erro é definido por `ApiError`, `GlobalExceptionHandler` e `LocalizedSecurityErrorHandler`.

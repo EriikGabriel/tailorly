@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface UpdateActiveSnapshotRequest {
-  activeSnapshotId?: string;
+export interface AnonymousMigrationResponse {
+  baseVersionId: string;
+  documentId: string;
+  documentReused: boolean;
+  replacedActive: boolean;
+  snapshotId: string;
 }

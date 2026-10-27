@@ -44,7 +44,13 @@ export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
     useReviewDraftStore.getState().resetForSource(selectionId);
     useQuickReviewStore.getState().reset();
     useDocumentViewerStore.getState().reset();
-    set({ file, selectionId, uploadedSelectionId: null, baseVersionId: null, error: null });
+    set({
+      file,
+      selectionId,
+      uploadedSelectionId: null,
+      baseVersionId: null,
+      error: null,
+    });
     return true;
   },
   setUploadedDocument: (file, baseVersionId) => {

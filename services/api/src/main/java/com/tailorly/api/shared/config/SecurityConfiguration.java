@@ -3,6 +3,20 @@ package com.tailorly.api.shared.config;
 import java.util.Base64;
 import java.util.UUID;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import com.tailorly.api.session.AnonymousSessionAuthenticationFilter;
+import com.tailorly.api.session.AnonymousSessionAuthenticationToken;
+import com.tailorly.api.session.AnonymousSessionTokens;
+
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -63,7 +77,12 @@ public class SecurityConfiguration {
 
   /** Regras de autorização por rota; veja a classe para as regras de JWT e senha. */
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain securityFilterChain(
+      HttpSecurity http,
+      ObjectProvider<AnonymousSessionAuthenticationFilter> anonymousSessionFilter
+  ) throws Exception {
+    anonymousSessionFilter.ifAvailable(filter ->
+        http.addFilterBefore(filter, BearerTokenAuthenticationFilter.class));
     return http
         .csrf(AbstractHttpConfigurer::disable)
         .cors(Customizer.withDefaults())
@@ -77,20 +96,60 @@ public class SecurityConfiguration {
             .requestMatchers(HttpMethod.POST, "/v1/users").permitAll()
             .requestMatchers(HttpMethod.POST, "/v1/auth/register", "/v1/auth/login").permitAll()
             .requestMatchers(HttpMethod.POST, "/v1/owners").permitAll()
-            .requestMatchers(
-                HttpMethod.POST,
-                "/v1/anonymous-sessions",
-                "/v1/anonymous-sessions/validate"
-            ).permitAll()
+            .requestMatchers(HttpMethod.POST, "/v1/anonymous-sessions").permitAll()
+            .requestMatchers("/v1/anonymous-sessions/current").authenticated()
             .requestMatchers(HttpMethod.GET, "/v1/anonymous-sessions/*").hasRole("ADMIN")
             .requestMatchers(HttpMethod.PATCH, "/v1/anonymous-sessions/*/revoke").hasRole("ADMIN")
             .requestMatchers(HttpMethod.GET, "/v1/users", "/v1/users/by-email").hasRole("ADMIN")
-            .anyRequest().authenticated())
+            .requestMatchers(ANONYMOUS_ALLOWED).authenticated()
+            .anyRequest().access(accountsOnly()))
         .httpBasic(AbstractHttpConfigurer::disable)
         .oauth2ResourceServer(oauth2 -> oauth2
+            .bearerTokenResolver(anonymousAwareBearerTokenResolver())
             .authenticationEntryPoint(securityErrorHandler)
             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
         .build();
+  }
+
+  /**
+   * Rotas de dados do Currículo Base que uma sessão anônima pode usar, restritas ao próprio
+   * owner por {@code OwnerAccessService}. Todo o resto exige uma conta: usuários, owners, objetos
+   * de storage, preferências de IA, {@code /v1/me} e a migração para conta.
+   */
+  private static final String[] ANONYMOUS_ALLOWED = {
+      "/v1/base-documents/upload", "/v1/base-documents/{id}", "/v1/base-documents/owner/{ownerId}",
+      "/v1/base-versions/{id}",
+      "/v1/extraction-runs", "/v1/extraction-runs/{id}", "/v1/extraction-runs/version/{versionId}",
+      "/v1/extracted-pages/{id}", "/v1/extracted-pages/{id}/text", "/v1/extracted-pages/run/{runId}",
+      "/v1/fact-records", "/v1/fact-records/{id}", "/v1/fact-records/version/{versionId}",
+      "/v1/fact-records/{id}/display-order",
+      "/v1/facts", "/v1/facts/{id}", "/v1/facts/record/{recordId}", "/v1/facts/{id}/review-state",
+      "/v1/facts/{id}/confirm",
+      "/v1/fact-evidence", "/v1/fact-evidence/{id}", "/v1/fact-evidence/fact/{factId}",
+      "/v1/fact-evidence/{id}/locator",
+      "/v1/review-issues/version/{versionId}", "/v1/review-issues/{id}/answer",
+      "/v1/gt-snapshots/{id}", "/v1/gt-snapshots/approve-version/{versionId}"
+  };
+
+  /** Autoriza qualquer autenticação, exceto a de uma sessão anônima. */
+  private static AuthorizationManager<RequestAuthorizationContext> accountsOnly() {
+    return (authentication, context) -> {
+      Authentication current = authentication.get();
+      boolean account = current != null
+          && current.isAuthenticated()
+          && !(current instanceof AnonymousAuthenticationToken)
+          && !(current instanceof AnonymousSessionAuthenticationToken);
+      return new AuthorizationDecision(account);
+    };
+  }
+
+  /** Tokens {@code tlr_anon_} são tratados pelo filtro de sessão anônima, não como JWT. */
+  private static BearerTokenResolver anonymousAwareBearerTokenResolver() {
+    DefaultBearerTokenResolver delegate = new DefaultBearerTokenResolver();
+    return request -> {
+      String token = delegate.resolve(request);
+      return AnonymousSessionTokens.isAnonymousToken(token) ? null : token;
+    };
   }
 
   /**

@@ -21,8 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Criação e consulta de owners. Na prática, a maioria das contas nunca chama {@link #create}
  * diretamente: cadastro e {@code GET /v1/me} provisionam o owner automaticamente (veja
- * {@link com.tailorly.api.shared.security.CurrentAccountService}). Esta rota continua
- * disponível sobretudo para criar owners anônimos antes de uma sessão.
+ * {@link com.tailorly.api.shared.security.CurrentAccountService}). Owners anônimos não são
+ * criados aqui: nascem junto da sessão emitida por
+ * {@link com.tailorly.api.session.AnonymousSessionService}.
  */
 @Service
 @RequiredArgsConstructor
@@ -33,7 +34,8 @@ public class OwnerService {
   /**
    * Cria um owner. Para {@code KIND_ACCOUNT}, exige autenticação e é idempotente: se a conta
    * já tiver um owner, devolve o existente em vez de criar outro (cada usuário tem no máximo
-   * um owner). Para {@code KIND_ANONYMOUS}, não aceita {@code userId}.
+   * um owner). {@code KIND_ANONYMOUS} é recusado: owners anônimos só são criados pela emissão
+   * de uma sessão anônima.
    */
   @Transactional
   public OwnerResponse create(CreateOwnerRequest request) {
@@ -43,8 +45,9 @@ public class OwnerService {
         && authentication.isAuthenticated()
         && !(authentication instanceof AnonymousAuthenticationToken);
 
-    if (kind == OwnerKindEnum.KIND_ANONYMOUS && request.userId() != null) {
-      throw new BadRequestException(ErrorCodes.Owner.USER_ONLY_FOR_ACCOUNT);
+    // Owners anônimos nascem apenas junto da sessão emitida pelo servidor (AnonymousSessionService).
+    if (kind == OwnerKindEnum.KIND_ANONYMOUS) {
+      throw new BadRequestException(ErrorCodes.Anonymous.ANONYMOUS_OWNER_CREATION_FORBIDDEN);
     }
 
     User user = null;

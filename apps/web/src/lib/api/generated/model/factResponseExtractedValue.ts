@@ -6,7 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ValidateAnonymousSessionRequest {
-  /** @minLength 1 */
-  tokenHash: string;
-}
+/**
+ * @nullable
+ */
+export type FactResponseExtractedValue =
+  | { [key: string]: unknown }
+  | unknown[]
+  | string
+  | number
+  | boolean
+  | null;

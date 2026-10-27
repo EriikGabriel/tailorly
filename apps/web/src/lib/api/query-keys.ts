@@ -18,8 +18,14 @@ export const apiQueryKeys = {
       ["extraction-runs", "version", versionId] as const,
   },
   baseReview: {
-    records: (versionId: string) => ["base-review", versionId, "records"] as const,
-    issues: (versionId: string) => ["base-review", versionId, "issues"] as const,
-    pages: (runId: string) => ["base-review", "extracted-pages", runId] as const,
+    records: (versionId: string) =>
+      ["base-review", versionId, "records"] as const,
+    issues: (versionId: string) =>
+      ["base-review", versionId, "issues"] as const,
+    pages: (runId: string) =>
+      ["base-review", "extracted-pages", runId] as const,
+  },
+  aiPreferences: {
+    current: ["ai-preferences", "current"] as const,
   },
 } as const;

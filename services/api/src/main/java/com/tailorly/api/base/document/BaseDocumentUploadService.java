@@ -17,8 +17,8 @@ import com.tailorly.api.objects.StoredObjectRepository;
 import com.tailorly.api.objects.storage.ObjectStorage;
 import com.tailorly.api.owner.Owner;
 import com.tailorly.api.owner.OwnerAccessService;
-import com.tailorly.api.owner.OwnerKindEnum;
 import com.tailorly.api.owner.OwnerRepository;
+import com.tailorly.api.session.AnonymousQuotaService;
 import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
@@ -69,6 +69,7 @@ public class BaseDocumentUploadService {
   private final ExtractionQueue extractionQueue;
   private final StoredObjectRepository objectRepository;
   private final ObjectStorage storage;
+  private final AnonymousQuotaService anonymousQuota;
 
   @Transactional
   public BaseDocumentUploadResponse upload(UUID ownerId, MultipartFile file) {
@@ -76,9 +77,7 @@ public class BaseDocumentUploadService {
         .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
     ownerAccessService.assertCanAccess(owner);
 
-    if (owner.getKind() != OwnerKindEnum.KIND_ACCOUNT) {
-      throw new BadRequestException(ErrorCodes.BaseDocument.ACCOUNT_OWNER_REQUIRED);
-    }
+    boolean anonymous = AnonymousQuotaService.isAnonymous(owner);
 
     if (file == null || file.isEmpty()) {
       throw new BadRequestException(ErrorCodes.BaseDocument.INVALID_PDF);
@@ -86,6 +85,10 @@ public class BaseDocumentUploadService {
 
     if (file.getSize() > MAX_PDF_SIZE) {
       throw new BadRequestException(ErrorCodes.BaseDocument.FILE_TOO_LARGE);
+    }
+
+    if (anonymous) {
+      anonymousQuota.assertFileSize(file.getSize());
     }
 
     byte[] bytes = readPdf(file);
@@ -99,6 +102,13 @@ public class BaseDocumentUploadService {
         throw new ResourceAlreadyExistsException(ErrorCodes.BaseDocument.ORIGINAL_OBJECT_MISSING);
       }
       return response(existing.get(), true);
+    }
+
+    // Só um arquivo novo consome o limite de uploads anônimos; reenvio idêntico reaproveita o existente.
+    Integer pageCount = null;
+    if (anonymous) {
+      pageCount = anonymousQuota.assertPageLimit(bytes);
+      anonymousQuota.consumeUpload(owner);
     }
 
     String key = "owners/" + ownerId + "/originals/" + UUID.randomUUID() + ".pdf";
@@ -126,6 +136,8 @@ public class BaseDocumentUploadService {
         .contentHash(hash)
         .mimeType("application/pdf")
         .sizeBytes((long) bytes.length)
+        // Dados de visitantes herdam o TTL da sessão; contas não expiram.
+        .expiresAt(anonymous ? owner.getExpiresAt() : null)
         .deletionStatus("ACTIVE")
         .build();
     objectRepository.save(object);
@@ -135,6 +147,7 @@ public class BaseDocumentUploadService {
         .originalObject(object)
         .contentHash(hash)
         .originalFilename(safeFilename(file.getOriginalFilename()))
+        .pageCount(pageCount)
         .build();
     documentRepository.saveAndFlush(document);
 

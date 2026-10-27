@@ -12,6 +12,7 @@ import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
+import com.tailorly.api.shared.exception.TooManyRequestsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -88,6 +89,14 @@ public class GlobalExceptionHandler {
       HttpServletRequest request
   ) {
     return buildError(HttpStatus.CONFLICT, localize(ex.getMessage()), request);
+  }
+
+  @ExceptionHandler(TooManyRequestsException.class)
+  public ResponseEntity<ApiError> handleTooManyRequests(
+      TooManyRequestsException ex,
+      HttpServletRequest request
+  ) {
+    return buildError(HttpStatus.TOO_MANY_REQUESTS, localize(ex.getMessage()), request);
   }
 
   @ExceptionHandler(BadRequestException.class)

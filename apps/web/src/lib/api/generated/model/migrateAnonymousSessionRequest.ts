@@ -6,9 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CreateAnonymousSessionRequest {
-  expiresAt: string;
-  ownerId: string;
+export interface MigrateAnonymousSessionRequest {
+  replaceActive?: boolean;
   /** @minLength 1 */
-  tokenHash: string;
+  sessionToken: string;
 }

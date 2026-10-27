@@ -14,9 +14,10 @@ export function currentAccountQueryOptions(
           try {
             return await currentAccountCurrent({ accessToken, signal });
           } catch (error) {
+            // 404: o token ainda é válido, mas a conta deixou de existir.
             if (
               error instanceof ApiClientError &&
-              error.status === 401 &&
+              (error.status === 401 || error.status === 404) &&
               useAuthStore.getState().accessToken === accessToken
             ) {
               useAuthStore.getState().clearSession();

@@ -6,10 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface AnonymousSessionValidationResponse {
-  /** @nullable */
-  expiresAt: string | null;
-  /** @nullable */
-  ownerId: string | null;
-  valid: boolean;
+export interface Usage {
+  extractions: number;
+  generations: number;
+  uploads: number;
 }

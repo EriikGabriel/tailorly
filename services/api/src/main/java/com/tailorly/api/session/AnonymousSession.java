@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.CreationTimestamp;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -46,4 +47,17 @@ public class AnonymousSession {
 
   @Column(name = "revoked_at")
   private Instant revokedAt;
+
+  @CreationTimestamp
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private Instant createdAt;
+
+  @Column(name = "uploads_count", nullable = false)
+  private int uploadsCount;
+
+  @Column(name = "extractions_count", nullable = false)
+  private int extractionsCount;
+
+  @Column(name = "generations_count", nullable = false)
+  private int generationsCount;
 }

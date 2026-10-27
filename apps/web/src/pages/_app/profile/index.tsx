@@ -1,4 +1,7 @@
+import { ApiClientError } from "@lib/api/client";
+import { currentAccountQueryOptions } from "@queries/current-account";
 import { useAuthStore } from "@stores/auth-store";
+import { resetClientState } from "@stores/reset-client-state";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AiPreferencesSection } from "./-components/ai-preferences-section";
 import { GroundTruthPrincipalSection } from "./-components/ground-truth-principal-section";
@@ -9,9 +12,27 @@ import { ProfileSidebar } from "./-components/profile-sidebar";
 import { ProfileTabs } from "./-components/profile-tabs";
 import { SecondBrainIntegrationsSection } from "./-components/second-brain-integrations-section";
 export const Route = createFileRoute("/_app/profile/")({
-  beforeLoad: () => {
-    if (!useAuthStore.getState().accessToken) {
+  beforeLoad: async ({ context }) => {
+    const accessToken = useAuthStore.getState().accessToken;
+    if (!accessToken) {
       throw redirect({ to: "/" });
+    }
+
+    // Ter token não basta: a conta pode ter sido removida (ex.: banco recriado).
+    try {
+      await context.queryClient.fetchQuery(
+        currentAccountQueryOptions(accessToken),
+      );
+    } catch (error) {
+      if (
+        error instanceof ApiClientError &&
+        (error.status === 401 || error.status === 404)
+      ) {
+        resetClientState();
+        context.queryClient.removeQueries();
+        throw redirect({ to: "/" });
+      }
+      throw error;
     }
   },
   component: ProfilePage,

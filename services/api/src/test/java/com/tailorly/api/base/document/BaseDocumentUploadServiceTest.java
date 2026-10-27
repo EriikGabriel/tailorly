@@ -25,7 +25,11 @@ import com.tailorly.api.owner.Owner;
 import com.tailorly.api.owner.OwnerAccessService;
 import com.tailorly.api.owner.OwnerKindEnum;
 import com.tailorly.api.owner.OwnerRepository;
+import com.tailorly.api.session.AnonymousQuotaService;
+import com.tailorly.api.shared.exception.BadRequestException;
+import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
+import com.tailorly.api.shared.exception.TooManyRequestsException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +50,7 @@ class BaseDocumentUploadServiceTest {
   @Mock ExtractionQueue extractionQueue;
   @Mock StoredObjectRepository objectRepository;
   @Mock ObjectStorage storage;
+  @Mock AnonymousQuotaService anonymousQuota;
   @InjectMocks BaseDocumentUploadService service;
 
   private final UUID ownerId = UUID.randomUUID();
@@ -137,6 +142,86 @@ class BaseDocumentUploadServiceTest {
     assertThrows(ResourceAlreadyExistsException.class, () -> service.upload(ownerId, file));
     verify(storage, never()).put(any(), any(), any());
     verify(versionService, never()).findOrCreateForUpload(any());
+  }
+
+  @Test
+  void anonymousUploadChecksLimitsConsumesQuotaAndInheritsSessionTtl() {
+    Instant expiresAt = Instant.now().plusSeconds(3600);
+    owner.setKind(OwnerKindEnum.KIND_ANONYMOUS);
+    owner.setExpiresAt(expiresAt);
+    byte[] pdf = "%PDF-1.7\nbody".getBytes(StandardCharsets.US_ASCII);
+    var file = new MockMultipartFile("file", "cv.pdf", "application/pdf", pdf);
+    when(ownerRepository.findByIdForUpdate(ownerId)).thenReturn(Optional.of(owner));
+    when(documentRepository.findByOwnerIdAndContentHash(eq(ownerId), any())).thenReturn(Optional.empty());
+    when(anonymousQuota.assertPageLimit(pdf)).thenReturn(2);
+    when(documentRepository.saveAndFlush(any())).thenAnswer(invocation -> {
+      BaseDocument document = invocation.getArgument(0);
+      document.setId(UUID.randomUUID());
+      return document;
+    });
+    when(versionService.findOrCreateForUpload(any())).thenAnswer(invocation ->
+        versionSelection(invocation.getArgument(0), false));
+
+    var response = service.upload(ownerId, file);
+
+    verify(anonymousQuota).assertFileSize(pdf.length);
+    verify(anonymousQuota).consumeUpload(owner);
+    var object = org.mockito.ArgumentCaptor.forClass(StoredObject.class);
+    verify(objectRepository).save(object.capture());
+    assertEquals(expiresAt, object.getValue().getExpiresAt());
+    var document = org.mockito.ArgumentCaptor.forClass(BaseDocument.class);
+    verify(documentRepository).saveAndFlush(document.capture());
+    assertEquals(2, document.getValue().getPageCount());
+    assertFalse(response.reused());
+  }
+
+  @Test
+  void anonymousUploadOverTheQuotaStoresNothing() {
+    owner.setKind(OwnerKindEnum.KIND_ANONYMOUS);
+    byte[] pdf = "%PDF-1.7\nbody".getBytes(StandardCharsets.US_ASCII);
+    var file = new MockMultipartFile("file", "cv.pdf", "application/pdf", pdf);
+    when(ownerRepository.findByIdForUpdate(ownerId)).thenReturn(Optional.of(owner));
+    when(documentRepository.findByOwnerIdAndContentHash(eq(ownerId), any())).thenReturn(Optional.empty());
+    org.mockito.Mockito.doThrow(new TooManyRequestsException(ErrorCodes.Anonymous.UPLOAD_LIMIT_REACHED))
+        .when(anonymousQuota).consumeUpload(owner);
+
+    assertThrows(TooManyRequestsException.class, () -> service.upload(ownerId, file));
+
+    verify(storage, never()).put(any(), any(), any());
+    verify(documentRepository, never()).saveAndFlush(any());
+  }
+
+  @Test
+  void anonymousUploadAboveTheSizeLimitIsRejectedBeforeReadingTheFile() {
+    owner.setKind(OwnerKindEnum.KIND_ANONYMOUS);
+    byte[] pdf = "%PDF-1.7\nbody".getBytes(StandardCharsets.US_ASCII);
+    var file = new MockMultipartFile("file", "cv.pdf", "application/pdf", pdf);
+    when(ownerRepository.findByIdForUpdate(ownerId)).thenReturn(Optional.of(owner));
+    org.mockito.Mockito.doThrow(new BadRequestException(ErrorCodes.Anonymous.FILE_TOO_LARGE))
+        .when(anonymousQuota).assertFileSize(pdf.length);
+
+    assertThrows(BadRequestException.class, () -> service.upload(ownerId, file));
+
+    verify(storage, never()).put(any(), any(), any());
+  }
+
+  @Test
+  void accountUploadNeverTouchesAnonymousQuotas() {
+    byte[] pdf = "%PDF-1.7\nbody".getBytes(StandardCharsets.US_ASCII);
+    var file = new MockMultipartFile("file", "cv.pdf", "application/pdf", pdf);
+    when(ownerRepository.findByIdForUpdate(ownerId)).thenReturn(Optional.of(owner));
+    when(documentRepository.findByOwnerIdAndContentHash(eq(ownerId), any())).thenReturn(Optional.empty());
+    when(documentRepository.saveAndFlush(any())).thenAnswer(invocation -> {
+      BaseDocument document = invocation.getArgument(0);
+      document.setId(UUID.randomUUID());
+      return document;
+    });
+    when(versionService.findOrCreateForUpload(any())).thenAnswer(invocation ->
+        versionSelection(invocation.getArgument(0), false));
+
+    service.upload(ownerId, file);
+
+    org.mockito.Mockito.verifyNoInteractions(anonymousQuota);
   }
 
   private BaseVersionService.VersionSelection versionSelection(BaseDocument document, boolean reused) {

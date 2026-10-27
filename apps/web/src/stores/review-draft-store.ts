@@ -46,7 +46,9 @@ export const useReviewDraftStore = create<ReviewDraftState>()((set) => ({
     set((state) =>
       sourceId === state.sourceId &&
       Object.values(state.draft.identity).every((value) => !value) &&
-      Object.values(state.draft).filter(Array.isArray).every((records) => records.length === 0)
+      Object.values(state.draft)
+        .filter(Array.isArray)
+        .every((records) => records.length === 0)
         ? { draft }
         : state,
     ),

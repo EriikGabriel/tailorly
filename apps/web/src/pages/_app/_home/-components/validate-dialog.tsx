@@ -26,6 +26,7 @@ import type {
   ReviewChoice,
   ReviewIssue,
 } from "@/types/review";
+import { factFieldLabel, formatFactValue } from "@/utils/fact-display";
 import {
   isReviewIssueComplete,
   selectQuickReviewIssues,
@@ -56,19 +57,27 @@ export function ValidateDialog({
   } = useQuickReviewStore();
   const [error, setError] = useState<string | null>(null);
   const apiIssues = useMemo(() => {
-    const supportedCategories = new Set<ReviewCategory>([
-      "identity",
-      "employment",
-      "projects",
-      "education",
-      "skills",
-      "languages",
-      "presentation",
-    ]);
+    // Categorias dos fatos (backend) -> seções da revisão rápida.
+    const reviewCategoryByFactCategory: Record<string, ReviewCategory> = {
+      identity: "identity",
+      experience: "employment",
+      projects: "projects",
+      degrees: "education",
+      certifications: "education",
+      languages: "languages",
+      technologies: "skills",
+    };
     return (review.issues.data ?? [])
       .filter((issue) => issue.status === "PENDING" && issue.fact)
       .map((issue): ReviewIssue => {
         const configured = issue.questionAndChoices ?? {};
+        const fieldLabel = factFieldLabel(
+          issue.fact?.fieldKey ?? "",
+          issue.category,
+        );
+        const currentValue = formatFactValue(
+          issue.fact?.reviewedValue ?? issue.fact?.extractedValue,
+        );
         const rawChoices = Array.isArray(configured.choices)
           ? configured.choices
           : ["confirmado", "corrigido", "omitido"];
@@ -76,31 +85,40 @@ export function ValidateDialog({
           (raw): ReviewChoice[] => {
             if (raw === "confirmado")
               return [
-                { value: raw, label: "Confirmar fato", result: "confirmed" },
+                { value: raw, label: "Está correto", result: "confirmed" },
               ];
             if (raw === "corrigido")
               return [
                 {
                   value: raw,
-                  label: "Corrigir fato",
+                  label: "Corrigir",
                   result: "corrected",
-                  correction: { label: "Valor correto", type: "text" },
+                  correction: {
+                    label: `Valor correto para ${fieldLabel}`,
+                    type: "text",
+                    placeholder: currentValue,
+                    originalValue: currentValue,
+                  },
                 },
               ];
             if (raw === "omitido")
-              return [{ value: raw, label: "Omitir fato", result: "omitted" }];
+              return [
+                {
+                  value: raw,
+                  label: "Não usar no currículo",
+                  result: "omitted",
+                },
+              ];
             return [];
           },
         );
-        const value = issue.fact?.reviewedValue ?? issue.fact?.extractedValue;
         return {
           id: issue.id,
-          category: supportedCategories.has(issue.category as ReviewCategory)
-            ? (issue.category as ReviewCategory)
-            : "identity",
-          type: "metric",
-          question:
-            `${typeof configured.question === "string" ? configured.question : "Revise este fato."} ${issue.fact?.fieldKey ?? ""}: ${String(value ?? "")}`.trim(),
+          category: reviewCategoryByFactCategory[issue.category] ?? "identity",
+          type: "fact",
+          question: `${fieldLabel} está correto?`,
+          fieldLabel,
+          value: currentValue,
           evidence: issue.fact?.evidence[0]?.sourceExcerpt,
           motivation: issue.reason,
           choices,

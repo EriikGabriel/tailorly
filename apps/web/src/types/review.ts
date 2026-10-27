@@ -35,8 +35,12 @@ export type ReviewChoice =
 export type ReviewIssue = {
   id: string;
   category: ReviewCategory;
-  type: "metric" | "temporal";
+  type: "metric" | "temporal" | "fact";
   question: string;
+  /** Nome legível do campo revisado (ex.: "Site pessoal"). */
+  fieldLabel?: string;
+  /** Valor atual do fato, exibido em destaque para conferência. */
+  value?: string;
   evidence?: string;
   motivation: string;
   choices: readonly ReviewChoice[];

@@ -6,25 +6,63 @@
     "version": "0.1.0"
   },
   "paths": {
-    "/v1/anonymous-sessions": {
-      "post": {
-        "operationId": "anonymousSessionCreate",
+    "/v1/ai-preferences": {
+      "get": {
+        "operationId": "aiPreferencesCurrent",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiPreferencesResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AiPreferences"
+        ]
+      },
+      "put": {
+        "operationId": "aiPreferencesUpdate",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateAnonymousSessionRequest"
+                "$ref": "#/components/schemas/UpdateAiPreferencesRequest"
               }
             }
           },
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiPreferencesResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AiPreferences"
+        ]
+      }
+    },
+    "/v1/anonymous-sessions": {
+      "post": {
+        "operationId": "anonymousSessionCreate",
+        "responses": {
           "201": {
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/AnonymousSessionResponse"
+                  "$ref": "#/components/schemas/IssuedAnonymousSessionResponse"
                 }
               }
             },
@@ -36,14 +74,45 @@
         ]
       }
     },
-    "/v1/anonymous-sessions/validate": {
+    "/v1/anonymous-sessions/current": {
+      "delete": {
+        "operationId": "anonymousSessionEnd",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "AnonymousSession"
+        ]
+      },
+      "get": {
+        "operationId": "anonymousSessionCurrent",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousSessionStatusResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AnonymousSession"
+        ]
+      }
+    },
+    "/v1/anonymous-sessions/migrate": {
       "post": {
-        "operationId": "anonymousSessionValidate",
+        "operationId": "anonymousSessionMigrate",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ValidateAnonymousSessionRequest"
+                "$ref": "#/components/schemas/MigrateAnonymousSessionRequest"
               }
             }
           },
@@ -54,7 +123,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/AnonymousSessionValidationResponse"
+                  "$ref": "#/components/schemas/AnonymousMigrationResponse"
                 }
               }
             },
@@ -584,6 +653,507 @@
         ]
       }
     },
+    "/v1/fact-evidence": {
+      "post": {
+        "operationId": "factEvidenceCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFactEvidenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactEvidenceResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "FactEvidence"
+        ]
+      }
+    },
+    "/v1/fact-evidence/fact/{factId}": {
+      "get": {
+        "operationId": "factEvidenceFindByFactId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FactEvidenceResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "FactEvidence"
+        ]
+      }
+    },
+    "/v1/fact-evidence/{id}": {
+      "get": {
+        "operationId": "factEvidenceFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactEvidenceResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "FactEvidence"
+        ]
+      }
+    },
+    "/v1/fact-evidence/{id}/locator": {
+      "patch": {
+        "operationId": "factEvidenceUpdateLocator",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEvidenceLocatorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactEvidenceResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "FactEvidence"
+        ]
+      }
+    },
+    "/v1/fact-records": {
+      "post": {
+        "operationId": "factRecordCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFactRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactRecordResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "FactRecord"
+        ]
+      }
+    },
+    "/v1/fact-records/version/{baseVersionId}": {
+      "get": {
+        "operationId": "factRecordFindByVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "baseVersionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FactRecordResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "FactRecord"
+        ]
+      }
+    },
+    "/v1/fact-records/{id}": {
+      "get": {
+        "operationId": "factRecordFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactRecordResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "FactRecord"
+        ]
+      }
+    },
+    "/v1/fact-records/{id}/display-order": {
+      "patch": {
+        "operationId": "factRecordUpdateDisplayOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDisplayOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactRecordResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "FactRecord"
+        ]
+      }
+    },
+    "/v1/facts": {
+      "post": {
+        "operationId": "factCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "Fact"
+        ]
+      }
+    },
+    "/v1/facts/record/{recordId}": {
+      "get": {
+        "operationId": "factFindByRecord",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recordId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FactResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Fact"
+        ]
+      }
+    },
+    "/v1/facts/{id}": {
+      "get": {
+        "operationId": "factFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Fact"
+        ]
+      }
+    },
+    "/v1/facts/{id}/confirm": {
+      "patch": {
+        "operationId": "factConfirm",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Fact"
+        ]
+      }
+    },
+    "/v1/facts/{id}/review-state": {
+      "patch": {
+        "operationId": "factUpdateReviewState",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFactReviewStateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Fact"
+        ]
+      }
+    },
+    "/v1/gt-snapshots/approve-version/{baseVersionId}": {
+      "post": {
+        "operationId": "gtSnapshotApproveVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "baseVersionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GtSnapshotResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "GtSnapshot"
+        ]
+      }
+    },
+    "/v1/gt-snapshots/{id}": {
+      "get": {
+        "operationId": "gtSnapshotFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GtSnapshotResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "GtSnapshot"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "currentAccountCurrent",
@@ -665,47 +1235,6 @@
         ]
       }
     },
-    "/v1/owners/{id}/active-snapshot": {
-      "patch": {
-        "operationId": "ownerUpdateActiveSnapshot",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateActiveSnapshotRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/OwnerResponse"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Owner"
-        ]
-      }
-    },
     "/v1/owners/{id}/increment-revision": {
       "patch": {
         "operationId": "ownerIncrementRevision",
@@ -734,6 +1263,81 @@
         },
         "tags": [
           "Owner"
+        ]
+      }
+    },
+    "/v1/review-issues/version/{baseVersionId}": {
+      "get": {
+        "operationId": "reviewIssueFindByVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "baseVersionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReviewIssueResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ReviewIssue"
+        ]
+      }
+    },
+    "/v1/review-issues/{id}/answer": {
+      "patch": {
+        "operationId": "reviewIssueAnswer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFactReviewStateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewIssueResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ReviewIssue"
         ]
       }
     },
@@ -1051,6 +1655,95 @@
   },
   "components": {
     "schemas": {
+      "AiPreferencesResponse": {
+        "type": "object",
+        "properties": {
+          "accountOverride": {
+            "type": "boolean"
+          },
+          "ollamaApiKeyConfigured": {
+            "type": "boolean"
+          },
+          "ollamaEndpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ollamaModel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "type": "string"
+          },
+          "remoteApiKeyConfigured": {
+            "type": "boolean"
+          },
+          "remoteEndpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "remoteModel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "accountOverride",
+          "ollamaApiKeyConfigured",
+          "ollamaEndpoint",
+          "ollamaModel",
+          "provider",
+          "remoteApiKeyConfigured",
+          "remoteEndpoint",
+          "remoteModel",
+          "updatedAt"
+        ]
+      },
+      "AnonymousMigrationResponse": {
+        "type": "object",
+        "properties": {
+          "baseVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentReused": {
+            "type": "boolean"
+          },
+          "replacedActive": {
+            "type": "boolean"
+          },
+          "snapshotId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "baseVersionId",
+          "documentId",
+          "documentReused",
+          "replacedActive",
+          "snapshotId"
+        ]
+      },
       "AnonymousSessionResponse": {
         "type": "object",
         "properties": {
@@ -1085,31 +1778,38 @@
           "valid"
         ]
       },
-      "AnonymousSessionValidationResponse": {
+      "AnonymousSessionStatusResponse": {
         "type": "object",
         "properties": {
           "expiresAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "format": "date-time"
           },
+          "limits": {
+            "$ref": "#/components/schemas/Limits"
+          },
+          "migratable": {
+            "type": "boolean"
+          },
           "ownerId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "format": "uuid"
           },
-          "valid": {
-            "type": "boolean"
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
           }
         },
         "required": [
           "expiresAt",
+          "limits",
+          "migratable",
           "ownerId",
-          "valid"
+          "sessionId",
+          "usage"
         ]
       },
       "BaseDocumentResponse": {
@@ -1223,28 +1923,6 @@
           "versionNumber"
         ]
       },
-      "CreateAnonymousSessionRequest": {
-        "type": "object",
-        "properties": {
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "tokenHash": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "expiresAt",
-          "ownerId",
-          "tokenHash"
-        ]
-      },
       "CreateExtractionRunRequest": {
         "type": "object",
         "properties": {
@@ -1257,13 +1935,90 @@
           "baseVersionId"
         ]
       },
-      "CreateOwnerRequest": {
+      "CreateFactEvidenceRequest": {
         "type": "object",
         "properties": {
-          "activeSnapshotId": {
+          "boundingBox": {},
+          "extractedPageId": {
             "type": "string",
             "format": "uuid"
           },
+          "factId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceExcerpt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceLocator": {}
+        },
+        "required": [
+          "extractedPageId",
+          "factId",
+          "sourceExcerpt",
+          "sourceLocator"
+        ]
+      },
+      "CreateFactRecordRequest": {
+        "type": "object",
+        "properties": {
+          "baseVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "baseVersionId",
+          "category",
+          "displayOrder"
+        ]
+      },
+      "CreateFactRequest": {
+        "type": "object",
+        "properties": {
+          "extractedValue": {},
+          "extractionRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fieldKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin": {
+            "type": "string",
+            "minLength": 1
+          },
+          "recordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reviewState": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reviewedValue": {}
+        },
+        "required": [
+          "fieldKey",
+          "origin",
+          "recordId",
+          "reviewState"
+        ]
+      },
+      "CreateOwnerRequest": {
+        "type": "object",
+        "properties": {
           "kind": {
             "type": "string",
             "minLength": 1
@@ -1470,6 +2225,291 @@
           "status"
         ]
       },
+      "FactEvidenceResponse": {
+        "type": "object",
+        "properties": {
+          "boundingBox": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "extractedPageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "factId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceExcerpt": {
+            "type": "string"
+          },
+          "sourceLocator": {}
+        },
+        "required": [
+          "boundingBox",
+          "extractedPageId",
+          "factId",
+          "id",
+          "sourceExcerpt",
+          "sourceLocator"
+        ]
+      },
+      "FactRecordResponse": {
+        "type": "object",
+        "properties": {
+          "baseVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FactResponse"
+            }
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "baseVersionId",
+          "category",
+          "displayOrder",
+          "facts",
+          "id"
+        ]
+      },
+      "FactResponse": {
+        "type": "object",
+        "properties": {
+          "confirmedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FactEvidenceResponse"
+            }
+          },
+          "extractedValue": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "extractionRunId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "fieldKey": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "recordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revalidateAfter": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "reviewState": {
+            "type": "string"
+          },
+          "reviewedValue": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "confirmedAt",
+          "evidence",
+          "extractedValue",
+          "extractionRunId",
+          "fieldKey",
+          "id",
+          "origin",
+          "recordId",
+          "revalidateAfter",
+          "reviewState",
+          "reviewedValue"
+        ]
+      },
+      "GtSnapshotItemResponse": {
+        "type": "object",
+        "properties": {
+          "approvedValue": {},
+          "category": {
+            "type": "string"
+          },
+          "fieldKey": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceDecisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceFactId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GtSnapshotResponse": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "approvedReviewRevision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "baseVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GtSnapshotItemResponse"
+            }
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schemaVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "snapshotNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "IssuedAnonymousSessionResponse": {
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expiresAt",
+          "ownerId",
+          "sessionId",
+          "token"
+        ]
+      },
+      "Limits": {
+        "type": "object",
+        "properties": {
+          "maxExtractions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxFileBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "maxGenerations": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxUploads": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "maxExtractions",
+          "maxFileBytes",
+          "maxGenerations",
+          "maxPages",
+          "maxUploads"
+        ]
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -1510,6 +2550,21 @@
           "expiresAt",
           "tokenType",
           "user"
+        ]
+      },
+      "MigrateAnonymousSessionRequest": {
+        "type": "object",
+        "properties": {
+          "replaceActive": {
+            "type": "boolean"
+          },
+          "sessionToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "sessionToken"
         ]
       },
       "OwnerResponse": {
@@ -1556,6 +2611,42 @@
           "revision",
           "userId"
         ]
+      },
+      "ReviewIssueResponse": {
+        "type": "object",
+        "properties": {
+          "baseVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "blocking": {
+            "type": "boolean"
+          },
+          "category": {
+            "type": "string"
+          },
+          "fact": {
+            "$ref": "#/components/schemas/FactResponse"
+          },
+          "factId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "questionAndChoices": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "reason": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
       },
       "StoredObjectResponse": {
         "type": "object",
@@ -1607,14 +2698,36 @@
           "storageKey"
         ]
       },
-      "UpdateActiveSnapshotRequest": {
+      "UpdateAiPreferencesRequest": {
         "type": "object",
         "properties": {
-          "activeSnapshotId": {
+          "ollamaApiKey": {
+            "type": "string"
+          },
+          "ollamaEndpoint": {
+            "type": "string"
+          },
+          "ollamaModel": {
+            "type": "string"
+          },
+          "provider": {
             "type": "string",
-            "format": "uuid"
+            "minLength": 1,
+            "pattern": "rules|remote|remote-with-ollama-fallback|ollama-only"
+          },
+          "remoteApiKey": {
+            "type": "string"
+          },
+          "remoteEndpoint": {
+            "type": "string"
+          },
+          "remoteModel": {
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "provider"
+        ]
       },
       "UpdateDeletionStatusRequest": {
         "type": "object",
@@ -1628,6 +2741,41 @@
           "deletionStatus"
         ]
       },
+      "UpdateDisplayOrderRequest": {
+        "type": "object",
+        "properties": {
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "displayOrder"
+        ]
+      },
+      "UpdateEvidenceLocatorRequest": {
+        "type": "object",
+        "properties": {
+          "sourceLocator": {}
+        },
+        "required": [
+          "sourceLocator"
+        ]
+      },
+      "UpdateFactReviewStateRequest": {
+        "type": "object",
+        "properties": {
+          "reviewState": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reviewedValue": {}
+        },
+        "required": [
+          "reviewState"
+        ]
+      },
       "UpdateUserRequest": {
         "type": "object",
         "properties": {
@@ -1639,6 +2787,28 @@
         },
         "required": [
           "email"
+        ]
+      },
+      "Usage": {
+        "type": "object",
+        "properties": {
+          "extractions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "generations": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "uploads": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "extractions",
+          "generations",
+          "uploads"
         ]
       },
       "UserResponse": {
@@ -1666,18 +2836,6 @@
           "enabled",
           "id",
           "roles"
-        ]
-      },
-      "ValidateAnonymousSessionRequest": {
-        "type": "object",
-        "properties": {
-          "tokenHash": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "tokenHash"
         ]
       }
     }
