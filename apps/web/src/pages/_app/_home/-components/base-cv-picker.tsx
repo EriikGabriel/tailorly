@@ -1,7 +1,7 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
+import { AnonymousNotice } from "@components/anonymous-notice";
 import { useSelectBaseDocumentFile } from "@queries/base-document";
 import { FileText, FileUp, RefreshCw } from "@react-zero-ui/icon-sprite";
-import { useAuthStore } from "@stores/auth-store";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
@@ -9,7 +9,6 @@ import { ExtractionProgress } from "../../base/-components/extraction-progress";
 
 export function BaseCvPicker() {
   const reducedMotion = useReducedMotion();
-  const accessToken = useAuthStore((state) => state.accessToken);
   const {
     file,
     error,
@@ -21,9 +20,8 @@ export function BaseCvPicker() {
   const { selectFile, upload: uploadBaseDocument } =
     useSelectBaseDocumentFile();
   const currentUpload = file !== null && uploadBaseDocument.variables === file;
-  const fileStatus = !accessToken
-    ? "Prévia local • entre na sua conta para enviar"
-    : currentUpload && uploadBaseDocument.isPending
+  const fileStatus =
+    currentUpload && uploadBaseDocument.isPending
       ? "Enviando PDF..."
       : selectionId && uploadedSelectionId === selectionId
         ? "Arquivo enviado"
@@ -72,6 +70,8 @@ export function BaseCvPicker() {
           ) : (
             <Picker selectFiles={selectFiles} />
           )}
+
+          <AnonymousNotice />
 
           {error && (
             <p

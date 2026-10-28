@@ -259,7 +259,7 @@ ordem pelo seletor de etapas:
 | # | `id` | Título na UI | Coleção (`DraftCollection`) |
 | --- | --- | --- | --- |
 | 1 | `identity` | Identidade & Contato | campos soltos (`DraftFields`) |
-| 2 | `experience` | Experiência Profissional | `experience` |
+| 2 | `experience` | Experiência & Voluntariado | `experience`, `volunteering` |
 | 3 | `projects` | Projetos & Métricas | `projects` |
 | 4 | `education` | Formação & Certificados | `degrees`, `certifications` |
 | 5 | `skills` | Competências & Idiomas | `languages`, `technologies` |
@@ -273,14 +273,38 @@ dimensão. A etapa 3 (Projetos) recebe destaque visual na borda da regra.
 ### Campos por dimensão
 
 Definidos como `const fields: ReviewField[]` dentro de cada arquivo em `-steps/`.
-`ReviewField` = `{ key, label, type?, hint?, wide? }`, com `type` em
-`text | email | tel | url | month | textarea`.
+`ReviewField` = `{ key, label, type?, hint?, wide?, icon?, placeholder?,
+maxLength?, options?, period? }`. O `type` escolhe o controle (em
+`src/components/fields/`), e o valor guardado continua sendo o texto do fato:
+
+| `type` | Controle | Observação |
+| --- | --- | --- |
+| `text` (padrão) | campo com ícone | |
+| `email` | campo de e-mail | sinaliza formato inválido |
+| `tel` | máscara de telefone brasileiro | números internacionais ficam como estão |
+| `url` | campo de link | ícone da marca (GitHub, LinkedIn), botão "abrir" e domínio/caminho formatados |
+| `month` | calendário de mês e ano (Popover do Animate UI) | aceita `YYYY-MM` ou só `YYYY`; limpar sem abrir |
+| `textarea` | área que cresce com o texto | contador quando há `maxLength` |
+| `select` | lista de opções (Base UI) | um valor extraído fora da lista continua selecionável |
+| `proficiency` | nível em 5 degraus (Toggle Group do Animate UI) | reconhece "avançado", "Advanced" etc.; outro texto é mostrado e pode ser trocado |
+| `period` | início + término + interruptor "Atualmente" | mantém o fato de situação (`Atual`/`Encerrado`, `Em andamento`/`Concluído`) em sincronia e avisa se o término for anterior ao início |
+
+As dicas (`hint`) aparecem em um tooltip ao lado do rótulo e são lidas por
+leitores de tela. Os cartões das coleções (Experiência, Projetos, Formação,
+Certificações) são um Accordion do Animate UI e mostram um resumo formatado no
+cabeçalho (cargo, empresa, período e duração, selos de vínculo e situação),
+calculado por `-components/record-summaries.ts`. Idiomas usam linhas com o
+nível em degraus (`language-list.tsx`) e tecnologias, chips com contexto
+opcional (`technology-chips.tsx`). A formatação (datas, período, duração,
+telefone, links, iniciais, nível) fica em `src/lib/review-format.ts`, com
+testes unitários.
 
 | Etapa | Chaves |
 | --- | --- |
-| Identidade | `name`, `location`, `email`, `phone`, `linkedin`, `github` |
+| Identidade | `name`, `headline`, `location`, `email`, `phone`, `summary`, `linkedin`, `github`, `website` |
 | Experiência | `company`, `role`, `employment`, `status`, `start`, `end`, `description` |
-| Projetos | `title`, `context`, `statement`, `metric`, `source` |
+| Voluntariado | `organization`, `role`, `status`, `start`, `end`, `description` |
+| Projetos | `title`, `context`, `statement`, `metric`, `link`, `source` |
 | Formação | `degree`, `institution`, `status`, `start`, `end` |
 | Certificações | `name`, `issuer`, `credential`, `issued`, `expires` |
 | Idiomas | `language`, `proficiency` |
@@ -398,7 +422,7 @@ ou reutilizada; a store guarda apenas o ID da seleção local para evitar que
 uma resposta atrasada altere seu status. A interface não lista o
 histórico de PDFs enviados. A troca em `/base` usa o mesmo envio da home. O
 cartão distingue prévia local, envio, sucesso e falha e mostra erros da API.
-Sem conta, não tenta o upload: a API já aceita upload por sessão anônima, mas o fluxo de visitante na interface ainda não foi liberado. O envio
+Sem conta, o envio funciona como visitante: a API emite uma sessão anônima sob demanda (só ao enviar o primeiro arquivo, nunca ao abrir a página) e o token dela é usado como credencial. Um aviso na home e em `/base` explica que os dados são temporários e mostra os limites e o uso vindos do servidor. O envio
 armazena o original, cria ou recupera a versão e enfileira extração no servidor.
 O frontend consulta o andamento enquanto a execução está na fila ou processando
 e, em `/base`, disponibiliza o texto bruto por página após a conclusão. A
@@ -678,7 +702,6 @@ registra cobertura parcial e critérios futuros sem adicionar toda a suíte.
 
 Os pontos abaixo continuam pendentes no frontend ou no fluxo completo:
 
-- fluxo de visitante na interface: criar a sessão anônima, enviar o token e oferecer a migração do snapshot revisado após o login (a API já oferece tudo isso);
 - visualização da evidência sobre o PDF e coordenadas de bounding box;
 - atualização automática do snapshot ativo após uma nova extração;
 - download e geração de PDF/Markdown;

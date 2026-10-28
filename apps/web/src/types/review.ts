@@ -1,6 +1,7 @@
 export type ReviewCategory =
   | "identity"
   | "employment"
+  | "volunteering"
   | "projects"
   | "education"
   | "skills"

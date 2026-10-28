@@ -1,5 +1,6 @@
 import { Button } from "@animate/buttons/button";
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
+import { AnonymousNotice } from "@components/anonymous-notice";
 import { useSelectBaseDocumentFile } from "@queries/base-document";
 import {
   CircleCheck,
@@ -10,7 +11,6 @@ import {
   Shield,
   ShieldCheck,
 } from "@react-zero-ui/icon-sprite";
-import { useAuthStore } from "@stores/auth-store";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useReducedMotion } from "motion/react";
@@ -26,20 +26,17 @@ export const Route = createFileRoute("/_app/base/")({
 function RouteComponent() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { file, error, selectionId, uploadedSelectionId } = useBaseCvStore();
-  const accessToken = useAuthStore((state) => state.accessToken);
   const { selectFile, upload } = useSelectBaseDocumentFile();
   const reducedMotion = useReducedMotion();
   const uploadPending =
     file !== null && upload.variables === file && upload.isPending;
   const fileStatus = uploadPending
     ? "Enviando PDF..."
-    : file && !accessToken
-      ? "Prévia local • entre na sua conta para enviar"
-      : file && selectionId && uploadedSelectionId === selectionId
-        ? "PDF enviado"
-        : file
-          ? "Prévia local • ainda não enviado"
-          : "Aguardando Currículo Base";
+    : file && selectionId && uploadedSelectionId === selectionId
+      ? "PDF enviado"
+      : file
+        ? "Prévia local • ainda não enviado"
+        : "Aguardando Currículo Base";
 
   return (
     <main className="min-h-[calc(100dvh-4rem)] px-4 py-6 sm:px-8 lg:px-16">
@@ -195,6 +192,7 @@ function RouteComponent() {
                 ? `${file.name} selecionado para prévia local.`
                 : "Nenhum arquivo selecionado."}
             </div>
+            <AnonymousNotice />
             {error && (
               <p role="alert" className="text-body-sm text-error">
                 {error}

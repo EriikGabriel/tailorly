@@ -7,7 +7,11 @@ import {
   DialogPortal,
   DialogTitle,
 } from "@components/ui/animate/primitives/base/dialog";
-import { useAnswerReviewIssue, useBaseReview } from "@queries/base-review";
+import {
+  useAnswerReviewIssue,
+  useBaseReview,
+  useInvalidateBaseReview,
+} from "@queries/base-review";
 import {
   ArrowRight,
   IconExclamationMark,
@@ -46,6 +50,7 @@ export function ValidateDialog({
   const { file, selectionId, baseVersionId } = useBaseCvStore();
   const review = useBaseReview(baseVersionId ?? undefined);
   const answerIssue = useAnswerReviewIssue(baseVersionId ?? "");
+  const invalidateReview = useInvalidateBaseReview(baseVersionId ?? "");
   const { revision: jobRevision, saveDraft: onSaveDraft } = useJobDraftStore();
   const {
     open,
@@ -61,6 +66,7 @@ export function ValidateDialog({
     const reviewCategoryByFactCategory: Record<string, ReviewCategory> = {
       identity: "identity",
       experience: "employment",
+      volunteering: "volunteering",
       projects: "projects",
       degrees: "education",
       certifications: "education",
@@ -156,9 +162,7 @@ export function ValidateDialog({
     if (needsFullReview || !reviewComplete || storedContext !== contextKey)
       return;
     if (!baseVersionId) {
-      setError(
-        "Envie o Currículo Base com uma conta autenticada para salvar as respostas.",
-      );
+      setError("Envie o Currículo Base antes de salvar as respostas.");
       return;
     }
     setError(null);
@@ -192,6 +196,8 @@ export function ValidateDialog({
           : "Não foi possível salvar as respostas.",
       );
       return;
+    } finally {
+      invalidateReview();
     }
     onSaveDraft();
     onOpenChange(false);
@@ -298,7 +304,7 @@ export function ValidateDialog({
               <p className="text-sm text-on-surface-variant">
                 {baseVersionId
                   ? "Não há pendências reais nesta versão candidata."
-                  : "Envie o Currículo Base autenticado para carregar pendências reais."}
+                  : "Envie o Currículo Base para carregar pendências reais."}
               </p>
             )}
             {error && (

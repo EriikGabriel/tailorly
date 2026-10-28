@@ -1,6 +1,9 @@
+import type { IconProps } from "@react-zero-ui/icon-sprite";
+import type { ComponentType } from "react";
+
 export const reviewSteps = [
   { id: "identity", title: "Identidade & Contato" },
-  { id: "experience", title: "Experiência Profissional" },
+  { id: "experience", title: "Experiência & Voluntariado" },
   { id: "projects", title: "Projetos & Métricas" },
   { id: "education", title: "Formação & Certificados" },
   { id: "skills", title: "Competências & Idiomas" },
@@ -12,6 +15,7 @@ export type DraftFields = Record<string, string>;
 export type DraftRecord = { id: string; fields: DraftFields };
 export type DraftCollection =
   | "experience"
+  | "volunteering"
   | "projects"
   | "degrees"
   | "certifications"
@@ -20,6 +24,7 @@ export type DraftCollection =
 export type ReviewDraft = {
   identity: DraftFields;
   experience: DraftRecord[];
+  volunteering: DraftRecord[];
   projects: DraftRecord[];
   degrees: DraftRecord[];
   certifications: DraftRecord[];
@@ -30,6 +35,7 @@ export type ReviewDraft = {
 export const createReviewDraft = (): ReviewDraft => ({
   identity: {},
   experience: [],
+  volunteering: [],
   projects: [],
   degrees: [],
   certifications: [],
@@ -37,12 +43,43 @@ export const createReviewDraft = (): ReviewDraft => ({
   technologies: [],
 });
 
+export type PeriodConfig = {
+  startKey: string;
+  endKey: string;
+  /** Fato "situação" mantido em sincronia com o término (ex.: "Atual"/"Encerrado"). */
+  statusKey?: string;
+  startLabel: string;
+  endLabel: string;
+  /** Texto do interruptor "Atualmente..."; sem ele o término é sempre editável. */
+  currentLabel?: string;
+  currentStatus?: string;
+  endedStatus?: string;
+  /** Permite datas futuras no término (ex.: validade de certificação). */
+  futureEnd?: boolean;
+};
+
+export type ReviewFieldType =
+  | "text"
+  | "email"
+  | "tel"
+  | "url"
+  | "month"
+  | "textarea"
+  | "select"
+  | "period"
+  | "proficiency";
+
 export type ReviewField = {
   key: string;
   label: string;
-  type?: "text" | "email" | "tel" | "url" | "month" | "textarea";
+  type?: ReviewFieldType;
   hint?: string;
   wide?: boolean;
+  icon?: ComponentType<IconProps>;
+  placeholder?: string;
+  maxLength?: number;
+  options?: readonly { value: string; label: string }[];
+  period?: PeriodConfig;
 };
 
 export type CollectionProps = {

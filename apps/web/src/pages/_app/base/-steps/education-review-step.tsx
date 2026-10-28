@@ -1,28 +1,61 @@
 import type { CollectionProps, ReviewField } from "@@types/review-model";
+import {
+  Award,
+  BadgeCheck,
+  Building2,
+  GraduationCap,
+} from "@react-zero-ui/icon-sprite";
+import {
+  summarizeCertificate,
+  summarizeDegree,
+} from "../-components/record-summaries";
 import { ReviewDraftCollection } from "../-components/review-draft-collection";
 import { ReviewStepShell } from "../-components/review-step-shell";
 
 const degreeFields: ReviewField[] = [
-  { key: "degree", label: "Grau acadêmico / curso", wide: true },
-  { key: "institution", label: "Instituição" },
   {
-    key: "status",
-    label: "Situação",
-    hint: "Concluído, em andamento ou interrompido.",
+    key: "degree",
+    label: "Curso / grau acadêmico",
+    icon: GraduationCap,
+    wide: true,
   },
-  { key: "start", label: "Início", type: "month" },
-  { key: "end", label: "Conclusão", type: "month" },
+  { key: "institution", label: "Instituição", icon: Building2, wide: true },
+  {
+    key: "period",
+    label: "Período",
+    type: "period",
+    period: {
+      startKey: "start",
+      endKey: "end",
+      statusKey: "status",
+      startLabel: "Início",
+      endLabel: "Conclusão",
+      currentLabel: "Curso em andamento",
+      currentStatus: "Em andamento",
+      endedStatus: "Concluído",
+    },
+  },
 ];
 const certificateFields: ReviewField[] = [
-  { key: "name", label: "Nome da certificação", wide: true },
-  { key: "issuer", label: "Órgão emissor" },
-  { key: "credential", label: "Credencial / identificação" },
-  { key: "issued", label: "Emissão", type: "month" },
+  { key: "name", label: "Certificação", icon: Award, wide: true },
+  { key: "issuer", label: "Órgão emissor", icon: Building2 },
   {
-    key: "expires",
-    label: "Validade",
-    type: "month",
-    hint: "Não presume validade quando ausente.",
+    key: "credential",
+    label: "Credencial / ID",
+    icon: BadgeCheck,
+    hint: "Código ou identificação da credencial, se constar no documento.",
+  },
+  {
+    key: "period",
+    label: "Emissão e validade",
+    type: "period",
+    period: {
+      startKey: "issued",
+      endKey: "expires",
+      startLabel: "Emissão",
+      endLabel: "Validade",
+      futureEnd: true,
+    },
   },
 ];
 
@@ -37,26 +70,26 @@ export function EducationReviewStep({
     <ReviewStepShell
       number={4}
       title="Formação & Certificações"
-      description="Títulos acadêmicos, órgãos emissores e credenciais oficiais"
-      rule="Confira os requisitos acadêmicos e as credenciais. Certificações e sua validade devem corresponder às informações fornecidas."
+      description="Cursos, instituições e credenciais"
+      rule="Confira os títulos e as credenciais. A validade de uma certificação não é presumida quando ausente."
     >
       <ReviewDraftCollection
         {...degrees}
-        title="Grau acadêmico"
+        title="Formação acadêmica"
         itemLabel="Adicionar formação"
         emptyText="Nenhuma formação extraída do documento."
         fields={degreeFields}
-        titleKey="degree"
-        subtitleKey="institution"
+        summarize={summarizeDegree}
+        icon={GraduationCap}
       />
       <ReviewDraftCollection
         {...certifications}
-        title="Certificações técnicas"
+        title="Certificações"
         itemLabel="Adicionar certificação"
         emptyText="Nenhuma certificação extraída do documento."
         fields={certificateFields}
-        titleKey="name"
-        subtitleKey="issuer"
+        summarize={summarizeCertificate}
+        icon={Award}
       />
     </ReviewStepShell>
   );

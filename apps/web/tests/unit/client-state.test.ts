@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
+import { pickToken } from "../../src/stores/active-token";
+import {
+  ANONYMOUS_TOKEN_PREFIX,
+  useAnonymousSessionStore as anonymous,
+} from "../../src/stores/anonymous-session-store";
 import {
   useAuthStore as auth,
   readStoredSession,
@@ -247,4 +252,108 @@ test("o visualizador limita o zoom e ignora valores numéricos inválidos", () =
   assert.equal(viewer.getState().zoom, 50);
   viewer.getState().setZoom("fit");
   assert.equal(viewer.getState().zoom, "fit");
+});
+
+const visitorSession = (overrides: Partial<{ expiresAt: string }> = {}) => ({
+  token: `${ANONYMOUS_TOKEN_PREFIX}abc`,
+  sessionId: "session-1",
+  ownerId: "owner-1",
+  expiresAt: new Date(Date.now() + 60_000).toISOString(),
+  ...overrides,
+});
+
+test("a sessão anônima fica no sessionStorage e a expirada é descartada na leitura", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => values.delete(key),
+  };
+  const previous = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "sessionStorage",
+  );
+  Object.defineProperty(globalThis, "sessionStorage", {
+    configurable: true,
+    value: storage,
+  });
+
+  try {
+    anonymous.getState().setSession(visitorSession());
+    assert.ok(
+      storage.getItem("tailorly:anonymous-session")?.includes("session-1"),
+    );
+
+    anonymous.getState().clear();
+    assert.equal(storage.getItem("tailorly:anonymous-session"), null);
+    assert.equal(anonymous.getState().session, null);
+  } finally {
+    anonymous.getState().clear();
+    if (previous) Object.defineProperty(globalThis, "sessionStorage", previous);
+    else delete (globalThis as { sessionStorage?: Storage }).sessionStorage;
+  }
+});
+
+test("limpar o estado do cliente também descarta a sessão anônima e o tipo de owner", () => {
+  anonymous.getState().setSession(visitorSession());
+  base.getState().selectFile(pdf());
+  base
+    .getState()
+    .setUploadedDocument(base.getState().file as File, "v1", "anonymous");
+  assert.equal(base.getState().ownerKind, "anonymous");
+
+  resetClientState();
+
+  assert.equal(anonymous.getState().session, null);
+  assert.equal(base.getState().ownerKind, null);
+});
+
+test("trocar o arquivo zera o tipo de owner; o envio o define", () => {
+  const first = pdf();
+  base.getState().selectFile(first);
+  base.getState().setUploadedDocument(first, "v1", "account");
+  assert.equal(base.getState().ownerKind, "account");
+
+  base.getState().selectFile(pdf("next.pdf"));
+  assert.equal(base.getState().ownerKind, null);
+  assert.equal(base.getState().baseVersionId, null);
+});
+
+test("o token ativo respeita de quem é a versão enviada", () => {
+  const accountToken = "jwt-da-conta";
+  const anonymousToken = `${ANONYMOUS_TOKEN_PREFIX}abc`;
+
+  // Visitante sem conta usa a sessão anônima.
+  assert.equal(
+    pickToken({ accountToken: null, anonymousToken, ownerKind: null }),
+    anonymousToken,
+  );
+  // Conta sem sessão anônima usa o JWT.
+  assert.equal(
+    pickToken({ accountToken, anonymousToken: null, ownerKind: null }),
+    accountToken,
+  );
+  // Entrou numa conta com um novo envio pendente: a conta vale.
+  assert.equal(
+    pickToken({ accountToken, anonymousToken, ownerKind: "account" }),
+    accountToken,
+  );
+  assert.equal(
+    pickToken({ accountToken, anonymousToken, ownerKind: null }),
+    accountToken,
+  );
+  // Versão enviada como visitante segue acessível pelo token anônimo mesmo após o login.
+  assert.equal(
+    pickToken({ accountToken, anonymousToken, ownerKind: "anonymous" }),
+    anonymousToken,
+  );
+  // Sem sessão anônima, cai para a conta; sem nada, não há token.
+  assert.equal(
+    pickToken({ accountToken, anonymousToken: null, ownerKind: "anonymous" }),
+    accountToken,
+  );
+  assert.equal(
+    pickToken({ accountToken: null, anonymousToken: null, ownerKind: null }),
+    null,
+  );
 });

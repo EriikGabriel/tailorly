@@ -21,6 +21,7 @@ const fieldLabels: Record<string, string> = {
   personalWebsite: "Site pessoal",
   url: "Link",
   company: "Empresa",
+  organization: "Organização",
   employer: "Empresa",
   startDate: "Data de início",
   endDate: "Data de término",
@@ -61,6 +62,10 @@ const categoryFieldLabels: Record<string, Record<string, string>> = {
   technologies: { name: "Tecnologia / competência" },
   projects: { title: "Projeto" },
   experience: { description: "Responsabilidades e contexto" },
+  volunteering: {
+    role: "Função",
+    description: "Atividades realizadas",
+  },
 };
 
 function humanize(key: string) {

@@ -139,12 +139,22 @@ public class AiCurriculumInterpreter {
          LinkedIn in identity "linkedin", GitHub profile in identity "github", personal site in identity "website",
          and links that belong to a project in that project's "link".
       8. Spell out proficiency or status only when the document states it. Do not extract soft claims without detail.
+      9. Use these canonical values when the document states the same idea (translate, never invent):
+         - employment: CLT, PJ, Estágio, Trainee, Aprendiz, Temporário, "Autônomo / Freelancer".
+           Omit it when the contract type is not stated; copy the original text if none of these fits.
+         - experience and volunteering status: "Atual" or "Encerrado"; degrees status: "Em andamento" or "Concluído".
+         - languages proficiency: Básico, Intermediário, Avançado, Fluente or Nativo. For a score or level code
+           (e.g. "C1", "B2", "TOEFL 100") copy it as written.
+         - phone: digits as written (the server formats Brazilian numbers); email: the address only.
 
       SCHEMA (category: allowed fieldKeys)
       identity: name, headline, location, email, phone, linkedin, github, website, summary
       experience (list): company, role, employment, status, start, end, description
-        - employment: contract type only if stated (e.g. CLT, PJ, Estágio); status: "Atual" or "Encerrado"
+        - paid professional jobs only; employment: contract type only if stated (e.g. CLT, PJ, Estágio)
         - description: responsibilities and achievements of that job, copied or lightly trimmed from the text
+      volunteering (list): organization, role, status, start, end, description
+        - unpaid volunteer work, NGOs, community service and social-impact initiatives; never put these in experience
+        - organization: the institution or cause; role: the function performed; status: "Atual" or "Encerrado"
       projects (list): title, context, statement, metric, link
         - context: company, course or period where it happened; statement: what was done; metric: documented numbers with units
       degrees (list): degree, institution, status, start, end
@@ -286,6 +296,7 @@ public class AiCurriculumInterpreter {
 
   private static final Map<String, Set<String>> LIST_FIELDS = Map.of(
       "experience", Set.of("company", "role", "employment", "status", "start", "end", "description"),
+      "volunteering", Set.of("organization", "role", "status", "start", "end", "description"),
       "projects", Set.of("title", "context", "statement", "metric", "link"),
       "degrees", Set.of("degree", "institution", "status", "start", "end"),
       "certifications", Set.of("name", "issuer", "credential", "issued", "expires"),

@@ -1,3 +1,8 @@
+import {
+  ANONYMOUS_TOKEN_PREFIX,
+  useAnonymousSessionStore,
+} from "../../stores/anonymous-session-store";
+
 export interface ApiErrorResponse {
   timestamp: string;
   status: number;
@@ -42,6 +47,16 @@ export async function apiRequest<T>(
       error = (await response.json()) as ApiErrorResponse;
     } catch {
       // Preserve a useful status when a proxy or network layer returns non-JSON.
+    }
+    // Uma sessão anônima expirada ou revogada não volta a valer: descarta a credencial local.
+    if (
+      response.status === 401 &&
+      accessToken?.startsWith(ANONYMOUS_TOKEN_PREFIX)
+    ) {
+      const session = useAnonymousSessionStore.getState().session;
+      if (session?.token === accessToken) {
+        useAnonymousSessionStore.getState().clear();
+      }
     }
     throw new ApiClientError(response.status, error);
   }

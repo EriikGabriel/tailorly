@@ -1,28 +1,45 @@
 import type { CollectionProps, ReviewField } from "@@types/review-model";
 import { Button } from "@animate/buttons/button";
-import { CheckCheck } from "@react-zero-ui/icon-sprite";
+import {
+  Building2,
+  CheckCheck,
+  FolderBookmark,
+  Quote,
+  TrendingUp,
+} from "@react-zero-ui/icon-sprite";
+import { summarizeProject } from "../-components/record-summaries";
 import { ReviewDraftCollection } from "../-components/review-draft-collection";
 import { ReviewStepShell } from "../-components/review-step-shell";
 
 const fields: ReviewField[] = [
-  { key: "title", label: "Projeto / realização" },
-  { key: "context", label: "Empresa e período" },
+  { key: "title", label: "Projeto ou realização", icon: FolderBookmark },
+  {
+    key: "context",
+    label: "Contexto",
+    icon: Building2,
+    placeholder: "Empresa, curso ou período",
+  },
   {
     key: "statement",
-    label: "Fato e autoria",
+    label: "O que foi feito",
     type: "textarea",
     wide: true,
+    maxLength: 800,
     hint: "Descreva sua participação sem ampliar o escopo da autoria.",
   },
   {
     key: "metric",
-    label: "Métrica e unidade",
+    label: "Métrica",
+    icon: TrendingUp,
+    placeholder: "ex.: 35% · 300 alunos",
     hint: "Inclua apenas números documentados.",
   },
   { key: "link", label: "Link do projeto", type: "url" },
   {
     key: "source",
     label: "Referência no documento",
+    icon: Quote,
+    wide: true,
     hint: "Página ou trecho informado por você, ainda não verificado.",
   },
 ];
@@ -31,9 +48,9 @@ export function ProjectsReviewStep(props: CollectionProps) {
   return (
     <ReviewStepShell
       number={3}
-      title="Projetos & Realizações (Métricas & Autoria Estrita)"
-      description="Fatos quantificados e rastreabilidade de indicadores numéricos"
-      rule="Valide números e autoria. Métricas e reduções percentuais precisam de evidência documental; não devem ser inferidas ou infladas."
+      title="Projetos & Realizações"
+      description="Fatos quantificados, links e autoria"
+      rule="Valide números e autoria. Métricas precisam de evidência no documento e não devem ser inferidas ou infladas."
     >
       <Button
         disabled
@@ -48,11 +65,11 @@ export function ProjectsReviewStep(props: CollectionProps) {
       <ReviewDraftCollection
         {...props}
         title="Fatos e métricas"
-        itemLabel="Adicionar realização ao rascunho"
-        emptyText="Nenhum fato extraído. As realizações, métricas e referências ao OCR aparecerão aqui após o processamento."
+        itemLabel="Adicionar realização"
+        emptyText="Nenhum fato extraído. As realizações, métricas e referências aparecem aqui depois do processamento."
         fields={fields}
-        titleKey="title"
-        subtitleKey="context"
+        summarize={summarizeProject}
+        icon={FolderBookmark}
         evidence
       />
     </ReviewStepShell>

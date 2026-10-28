@@ -25,6 +25,9 @@ export const apiQueryKeys = {
     pages: (runId: string) =>
       ["base-review", "extracted-pages", runId] as const,
   },
+  anonymousSession: {
+    current: ["anonymous-session", "current"] as const,
+  },
   aiPreferences: {
     current: ["ai-preferences", "current"] as const,
   },
