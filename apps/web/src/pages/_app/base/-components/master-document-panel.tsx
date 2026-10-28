@@ -1,5 +1,7 @@
+import type { ReviewStepId } from "@@types/review-model";
 import { Switch } from "@animate/base/switch";
 import { Button } from "@animate/buttons/button";
+import type { FactRecord } from "@queries/base-review";
 import {
   ExternalLink,
   FileText,
@@ -9,21 +11,31 @@ import {
 } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useDocumentViewerStore } from "@stores/document-viewer-store";
-import { type ComponentProps, useEffect, useState } from "react";
+import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import { DocumentZoomControls } from "./document-zoom-controls";
+import { EvidenceBoundingBoxes } from "./evidence-bounding-boxes";
+import { buildEvidenceFacts } from "./evidence-facts";
 import { ExtractedTextPanel } from "./extracted-text-panel";
+import { PdfEvidenceViewer } from "./pdf-evidence-viewer";
 
 export function MasterDocumentPanel({
   onSelectFile,
   extractedPages,
   extractionLoading,
+  records,
+  activeStep,
+  focusedRecordKeys,
 }: {
   onSelectFile: () => void;
   extractedPages: ComponentProps<typeof ExtractedTextPanel>["pages"];
   extractionLoading: boolean;
+  records: FactRecord[];
+  activeStep: ReviewStepId;
+  focusedRecordKeys: Set<string>;
 }) {
   const file = useBaseCvStore((state) => state.file);
-  const { zoom, setZoom } = useDocumentViewerStore();
+  const { zoom, setZoom, boundingBoxesEnabled, setBoundingBoxesEnabled } =
+    useDocumentViewerStore();
   const isPdf = Boolean(file && /\.pdf$/i.test(file.name));
   const [preview, setPreview] = useState<{ file: File; url: string } | null>(
     null,
@@ -41,6 +53,10 @@ export function MasterDocumentPanel({
 
   // Never display the previous document while a replacement URL is created.
   const url = preview?.file === file ? preview?.url : undefined;
+  const evidenceFacts = useMemo(
+    () => buildEvidenceFacts(records, extractedPages),
+    [records, extractedPages],
+  );
 
   return (
     <section
@@ -75,12 +91,17 @@ export function MasterDocumentPanel({
         </label>
         <Switch
           id="document-ocr-boxes"
-          checked={false}
-          disabled
+          checked={boundingBoxesEnabled}
+          onCheckedChange={setBoundingBoxesEnabled}
           aria-describedby="document-ocr-status"
           className="h-6 w-11 px-0.5 **:data-[slot=switch-thumb]:size-5"
         />
       </div>
+      <p id="document-ocr-status" className="sr-only">
+        {boundingBoxesEnabled
+          ? "Exibindo os pontos de onde a IA extraiu cada fato do documento."
+          : "Exibindo o documento original sem marcações."}
+      </p>
 
       <div className="flex h-130 max-h-195 min-w-0 flex-col overflow-hidden rounded-xl bg-card shadow-md sm:h-195">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-6 pb-4 text-xs font-semibold leading-4 tracking-[0.3px] text-on-surface-variant sm:px-6">
@@ -88,10 +109,26 @@ export function MasterDocumentPanel({
             {file?.name ?? "Nenhum documento selecionado"}
           </span>
           <span className="shrink-0">
-            {file ? "Documento original • Prévia local" : "PDF original"}
+            {boundingBoxesEnabled
+              ? `Pontos de extração da IA • ${evidenceFacts.length} localizado${evidenceFacts.length === 1 ? "" : "s"}`
+              : file
+                ? "Documento original • Prévia local"
+                : "PDF original"}
           </span>
         </div>
-        {url ? (
+        {boundingBoxesEnabled ? (
+          url && isPdf && file ? (
+            <PdfEvidenceViewer
+              file={file}
+              facts={evidenceFacts}
+              zoom={zoom}
+              activeStep={activeStep}
+              focusedRecordKeys={focusedRecordKeys}
+            />
+          ) : (
+            <EvidenceBoundingBoxes records={records} activeStep={activeStep} />
+          )
+        ) : url ? (
           <iframe
             key={`${url}-${zoom}`}
             src={`${url}#toolbar=0&navpanes=0&${zoom === "fit" ? "view=Fit" : `zoom=${zoom}`}`}

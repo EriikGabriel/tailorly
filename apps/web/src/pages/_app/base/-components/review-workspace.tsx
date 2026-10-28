@@ -27,6 +27,7 @@ import { IdentityReviewStep } from "../-steps/identity-review-step";
 import { PreferencesReviewStep } from "../-steps/preferences-review-step";
 import { ProjectsReviewStep } from "../-steps/projects-review-step";
 import { SkillsReviewStep } from "../-steps/skills-review-step";
+import { STEP_CATEGORIES } from "./evidence-style";
 import { MasterDocumentPanel } from "./master-document-panel";
 import { ReviewCompletionCard } from "./review-completion-card";
 import { ReviewStepper } from "./review-stepper";
@@ -43,7 +44,16 @@ export function ReviewWorkspace({
     draft,
     setIdentity,
     setCollection,
+    expandedRecords,
   } = useReviewDraftStore();
+  // O card de uma entrada específica (ex.: "Experiência 2") aberto no
+  // formulário à direita é o que define qual bounding box fica em foco no
+  // documento à esquerda — não a etapa inteira.
+  const focusedRecordKeys = new Set(
+    STEP_CATEGORIES[activeStep]
+      .map((category) => expandedRecords[category as DraftCollection])
+      .filter((id): id is string => Boolean(id)),
+  );
   const baseVersionId = useBaseCvStore((state) => state.baseVersionId);
   const review = useBaseReview(baseVersionId ?? undefined);
   const createRecord = useCreateFactRecord(baseVersionId ?? "");
@@ -300,6 +310,9 @@ export function ReviewWorkspace({
           onSelectFile={onSelectFile}
           extractedPages={review.pages.data ?? []}
           extractionLoading={review.pages.isLoading}
+          records={review.records.data ?? []}
+          activeStep={activeStep}
+          focusedRecordKeys={focusedRecordKeys}
         />
         <div className="min-w-0 space-y-4">
           <section
