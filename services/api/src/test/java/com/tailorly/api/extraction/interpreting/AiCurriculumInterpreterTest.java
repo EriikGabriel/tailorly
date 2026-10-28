@@ -93,6 +93,27 @@ class AiCurriculumInterpreterTest {
   }
 
   @Test
+  void acceptsTheVolunteeringCategoryWithItsOwnFields() throws IOException {
+    String content = """
+        {"facts": [
+          {"category": "volunteering", "fieldKey": "organization", "extractedValue": "FinTech Solutions Brasil",
+           "pageNumber": 1, "sourceExcerpt": "FinTech Solutions Brasil"},
+          {"category": "volunteering", "fieldKey": "0:role", "extractedValue": "Tech Lead",
+           "pageNumber": 1, "sourceExcerpt": "Tech Lead"},
+          {"category": "volunteering", "fieldKey": "company", "extractedValue": "FinTech Solutions Brasil",
+           "pageNumber": 1, "sourceExcerpt": "FinTech Solutions Brasil"}
+        ]}
+        """;
+
+    List<FactProposal> proposals = interpret(content);
+
+    // "company" não existe em voluntariado (o campo é "organization"), então é descartado.
+    assertEquals(List.of("0:organization", "0:role"),
+        proposals.stream().map(FactProposal::fieldKey).toList());
+    assertEquals("volunteering", proposals.get(0).category());
+  }
+
+  @Test
   void failsWhenNoFactHasVerifiableEvidence() throws IOException {
     String content = """
         {"facts": [

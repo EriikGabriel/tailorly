@@ -1,4 +1,5 @@
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
+import { AnonymousMigrationDialog } from "@components/anonymous-migration-dialog";
 import { Header } from "@components/header";
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -34,6 +35,7 @@ function RootComponent() {
       <HeadContent />
       <Header />
       <Outlet />
+      <AnonymousMigrationDialog />
     </TooltipPrimitive.Provider>
   );
 }

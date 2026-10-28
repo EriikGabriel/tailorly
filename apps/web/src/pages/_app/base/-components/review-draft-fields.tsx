@@ -1,5 +1,60 @@
 import type { DraftFields, ReviewField } from "@@types/review-model";
+import { AutoTextarea } from "@components/fields/auto-textarea";
+import { FieldFrame } from "@components/fields/field-frame";
+import { IconInput } from "@components/fields/icon-input";
+import { MonthYearPicker } from "@components/fields/month-year-picker";
+import { PeriodField } from "@components/fields/period-field";
+import { ProficiencyField } from "@components/fields/proficiency-field";
+import { SelectField } from "@components/fields/select-field";
+import {
+  EmailInput,
+  LinkInput,
+  PhoneInput,
+} from "@components/fields/typed-inputs";
 import { useId } from "react";
+
+function renderControl(
+  field: ReviewField,
+  id: string,
+  value: string,
+  set: (value: string) => void,
+) {
+  const describedBy = field.hint ? `${id}-hint` : undefined;
+  const common = { id, value, onChange: set, describedBy };
+
+  switch (field.type) {
+    case "email":
+      return <EmailInput {...common} />;
+    case "tel":
+      return <PhoneInput {...common} />;
+    case "url":
+      return <LinkInput {...common} placeholder={field.placeholder} />;
+    case "month":
+      return <MonthYearPicker {...common} label={field.label} />;
+    case "textarea":
+      return <AutoTextarea {...common} maxLength={field.maxLength} />;
+    case "select":
+      return (
+        <SelectField
+          {...common}
+          options={field.options ?? []}
+          icon={field.icon}
+          placeholder={field.placeholder}
+        />
+      );
+    case "proficiency":
+      return <ProficiencyField {...common} label={field.label} />;
+    default:
+      return (
+        <IconInput
+          {...common}
+          icon={field.icon}
+          placeholder={field.placeholder}
+          maxLength={field.maxLength}
+        />
+      );
+  }
+}
 
 export function ReviewDraftFields({
   fields,
@@ -11,46 +66,36 @@ export function ReviewDraftFields({
   onChange: (values: DraftFields) => void;
 }) {
   const id = useId();
+
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {fields.map((field) => {
-        const inputId = `${id}-${field.key}`;
-        const props = {
-          id: inputId,
-          value: values[field.key] ?? "",
-          onChange: (
-            event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-          ) => onChange({ ...values, [field.key]: event.target.value }),
-          "aria-describedby": field.hint ? `${inputId}-hint` : undefined,
-          className:
-            "w-full min-w-0 rounded-md border border-transparent bg-transparent px-1 py-1 text-base font-semibold leading-6 text-primary-950 outline-none placeholder:font-normal placeholder:text-outline focus:border-outline-variant focus:bg-card focus:ring-2 focus:ring-ring/20",
-          placeholder: "Não informado",
-        };
+        const fieldId = `${id}-${field.key}`;
+
+        if (field.type === "period" && field.period) {
+          return (
+            <PeriodField
+              key={field.key}
+              id={fieldId}
+              period={field.period}
+              values={values}
+              onChange={onChange}
+            />
+          );
+        }
+
         return (
-          <div
+          <FieldFrame
             key={field.key}
-            className={`min-w-0 space-y-0.5 rounded-xl bg-surface-container-low p-2 ${field.wide ? "sm:col-span-2" : ""}`}
+            id={fieldId}
+            label={field.label}
+            hint={field.hint}
+            wide={field.wide}
           >
-            <label
-              htmlFor={inputId}
-              className="block text-xs font-semibold leading-4 tracking-[0.6px] uppercase"
-            >
-              {field.label}
-            </label>
-            {field.type === "textarea" ? (
-              <textarea {...props} rows={3} />
-            ) : (
-              <input {...props} type={field.type ?? "text"} />
+            {renderControl(field, fieldId, values[field.key] ?? "", (next) =>
+              onChange({ ...values, [field.key]: next }),
             )}
-            {field.hint && (
-              <p
-                id={`${inputId}-hint`}
-                className="text-body-sm text-muted-foreground"
-              >
-                {field.hint}
-              </p>
-            )}
-          </div>
+          </FieldFrame>
         );
       })}
     </div>

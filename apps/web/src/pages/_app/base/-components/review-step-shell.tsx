@@ -38,11 +38,11 @@ export function ReviewStepShell({
         </span>
       </header>
       <p
-        className={`flex items-start gap-1 rounded-xl border-l-4 bg-surface-container-low py-2 pr-2 pl-3 text-body-sm ${number === 3 ? "border-on-tertiary-container" : "border-primary-950"}`}
+        className={`flex items-start gap-1.5 rounded-lg border-l-4 bg-surface-container-low py-1.5 pr-2 pl-3 text-xs leading-5 text-on-surface-variant ${number === 3 ? "border-on-tertiary-container" : "border-primary-950"}`}
       >
         <ShieldCheck
           aria-hidden="true"
-          className="mt-0.5 size-4 shrink-0 text-primary-950"
+          className="mt-0.5 size-3.5 shrink-0 text-primary-950"
         />
         <span>
           <strong className="font-bold text-primary-950">

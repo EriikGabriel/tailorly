@@ -5,8 +5,8 @@ import {
   extractionRunFindByVersion,
 } from "@lib/api/generated/tailorly";
 import { apiQueryKeys } from "@lib/api/query-keys";
-import { useAuthStore } from "@stores/auth-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useApiToken } from "./api-credential";
 
 export type FactEvidence = {
   id: string;
@@ -70,8 +70,11 @@ function useBaseReviewMutation<TInput, TOutput>(
   path: (input: TInput) => string,
   method: "POST" | "PATCH",
   requestBody: (input: TInput) => unknown = (input) => input,
+  // Quem envia várias respostas seguidas invalida uma única vez ao final, para não
+  // refazer as consultas a cada resposta (e não estourar o limite de taxa da sessão).
+  invalidateOnSuccess = true,
 ) {
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const accessToken = useApiToken();
   const queryClient = useQueryClient();
 
   return useMutation<TOutput, Error, TInput>({
@@ -83,6 +86,7 @@ function useBaseReviewMutation<TInput, TOutput>(
         body: JSON.stringify(requestBody(input)),
       }),
     onSuccess: () => {
+      if (!invalidateOnSuccess) return;
       queryClient.invalidateQueries({
         queryKey: apiQueryKeys.baseReview.records(versionId),
       });
@@ -93,8 +97,21 @@ function useBaseReviewMutation<TInput, TOutput>(
   });
 }
 
+export function useInvalidateBaseReview(versionId: string) {
+  const queryClient = useQueryClient();
+
+  return () => {
+    queryClient.invalidateQueries({
+      queryKey: apiQueryKeys.baseReview.records(versionId),
+    });
+    queryClient.invalidateQueries({
+      queryKey: apiQueryKeys.baseReview.issues(versionId),
+    });
+  };
+}
+
 export function useBaseReview(versionId?: string) {
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const accessToken = useApiToken();
   const runs = useQuery({
     queryKey: apiQueryKeys.extractionRuns.byVersion(versionId ?? ""),
     queryFn: () =>
@@ -198,6 +215,7 @@ export function useAnswerReviewIssue(versionId: string) {
     ({ id }) => `/v1/review-issues/${encodeURIComponent(id)}/answer`,
     "PATCH",
     ({ answer }) => answer,
+    false,
   );
 }
 
@@ -218,7 +236,7 @@ export function useUpdateFactReviewState(versionId: string) {
 }
 
 export function useApproveGroundTruth(versionId: string) {
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const accessToken = useApiToken();
   const queryClient = useQueryClient();
 
   return useMutation<GroundTruthSnapshot, Error, void>({
@@ -233,6 +251,9 @@ export function useApproveGroundTruth(versionId: string) {
       });
       queryClient.invalidateQueries({
         queryKey: apiQueryKeys.baseReview.issues(versionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: apiQueryKeys.anonymousSession.current,
       });
     },
   });
@@ -251,7 +272,7 @@ export function useCreateFactEvidence(versionId: string) {
 }
 
 export function useExtractedPageText(pageId?: string) {
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const accessToken = useApiToken();
 
   return useQuery({
     queryKey: ["extracted-page-text", pageId ?? ""],

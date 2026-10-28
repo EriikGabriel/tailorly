@@ -1,16 +1,31 @@
-import type { CollectionProps, ReviewField } from "@@types/review-model";
-import { Button } from "@animate/buttons/button";
-import { AutoHeight } from "@animate/primitives/effects/auto-height";
+import type {
+  CollectionProps,
+  DraftFields,
+  ReviewField,
+} from "@@types/review-model";
 import {
-  ChevronDown,
+  Accordion,
+  AccordionItem,
+  AccordionPanel,
+  AccordionTrigger,
+} from "@animate/base/accordion";
+import { Button } from "@animate/buttons/button";
+import {
   FileSearch,
+  type IconProps,
   Plus,
   Trash2,
 } from "@react-zero-ui/icon-sprite";
 import { useReviewDraftStore } from "@stores/review-draft-store";
-import { useReducedMotion } from "motion/react";
-import { useId, useRef } from "react";
+import { type ComponentType, useId, useRef } from "react";
+import type { BadgeTone, RecordSummary } from "./record-summaries";
 import { ReviewDraftFields } from "./review-draft-fields";
+
+const badgeTone: Record<BadgeTone, string> = {
+  success: "bg-tertiary-container text-on-tertiary-container",
+  info: "bg-secondary-container text-on-secondary-container",
+  neutral: "border border-outline-variant/50 bg-card text-on-surface-variant",
+};
 
 export function ReviewDraftCollection({
   collectionKey,
@@ -20,16 +35,16 @@ export function ReviewDraftCollection({
   itemLabel,
   emptyText,
   fields,
-  titleKey,
-  subtitleKey,
+  summarize,
+  icon: Icon,
   evidence = false,
 }: CollectionProps & {
   title: string;
   itemLabel: string;
   emptyText: string;
   fields: readonly ReviewField[];
-  titleKey: string;
-  subtitleKey?: string;
+  summarize: (values: DraftFields) => RecordSummary;
+  icon: ComponentType<IconProps>;
   evidence?: boolean;
 }) {
   const { sourceId, expandedRecords, setExpandedRecord } =
@@ -39,75 +54,95 @@ export function ReviewDraftCollection({
     setExpandedRecord(sourceId, collectionKey, id);
   const id = useId();
   const addRef = useRef<HTMLButtonElement>(null);
-  const reducedMotion = useReducedMotion();
+
+  function addRecord() {
+    const record = { id: crypto.randomUUID(), fields: {} };
+    onChange([...records, record]);
+    setExpandedId(record.id);
+  }
 
   return (
     <section aria-labelledby={`${id}-heading`} className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3
           id={`${id}-heading`}
-          className="text-xs font-semibold tracking-[0.6px] uppercase"
+          className="flex items-center gap-2 text-sm font-semibold text-primary-950"
         >
           {title}
+          <span className="rounded-full bg-surface-container px-2 py-0.5 text-xs font-semibold text-on-surface-variant tabular-nums">
+            {records.length}
+          </span>
         </h3>
         <Button
           ref={addRef}
           variant="accent"
           size="sm"
           className="h-auto whitespace-normal rounded-lg text-xs"
-          onClick={() => {
-            const record = { id: crypto.randomUUID(), fields: {} };
-            onChange([...records, record]);
-            setExpandedId(record.id);
-          }}
+          onClick={addRecord}
         >
           <Plus aria-hidden="true" className="size-3.5" />
           {itemLabel}
         </Button>
       </div>
-      <AutoHeight
-        deps={[records.length, expandedId]}
-        transition={reducedMotion ? { duration: 0 } : undefined}
-      >
-        <div className="space-y-3 p-0.5">
-          {records.length === 0 && (
-            <p className="rounded-xl bg-surface-container-low p-4 text-body-sm">
-              {emptyText}
-            </p>
-          )}
+
+      {records.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-outline-variant/60 bg-surface-container-low px-4 py-6 text-center">
+          <span className="flex size-10 items-center justify-center rounded-full bg-card text-secondary-700">
+            <Icon aria-hidden="true" className="size-5" />
+          </span>
+          <p className="max-w-md text-sm text-on-surface-variant">
+            {emptyText}
+          </p>
+        </div>
+      ) : (
+        <Accordion
+          value={expandedId ? [expandedId] : []}
+          onValueChange={(next: string[]) =>
+            setExpandedId(next.find((item) => item !== expandedId) ?? null)
+          }
+          className="space-y-2.5"
+        >
           {records.map((record) => {
-            const expanded = expandedId === record.id;
+            const summary = summarize(record.fields);
             return (
-              <article
+              <AccordionItem
                 key={record.id}
-                className="space-y-3 rounded-xl bg-surface-container-low p-4"
+                value={record.id}
+                className="overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container-low transition-shadow data-open:shadow-sm"
               >
-                <button
-                  type="button"
-                  aria-expanded={expanded}
-                  aria-controls={`${id}-${record.id}`}
-                  onClick={() => setExpandedId(expanded ? null : record.id)}
-                  className="flex w-full items-start justify-between gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <span className="min-w-0">
-                    <span className="block wrap-break-word text-title-md text-primary-950">
-                      {record.fields[titleKey] || "Novo registro"}
+                <AccordionTrigger className="items-center gap-3 rounded-none px-4 py-3 no-underline hover:bg-surface-container hover:no-underline">
+                  <span className="flex min-w-0 flex-1 items-center gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-secondary-700 shadow-xs">
+                      <Icon aria-hidden="true" className="size-5" />
                     </span>
-                    {subtitleKey && record.fields[subtitleKey] && (
-                      <span className="block wrap-break-word text-body-sm">
-                        {record.fields[subtitleKey]}
+                    <span className="min-w-0 space-y-0.5">
+                      <span className="block wrap-break-word text-sm font-semibold text-primary-950">
+                        {summary.title}
                       </span>
-                    )}
-                    <span className="mt-1 inline-block rounded-full bg-secondary-container px-2 py-0.5 text-xs font-semibold text-on-secondary-container">
-                      Rascunho • não validado
+                      {summary.subtitle && (
+                        <span className="block wrap-break-word text-sm text-on-surface-variant">
+                          {summary.subtitle}
+                        </span>
+                      )}
+                      {summary.meta && (
+                        <span className="block text-xs text-on-surface-variant">
+                          {summary.meta}
+                        </span>
+                      )}
                     </span>
                   </span>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className={`mt-1 size-4 shrink-0 transition-transform motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
-                  />
-                </button>
-                <div id={`${id}-${record.id}`} hidden={!expanded}>
+                  <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                    {summary.badges.map((badge) => (
+                      <span
+                        key={badge.label}
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeTone[badge.tone]}`}
+                      >
+                        {badge.label}
+                      </span>
+                    ))}
+                  </span>
+                </AccordionTrigger>
+                <AccordionPanel className="space-y-3 border-t border-outline-variant/30 bg-card/60 px-4 pt-4 pb-4">
                   <ReviewDraftFields
                     fields={fields}
                     values={record.fields}
@@ -121,7 +156,7 @@ export function ReviewDraftCollection({
                       )
                     }
                   />
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/30 pt-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/30 pt-3">
                     {evidence && (
                       <Button
                         disabled
@@ -150,12 +185,12 @@ export function ReviewDraftCollection({
                       Remover rascunho
                     </Button>
                   </div>
-                </div>
-              </article>
+                </AccordionPanel>
+              </AccordionItem>
             );
           })}
-        </div>
-      </AutoHeight>
+        </Accordion>
+      )}
     </section>
   );
 }

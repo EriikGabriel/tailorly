@@ -3,14 +3,23 @@ import { useDocumentViewerStore } from "./document-viewer-store";
 import { useQuickReviewStore } from "./quick-review-store";
 import { useReviewDraftStore } from "./review-draft-store";
 
+export type OwnerKind = "account" | "anonymous";
+
 interface BaseCvState {
   file: File | null;
   selectionId: string | null;
   uploadedSelectionId: string | null;
   baseVersionId: string | null;
+  /** De quem é o owner da versão enviada; define qual credencial a acessa. */
+  ownerKind: OwnerKind | null;
   error: string | null;
   selectFile: (file: File | null) => boolean;
-  setUploadedDocument: (file: File, baseVersionId?: string) => void;
+  setUploadedDocument: (
+    file: File,
+    baseVersionId?: string,
+    ownerKind?: OwnerKind,
+  ) => void;
+  setOwnerKind: (ownerKind: OwnerKind | null) => void;
   setError: (error: string | null) => void;
   reset: () => void;
 }
@@ -22,6 +31,7 @@ export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
   selectionId: null,
   uploadedSelectionId: null,
   baseVersionId: null,
+  ownerKind: null,
   error: null,
   selectFile: (file) => {
     if (file && (!/\.pdf$/i.test(file.name) || file.size === 0)) {
@@ -49,17 +59,20 @@ export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
       selectionId,
       uploadedSelectionId: null,
       baseVersionId: null,
+      ownerKind: null,
       error: null,
     });
     return true;
   },
-  setUploadedDocument: (file, baseVersionId) => {
+  setUploadedDocument: (file, baseVersionId, ownerKind) => {
     if (get().file !== file) return;
     set({
       uploadedSelectionId: get().selectionId,
       baseVersionId: baseVersionId ?? null,
+      ownerKind: ownerKind ?? null,
     });
   },
+  setOwnerKind: (ownerKind) => set({ ownerKind }),
   setError: (error) => set({ error }),
   reset: () => {
     useReviewDraftStore.getState().resetForSource(null);
@@ -70,6 +83,7 @@ export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
       selectionId: null,
       uploadedSelectionId: null,
       baseVersionId: null,
+      ownerKind: null,
       error: null,
     });
   },

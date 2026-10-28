@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component;
  * Único {@link CurriculumInterpreter} registrado: resolve a preferência de IA do owner (com
  * fallback para a configuração global do servidor, veja {@link AiPreferencesService}) e
  * encaminha para regras determinísticas ({@code rules}) ou para {@link AiCurriculumInterpreter}
- * ({@code remote}, {@code remote-with-ollama-fallback}, {@code ollama-only}).
+ * ({@code remote}, {@code remote-with-ollama-fallback}, {@code ollama-only}). O resultado de
+ * qualquer caminho passa por {@link FactValueNormalizer}.
  */
 @Component
 @RequiredArgsConstructor
@@ -25,9 +26,11 @@ public class RoutingCurriculumInterpreter implements CurriculumInterpreter {
   public List<FactProposal> interpret(UUID ownerId, List<ExtractedTextPage> pages) {
     EffectiveAiSettings settings = aiPreferencesService.resolveEffectiveSettings(ownerId);
 
-    if ("rules".equals(settings.provider()))
-      return ruleBasedInterpreter.interpret(pages);
+    List<FactProposal> proposals = "rules".equals(settings.provider())
+        ? ruleBasedInterpreter.interpret(pages)
+        : aiInterpreter.interpret(pages, settings);
 
-    return aiInterpreter.interpret(pages, settings);
+    // Qualquer provedor entrega valores nos formatos que a revisão reconhece e edita.
+    return FactValueNormalizer.normalize(proposals);
   }
 }

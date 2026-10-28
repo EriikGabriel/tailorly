@@ -3,6 +3,7 @@ import type { ReviewAnswer, ReviewCategory, ReviewIssue } from "@/types/review";
 export const reviewCategories = {
   identity: "Identificação e contato",
   employment: "Experiência profissional",
+  volunteering: "Atividades voluntárias",
   projects: "Projetos e resultados",
   education: "Formação e certificações",
   skills: "Competências",

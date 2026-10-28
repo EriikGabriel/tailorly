@@ -80,6 +80,7 @@ export function ReviewWorkspace({
       if (
         ![
           "experience",
+          "volunteering",
           "projects",
           "degrees",
           "certifications",
@@ -112,9 +113,7 @@ export function ReviewWorkspace({
 
   async function saveDraft() {
     if (!baseVersionId) {
-      setSaveError(
-        "Envie o Currículo Base com uma conta autenticada para salvar os fatos.",
-      );
+      setSaveError("Envie o Currículo Base antes de salvar os fatos.");
       return false;
     }
     if (review.records.isLoading) return false;
@@ -130,6 +129,7 @@ export function ReviewWorkspace({
       }
       const collections: DraftCollection[] = [
         "experience",
+        "volunteering",
         "projects",
         "degrees",
         "certifications",
@@ -259,7 +259,12 @@ export function ReviewWorkspace({
           />
         );
       case "experience":
-        return <ExperienceReviewStep {...collection("experience")} />;
+        return (
+          <ExperienceReviewStep
+            experience={collection("experience")}
+            volunteering={collection("volunteering")}
+          />
+        );
       case "projects":
         return <ProjectsReviewStep {...collection("projects")} />;
       case "education":
