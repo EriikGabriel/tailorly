@@ -2,6 +2,7 @@ import {
   ANONYMOUS_TOKEN_PREFIX,
   useAnonymousSessionStore,
 } from "../../stores/anonymous-session-store";
+import { useAuthStore } from "../../stores/auth-store";
 
 export interface ApiErrorResponse {
   timestamp: string;
@@ -38,7 +39,7 @@ export async function apiRequest<T>(
   const requestHeaders = new Headers(headers);
   requestHeaders.set("Accept", "application/json");
   requestHeaders.set("Accept-Language", language);
-  if (accessToken) requestHeaders.set("Authorization", `Bearer ${accessToken}`);
+  if (accessToken) requestHeaders.set("Authorization", "Bearer " + accessToken);
 
   const response = await fetch(path, { ...init, headers: requestHeaders });
   if (!response.ok) {
@@ -57,6 +58,16 @@ export async function apiRequest<T>(
       if (session?.token === accessToken) {
         useAnonymousSessionStore.getState().clear();
       }
+    }
+    // Idem para o JWT da conta (expirou ou a conta deixou de existir): a interface deixa de se
+    // mostrar logada, em vez de repetir chamadas que o servidor recusa.
+    if (
+      response.status === 401 &&
+      accessToken &&
+      !accessToken.startsWith(ANONYMOUS_TOKEN_PREFIX) &&
+      useAuthStore.getState().accessToken === accessToken
+    ) {
+      useAuthStore.getState().clearSession();
     }
     throw new ApiClientError(response.status, error);
   }

@@ -3,14 +3,21 @@ import {
   Highlight,
   HighlightItem,
 } from "@animate/primitives/effects/highlight";
+import { CircleCheck } from "@react-zero-ui/icon-sprite";
 import { useReducedMotion } from "motion/react";
+import type { StepPending } from "@/utils/review-step-map";
 
 export function ReviewStepper({
   activeStep,
   onStepChange,
+  pending,
+  clear,
 }: {
   activeStep: ReviewStepId;
   onStepChange: (step: ReviewStepId) => void;
+  pending?: Record<ReviewStepId, StepPending>;
+  /** Etapas com fatos e nenhuma pendência aberta. */
+  clear?: Record<ReviewStepId, boolean>;
 }) {
   const reducedMotion = useReducedMotion();
 
@@ -37,6 +44,7 @@ export function ReviewStepper({
           {steps.map((step, index) => {
             const active = step.id === activeStep;
             const number = String(index + 1).padStart(2, "0");
+            const stepPending = pending?.[step.id];
 
             return (
               <li
@@ -81,9 +89,33 @@ export function ReviewStepper({
                             className="size-2 shrink-0 rounded-full bg-secondary-fixed"
                           />
                         )}
-                        {step.id === "preferences"
-                          ? "Ajustes editoriais"
-                          : "Aguardando revisão"}
+                        {stepPending && stepPending.total > 0 ? (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${active ? "bg-card text-primary-950" : "bg-amber-200/80 text-amber-900"}`}
+                          >
+                            {stepPending.total}{" "}
+                            {stepPending.total === 1
+                              ? "pendência"
+                              : "pendências"}
+                            {stepPending.relevant > 0
+                              ? ` · ${stepPending.relevant} p/ a vaga`
+                              : ""}
+                          </span>
+                        ) : clear?.[step.id] ? (
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${active ? "bg-card text-green-700" : "bg-green-100 text-green-800"}`}
+                          >
+                            <CircleCheck
+                              aria-hidden="true"
+                              className="size-3.5"
+                            />
+                            Sem pendências
+                          </span>
+                        ) : step.id === "preferences" ? (
+                          "Ajustes editoriais"
+                        ) : (
+                          "Aguardando revisão"
+                        )}
                       </span>
                     </span>
                   </button>

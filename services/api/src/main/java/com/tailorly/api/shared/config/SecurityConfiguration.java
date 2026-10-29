@@ -113,8 +113,10 @@ public class SecurityConfiguration {
 
   /**
    * Rotas de dados do Currículo Base que uma sessão anônima pode usar, restritas ao próprio
-   * owner por {@code OwnerAccessService}. Todo o resto exige uma conta: usuários, owners, objetos
-   * de storage, preferências de IA, {@code /v1/me} e a migração para conta.
+   * owner por {@code OwnerAccessService}, mais a leitura de vagas por link (sem dados de owner; o
+   * limite de requisições da sessão e a validação anti-SSRF de {@code JobUrlPolicy} se aplicam).
+   * Todo o resto exige uma conta: usuários, owners, objetos de storage, preferências de IA,
+   * {@code /v1/me} e a migração para conta.
    */
   private static final String[] ANONYMOUS_ALLOWED = {
       "/v1/base-documents/upload", "/v1/base-documents/{id}", "/v1/base-documents/owner/{ownerId}",
@@ -128,7 +130,10 @@ public class SecurityConfiguration {
       "/v1/fact-evidence", "/v1/fact-evidence/{id}", "/v1/fact-evidence/fact/{factId}",
       "/v1/fact-evidence/{id}/locator",
       "/v1/review-issues/version/{versionId}", "/v1/review-issues/{id}/answer",
-      "/v1/gt-snapshots/{id}", "/v1/gt-snapshots/approve-version/{versionId}"
+      "/v1/gt-snapshots/{id}", "/v1/gt-snapshots/approve-version/{versionId}",
+      "/v1/job-postings", "/v1/job-postings/extract", "/v1/job-postings/owner/{ownerId}",
+      "/v1/job-postings/{id}", "/v1/job-postings/{id}/versions/{versionNumber}",
+      "/v1/job-postings/{id}/versions/{versionNumber}/analysis"
   };
 
   /** Autoriza qualquer autenticação, exceto a de uma sessão anônima. */

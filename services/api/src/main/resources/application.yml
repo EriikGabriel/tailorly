@@ -73,6 +73,7 @@ tailorly:
     max-uploads: ${TAILORLY_ANONYMOUS_MAX_UPLOADS:3}
     max-extractions: ${TAILORLY_ANONYMOUS_MAX_EXTRACTIONS:3}
     max-generations: ${TAILORLY_ANONYMOUS_MAX_GENERATIONS:3}
+    max-job-postings: ${TAILORLY_ANONYMOUS_MAX_JOB_POSTINGS:10}
     requests-per-minute: ${TAILORLY_ANONYMOUS_REQUESTS_PER_MINUTE:300}
     sessions-per-ip-per-hour: ${TAILORLY_ANONYMOUS_SESSIONS_PER_IP_PER_HOUR:10}
     max-active-sessions: ${TAILORLY_ANONYMOUS_MAX_ACTIVE_SESSIONS:1000}

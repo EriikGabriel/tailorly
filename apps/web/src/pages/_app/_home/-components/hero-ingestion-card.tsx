@@ -5,7 +5,12 @@ import {
   TabsPanels,
   TabsTab,
 } from "@animate/base/tabs";
+import {
+  JobUrlFeedback,
+  useSettledUrlCheck,
+} from "@components/job-url-feedback";
 import { RippleButton } from "@components/ui/animate/buttons/ripple";
+import { useJobTarget } from "@hooks/use-job-target";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -16,9 +21,8 @@ import {
   ShieldCheck,
   Zap,
 } from "@react-zero-ui/icon-sprite";
-import { useBaseCvStore } from "@stores/base-cv-store";
 import { type JobInputMode, useJobDraftStore } from "@stores/job-draft-store";
-import { useQuickReviewStore } from "@stores/quick-review-store";
+import { MAX_JOB_URL_LENGTH } from "@/utils/job-url";
 import { BaseCvPicker } from "./base-cv-picker";
 import { ValidateDialog } from "./validate-dialog";
 
@@ -33,18 +37,11 @@ const quickTests = [
 ] as const;
 
 export function HeroIngestionCard() {
-  const { mode, jobUrl, jobText, setMode, setJobUrl, setJobText, saveDraft } =
+  const { mode, jobUrl, jobText, setMode, setJobUrl, setJobText } =
     useJobDraftStore();
-  const baseCv = useBaseCvStore((state) => state.file);
-  const setReviewOpen = useQuickReviewStore((state) => state.setOpen);
-  const hasJob =
-    mode === "url" ? jobUrl.trim().length > 0 : jobText.trim().length > 0;
-
-  function openReview() {
-    if (!hasJob || !baseCv) return;
-    saveDraft();
-    setReviewOpen(true);
-  }
+  const target = useJobTarget();
+  const shownUrlCheck = useSettledUrlCheck(target.urlCheck);
+  const urlInvalid = shownUrlCheck.status === "invalid";
 
   async function pasteUrl() {
     try {
@@ -109,13 +106,24 @@ export function HeroIngestionCard() {
           <div className="mt-3 pb-4">
             <TabsPanels className="-mx-1">
               <TabsPanel value="url" className="p-1">
-                <div className="relative flex min-h-12.75 items-center rounded-lg bg-surface-container-low shadow-xs focus-within:ring-2 focus-within:ring-primary-300">
+                <div
+                  className={`relative flex min-h-12.75 items-center rounded-lg bg-surface-container-low shadow-xs focus-within:ring-2 ${
+                    urlInvalid
+                      ? "ring-2 ring-error focus-within:ring-error"
+                      : "focus-within:ring-primary-300"
+                  }`}
+                >
                   <Search className="pointer-events-none absolute left-4.5 size-4.75 text-secondary-700" />
                   <input
                     type="url"
                     aria-label="Link da vaga"
-                    placeholder="Cole o link da vaga (LinkedIn, Gupy, Greenhouse, Lever...)"
+                    placeholder="Cole o link da vaga (Gupy, Greenhouse, Lever...)"
                     value={jobUrl}
+                    maxLength={MAX_JOB_URL_LENGTH + 1}
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-invalid={urlInvalid}
+                    aria-describedby="home-job-url-feedback"
                     onChange={(event) => setJobUrl(event.target.value)}
                     className="min-h-12.75 w-full rounded-lg bg-transparent pl-12 pr-21 text-[15px] text-on-surface outline-none placeholder:text-on-surface-variant/60"
                   />
@@ -128,7 +136,12 @@ export function HeroIngestionCard() {
                     Colar
                   </button>
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-1 text-xs tracking-[0.3px]">
+                <JobUrlFeedback
+                  id="home-job-url-feedback"
+                  check={shownUrlCheck}
+                  className="mt-1.5 px-1"
+                />
+                <div className="mt-1 flex flex-wrap items-center gap-1 text-xs tracking-[0.3px]">
                   <span className="mr-1 inline-flex items-center gap-1 font-medium text-on-surface-variant">
                     <Zap className="size-3.25" />
                     Testar com 1 clique:
@@ -154,6 +167,7 @@ export function HeroIngestionCard() {
                   aria-label="Texto da vaga"
                   placeholder="Cole aqui a descrição da vaga..."
                   value={jobText}
+                  maxLength={50000}
                   onChange={(event) => setJobText(event.target.value)}
                   className="min-h-29.75 w-full resize-y rounded-lg bg-surface-container-low p-4 text-[15px] text-on-surface shadow-xs outline-none placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-primary-300"
                 />
@@ -166,14 +180,36 @@ export function HeroIngestionCard() {
       <div className="flex flex-col gap-2 bg-surface-container-low/70 px-5 py-3 sm:px-7">
         <RippleButton
           type="button"
-          onClick={openReview}
-          disabled={!hasJob || !baseCv}
+          onClick={target.generate}
+          disabled={!target.canGenerate || target.isAnalyzing}
+          aria-describedby={
+            target.blockReason ? "home-generate-hint" : undefined
+          }
           hoverScale={1.03}
           className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary-900 px-4 py-2 text-center text-sm font-semibold text-primary-foreground shadow-[0_4px_6px_rgb(62_39_35/15%)] transition-colors hover:bg-primary-800 active:bg-primary-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-900 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <span>Gerar currículo sob medida</span>
+          <span>
+            {target.isAnalyzing
+              ? "Lendo e analisando a vaga..."
+              : "Gerar currículo sob medida"}
+          </span>
           <ArrowRight className="size-3.5 shrink-0" />
         </RippleButton>
+        {target.error ? (
+          <p role="alert" className="px-1 text-[13px] leading-5 text-error">
+            {target.error}
+          </p>
+        ) : (
+          target.blockReason && (
+            <p
+              id="home-generate-hint"
+              aria-live="polite"
+              className="px-1 text-[13px] leading-5 text-on-surface-variant"
+            >
+              {target.blockReason}
+            </p>
+          )
+        )}
       </div>
 
       <ValidateDialog />

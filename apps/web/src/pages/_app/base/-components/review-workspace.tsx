@@ -2,25 +2,34 @@ import {
   type CollectionProps,
   createReviewDraft,
   type DraftCollection,
+  type ReviewStepId,
   reviewSteps,
 } from "@@types/review-model";
 import { Button } from "@animate/buttons/button";
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
 import {
+  useReviewIssues,
+  useSubmitReviewAnswers,
+} from "@hooks/use-review-issues";
+import { apiErrorMessage } from "@lib/api/error-message";
+import {
+  useAnswerReviewIssue,
   useApproveGroundTruth,
-  useBaseReview,
   useCreateFact,
   useCreateFactRecord,
+  useInvalidateBaseReview,
   useUpdateFactReviewState,
 } from "@queries/base-review";
 import { ArrowLeft, ArrowRight } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { usePresentationStore } from "@stores/presentation-store";
-import { useQuickReviewStore } from "@stores/quick-review-store";
 import { useReviewDraftStore } from "@stores/review-draft-store";
 import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
+import type { ReviewIssue } from "@/types/review";
+import { firstStepWithPending, pendingByStep } from "@/utils/review-step-map";
+import { clearSteps } from "@/utils/review-verification";
 import { EducationReviewStep } from "../-steps/education-review-step";
 import { ExperienceReviewStep } from "../-steps/experience-review-step";
 import { IdentityReviewStep } from "../-steps/identity-review-step";
@@ -29,6 +38,7 @@ import { ProjectsReviewStep } from "../-steps/projects-review-step";
 import { SkillsReviewStep } from "../-steps/skills-review-step";
 import { STEP_CATEGORIES } from "./evidence-style";
 import { MasterDocumentPanel } from "./master-document-panel";
+import { PendingFieldsProvider } from "./pending-fields";
 import { ReviewCompletionCard } from "./review-completion-card";
 import { ReviewStepper } from "./review-stepper";
 
@@ -55,13 +65,24 @@ export function ReviewWorkspace({
       .filter((id): id is string => Boolean(id)),
   );
   const baseVersionId = useBaseCvStore((state) => state.baseVersionId);
-  const review = useBaseReview(baseVersionId ?? undefined);
+  const { review, issues: pendingIssues } = useReviewIssues();
+  const answerIssue = useAnswerReviewIssue(baseVersionId ?? "");
+  const invalidateReview = useInvalidateBaseReview(baseVersionId ?? "");
+  const submitAnswers = useSubmitReviewAnswers(baseVersionId ?? "");
+  const pending = pendingByStep(pendingIssues);
+  const clearByStep = clearSteps(
+    review.records.data ?? [],
+    Object.fromEntries(
+      Object.entries(pending).map(([step, value]) => [step, value.total]),
+    ) as Record<ReviewStepId, number>,
+    STEP_CATEGORIES,
+  );
   const createRecord = useCreateFactRecord(baseVersionId ?? "");
   const createFact = useCreateFact(baseVersionId ?? "");
   const updateFact = useUpdateFactReviewState(baseVersionId ?? "");
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const approveGroundTruth = useApproveGroundTruth(baseVersionId ?? "");
   const navigate = useNavigate();
-  const setQuickReviewOpen = useQuickReviewStore((state) => state.setOpen);
   const hydrateFromApi = useReviewDraftStore((state) => state.hydrateFromApi);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -161,6 +182,14 @@ export function ReviewWorkspace({
         }
       }
 
+      // Editar ou remover um campo pendente resolve a pendência (a resposta registra a decisão);
+      // só atualizar o fato deixaria a pendência aberta e a aprovação bloqueada.
+      const openIssueByFact = new Map(
+        (review.issues.data ?? [])
+          .filter((issue) => issue.status === "PENDING" && issue.factId)
+          .map((issue) => [issue.factId as string, issue.id]),
+      );
+
       for (const group of groups) {
         let record = review.records.data?.find(
           (item) => item.category === group.category,
@@ -191,11 +220,19 @@ export function ReviewWorkspace({
             fact.reviewedValue ?? fact.extractedValue ?? "",
           );
           if (currentValue !== value) {
-            await updateFact.mutateAsync({
-              id: fact.id,
-              reviewState: "corrigido",
-              reviewedValue: value,
-            });
+            const issueId = openIssueByFact.get(fact.id);
+            if (issueId) {
+              await answerIssue.mutateAsync({
+                id: issueId,
+                answer: { reviewState: "corrigido", reviewedValue: value },
+              });
+            } else {
+              await updateFact.mutateAsync({
+                id: fact.id,
+                reviewState: "corrigido",
+                reviewedValue: value,
+              });
+            }
           }
         }
         for (const fact of record.facts) {
@@ -203,20 +240,26 @@ export function ReviewWorkspace({
             fact.reviewState !== "omitido" &&
             !(fact.fieldKey in group.fields)
           ) {
-            await updateFact.mutateAsync({
-              id: fact.id,
-              reviewState: "omitido",
-            });
+            const issueId = openIssueByFact.get(fact.id);
+            if (issueId) {
+              await answerIssue.mutateAsync({
+                id: issueId,
+                answer: { reviewState: "omitido" },
+              });
+            } else {
+              await updateFact.mutateAsync({
+                id: fact.id,
+                reviewState: "omitido",
+              });
+            }
           }
         }
       }
+      invalidateReview();
       return true;
     } catch (cause) {
-      setSaveError(
-        cause instanceof Error
-          ? cause.message
-          : "Não foi possível salvar os fatos.",
-      );
+      invalidateReview();
+      setSaveError(apiErrorMessage(cause, "Não foi possível salvar os fatos."));
       return false;
     } finally {
       setSaving(false);
@@ -239,16 +282,31 @@ export function ReviewWorkspace({
       navigate({ to: "/" });
     } catch (cause) {
       setApprovalError(
-        cause instanceof Error
-          ? cause.message
-          : "Não foi possível aprovar o Ground Truth.",
+        apiErrorMessage(cause, "Não foi possível aprovar o Ground Truth."),
       );
     }
   }
 
+  async function confirmIssue(issue: ReviewIssue) {
+    setConfirmError(null);
+    try {
+      await submitAnswers.submit([
+        { issue, answer: { choice: "confirmado", correction: "" } },
+      ]);
+    } catch (cause) {
+      setConfirmError(
+        apiErrorMessage(cause, "Não foi possível confirmar o valor."),
+      );
+    }
+  }
+
+  // Resolve aqui mesmo: abre a etapa com as pendências mais importantes para a vaga.
   function reviewPendingIssues() {
-    setQuickReviewOpen(true);
-    navigate({ to: "/" });
+    const step = firstStepWithPending(pending);
+    if (step) setActiveStep(step);
+    document
+      .getElementById("review-active-panel")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function collection(key: DraftCollection): CollectionProps {
@@ -303,8 +361,19 @@ export function ReviewWorkspace({
 
   const stepIndex = reviewSteps.findIndex((step) => step.id === activeStep);
   return (
-    <>
-      <ReviewStepper activeStep={activeStep} onStepChange={setActiveStep} />
+    <PendingFieldsProvider
+      issues={pendingIssues}
+      records={review.records.data ?? []}
+      clearSteps={clearByStep}
+      onConfirm={confirmIssue}
+      busy={submitAnswers.isPending}
+    >
+      <ReviewStepper
+        activeStep={activeStep}
+        onStepChange={setActiveStep}
+        pending={pending}
+        clear={clearByStep}
+      />
       <div className="mx-auto mt-6 grid w-full max-w-384 items-start gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <MasterDocumentPanel
           onSelectFile={onSelectFile}
@@ -337,6 +406,11 @@ export function ReviewWorkspace({
               </AnimatePresence>
             </AutoHeight>
           </section>
+          {confirmError && (
+            <p role="alert" className="text-sm text-error">
+              {confirmError}
+            </p>
+          )}
           <nav
             aria-label="Navegação entre etapas"
             className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-card border p-4"
@@ -380,6 +454,6 @@ export function ReviewWorkspace({
           )}
         </div>
       </div>
-    </>
+    </PendingFieldsProvider>
   );
 }

@@ -28,6 +28,20 @@ export const apiQueryKeys = {
   anonymousSession: {
     current: ["anonymous-session", "current"] as const,
   },
+  jobPostings: {
+    all: ["job-postings"] as const,
+    byOwner: (ownerId: string) =>
+      [...apiQueryKeys.jobPostings.all, "owner", ownerId] as const,
+    detail: (postingId: string) =>
+      [...apiQueryKeys.jobPostings.all, "detail", postingId] as const,
+    version: (postingId: string, versionNumber: number) =>
+      [
+        ...apiQueryKeys.jobPostings.all,
+        "version",
+        postingId,
+        versionNumber,
+      ] as const,
+  },
   aiPreferences: {
     current: ["ai-preferences", "current"] as const,
   },

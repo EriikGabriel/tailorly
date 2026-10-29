@@ -8,10 +8,10 @@ import {
   DialogTitle,
 } from "@components/ui/animate/primitives/base/dialog";
 import {
-  useAnswerReviewIssue,
-  useBaseReview,
-  useInvalidateBaseReview,
-} from "@queries/base-review";
+  useReviewIssues,
+  useSubmitReviewAnswers,
+} from "@hooks/use-review-issues";
+import { apiErrorMessage } from "@lib/api/error-message";
 import {
   ArrowRight,
   IconExclamationMark,
@@ -23,18 +23,13 @@ import { useBaseCvStore } from "@stores/base-cv-store";
 import { useJobDraftStore } from "@stores/job-draft-store";
 import { useQuickReviewStore } from "@stores/quick-review-store";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import type {
-  ReviewAnswer,
-  ReviewCategory,
-  ReviewChoice,
-  ReviewIssue,
-} from "@/types/review";
-import { factFieldLabel, formatFactValue } from "@/utils/fact-display";
+import { useEffect, useState } from "react";
+import type { ReviewAnswer, ReviewCategory, ReviewIssue } from "@/types/review";
 import {
   isReviewIssueComplete,
   selectQuickReviewIssues,
 } from "@/utils/review-issues";
+import { JobRequirementsPanel } from "./job-requirements-panel";
 import { ReviewSection } from "./review-section";
 
 type ValidateDialogProps = {
@@ -48,9 +43,16 @@ export function ValidateDialog({
 }: ValidateDialogProps = {}) {
   const navigate = useNavigate();
   const { file, selectionId, baseVersionId } = useBaseCvStore();
-  const review = useBaseReview(baseVersionId ?? undefined);
-  const answerIssue = useAnswerReviewIssue(baseVersionId ?? "");
-  const invalidateReview = useInvalidateBaseReview(baseVersionId ?? "");
+  const {
+    review,
+    issues: apiIssues,
+    relevantIssues,
+    canPrioritize,
+    verifiable,
+    jobMatch,
+    jobVersion,
+  } = useReviewIssues();
+  const submitAnswers = useSubmitReviewAnswers(baseVersionId ?? "");
   const { revision: jobRevision, saveDraft: onSaveDraft } = useJobDraftStore();
   const {
     open,
@@ -61,77 +63,11 @@ export function ValidateDialog({
     setAnswer,
   } = useQuickReviewStore();
   const [error, setError] = useState<string | null>(null);
-  const apiIssues = useMemo(() => {
-    // Categorias dos fatos (backend) -> seções da revisão rápida.
-    const reviewCategoryByFactCategory: Record<string, ReviewCategory> = {
-      identity: "identity",
-      experience: "employment",
-      volunteering: "volunteering",
-      projects: "projects",
-      degrees: "education",
-      certifications: "education",
-      languages: "languages",
-      technologies: "skills",
-    };
-    return (review.issues.data ?? [])
-      .filter((issue) => issue.status === "PENDING" && issue.fact)
-      .map((issue): ReviewIssue => {
-        const configured = issue.questionAndChoices ?? {};
-        const fieldLabel = factFieldLabel(
-          issue.fact?.fieldKey ?? "",
-          issue.category,
-        );
-        const currentValue = formatFactValue(
-          issue.fact?.reviewedValue ?? issue.fact?.extractedValue,
-        );
-        const rawChoices = Array.isArray(configured.choices)
-          ? configured.choices
-          : ["confirmado", "corrigido", "omitido"];
-        const choices: ReviewChoice[] = rawChoices.flatMap(
-          (raw): ReviewChoice[] => {
-            if (raw === "confirmado")
-              return [
-                { value: raw, label: "Está correto", result: "confirmed" },
-              ];
-            if (raw === "corrigido")
-              return [
-                {
-                  value: raw,
-                  label: "Corrigir",
-                  result: "corrected",
-                  correction: {
-                    label: `Valor correto para ${fieldLabel}`,
-                    type: "text",
-                    placeholder: currentValue,
-                    originalValue: currentValue,
-                  },
-                },
-              ];
-            if (raw === "omitido")
-              return [
-                {
-                  value: raw,
-                  label: "Não usar no currículo",
-                  result: "omitted",
-                },
-              ];
-            return [];
-          },
-        );
-        return {
-          id: issue.id,
-          category: reviewCategoryByFactCategory[issue.category] ?? "identity",
-          type: "fact",
-          question: `${fieldLabel} está correto?`,
-          fieldLabel,
-          value: currentValue,
-          evidence: issue.fact?.evidence[0]?.sourceExcerpt,
-          motivation: issue.reason,
-          choices,
-        };
-      });
-  }, [review.issues.data]);
-  const allIssues = issues ?? apiIssues;
+  const prioritized = !issues && canPrioritize;
+  const otherPending = prioritized
+    ? apiIssues.length - relevantIssues.length
+    : 0;
+  const allIssues = issues ?? (prioritized ? relevantIssues : apiIssues);
   const contextKey = JSON.stringify([
     selectionId,
     jobRevision,
@@ -146,7 +82,9 @@ export function ValidateDialog({
   }, [configure, contextKey, allIssues]);
 
   const quickIssues =
-    apiIssues.length > 0 ? apiIssues : selectQuickReviewIssues(allIssues);
+    prioritized || apiIssues.length > 0
+      ? allIssues
+      : selectQuickReviewIssues(allIssues);
   const needsFullReview =
     requiresFullReview || quickIssues.length < allIssues.length;
   const reviewComplete = quickIssues.every((issue) =>
@@ -167,37 +105,12 @@ export function ValidateDialog({
     }
     setError(null);
     try {
-      for (const issue of quickIssues) {
-        const answer = answers[issue.id];
-        const choice = issue.choices.find(
-          (item) => item.value === answer.choice,
-        );
-        if (!choice) continue;
-        const reviewState =
-          choice.result === "confirmed"
-            ? "confirmado"
-            : choice.result === "corrected"
-              ? "corrigido"
-              : "omitido";
-        await answerIssue.mutateAsync({
-          id: issue.id,
-          answer: {
-            reviewState,
-            ...(choice.result === "corrected"
-              ? { reviewedValue: answer.correction }
-              : {}),
-          },
-        });
-      }
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Não foi possível salvar as respostas.",
+      await submitAnswers.submit(
+        quickIssues.map((issue) => ({ issue, answer: answers[issue.id] })),
       );
+    } catch (cause) {
+      setError(apiErrorMessage(cause, "Não foi possível salvar as respostas."));
       return;
-    } finally {
-      invalidateReview();
     }
     onSaveDraft();
     onOpenChange(false);
@@ -208,7 +121,9 @@ export function ValidateDialog({
   const heading =
     count === 0
       ? "Tudo pronto para gerar"
-      : `Confirme ${count} ${count === 1 ? "informação" : "informações"} antes de gerar`;
+      : prioritized
+        ? `Confirme ${count} ${count === 1 ? "informação importante" : "informações importantes"} para esta vaga`
+        : `Confirme ${count} ${count === 1 ? "informação" : "informações"} antes de gerar`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -237,8 +152,9 @@ export function ValidateDialog({
                   {`${count} pendências para revisar`}
                 </span>
                 <DialogDescription className="text-sm leading-5 text-on-surface-variant">
-                  "Pendências persistidas na versão candidata do Currículo Base.
-                  As respostas são registradas na API."
+                  {prioritized
+                    ? "Escolhemos os fatos do seu currículo que sustentam o que a vaga mais pede. As respostas são registradas na versão do Currículo Base."
+                    : "Pendências persistidas na versão candidata do Currículo Base. As respostas são registradas na API."}
                 </DialogDescription>
               </div>
               <Button
@@ -259,7 +175,9 @@ export function ValidateDialog({
                 <IconExclamationMark className="size-4.5 stroke-3 text-tertiary" />
                 {count === 0
                   ? "Nenhuma pendência"
-                  : "Itens que exigem sua confirmação"}
+                  : prioritized
+                    ? "Itens relevantes para esta vaga"
+                    : "Itens que exigem sua confirmação"}
               </p>
               {file && (
                 <p
@@ -272,6 +190,25 @@ export function ValidateDialog({
               )}
             </div>
 
+            {prioritized && jobMatch && (
+              <JobRequirementsPanel
+                title={jobVersion?.details?.title}
+                company={jobVersion?.details?.company?.name}
+                matches={verifiable}
+              />
+            )}
+            {!prioritized && jobVersion && !issues && review.records.data && (
+              <p className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-3 text-sm text-on-surface-variant">
+                {jobVersion.analysisStatus === "completed"
+                  ? "A vaga não nomeia tecnologias ou competências que possamos procurar nos seus fatos; mostrando todas as pendências."
+                  : "Sem a análise por IA da vaga não dá para priorizar os fatos; mostrando todas as pendências."}
+              </p>
+            )}
+            {otherPending > 0 && (
+              <p className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-3 text-sm text-on-surface-variant">
+                {`Há ${otherPending} ${otherPending === 1 ? "outra pendência" : "outras pendências"} sem relação com esta vaga. Elas não bloqueiam, mas fatos pendentes não entram no currículo: resolva-as na revisão completa.`}
+              </p>
+            )}
             {needsFullReview && (
               <p className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-3 text-sm text-on-surface-variant">
                 {allIssues.length > count
@@ -302,9 +239,11 @@ export function ValidateDialog({
             )}
             {count === 0 && !needsFullReview && (
               <p className="text-sm text-on-surface-variant">
-                {baseVersionId
-                  ? "Não há pendências reais nesta versão candidata."
-                  : "Envie o Currículo Base para carregar pendências reais."}
+                {prioritized
+                  ? "Nenhuma pendência do seu currículo está ligada ao que a vaga pede."
+                  : baseVersionId
+                    ? "Não há pendências reais nesta versão candidata."
+                    : "Envie o Currículo Base para carregar pendências reais."}
               </p>
             )}
             {error && (
@@ -354,7 +293,7 @@ export function ValidateDialog({
                     !reviewComplete ||
                     !baseVersionId ||
                     review.issues.isLoading ||
-                    answerIssue.isPending
+                    submitAnswers.isPending
                   }
                   className="rounded-xl bg-primary-900 px-6! py-6 text-sm font-semibold text-primary-foreground hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40"
                   disableZoom

@@ -21,6 +21,7 @@ import type {
   CreateFactEvidenceRequest,
   CreateFactRecordRequest,
   CreateFactRequest,
+  CreateJobPostingRequest,
   CreateOwnerRequest,
   CreateStoredObjectRequest,
   CreateUserRequest,
@@ -28,11 +29,16 @@ import type {
   ExtractedPageResponse,
   ExtractedPageTextResponse,
   ExtractionRunResponse,
+  ExtractJobPostingRequest,
   FactEvidenceResponse,
   FactRecordResponse,
   FactResponse,
   GtSnapshotResponse,
   IssuedAnonymousSessionResponse,
+  JobPostingDetailResponse,
+  JobPostingResponse,
+  JobPostingSummaryResponse,
+  JobPostingVersionResponse,
   LoginRequest,
   LoginResponse,
   MigrateAnonymousSessionRequest,
@@ -916,6 +922,173 @@ export const gtSnapshotFindById = async (
     ...options,
     method: "GET",
   });
+};
+
+export const getJobPostingCreateUrl = () => {
+  return `/v1/job-postings`;
+};
+
+export const jobPostingCreate = async (
+  createJobPostingRequest: CreateJobPostingRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<JobPostingVersionResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<JobPostingVersionResponse>(getJobPostingCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(createJobPostingRequest),
+  });
+};
+
+export const getJobPostingExtractUrl = () => {
+  return `/v1/job-postings/extract`;
+};
+
+export const jobPostingExtract = async (
+  extractJobPostingRequest: ExtractJobPostingRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<JobPostingResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<JobPostingResponse>(getJobPostingExtractUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(extractJobPostingRequest),
+  });
+};
+
+export const getJobPostingFindByOwnerUrl = (ownerId: string) => {
+  return `/v1/job-postings/owner/${encodeURIComponent(String(ownerId))}`;
+};
+
+export const jobPostingFindByOwner = async (
+  ownerId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<JobPostingSummaryResponse[]> => {
+  return apiRequest<JobPostingSummaryResponse[]>(
+    getJobPostingFindByOwnerUrl(ownerId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getJobPostingDeleteUrl = (id: string) => {
+  return `/v1/job-postings/${encodeURIComponent(String(id))}`;
+};
+
+export const jobPostingDelete = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<void> => {
+  return apiRequest<void>(getJobPostingDeleteUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getJobPostingFindByIdUrl = (id: string) => {
+  return `/v1/job-postings/${encodeURIComponent(String(id))}`;
+};
+
+export const jobPostingFindById = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<JobPostingDetailResponse> => {
+  return apiRequest<JobPostingDetailResponse>(getJobPostingFindByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getJobPostingFindVersionUrl = (
+  id: string,
+  versionNumber: number,
+) => {
+  return `/v1/job-postings/${encodeURIComponent(String(id))}/versions/${encodeURIComponent(String(versionNumber))}`;
+};
+
+export const jobPostingFindVersion = async (
+  id: string,
+  versionNumber: number,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<JobPostingVersionResponse> => {
+  return apiRequest<JobPostingVersionResponse>(
+    getJobPostingFindVersionUrl(id, versionNumber),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getJobPostingReanalyzeUrl = (
+  id: string,
+  versionNumber: number,
+) => {
+  return `/v1/job-postings/${encodeURIComponent(String(id))}/versions/${encodeURIComponent(String(versionNumber))}/analysis`;
+};
+
+export const jobPostingReanalyze = async (
+  id: string,
+  versionNumber: number,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<JobPostingVersionResponse> => {
+  return apiRequest<JobPostingVersionResponse>(
+    getJobPostingReanalyzeUrl(id, versionNumber),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
 };
 
 export const getCurrentAccountCurrentUrl = () => {

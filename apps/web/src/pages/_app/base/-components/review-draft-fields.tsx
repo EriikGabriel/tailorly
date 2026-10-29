@@ -12,6 +12,12 @@ import {
   PhoneInput,
 } from "@components/fields/typed-inputs";
 import { useId } from "react";
+import {
+  PENDING_RING,
+  PendingNote,
+  usePendingFields,
+  VerifiedMark,
+} from "./pending-fields";
 
 function renderControl(
   field: ReviewField,
@@ -60,12 +66,16 @@ export function ReviewDraftFields({
   fields,
   values,
   onChange,
+  scope,
 }: {
   fields: readonly ReviewField[];
   values: DraftFields;
   onChange: (values: DraftFields) => void;
+  /** "identity" ou o id da linha da coleção; liga o campo às pendências do fato. */
+  scope: string;
 }) {
   const id = useId();
+  const pending = usePendingFields();
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -73,16 +83,49 @@ export function ReviewDraftFields({
         const fieldId = `${id}-${field.key}`;
 
         if (field.type === "period" && field.period) {
+          const issues = [
+            field.period.startKey,
+            field.period.endKey,
+            field.period.statusKey,
+          ]
+            .filter((key): key is string => Boolean(key))
+            .map((key) => pending.field(scope, key))
+            .filter((issue) => issue !== undefined);
+          const periodKeys = [
+            field.period.startKey,
+            field.period.endKey,
+            field.period.statusKey,
+          ].filter((key): key is string => Boolean(key));
+          const periodVerified =
+            issues.length === 0 &&
+            periodKeys.some((key) => pending.verified(scope, key));
           return (
-            <PeriodField
+            <div
               key={field.key}
-              id={fieldId}
-              period={field.period}
-              values={values}
-              onChange={onChange}
-            />
+              className={`space-y-1.5 sm:col-span-2 ${issues.length > 0 ? PENDING_RING : ""}`}
+            >
+              <PeriodField
+                id={fieldId}
+                period={field.period}
+                values={values}
+                onChange={onChange}
+              />
+              {periodVerified && (
+                <VerifiedMark showLabel label="Período verificado" />
+              )}
+              {issues.map((issue) => (
+                <div key={issue.id} className="space-y-0.5">
+                  <p className="text-[11px] text-on-surface-variant">
+                    {issue.fieldLabel}: {issue.value}
+                  </p>
+                  <PendingNote issue={issue} />
+                </div>
+              ))}
+            </div>
           );
         }
+
+        const issue = pending.field(scope, field.key);
 
         return (
           <FieldFrame
@@ -91,6 +134,9 @@ export function ReviewDraftFields({
             label={field.label}
             hint={field.hint}
             wide={field.wide}
+            highlight={issue ? PENDING_RING : undefined}
+            verified={!issue && pending.verified(scope, field.key)}
+            status={issue ? <PendingNote issue={issue} /> : undefined}
           >
             {renderControl(field, fieldId, values[field.key] ?? "", (next) =>
               onChange({ ...values, [field.key]: next }),

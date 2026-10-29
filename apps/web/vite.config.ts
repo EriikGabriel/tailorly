@@ -47,7 +47,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/v1": "http://localhost:8080",
+      "/v1": process.env.TAILORLY_API_URL ?? "http://localhost:8080",
     },
   },
 });

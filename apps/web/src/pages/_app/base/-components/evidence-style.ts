@@ -43,10 +43,6 @@ export const EVIDENCE_TONE = {
     focused: "bg-tertiary-container text-on-error",
     neutral: "bg-surface-container-highest text-on-surface-variant",
   },
-  // Sem mix-blend-mode: ele compõe com a seleção nativa do navegador (que
-  // também é desenhada por cima do texto) e deixava o cursor/seleção
-  // piscando ao arrastar. Translúcido simples já deixa a tinta escura do PDF
-  // visível por baixo sem interferir na seleção de texto real.
   mark: {
     focused: "bg-secondary-fixed/60 border-secondary-fixed-dim border",
     neutral: "bg-on-surface-variant/20",

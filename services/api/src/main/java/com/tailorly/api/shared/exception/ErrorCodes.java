@@ -45,6 +45,7 @@ public final class ErrorCodes {
     public static final String UPLOAD_LIMIT_REACHED = "error.anonymous.upload_limit_reached";
     public static final String EXTRACTION_LIMIT_REACHED = "error.anonymous.extraction_limit_reached";
     public static final String GENERATION_LIMIT_REACHED = "error.anonymous.generation_limit_reached";
+    public static final String JOB_LIMIT_REACHED = "error.anonymous.job_limit_reached";
     public static final String NOTHING_TO_MIGRATE = "error.anonymous.nothing_to_migrate";
     public static final String ACTIVE_SNAPSHOT_EXISTS = "error.anonymous.active_snapshot_exists";
     public static final String ANONYMOUS_OWNER_CREATION_FORBIDDEN =
@@ -147,6 +148,19 @@ public final class ErrorCodes {
     public static final String EXCERPT_NOT_IN_SOURCE = "error.fact_evidence.excerpt_not_in_source";
 
     private FactEvidence() {
+    }
+  }
+
+  public static final class Job {
+    public static final String URL_INVALID = "error.job.url_invalid";
+    public static final String URL_NOT_ALLOWED = "error.job.url_not_allowed";
+    public static final String PAGE_UNAVAILABLE = "error.job.page_unavailable";
+    public static final String NOT_HTML = "error.job.not_html";
+    public static final String NO_CONTENT = "error.job.no_content";
+    public static final String NOT_FOUND = "error.job.not_found";
+    public static final String INPUT_REQUIRED = "error.job.input_required";
+
+    private Job() {
     }
   }
 

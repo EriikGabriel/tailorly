@@ -16,6 +16,7 @@ public record AnonymousProperties(
     int maxUploads,
     int maxExtractions,
     int maxGenerations,
+    int maxJobPostings,
     int requestsPerMinute,
     int sessionsPerIpPerHour,
     int maxActiveSessions,

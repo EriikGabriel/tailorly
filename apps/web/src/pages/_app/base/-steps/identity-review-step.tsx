@@ -172,6 +172,7 @@ export function IdentityReviewStep({
         Dados de contato
       </h3>
       <ReviewDraftFields
+        scope="identity"
         fields={identityFields}
         values={values}
         onChange={onChange}
@@ -180,6 +181,7 @@ export function IdentityReviewStep({
         Presença online
       </h3>
       <ReviewDraftFields
+        scope="identity"
         fields={linkFields}
         values={values}
         onChange={onChange}

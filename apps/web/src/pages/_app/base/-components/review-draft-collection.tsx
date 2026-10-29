@@ -18,6 +18,7 @@ import {
 } from "@react-zero-ui/icon-sprite";
 import { useReviewDraftStore } from "@stores/review-draft-store";
 import { type ComponentType, useId, useRef } from "react";
+import { usePendingFields, VerifiedMark } from "./pending-fields";
 import type { BadgeTone, RecordSummary } from "./record-summaries";
 import { ReviewDraftFields } from "./review-draft-fields";
 
@@ -54,6 +55,7 @@ export function ReviewDraftCollection({
     setExpandedRecord(sourceId, collectionKey, id);
   const id = useId();
   const addRef = useRef<HTMLButtonElement>(null);
+  const pending = usePendingFields();
 
   function addRecord() {
     const record = { id: crypto.randomUUID(), fields: {} };
@@ -104,11 +106,15 @@ export function ReviewDraftCollection({
         >
           {records.map((record) => {
             const summary = summarize(record.fields);
+            const rowPending = pending.row(record.id);
+            const rowRelevant = rowPending.filter(
+              (issue) => issue.jobRelevance,
+            );
             return (
               <AccordionItem
                 key={record.id}
                 value={record.id}
-                className="overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container-low transition-shadow data-open:shadow-sm"
+                className={`overflow-hidden rounded-xl border transition-shadow data-open:shadow-sm ${rowPending.length > 0 ? "border-outline-variant/40 bg-amber-50/80" : "border-outline-variant/40"}`}
               >
                 <AccordionTrigger className="items-center gap-3 rounded-none px-4 py-3 no-underline hover:bg-surface-container hover:no-underline">
                   <span className="flex min-w-0 flex-1 items-center gap-3">
@@ -132,6 +138,19 @@ export function ReviewDraftCollection({
                     </span>
                   </span>
                   <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                    {rowPending.length === 0 &&
+                      pending.rowVerified(record.id) && (
+                        <VerifiedMark showLabel label="Verificado" />
+                      )}
+                    {rowPending.length > 0 && (
+                      <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[11px] font-bold text-amber-900">
+                        {rowPending.length}{" "}
+                        {rowPending.length === 1 ? "pendência" : "pendências"}
+                        {rowRelevant.length > 0
+                          ? ` · ${rowRelevant.length} p/ a vaga`
+                          : ""}
+                      </span>
+                    )}
                     {summary.badges.map((badge) => (
                       <span
                         key={badge.label}
@@ -142,8 +161,11 @@ export function ReviewDraftCollection({
                     ))}
                   </span>
                 </AccordionTrigger>
-                <AccordionPanel className="space-y-3 border-t border-outline-variant/30 bg-card/60 px-4 pt-4 pb-4">
+                <AccordionPanel
+                  className={`space-y-3 border-t border-outline-variant/30 px-4 pt-4 pb-4 ${rowPending.length > 0 ? "bg-amber-50/80" : "bg-card/60"}`}
+                >
                   <ReviewDraftFields
+                    scope={record.id}
                     fields={fields}
                     values={record.fields}
                     onChange={(values) =>

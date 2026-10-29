@@ -1,15 +1,20 @@
 import type { CollectionProps } from "@@types/review-model";
 import { AutoTextarea } from "@components/fields/auto-textarea";
 import { IconInput } from "@components/fields/icon-input";
-import { Tag, X } from "@react-zero-ui/icon-sprite";
+import { Check, Tag, X } from "@react-zero-ui/icon-sprite";
 import { useId, useState } from "react";
+import { PendingNote, usePendingFields, VerifiedMark } from "./pending-fields";
 
 /** Tecnologias e competências como chips; clicar em um chip edita o contexto de uso. */
 export function TechnologyChips({ records, onChange }: CollectionProps) {
   const id = useId();
+  const pending = usePendingFields();
   const [draft, setDraft] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = records.find((record) => record.id === selectedId) ?? null;
+  const selectedIssue = selected
+    ? pending.field(selected.id, "name")
+    : undefined;
 
   function addFromText(text: string) {
     const known = new Set(
@@ -52,10 +57,12 @@ export function TechnologyChips({ records, onChange }: CollectionProps) {
             {records.map((record) => {
               const name = record.fields.name || "Sem nome";
               const active = record.id === selectedId;
+              const issue = pending.field(record.id, "name");
               return (
                 <li
                   key={record.id}
-                  className={`flex items-center overflow-hidden rounded-full border text-xs font-semibold transition-colors ${active ? "border-primary-900 bg-primary-900 text-primary-foreground" : "border-outline-variant/60 bg-card text-primary-950"}`}
+                  title={issue?.jobRelevance?.label}
+                  className={`flex items-center overflow-hidden rounded-full border text-xs font-semibold transition-colors ${active ? "border-primary-900 bg-primary-900 text-primary-foreground" : "border-outline-variant/60 bg-card text-primary-950"} ${issue && !active ? "bg-amber-50/80" : ""}`}
                 >
                   <button
                     type="button"
@@ -72,6 +79,24 @@ export function TechnologyChips({ records, onChange }: CollectionProps) {
                       />
                     )}
                   </button>
+                  {!issue && pending.verified(record.id, "name") && (
+                    <VerifiedMark
+                      label={`${name}: verificado`}
+                      className="pr-1"
+                    />
+                  )}
+                  {issue && !pending.edited(issue) && (
+                    <button
+                      type="button"
+                      aria-label={`Confirmar ${name}`}
+                      title="Confirmar tecnologia"
+                      disabled={pending.busy}
+                      onClick={() => pending.confirm(issue)}
+                      className="px-1.5 py-1 text-amber-800 outline-none hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                    >
+                      <Check aria-hidden="true" className="size-3.5" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     aria-label={`Remover ${name}`}
@@ -116,6 +141,7 @@ export function TechnologyChips({ records, onChange }: CollectionProps) {
 
       {selected && (
         <div className="space-y-1.5 rounded-xl bg-surface-container-low p-3">
+          {selectedIssue && <PendingNote issue={selectedIssue} />}
           <label
             htmlFor={`${id}-context`}
             className="text-xs font-semibold tracking-[0.4px] text-on-surface-variant uppercase"

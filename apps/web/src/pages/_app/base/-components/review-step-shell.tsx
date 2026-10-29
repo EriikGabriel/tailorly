@@ -1,5 +1,7 @@
-import { ShieldCheck } from "@react-zero-ui/icon-sprite";
+import { reviewSteps } from "@@types/review-model";
+import { CircleCheck, ShieldCheck } from "@react-zero-ui/icon-sprite";
 import type { ReactNode } from "react";
+import { usePendingFields } from "./pending-fields";
 
 export function ReviewStepShell({
   number,
@@ -16,6 +18,7 @@ export function ReviewStepShell({
   editorial?: boolean;
   children: ReactNode;
 }) {
+  const clear = usePendingFields().stepClear(reviewSteps[number - 1].id);
   return (
     <section
       aria-labelledby={`review-heading-${number}`}
@@ -33,9 +36,16 @@ export function ReviewStepShell({
             <p className="text-body-sm">{description}</p>
           </div>
         </div>
-        <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-semibold text-on-surface-variant">
-          {editorial ? "Ajustes editoriais" : "Aguardando revisão"}
-        </span>
+        {clear ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
+            <CircleCheck aria-hidden="true" className="size-4" />
+            Sem pendências
+          </span>
+        ) : (
+          <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-semibold text-on-surface-variant">
+            {editorial ? "Ajustes editoriais" : "Aguardando revisão"}
+          </span>
+        )}
       </header>
       <p
         className={`flex items-start gap-1.5 rounded-lg border-l-4 bg-surface-container-low py-1.5 pr-2 pl-3 text-xs leading-5 text-on-surface-variant ${number === 3 ? "border-on-tertiary-container" : "border-primary-950"}`}

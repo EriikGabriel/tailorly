@@ -13,7 +13,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Exclusão completa dos dados de um owner anônimo: arquivo original, texto extraído, fatos,
- * evidências, pendências, decisões, snapshots, a sessão e o próprio owner.
+ * evidências, pendências, decisões, snapshots, vagas lidas (com versões e análises), a sessão e o
+ * próprio owner.
  *
  * <p>Os objetos do storage são removidos antes das linhas do banco: se a remoção falhar, nada
  * foi apagado no banco e a limpeza tenta de novo no próximo ciclo, sem deixar bytes órfãos sem
@@ -88,6 +89,9 @@ public class AnonymousDataPurgeService {
     jdbc.update("delete from base_versions where owner_id = ?", ownerId);
     jdbc.update("delete from base_documents where owner_id = ?", ownerId);
     jdbc.update("delete from stored_objects where owner_id = ?", ownerId);
+    jdbc.update("delete from job_posting_versions where job_posting_id in "
+        + "(select id from job_postings where owner_id = ?)", ownerId);
+    jdbc.update("delete from job_postings where owner_id = ?", ownerId);
     jdbc.update("delete from ai_preferences where owner_id = ?", ownerId);
     jdbc.update("delete from anonymous_sessions where owner_id = ?", ownerId);
     jdbc.update("delete from owners where id = ? and kind = 'KIND_ANONYMOUS'", ownerId);

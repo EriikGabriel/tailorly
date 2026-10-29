@@ -8,6 +8,7 @@ import { apiQueryKeys } from "@lib/api/query-keys";
 import { useAnonymousSessionStore } from "@stores/anonymous-session-store";
 import { useAuthStore } from "@stores/auth-store";
 import { useBaseCvStore } from "@stores/base-cv-store";
+import { useJobPostingStore } from "@stores/job-posting-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 /** Uso, limites e se há snapshot revisado migrável da sessão anônima atual. */
@@ -23,8 +24,16 @@ export function useAnonymousSessionStatus() {
   });
 }
 
+/** As vagas do visitante não migram para a conta: somem com a sessão. */
+function releaseVisitorJobPosting() {
+  if (useJobPostingStore.getState().selected?.ownerKind === "anonymous") {
+    useJobPostingStore.getState().clear();
+  }
+}
+
 function releaseVisitorData() {
   useAnonymousSessionStore.getState().clear();
+  releaseVisitorJobPosting();
   // Uma versão que era do visitante some do cliente; se foi migrada, passa a ser da conta.
   if (useBaseCvStore.getState().ownerKind === "anonymous") {
     useBaseCvStore.getState().reset();
@@ -54,6 +63,7 @@ export function useMigrateAnonymousSession() {
     },
     onSuccess: () => {
       useAnonymousSessionStore.getState().clear();
+      releaseVisitorJobPosting();
       // A versão migrada mantém o mesmo id; só passa a ser acessada pela conta.
       if (useBaseCvStore.getState().ownerKind === "anonymous") {
         useBaseCvStore.getState().setOwnerKind("account");

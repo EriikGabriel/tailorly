@@ -6,12 +6,18 @@ import {
   TabsTab,
 } from "@animate/base/tabs";
 import {
+  JobUrlFeedback,
+  useSettledUrlCheck,
+} from "@components/job-url-feedback";
+import {
   ClipboardPaste,
   FileText,
   Link as LinkIcon,
   Sparkles,
 } from "@react-zero-ui/icon-sprite";
 import { type JobInputMode, useJobDraftStore } from "@stores/job-draft-store";
+import { checkJobUrl, MAX_JOB_URL_LENGTH } from "@/utils/job-url";
+import { JobAnalysisCard } from "./job-analysis-card";
 import { SectionHeading } from "./section-heading";
 
 const inputModes = [
@@ -27,6 +33,10 @@ const quickTests = [
 export function JobTargetCard() {
   const { mode, jobUrl, jobText, setMode, setJobUrl, setJobText } =
     useJobDraftStore();
+
+  const urlCheck = checkJobUrl(jobUrl);
+  const shownUrlCheck = useSettledUrlCheck(urlCheck);
+  const urlInvalid = shownUrlCheck.status === "invalid";
 
   async function pasteUrl() {
     try {
@@ -78,7 +88,7 @@ export function JobTargetCard() {
                   Link da Vaga
                 </label>
                 <span className="text-xs font-medium tracking-[0.3px] text-on-surface-variant">
-                  LinkedIn, Gupy, Lever, Greenhouse
+                  Gupy, Lever, Greenhouse
                 </span>
               </div>
               <div className="relative flex items-center">
@@ -91,8 +101,17 @@ export function JobTargetCard() {
                   type="url"
                   placeholder="https://linkedin.com/jobs/view/..."
                   value={jobUrl}
+                  maxLength={MAX_JOB_URL_LENGTH + 1}
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-invalid={urlInvalid}
+                  aria-describedby="generator-job-url-feedback"
                   onChange={(event) => setJobUrl(event.target.value)}
-                  className="min-h-11 w-full rounded-lg bg-surface-container-low pl-10 pr-20 text-[15px] text-on-surface shadow-xs outline-none placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-primary-300"
+                  className={`min-h-11 w-full rounded-lg bg-surface-container-low pl-10 pr-20 text-[15px] text-on-surface shadow-xs outline-none placeholder:text-on-surface-variant/60 focus:ring-2 ${
+                    urlInvalid
+                      ? "ring-2 ring-error focus:ring-error"
+                      : "focus:ring-primary-300"
+                  }`}
                 />
                 <button
                   type="button"
@@ -103,9 +122,14 @@ export function JobTargetCard() {
                   Colar
                 </button>
               </div>
+              <JobUrlFeedback
+                id="generator-job-url-feedback"
+                check={shownUrlCheck}
+              />
               <p className="flex items-start gap-1 pt-0.5 text-[13px] leading-5 text-on-surface-variant">
-                Nossa IA raspa requisitos, tech stack e cultura organizacional
-                instantaneamente.
+                Lemos a página pública da vaga e separamos requisitos,
+                benefícios e dados da empresa. Sites que exigem login, como o
+                LinkedIn, precisam do texto colado.
               </p>
             </TabsPanel>
 
@@ -114,6 +138,7 @@ export function JobTargetCard() {
                 aria-label="Texto da vaga"
                 placeholder="Cole aqui a descrição completa da vaga..."
                 value={jobText}
+                maxLength={50000}
                 onChange={(event) => setJobText(event.target.value)}
                 className="min-h-28 w-full resize-y rounded-lg bg-surface-container-low p-3.5 text-[15px] text-on-surface shadow-xs outline-none placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-primary-300"
               />
@@ -121,6 +146,8 @@ export function JobTargetCard() {
           </TabsPanels>
         </div>
       </Tabs>
+
+      <JobAnalysisCard />
 
       <div className="flex flex-col gap-1.5">
         <p className="text-xs font-medium tracking-[0.3px] text-on-surface-variant">

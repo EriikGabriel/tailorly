@@ -49,6 +49,7 @@ import org.springframework.test.web.servlet.MockMvc;
     "tailorly.anonymous.max-uploads=3",
     "tailorly.anonymous.max-extractions=3",
     "tailorly.anonymous.max-generations=3",
+    "tailorly.anonymous.max-job-postings=10",
     "tailorly.anonymous.requests-per-minute=10",
     "tailorly.anonymous.sessions-per-ip-per-hour=2",
     "tailorly.anonymous.max-active-sessions=100",

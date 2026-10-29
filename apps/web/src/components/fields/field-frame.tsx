@@ -1,5 +1,5 @@
 import { Tooltip, TooltipPanel, TooltipTrigger } from "@animate/base/tooltip";
-import { Info } from "@react-zero-ui/icon-sprite";
+import { CircleCheck, Info } from "@react-zero-ui/icon-sprite";
 import { cn } from "cn";
 import type { ReactNode } from "react";
 
@@ -10,6 +10,11 @@ interface FieldFrameProps {
   wide?: boolean;
   children: ReactNode;
   className?: string;
+  /** Aviso exibido abaixo do controle (ex.: pendência de confirmação). */
+  status?: ReactNode;
+  highlight?: string;
+  /** Fato confirmado ou corrigido pela pessoa; mostra o selo ao lado do rótulo. */
+  verified?: boolean;
 }
 
 /** Rótulo + ajuda em tooltip (também lida por leitores de tela) + controle. */
@@ -20,10 +25,18 @@ export function FieldFrame({
   wide,
   children,
   className,
+  status,
+  highlight,
+  verified,
 }: FieldFrameProps) {
   return (
     <div
-      className={cn("min-w-0 space-y-1.5", wide && "sm:col-span-2", className)}
+      className={cn(
+        "min-w-0 space-y-1.5",
+        wide && "sm:col-span-2",
+        highlight,
+        className,
+      )}
     >
       <div className="flex items-center gap-1.5">
         <label
@@ -32,6 +45,16 @@ export function FieldFrame({
         >
           {label}
         </label>
+        {verified && (
+          <span
+            role="img"
+            aria-label="Fato verificado"
+            title="Fato verificado"
+            className="text-green-600"
+          >
+            <CircleCheck aria-hidden="true" className="size-4" />
+          </span>
+        )}
         {hint && (
           <Tooltip>
             <TooltipTrigger
@@ -46,6 +69,7 @@ export function FieldFrame({
         )}
       </div>
       {children}
+      {status}
       {hint && (
         <span id={`${id}-hint`} className="sr-only">
           {hint}

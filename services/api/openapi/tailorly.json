@@ -1154,6 +1154,233 @@
         ]
       }
     },
+    "/v1/job-postings": {
+      "post": {
+        "operationId": "jobPostingCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJobPostingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPostingVersionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "JobPosting"
+        ]
+      }
+    },
+    "/v1/job-postings/extract": {
+      "post": {
+        "operationId": "jobPostingExtract",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtractJobPostingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPostingResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "JobPosting"
+        ]
+      }
+    },
+    "/v1/job-postings/owner/{ownerId}": {
+      "get": {
+        "operationId": "jobPostingFindByOwner",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JobPostingSummaryResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "JobPosting"
+        ]
+      }
+    },
+    "/v1/job-postings/{id}": {
+      "delete": {
+        "operationId": "jobPostingDelete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "JobPosting"
+        ]
+      },
+      "get": {
+        "operationId": "jobPostingFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPostingDetailResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "JobPosting"
+        ]
+      }
+    },
+    "/v1/job-postings/{id}/versions/{versionNumber}": {
+      "get": {
+        "operationId": "jobPostingFindVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionNumber",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPostingVersionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "JobPosting"
+        ]
+      }
+    },
+    "/v1/job-postings/{id}/versions/{versionNumber}/analysis": {
+      "post": {
+        "operationId": "jobPostingReanalyze",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionNumber",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPostingVersionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "JobPosting"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "currentAccountCurrent",
@@ -1923,6 +2150,32 @@
           "versionNumber"
         ]
       },
+      "Company": {
+        "type": "object",
+        "properties": {
+          "careerPageUrl": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          }
+        }
+      },
       "CreateExtractionRunRequest": {
         "type": "object",
         "properties": {
@@ -2014,6 +2267,38 @@
           "origin",
           "recordId",
           "reviewState"
+        ]
+      },
+      "CreateJobPostingRequest": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 50000,
+            "minLength": 0
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "ownerId"
         ]
       },
       "CreateOwnerRequest": {
@@ -2108,6 +2393,19 @@
         "required": [
           "owner",
           "user"
+        ]
+      },
+      "ExtractJobPostingRequest": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "url"
         ]
       },
       "ExtractedPageResponse": {
@@ -2478,6 +2776,232 @@
           "token"
         ]
       },
+      "JobAnalysis": {
+        "type": "object",
+        "properties": {
+          "analyzerVersion": {
+            "type": "string"
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Requirement"
+            }
+          },
+          "seniority": {
+            "type": "string"
+          },
+          "seniorityEvidence": {
+            "type": "string"
+          },
+          "technologies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "JobPostingDetailResponse": {
+        "type": "object",
+        "properties": {
+          "latest": {
+            "$ref": "#/components/schemas/JobPostingVersionResponse"
+          },
+          "posting": {
+            "$ref": "#/components/schemas/JobPostingSummaryResponse"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VersionInfo"
+            }
+          }
+        }
+      },
+      "JobPostingResponse": {
+        "type": "object",
+        "properties": {
+          "benefits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "canonicalUrl": {
+            "type": "string"
+          },
+          "company": {
+            "$ref": "#/components/schemas/Company"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "descriptionText": {
+            "type": "string"
+          },
+          "employmentType": {
+            "type": "string"
+          },
+          "expired": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "fetchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finalUrl": {
+            "type": "string"
+          },
+          "hiringProcess": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "niceToHave": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "platform": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string"
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "responsibilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "salary": {
+            "$ref": "#/components/schemas/Salary"
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "workModel": {
+            "type": "string"
+          }
+        }
+      },
+      "JobPostingSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expired": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "latestVersionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceKind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "JobPostingVersionResponse": {
+        "type": "object",
+        "properties": {
+          "analysis": {
+            "$ref": "#/components/schemas/JobAnalysis"
+          },
+          "analysisStatus": {
+            "type": "string"
+          },
+          "analyzedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "details": {
+            "$ref": "#/components/schemas/JobPostingResponse"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobPostingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reused": {
+            "type": "boolean"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "Limits": {
         "type": "object",
         "properties": {
@@ -2509,6 +3033,23 @@
           "maxPages",
           "maxUploads"
         ]
+      },
+      "Location": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "raw": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        }
       },
       "LoginRequest": {
         "type": "object",
@@ -2612,6 +3153,33 @@
           "userId"
         ]
       },
+      "Requirement": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "importance": {
+            "type": "string"
+          },
+          "minYears": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "technologies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
       "ReviewIssueResponse": {
         "type": "object",
         "properties": {
@@ -2644,6 +3212,23 @@
             "type": "string"
           },
           "status": {
+            "type": "string"
+          }
+        }
+      },
+      "Salary": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "max": {
+            "type": "number"
+          },
+          "min": {
+            "type": "number"
+          },
+          "period": {
             "type": "string"
           }
         }
@@ -2837,6 +3422,25 @@
           "id",
           "roles"
         ]
+      },
+      "VersionInfo": {
+        "type": "object",
+        "properties": {
+          "analysisStatus": {
+            "type": "string"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       }
     }
   }

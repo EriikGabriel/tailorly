@@ -1,4 +1,5 @@
 import { apiRequest } from "@lib/api/client";
+import { SESSION_EXPIRED_MESSAGE } from "@lib/api/error-message";
 import {
   extractedPageFindAllByRunId,
   extractedPageReadText,
@@ -78,13 +79,16 @@ function useBaseReviewMutation<TInput, TOutput>(
   const queryClient = useQueryClient();
 
   return useMutation<TOutput, Error, TInput>({
-    mutationFn: (input) =>
-      apiRequest<TOutput>(path(input), {
+    mutationFn: (input) => {
+      // Sem credencial a chamada só voltaria 401; avisa antes, com a orientação certa.
+      if (!accessToken) throw new Error(SESSION_EXPIRED_MESSAGE);
+      return apiRequest<TOutput>(path(input), {
         method,
-        accessToken: accessToken ?? undefined,
+        accessToken,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody(input)),
-      }),
+      });
+    },
     onSuccess: () => {
       if (!invalidateOnSuccess) return;
       queryClient.invalidateQueries({

@@ -13,6 +13,7 @@ import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
 import com.tailorly.api.shared.exception.TooManyRequestsException;
+import com.tailorly.api.shared.exception.UnprocessableRequestException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -105,6 +106,14 @@ public class GlobalExceptionHandler {
       HttpServletRequest request
   ) {
     return buildError(HttpStatus.BAD_REQUEST, localize(ex.getMessage()), request);
+  }
+
+  @ExceptionHandler(UnprocessableRequestException.class)
+  public ResponseEntity<ApiError> handleUnprocessable(
+      UnprocessableRequestException ex,
+      HttpServletRequest request
+  ) {
+    return buildError(HttpStatus.UNPROCESSABLE_ENTITY, localize(ex.getMessage()), request);
   }
 
   @ExceptionHandler(AccessDeniedException.class)

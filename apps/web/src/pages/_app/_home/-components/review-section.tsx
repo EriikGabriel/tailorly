@@ -157,6 +157,23 @@ export function ReviewSection({
           return (
             <div key={issue.id} className="py-3 last:pb-0">
               <p className="text-sm font-semibold">{issue.question}</p>
+              {issue.jobRelevance && (
+                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-on-surface-variant">
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                      issue.jobRelevance.importance === "required"
+                        ? "bg-primary-900 text-primary-foreground"
+                        : "bg-surface-container text-on-surface",
+                    )}
+                  >
+                    {issue.jobRelevance.importance === "required"
+                      ? "Obrigatório na vaga"
+                      : "Desejável na vaga"}
+                  </span>
+                  {issue.jobRelevance.label}
+                </p>
+              )}
               {issue.value && (
                 <p className="mt-2 rounded-lg border border-outline-variant/50 bg-card px-3 py-2 text-sm">
                   <span className="mr-2 text-xs font-medium text-on-surface-variant">

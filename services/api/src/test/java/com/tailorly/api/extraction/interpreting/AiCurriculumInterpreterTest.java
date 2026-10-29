@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
+import com.tailorly.api.ai.AiChatClient;
 import com.tailorly.api.aipreferences.EffectiveAiSettings;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -141,6 +142,6 @@ class AiCurriculumInterpreterTest {
     EffectiveAiSettings settings = new EffectiveAiSettings("remote", endpoint, "test-model", "key",
         "http://127.0.0.1:1/unused", "unused", "unused");
 
-    return new AiCurriculumInterpreter(objectMapper).interpret(PAGES, settings);
+    return new AiCurriculumInterpreter(objectMapper, new AiChatClient()).interpret(PAGES, settings);
   }
 }

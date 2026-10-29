@@ -4,12 +4,19 @@ import { IconInput } from "@components/fields/icon-input";
 import { ProficiencyField } from "@components/fields/proficiency-field";
 import { Languages, Plus, Trash2 } from "@react-zero-ui/icon-sprite";
 import { useId } from "react";
+import {
+  PENDING_RING,
+  PendingNote,
+  usePendingFields,
+  VerifiedMark,
+} from "./pending-fields";
 
 const SUGGESTIONS = ["Português", "Inglês", "Espanhol", "Francês", "Alemão"];
 
 /** Idiomas em linhas compactas, com o nível de proficiência em degraus. */
 export function LanguageList({ records, onChange }: CollectionProps) {
   const id = useId();
+  const pending = usePendingFields();
   const present = new Set(
     records.map((record) =>
       (record.fields.language ?? "").trim().toLowerCase(),
@@ -68,37 +75,55 @@ export function LanguageList({ records, onChange }: CollectionProps) {
       )}
 
       <ul className="space-y-2.5">
-        {records.map((record) => (
-          <li
-            key={record.id}
-            className="grid gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto] sm:items-center"
-          >
-            <IconInput
-              id={`${id}-${record.id}-language`}
-              icon={Languages}
-              value={record.fields.language ?? ""}
-              placeholder="Idioma"
-              onChange={(value) => update(record.id, { language: value })}
-            />
-            <ProficiencyField
-              id={`${id}-${record.id}-level`}
-              label={`Nível de ${record.fields.language || "idioma"}`}
-              value={record.fields.proficiency ?? ""}
-              onChange={(value) => update(record.id, { proficiency: value })}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-label={`Remover ${record.fields.language || "idioma"}`}
-              className="justify-self-end text-xs"
-              onClick={() =>
-                onChange(records.filter((item) => item.id !== record.id))
-              }
+        {records.map((record) => {
+          const rowIssues = pending.row(record.id);
+          return (
+            <li
+              key={record.id}
+              className={`space-y-2 rounded-xl border p-3 ${rowIssues.length > 0 ? "border-outline-variant/40 bg-amber-50/80" : "border-outline-variant/40 bg-surface-container-low"}`}
             >
-              <Trash2 aria-hidden="true" className="size-3.5" />
-            </Button>
-          </li>
-        ))}
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto] sm:items-center">
+                <IconInput
+                  id={`${id}-${record.id}-language`}
+                  icon={Languages}
+                  value={record.fields.language ?? ""}
+                  placeholder="Idioma"
+                  onChange={(value) => update(record.id, { language: value })}
+                />
+                <ProficiencyField
+                  id={`${id}-${record.id}-level`}
+                  label={`Nível de ${record.fields.language || "idioma"}`}
+                  value={record.fields.proficiency ?? ""}
+                  onChange={(value) =>
+                    update(record.id, { proficiency: value })
+                  }
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Remover ${record.fields.language || "idioma"}`}
+                  className="justify-self-end text-xs"
+                  onClick={() =>
+                    onChange(records.filter((item) => item.id !== record.id))
+                  }
+                >
+                  <Trash2 aria-hidden="true" className="size-3.5" />
+                </Button>
+              </div>
+              {rowIssues.length === 0 && pending.rowVerified(record.id) && (
+                <VerifiedMark showLabel label="Verificado" />
+              )}
+              {rowIssues.map((issue) => (
+                <div key={issue.id} className={`space-y-0.5 ${PENDING_RING}`}>
+                  <p className="text-[11px] text-on-surface-variant">
+                    {issue.fieldLabel}: {issue.value}
+                  </p>
+                  <PendingNote issue={issue} />
+                </div>
+              ))}
+            </li>
+          );
+        })}
       </ul>
 
       <div className="flex flex-wrap items-center gap-1.5">

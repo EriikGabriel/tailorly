@@ -27,7 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AnonymousQuotaServiceTest {
   private static final AnonymousProperties PROPERTIES = new AnonymousProperties(
-      Duration.ofHours(1), 1000, 2, 3, 2, 1, 60, 10, 100, Duration.ofMinutes(5), true);
+      Duration.ofHours(1), 1000, 2, 3, 2, 1, 5, 60, 10, 100, Duration.ofMinutes(5), true);
 
   @Mock AnonymousSessionRepository sessions;
 
