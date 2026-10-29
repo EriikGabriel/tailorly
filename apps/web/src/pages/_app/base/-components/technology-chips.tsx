@@ -62,7 +62,7 @@ export function TechnologyChips({ records, onChange }: CollectionProps) {
                 <li
                   key={record.id}
                   title={issue?.jobRelevance?.label}
-                  className={`flex items-center overflow-hidden rounded-full border text-xs font-semibold transition-colors ${active ? "border-primary-900 bg-primary-900 text-primary-foreground" : "border-outline-variant/60 bg-card text-primary-950"} ${issue && !active ? "bg-amber-50/80" : ""}`}
+                  className={`flex items-center overflow-hidden rounded-full border text-xs font-semibold transition-colors ${active ? "border-primary-900 bg-primary-900 text-primary-foreground" : "border-outline-variant/60 bg-card text-primary-950"} ${issue && !active ? "bg-tertiary-50" : ""}`}
                 >
                   <button
                     type="button"
@@ -92,7 +92,7 @@ export function TechnologyChips({ records, onChange }: CollectionProps) {
                       title="Confirmar tecnologia"
                       disabled={pending.busy}
                       onClick={() => pending.confirm(issue)}
-                      className="px-1.5 py-1 text-amber-800 outline-none hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                      className="px-1.5 py-1 text-tertiary-900 outline-none hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                     >
                       <Check aria-hidden="true" className="size-3.5" />
                     </button>

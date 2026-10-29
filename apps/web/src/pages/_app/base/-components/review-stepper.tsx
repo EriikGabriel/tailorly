@@ -3,7 +3,8 @@ import {
   Highlight,
   HighlightItem,
 } from "@animate/primitives/effects/highlight";
-import { CircleCheck } from "@react-zero-ui/icon-sprite";
+import { BadgeCheck } from "@react-zero-ui/icon-sprite";
+import { cn } from "cn";
 import { useReducedMotion } from "motion/react";
 import type { StepPending } from "@/utils/review-step-map";
 
@@ -68,7 +69,7 @@ export function ReviewStepper({
                     >
                       {number}
                     </span>
-                    <span className="flex min-w-0 flex-col">
+                    <span className="flex min-w-0 flex-col gap-1">
                       <span
                         className={`text-[10px] font-semibold leading-4 tracking-[0.6px] uppercase ${active ? "text-primary-foreground/70" : "text-on-surface-variant"}`}
                       >
@@ -76,40 +77,45 @@ export function ReviewStepper({
                         {active ? " (atual)" : ""}
                       </span>
                       <span
-                        className={`text-sm font-bold leading-5 ${active ? "text-primary-foreground" : "text-primary-950"}`}
+                        className={`text-xs font-bold leading-5 ${active ? "text-primary-foreground" : "text-primary-950"}`}
                       >
                         {step.title}
                       </span>
                       <span
-                        className={`flex items-center gap-1 text-xs font-medium leading-4 tracking-[0.3px] ${active ? "text-secondary-fixed" : "text-on-surface-variant"}`}
+                        className={`flex items-center text-xs font-medium leading-4 tracking-[0.3px] ${active ? "text-secondary-fixed" : "text-on-surface-variant"}`}
                       >
-                        {active && (
-                          <span
-                            aria-hidden="true"
-                            className="size-2 shrink-0 rounded-full bg-secondary-fixed"
-                          />
-                        )}
                         {stepPending && stepPending.total > 0 ? (
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${active ? "bg-card text-primary-950" : "bg-amber-200/80 text-amber-900"}`}
-                          >
-                            {stepPending.total}{" "}
-                            {stepPending.total === 1
-                              ? "pendência"
-                              : "pendências"}
-                            {stepPending.relevant > 0
-                              ? ` · ${stepPending.relevant} p/ a vaga`
-                              : ""}
-                          </span>
+                          <>
+                            <span
+                              aria-hidden="true"
+                              className={cn(
+                                "size-1.5 shrink-0 rounded-full bg-secondary-fixed mr-1",
+                                active
+                                  ? "bg-secondary-fixed"
+                                  : "bg-on-surface-variant",
+                              )}
+                            />
+                            <span
+                              className={`rounded-full font-bold ${active ? " text-secondary-fixed" : " text-tertiary-900"}`}
+                            >
+                              {stepPending.total}{" "}
+                              {stepPending.total === 1
+                                ? "pendência"
+                                : "pendências"}
+                              {stepPending.relevant > 0
+                                ? ` · ${stepPending.relevant} p/ a vaga`
+                                : ""}
+                            </span>
+                          </>
                         ) : clear?.[step.id] ? (
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${active ? "bg-card text-green-700" : "bg-green-100 text-green-800"}`}
+                            className={`inline-flex items-center gap-1 rounded-full  font-bold ${active ? "text-secondary-fixed" : "text-tertiary-700"}`}
                           >
-                            <CircleCheck
+                            <BadgeCheck
                               aria-hidden="true"
                               className="size-3.5"
                             />
-                            Sem pendências
+                            Validado
                           </span>
                         ) : step.id === "preferences" ? (
                           "Ajustes editoriais"

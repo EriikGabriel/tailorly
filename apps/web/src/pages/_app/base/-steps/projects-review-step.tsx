@@ -1,8 +1,6 @@
 import type { CollectionProps, ReviewField } from "@@types/review-model";
-import { Button } from "@animate/buttons/button";
 import {
   Building2,
-  CheckCheck,
   FolderBookmark,
   Quote,
   TrendingUp,
@@ -52,16 +50,6 @@ export function ProjectsReviewStep(props: CollectionProps) {
       description="Fatos quantificados, links e autoria"
       rule="Valide números e autoria. Métricas precisam de evidência no documento e não devem ser inferidas ou infladas."
     >
-      <Button
-        disabled
-        variant="accent"
-        size="sm"
-        className="self-start rounded-lg text-xs"
-        title="A validação depende dos fatos extraídos e de suas evidências"
-      >
-        <CheckCheck aria-hidden="true" className="size-3.5" />
-        Validar todos os fatos
-      </Button>
       <ReviewDraftCollection
         {...props}
         title="Fatos e métricas"

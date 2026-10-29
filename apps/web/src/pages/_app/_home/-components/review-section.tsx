@@ -179,7 +179,7 @@ export function ReviewSection({
                   <span className="mr-2 text-xs font-medium text-on-surface-variant">
                     Valor identificado:
                   </span>
-                  <span className="break-words font-semibold text-primary-950">
+                  <span className="wrap-break-word font-semibold text-primary-950">
                     {issue.value}
                   </span>
                 </p>

@@ -103,7 +103,7 @@ export function PeriodField({
         />
       </FieldFrame>
       {(hasSwitch || duration || reversed) && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-container-low px-3 py-2 sm:col-span-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg   py-2 sm:col-span-2">
           {hasSwitch ? (
             <div className="flex items-center gap-2">
               <Switch

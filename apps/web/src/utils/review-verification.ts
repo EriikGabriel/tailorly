@@ -74,8 +74,7 @@ export function buildVerificationIndex(
 }
 
 /**
- * Etapas sem pendência: têm fatos a revisar e nenhuma pendência aberta. Uma etapa sem fatos
- * (nada extraído) continua como está, porque "sem pendências" ali não diria nada.
+ * Etapas sem pendência: têm fatos a revisar e nenhuma pendência aberta.
  */
 export function clearSteps<Step extends string>(
   records: readonly VerifiableRecord[],

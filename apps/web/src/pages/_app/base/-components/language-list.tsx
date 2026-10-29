@@ -80,7 +80,7 @@ export function LanguageList({ records, onChange }: CollectionProps) {
           return (
             <li
               key={record.id}
-              className={`space-y-2 rounded-xl border p-3 ${rowIssues.length > 0 ? "border-outline-variant/40 bg-amber-50/80" : "border-outline-variant/40 bg-surface-container-low"}`}
+              className={`space-y-2 rounded-xl border p-3 ${rowIssues.length > 0 ? "border-tertiary-200 bg-tertiary-50" : "border-outline-variant/40 bg-surface-container-low"}`}
             >
               <div className="grid gap-3 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto] sm:items-center">
                 <IconInput

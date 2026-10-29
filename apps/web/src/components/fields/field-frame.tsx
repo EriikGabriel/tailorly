@@ -1,5 +1,5 @@
 import { Tooltip, TooltipPanel, TooltipTrigger } from "@animate/base/tooltip";
-import { CircleCheck, Info } from "@react-zero-ui/icon-sprite";
+import { BadgeCheck, Info } from "@react-zero-ui/icon-sprite";
 import { cn } from "cn";
 import type { ReactNode } from "react";
 
@@ -50,9 +50,9 @@ export function FieldFrame({
             role="img"
             aria-label="Fato verificado"
             title="Fato verificado"
-            className="text-green-600"
+            className="text-tertiary-700"
           >
-            <CircleCheck aria-hidden="true" className="size-4" />
+            <BadgeCheck aria-hidden="true" className="size-4" />
           </span>
         )}
         {hint && (

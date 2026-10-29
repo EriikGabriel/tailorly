@@ -1,6 +1,8 @@
 import { reviewSteps } from "@@types/review-model";
-import { CircleCheck, ShieldCheck } from "@react-zero-ui/icon-sprite";
+import { BadgeAlert, BadgeCheck, ShieldCheck } from "@react-zero-ui/icon-sprite";
+import { useState } from "react";
 import type { ReactNode } from "react";
+import { Button } from "@animate/buttons/button";
 import { usePendingFields } from "./pending-fields";
 
 export function ReviewStepShell({
@@ -18,7 +20,20 @@ export function ReviewStepShell({
   editorial?: boolean;
   children: ReactNode;
 }) {
-  const clear = usePendingFields().stepClear(reviewSteps[number - 1].id);
+  const pending = usePendingFields();
+  const stepId = reviewSteps[number - 1].id;
+  const clear = pending.stepClear(stepId);
+  const stepIssues = pending.stepIssues(stepId);
+  const [confirming, setConfirming] = useState(false);
+
+  async function confirmAll() {
+    setConfirming(true);
+    for (const issue of stepIssues) {
+      await pending.confirm(issue);
+    }
+    setConfirming(false);
+  }
+
   return (
     <section
       aria-labelledby={`review-heading-${number}`}
@@ -36,16 +51,30 @@ export function ReviewStepShell({
             <p className="text-body-sm">{description}</p>
           </div>
         </div>
-        {clear ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-            <CircleCheck aria-hidden="true" className="size-4" />
-            Sem pendências
-          </span>
-        ) : (
-          <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-semibold text-on-surface-variant">
-            {editorial ? "Ajustes editoriais" : "Aguardando revisão"}
-          </span>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {!clear && stepIssues.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={confirming || pending.busy}
+              onClick={confirmAll}
+              className="h-auto gap-1 px-2 py-1 text-xs text-tertiary-700 hover:bg-tertiary-50 hover:text-tertiary-700"
+            >
+              <BadgeAlert aria-hidden="true" className="size-3.5" />
+              Validar todos ({stepIssues.length})
+            </Button>
+          )}
+          {clear ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-tertiary-100 px-3 py-1 text-xs font-semibold text-tertiary-700">
+              <BadgeCheck aria-hidden="true" className="size-4" />
+              Validado
+            </span>
+          ) : (
+            <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-semibold text-on-surface-variant">
+              {editorial ? "Ajustes editoriais" : "Aguardando revisão"}
+            </span>
+          )}
+        </div>
       </header>
       <p
         className={`flex items-start gap-1.5 rounded-lg border-l-4 bg-surface-container-low py-1.5 pr-2 pl-3 text-xs leading-5 text-on-surface-variant ${number === 3 ? "border-on-tertiary-container" : "border-primary-950"}`}

@@ -10,8 +10,8 @@
     "allowSyntheticDefaultImports": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "baseUrl": ".",
     "paths": {
+      "*": ["./*"],
       "@components/*": ["./src/components/*"],
       "@ui/*": ["./src/components/ui/*"],
       "@animate/*": ["./src/components/ui/animate/*"],

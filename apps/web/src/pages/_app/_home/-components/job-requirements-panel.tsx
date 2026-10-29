@@ -1,4 +1,9 @@
-import { Check, IconExclamationMark, Target } from "@react-zero-ui/icon-sprite";
+import {
+  BadgeAlert,
+  BadgeCheck,
+  BadgeX,
+  Target,
+} from "@react-zero-ui/icon-sprite";
 import type {
   RequirementMatch,
   RequirementStatus,
@@ -7,7 +12,7 @@ import type {
 const statusLabels: Record<RequirementStatus, string> = {
   supported: "No seu currículo",
   unconfirmed: "No seu currículo · confirme abaixo",
-  missing: "Não encontrado · não será inventado",
+  missing: "Não encontrado",
 };
 
 const statusTones: Record<RequirementStatus, string> = {
@@ -34,10 +39,14 @@ function Row({ item }: { item: RequirementMatch }) {
       <span
         className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusTones[item.status]}`}
       >
-        {item.status === "supported" ? (
-          <Check className="size-3" aria-hidden="true" />
-        ) : (
-          <IconExclamationMark className="size-3" aria-hidden="true" />
+        {item.status === "supported" && (
+          <BadgeCheck className="size-3" aria-hidden="true" />
+        )}
+        {item.status === "unconfirmed" && (
+          <BadgeAlert className="size-3" aria-hidden="true" />
+        )}
+        {item.status === "missing" && (
+          <BadgeX className="size-3" aria-hidden="true" />
         )}
         {statusLabels[item.status]}
       </span>

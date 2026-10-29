@@ -23,7 +23,8 @@ import type { BadgeTone, RecordSummary } from "./record-summaries";
 import { ReviewDraftFields } from "./review-draft-fields";
 
 const badgeTone: Record<BadgeTone, string> = {
-  success: "bg-tertiary-container text-on-tertiary-container",
+  success:
+    "bg-on-tertiary-container/15 border border-on-tertiary-container text-on-tertiary-container",
   info: "bg-secondary-container text-on-secondary-container",
   neutral: "border border-outline-variant/50 bg-card text-on-surface-variant",
 };
@@ -102,7 +103,7 @@ export function ReviewDraftCollection({
           onValueChange={(next: string[]) =>
             setExpandedId(next.find((item) => item !== expandedId) ?? null)
           }
-          className="space-y-2.5"
+          className="space-y-2.5 pb-1"
         >
           {records.map((record) => {
             const summary = summarize(record.fields);
@@ -114,9 +115,11 @@ export function ReviewDraftCollection({
               <AccordionItem
                 key={record.id}
                 value={record.id}
-                className={`overflow-hidden rounded-xl border transition-shadow data-open:shadow-sm ${rowPending.length > 0 ? "border-outline-variant/40 bg-amber-50/80" : "border-outline-variant/40"}`}
+                className={`overflow-clip rounded-xl border border-b! transition-shadow data-open:shadow-sm ${rowPending.length > 0 ? "border-tertiary-200 bg-tertiary-50" : "border-outline-variant/40"}`}
               >
-                <AccordionTrigger className="items-center gap-3 rounded-none px-4 py-3 no-underline hover:bg-surface-container hover:no-underline">
+                <AccordionTrigger
+                  className={`items-center gap-3 rounded-none px-4 py-3 no-underline hover:no-underline ${rowPending.length > 0 ? "hover:bg-tertiary-100" : "hover:bg-surface-container"}`}
+                >
                   <span className="flex min-w-0 flex-1 items-center gap-3">
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-secondary-700 shadow-xs">
                       <Icon aria-hidden="true" className="size-5" />
@@ -138,12 +141,8 @@ export function ReviewDraftCollection({
                     </span>
                   </span>
                   <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                    {rowPending.length === 0 &&
-                      pending.rowVerified(record.id) && (
-                        <VerifiedMark showLabel label="Verificado" />
-                      )}
                     {rowPending.length > 0 && (
-                      <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[11px] font-bold text-amber-900">
+                      <span className="rounded-full bg-tertiary-100 px-2 py-0.5 text-[11px] font-bold text-tertiary-900">
                         {rowPending.length}{" "}
                         {rowPending.length === 1 ? "pendência" : "pendências"}
                         {rowRelevant.length > 0
@@ -159,10 +158,15 @@ export function ReviewDraftCollection({
                         {badge.label}
                       </span>
                     ))}
+
+                    {rowPending.length === 0 &&
+                      pending.rowVerified(record.id) && (
+                        <VerifiedMark label="Verificado" />
+                      )}
                   </span>
                 </AccordionTrigger>
                 <AccordionPanel
-                  className={`space-y-3 border-t border-outline-variant/30 px-4 pt-4 pb-4 ${rowPending.length > 0 ? "bg-amber-50/80" : "bg-card/60"}`}
+                  className={`space-y-3 border-t border-outline-variant/30 px-4 pt-4 pb-6 ${rowPending.length > 0 ? "bg-tertiary-50" : "bg-card/60"}`}
                 >
                   <ReviewDraftFields
                     scope={record.id}

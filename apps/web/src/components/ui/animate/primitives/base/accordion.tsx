@@ -120,7 +120,7 @@ function AccordionPanel({
                   "linear-gradient(black var(--mask-stop), transparent var(--mask-stop))",
                 WebkitMaskImage:
                   "linear-gradient(black var(--mask-stop), transparent var(--mask-stop))",
-                overflow: "hidden",
+                overflow: "clip",
               }}
               {...props}
             />
@@ -150,7 +150,7 @@ function AccordionPanel({
                     "linear-gradient(black var(--mask-stop), transparent var(--mask-stop))",
                   WebkitMaskImage:
                     "linear-gradient(black var(--mask-stop), transparent var(--mask-stop))",
-                  overflow: "hidden",
+                  overflow: "clip",
                 }}
                 {...props}
               />

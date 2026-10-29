@@ -3,10 +3,11 @@ import type {
   ReviewDraft,
   ReviewStepId,
 } from "@@types/review-model";
-import { CircleCheck, IconExclamationMark } from "@react-zero-ui/icon-sprite";
+import { BadgeAlert, BadgeCheck } from "@react-zero-ui/icon-sprite";
 import { useReviewDraftStore } from "@stores/review-draft-store";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 import type { ReviewIssue } from "@/types/review";
+import { stepForReviewCategory } from "@/utils/review-step-map";
 import {
   buildVerificationIndex,
   factLocation,
@@ -24,7 +25,7 @@ export interface PendingFieldsApi {
   /** O valor no rascunho já foi alterado em relação ao fato (resolve ao salvar). */
   edited: (issue: ReviewIssue) => boolean;
   /** Confirma o valor atual do fato (resolve a pendência na hora). */
-  confirm: (issue: ReviewIssue) => void;
+  confirm: (issue: ReviewIssue) => void | Promise<void>;
   busy: boolean;
   /** O campo foi confirmado ou corrigido e o rascunho ainda tem esse valor. */
   verified: (scope: Scope, key: string) => boolean;
@@ -32,6 +33,8 @@ export interface PendingFieldsApi {
   rowVerified: (scope: Scope) => boolean;
   /** A etapa tem fatos e nenhuma pendência aberta. */
   stepClear: (step: ReviewStepId) => boolean;
+  /** Pendências abertas de uma etapa inteira. */
+  stepIssues: (step: ReviewStepId) => ReviewIssue[];
 }
 
 const PendingFieldsContext = createContext<PendingFieldsApi | null>(null);
@@ -45,6 +48,7 @@ const EMPTY: PendingFieldsApi = {
   verified: () => false,
   rowVerified: () => false,
   stepClear: () => false,
+  stepIssues: () => [],
 };
 
 function scopeOf(source: NonNullable<ReviewIssue["source"]>): {
@@ -86,7 +90,10 @@ export function PendingFieldsProvider({
   const api = useMemo<PendingFieldsApi>(() => {
     const byField = new Map<string, ReviewIssue>();
     const byRow = new Map<string, ReviewIssue[]>();
+    const byStep = new Map<ReviewStepId, ReviewIssue[]>();
     for (const issue of issues) {
+      const step = stepForReviewCategory(issue.category);
+      if (step) byStep.set(step, [...(byStep.get(step) ?? []), issue]);
       if (!issue.source) continue;
       const { scope, key } = scopeOf(issue.source);
       byField.set(`${scope}|${key}`, issue);
@@ -105,6 +112,7 @@ export function PendingFieldsProvider({
       },
       rowVerified: (scope) => verification.rows.has(scope) && !byRow.has(scope),
       stepClear: (step) => clearSteps[step] ?? false,
+      stepIssues: (step) => byStep.get(step) ?? [],
       field: (scope, key) => byField.get(`${scope}|${key}`),
       row: (scope) => byRow.get(scope) ?? [],
       edited: (issue) => {
@@ -131,7 +139,7 @@ export function usePendingFields(): PendingFieldsApi {
 }
 
 /** Destaque do campo pendente; combine com {@link PendingNote} ao lado do controle. */
-export const PENDING_RING = "rounded-xl bg-amber-50/80 p-2";
+export const PENDING_RING = "rounded-xl bg-tertiary-50 p-2";
 
 /**
  * Aviso no próprio campo: por que ele está pendente, o quanto importa para a vaga e como resolver
@@ -152,8 +160,8 @@ export function PendingNote({
     <div
       className={`flex flex-wrap items-center gap-1.5 text-[11px] ${inline ? "" : "mt-1"}`}
     >
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-200/80 px-2 py-0.5 font-bold text-amber-900">
-        <IconExclamationMark aria-hidden="true" className="size-3 stroke-3" />
+      <span className="inline-flex items-center gap-1 rounded-full bg-tertiary-100 px-2 py-0.5 font-bold text-tertiary-900">
+        <BadgeAlert aria-hidden="true" className="size-3.5" />
         Pendente
       </span>
       {relevance && (
@@ -201,9 +209,9 @@ export function VerifiedMark({
       role="img"
       aria-label={label}
       title={label}
-      className={`inline-flex items-center gap-1 text-green-700 ${className}`}
+      className={`inline-flex items-center gap-1 text-tertiary-700 ${className}`}
     >
-      <CircleCheck aria-hidden="true" className="size-4 shrink-0" />
+      <BadgeCheck aria-hidden="true" className="size-4 shrink-0" />
       {showLabel && <span className="text-[11px] font-semibold">{label}</span>}
     </span>
   );
