@@ -42,4 +42,10 @@ public interface AnonymousSessionRepository extends JpaRepository<AnonymousSessi
   @Query("update AnonymousSession s set s.generationsCount = s.generationsCount + 1 "
       + "where s.owner.id = :ownerId and s.generationsCount < :max")
   int incrementGenerations(@Param("ownerId") UUID ownerId, @Param("max") int max);
+
+  /** Devolve uma geração que não chegou a ser entregue (falha depois de consumida). */
+  @Modifying(flushAutomatically = true)
+  @Query("update AnonymousSession s set s.generationsCount = s.generationsCount - 1 "
+      + "where s.owner.id = :ownerId and s.generationsCount > 0")
+  int decrementGenerations(@Param("ownerId") UUID ownerId);
 }

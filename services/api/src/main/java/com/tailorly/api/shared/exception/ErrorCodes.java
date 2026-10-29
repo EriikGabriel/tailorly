@@ -164,6 +164,23 @@ public final class ErrorCodes {
     }
   }
 
+  public static final class CvGeneration {
+    public static final String NOT_FOUND = "error.cv_generation.not_found";
+    public static final String NO_ACTIVE_SNAPSHOT = "error.cv_generation.no_active_snapshot";
+    public static final String JOB_NOT_FOUND = "error.cv_generation.job_not_found";
+    public static final String TEMPLATE_UNKNOWN = "error.cv_generation.template_unknown";
+    public static final String INVALID_FORMAT = "error.cv_generation.invalid_format";
+    public static final String ARTIFACT_MISSING = "error.cv_generation.artifact_missing";
+    public static final String RENDERER_UNAVAILABLE = "error.cv_generation.renderer_unavailable";
+    public static final String TEMPLATE_INVALID = "error.cv_generation.template_invalid";
+    public static final String TEMPLATE_NOT_FOUND = "error.cv_generation.template_not_found";
+    public static final String TEMPLATE_LIMIT_REACHED = "error.cv_generation.template_limit_reached";
+    public static final String PREFERENCES_INVALID = "error.cv_generation.preferences_invalid";
+
+    private CvGeneration() {
+    }
+  }
+
   public static final class Security {
     public static final String AUTHENTICATION_REQUIRED = "error.security.authentication_required";
     public static final String ACCESS_DENIED = "error.security.access_denied";

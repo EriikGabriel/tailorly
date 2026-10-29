@@ -30,14 +30,43 @@ export class ApiClientError extends Error {
 export interface ApiRequestOptions extends RequestInit {
   accessToken?: string;
   language?: string;
+  /** Tipo aceito na resposta; JSON por padrão. */
+  accept?: string;
+}
+
+/** Baixa um arquivo (PDF, Markdown) com as mesmas credenciais e o mesmo tratamento de erro do JSON. */
+export async function apiBlob(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<Blob> {
+  const response = await apiFetch(path, {
+    accept: "application/pdf, text/markdown, */*",
+    ...options,
+  });
+  return response.blob();
 }
 
 export async function apiRequest<T>(
   path: string,
-  { accessToken, language = "pt-BR", headers, ...init }: ApiRequestOptions = {},
+  options: ApiRequestOptions = {},
 ): Promise<T> {
+  const response = await apiFetch(path, options);
+  if (response.status === 204) return undefined as T;
+  return (await response.json()) as T;
+}
+
+async function apiFetch(
+  path: string,
+  {
+    accessToken,
+    language = "pt-BR",
+    accept = "application/json",
+    headers,
+    ...init
+  }: ApiRequestOptions,
+): Promise<Response> {
   const requestHeaders = new Headers(headers);
-  requestHeaders.set("Accept", "application/json");
+  requestHeaders.set("Accept", accept);
   requestHeaders.set("Accept-Language", language);
   if (accessToken) requestHeaders.set("Authorization", "Bearer " + accessToken);
 
@@ -72,6 +101,5 @@ export async function apiRequest<T>(
     throw new ApiClientError(response.status, error);
   }
 
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  return response;
 }

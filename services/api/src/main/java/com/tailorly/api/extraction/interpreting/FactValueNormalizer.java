@@ -264,7 +264,7 @@ public final class FactValueNormalizer {
       String base = key.base().equals("company") ? "organization" : key.base();
       result.add(new FactProposal("volunteering", newIndexes.get(key.index()) + ":" + base,
           proposal.extractedValue(), proposal.extractedPageId(), proposal.sourceExcerpt(),
-          proposal.excerptStart(), proposal.excerptEnd()));
+          proposal.excerptStart(), proposal.excerptEnd(), proposal.needsReview(), proposal.reviewReason()));
     }
     return result;
   }
@@ -336,7 +336,8 @@ public final class FactValueNormalizer {
 
   private static FactProposal withValue(FactProposal proposal, String fieldKey, String value) {
     return new FactProposal(proposal.category(), fieldKey, value, proposal.extractedPageId(),
-        proposal.sourceExcerpt(), proposal.excerptStart(), proposal.excerptEnd());
+        proposal.sourceExcerpt(), proposal.excerptStart(), proposal.excerptEnd(),
+        proposal.needsReview(), proposal.reviewReason());
   }
 
   private static String asText(Object raw) {

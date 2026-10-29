@@ -13,6 +13,7 @@ import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
 import com.tailorly.api.shared.exception.TooManyRequestsException;
+import com.tailorly.api.shared.exception.ServiceUnavailableException;
 import com.tailorly.api.shared.exception.UnprocessableRequestException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -113,7 +114,16 @@ public class GlobalExceptionHandler {
       UnprocessableRequestException ex,
       HttpServletRequest request
   ) {
-    return buildError(HttpStatus.UNPROCESSABLE_ENTITY, localize(ex.getMessage()), request);
+    return buildError(HttpStatus.UNPROCESSABLE_ENTITY, localize(ex.getMessage()),
+        ex.getDetails().isEmpty() ? null : ex.getDetails(), request);
+  }
+
+  @ExceptionHandler(ServiceUnavailableException.class)
+  public ResponseEntity<ApiError> handleServiceUnavailable(
+      ServiceUnavailableException ex,
+      HttpServletRequest request
+  ) {
+    return buildError(HttpStatus.SERVICE_UNAVAILABLE, localize(ex.getMessage()), request);
   }
 
   @ExceptionHandler(AccessDeniedException.class)

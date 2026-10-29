@@ -17,7 +17,10 @@ import { useReducedMotion } from "motion/react";
 import { useRef } from "react";
 import { ExtractionProgress } from "./-components/extraction-progress";
 import { GovernanceCard } from "./-components/governance-card";
-import { ReviewWorkspace } from "./-components/review-workspace";
+import {
+  ReviewWorkspace,
+  type ReviewWorkspaceHandle,
+} from "./-components/review-workspace";
 
 export const Route = createFileRoute("/_app/base/")({
   component: RouteComponent,
@@ -25,9 +28,11 @@ export const Route = createFileRoute("/_app/base/")({
 
 function RouteComponent() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { file, error, selectionId, uploadedSelectionId } = useBaseCvStore();
+  const { file, error, selectionId, uploadedSelectionId, baseVersionId } =
+    useBaseCvStore();
   const { selectFile, upload } = useSelectBaseDocumentFile();
   const reducedMotion = useReducedMotion();
+  const reviewWorkspaceRef = useRef<ReviewWorkspaceHandle>(null);
   const uploadPending =
     file !== null && upload.variables === file && upload.isPending;
   const fileStatus = uploadPending
@@ -127,12 +132,13 @@ function RouteComponent() {
               {file ? "Selecionar outro PDF" : "Selecionar Currículo Base"}
             </Button>
             <Button
-              disabled
+              disabled={!baseVersionId || uploadPending}
+              onClick={() => reviewWorkspaceRef.current?.approve()}
               aria-describedby="base-availability"
-              className="h-auto min-h-12 gap-1 whitespace-normal text-white disabled:text-white rounded-xl px-6 py-3.5 text-label-md font-semibold shadow-md has-[>svg]:px-6"
+              className="h-auto min-h-12 gap-1 whitespace-normal text-white! disabled:text-white rounded-xl px-6 py-3.5 text-label-md font-semibold shadow-md has-[>svg]:px-6"
             >
               <CircleCheck aria-hidden="true" className="size-4" />
-              Aprovar Ground Truth e Voltar ao Início ✓
+              Aprovar currículo base
             </Button>
           </div>
         </div>
@@ -204,7 +210,10 @@ function RouteComponent() {
           </div>
         </AutoHeight>
       </section>
-      <ReviewWorkspace onSelectFile={() => inputRef.current?.click()} />
+      <ReviewWorkspace
+        ref={reviewWorkspaceRef}
+        onSelectFile={() => inputRef.current?.click()}
+      />
     </main>
   );
 }

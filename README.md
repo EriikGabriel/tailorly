@@ -2,7 +2,7 @@
 
 Monorepo para gerar currículos personalizados para cada vaga. O produto recebe uma descrição ou URL de oportunidade, extrai os requisitos, adapta um currículo a partir de um template versionado e disponibiliza os artefatos para download e acompanhamento no Second Brain.
 
-> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator, autenticação JWT e os serviços locais de PostgreSQL e Garage já existem. O fluxo completo de sessões anônimas, o domínio de geração de currículos e integrações externas ainda estão planejados.
+> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator, autenticação JWT e os serviços locais de PostgreSQL e Garage já existem. A geração de PDF/Markdown com esteira de ATS, o template Typst editável com prévia ao vivo e o histórico estão implementados (ver [Geração de currículos](#geração-de-currículos)). O vault e outras integrações externas continuam planejados.
 
 ## Objetivo e escopo
 
@@ -27,14 +27,14 @@ flowchart LR
     Storage --> Vault[Second Brain\nB03 Resources/CVs]
 ```
 
-Os blocos de templates, geração de PDF e vault representam a arquitetura planejada. Hoje a API implementa contas, JWT, upload no Garage, extração por página com OCR seletivo, propostas de fatos por IA com evidência, revisão manual por versão candidata e aprovação atômica de snapshots do Ground Truth. A interface permite consultar o texto bruto extraído por página. A geração de currículos ainda não está disponível; fatos extraídos por IA continuam pendentes até revisão humana.
+Os blocos de templates, geração de PDF e vault representam a arquitetura planejada. Hoje a API implementa contas, JWT, upload no Garage, extração por página com OCR seletivo, propostas de fatos por IA com evidência, revisão manual por versão candidata e aprovação atômica de snapshots do Ground Truth. A interface permite consultar o texto bruto extraído por página. A API gera PDF/Markdown a partir do snapshot aprovado e da versão da vaga; fatos extraídos por IA continuam pendentes até revisão humana.
 
 ## Estrutura do repositório
 
 | Caminho | Papel | Estado |
 | --- | --- | --- |
-| `apps/web` | Interface React para upload, revisão de fatos por candidata, conta e fluxo de geração planejado. | Upload e revisão persistida parciais; geração e download reais pendentes |
-| `services/api` | API HTTP e orquestração do fluxo de geração. | Autenticação, upload, extração seletiva e revisão manual persistida; extração semântica e geração pendentes |
+| `apps/web` | Interface React para upload, revisão de fatos por candidata, conta e fluxo de geração planejado. | Upload, revisão, geração, prévia Typst ao vivo, nota de ATS, histórico e download usam a API |
+| `services/api` | API HTTP e orquestração do fluxo de geração. | Autenticação, upload, extração seletiva e revisão manual persistida; extração semântica e geração (`/v1/cv/*`) implementadas; o desenvolvimento local usa Typst via Docker |
 | `compose.yaml` | PostgreSQL 17 e Garage para desenvolvimento local. | Disponível |
 | `turbo.json` | Orquestra tarefas do monorepo. | Disponível |
 | `pnpm-workspace.yaml` | Define os workspaces `apps/*` e `services/*`. | Disponível |
@@ -69,7 +69,7 @@ A documentação detalhada da implementação Spring Boot está em [`services/ap
 | Aspecto | Implementação atual | Evolução prevista |
 | --- | --- | --- |
 | Runtime | Java 21 e Spring Boot 3.5 | — |
-| HTTP e validação | Spring Web, Validation, endpoints de usuários e owners, OpenAPI/Swagger UI | Endpoints de geração de currículo |
+| HTTP e validação | Spring Web, Validation, endpoints de usuários e owners, OpenAPI/Swagger UI | Idioma/templates adicionais |
 | Saúde | Spring Actuator com `health` e `info` expostos | Métricas e logs estruturados |
 | Acesso web | CORS, JWT Bearer e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente e renovação de tokens |
 | Parsing de páginas | Jsoup | Leitura de vagas por link implementada (Gupy, JSON-LD `JobPosting` e HTML genérico), com análise por IA e versionamento |
@@ -125,7 +125,7 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 
 ## Vagas: leitura por link ou texto, análise por IA e versionamento
 
-**Implementado.** A vaga entra por link (Jsoup) ou por texto colado, é gravada por owner (conta ou sessão anônima) em versões imutáveis e analisada pela IA configurada. Fica pendente a geração de currículos a partir dela (que registrará a versão usada) e o cruzamento automático com o Ground Truth.
+**Implementado.** A vaga entra por link (Jsoup) ou por texto colado, é gravada por owner (conta ou sessão anônima) em versões imutáveis e analisada pela IA configurada. A geração de currículos a partir dela já registra a versão usada; o cruzamento automático com o Ground Truth segue pendente.
 
 | Rota | Método | Função |
 | --- | --- | --- |
@@ -169,7 +169,7 @@ Em ambos, as tecnologias precisam aparecer no texto (e, na anotação, no própr
 
 ### Versionamento e dados
 
-Tabelas `job_postings` (identidade da vaga por owner) e `job_posting_versions` (conteúdo imutável + análise). A identidade é o ID da plataforma quando existe (Gupy), senão o link canônico sem rastreadores, senão o hash do texto colado, e nunca se deduplica entre owners. Reler a mesma vaga com conteúdo idêntico (hash de título, descrição e campos estruturados como prazo, salário e local) reaproveita a versão mais recente e só atualiza `last_checked_at`; conteúdo diferente cria a versão seguinte e as anteriores continuam consultáveis. Texto colado alterado vira **outra vaga**, pois não há como saber que é a mesma. `expired` é recalculado a cada leitura, porque o prazo muda de significado com o tempo. A geração futura deverá registrar o `id` e o `contentHash` da versão usada.
+Tabelas `job_postings` (identidade da vaga por owner) e `job_posting_versions` (conteúdo imutável + análise). A identidade é o ID da plataforma quando existe (Gupy), senão o link canônico sem rastreadores, senão o hash do texto colado, e nunca se deduplica entre owners. Reler a mesma vaga com conteúdo idêntico (hash de título, descrição e campos estruturados como prazo, salário e local) reaproveita a versão mais recente e só atualiza `last_checked_at`; conteúdo diferente cria a versão seguinte e as anteriores continuam consultáveis. Texto colado alterado vira **outra vaga**, pois não há como saber que é a mesma. `expired` é recalculado a cada leitura, porque o prazo muda de significado com o tempo. Cada geração registra o `id` e o `contentHash` da versão usada (`cv_generations.job_posting_version_id`).
 
 **Visitantes:** a análise consome a cota de processamentos da sessão (`max-extractions`, compartilhada com a extração do currículo) apenas quando a IA é de fato chamada, inclusive em chamadas que falham, e a sessão guarda no máximo `TAILORLY_ANONYMOUS_MAX_JOB_POSTINGS` vagas (padrão 10). As vagas do visitante são apagadas com a sessão (TTL ou descarte) e **não** são migradas para a conta; só o snapshot revisado do currículo é.
 
@@ -181,9 +181,26 @@ Tabelas `job_postings` (identidade da vaga por owner) e `job_posting_versions` (
 
 **Auditoria completa (`/base`):** as pendências aparecem destacadas **nos próprios campos** da etapa, sem painel separado, com o mesmo critério do diálogo. O campo pendente ganha contorno, o selo "Pendente" e, quando a vaga pede aquilo, "Obrigatório/Desejável na vaga" com o motivo; a linha do acordeão, o chip de tecnologia e a linha de idioma ganham o mesmo destaque, e o stepper mostra quantas pendências há em cada etapa (e quantas são da vaga). Resolve-se com os controles que já existem: **editar** o campo e salvar a auditoria registra a correção, **limpar/remover** e salvar omite o fato, e **"Confirmar valor"** (ou o ✓ do chip) confirma na hora. Editar ou remover um campo pendente fecha a pendência pela resposta da API (só atualizar o fato a deixaria aberta e bloquearia a aprovação), e campos que a pessoa não tocou continuam pendentes. Ao confirmar (ou corrigir), o aviso de pendência some e o campo ganha o ícone de verificado (círculo com check), também na linha do acordeão, no chip de tecnologia e na linha de idioma; alterar um campo verificado tira a marca até salvar de novo. Quando a última pendência de uma etapa é resolvida, ela passa a "Sem pendências" no stepper e no cabeçalho da etapa (uma etapa sem fatos extraídos não recebe essa marca). Responder uma pendência pelo diálogo também atualiza o rascunho da auditoria, para o próximo "Salvar" não sobrescrever a correção em silêncio.
 
-**Pendente:** a geração em si. O teste e2e `quick-review.spec.ts` ainda descreve a prévia com dados fictícios de uma versão anterior do diálogo e precisa ser reescrito.
+**Pendente:** ligar a interface à geração. O teste e2e `quick-review.spec.ts` ainda descreve a prévia com dados fictícios de uma versão anterior do diálogo e precisa ser reescrito.
 
 Na página do Gerador, "Detalhes da Vaga Alvo" mostra, depois de gerar (ou ao abrir uma vaga salva), o resultado da leitura: dados da vaga, requisitos obrigatórios e desejáveis com tecnologias e anos, senioridade, benefícios, etapas, empresa com links para conferência, histórico de versões, avisos e exclusão. Não há botão separado de "analisar": gerar já lê e analisa a vaga, o que também evita gastar a cota de IA do visitante duas vezes.
+
+## Geração de currículos
+
+**Implementada na API e na interface do gerador.** Ao confirmar a revisão rápida (“Gerar currículo”), a interface chama `POST /v1/cv/generate` com a vaga selecionada e as preferências ativas (diretrizes de destaque e “otimizar para ATS”). O currículo é montado **somente** com os itens congelados do snapshot aprovado do Ground Truth (o ativo, ou o `snapshotId` informado, sempre do mesmo owner) e uma versão da vaga. Não há OCR, extração nem consulta externa nesse caminho, e nenhum texto vem do template, da vaga ou da IA.
+
+**Esteira de otimização para ATS** (`cv/pipeline`):
+
+1. **Montagem determinística.** Os fatos viram um documento (identidade, contatos, seções); a vaga só ordena tecnologias e projetos que a pessoa já tem. Termos pedidos pela vaga sem fato aprovado nunca entram.
+2. **Compilação e avaliação.** O PDF é compilado com o Typst e o avaliador de ATS (`AtsEvaluator`, sem IA) **lê o texto extraído desse próprio PDF**, como um parser de triagem faria. A nota (0–100) soma: cobertura ponderada dos termos da vaga (40; obrigatórios pesam o dobro), nome e contato (10), seções esperadas (15), leitura do PDF — texto legível, nome, e-mail e seções na ordem (20), tamanho em páginas e palavras (10) e datas nas experiências (5). É uma estimativa por regras, não o resultado de um ATS real.
+3. **Etapa de IA (`CvPlanAdvisor`).** Se “otimizar para ATS” está ligado e a nota está abaixo de 90, a IA do owner recebe o conteúdo aprovado, a análise da vaga, as diretrizes e o relatório de ATS e devolve um **plano de apresentação**: ordem das seções, ordem de projetos/tecnologias/certificações/voluntariado/idiomas e densidade (`normal` ou `compact`). A resposta só pode citar seções e itens que já existem; ela não escreve nem altera texto, então não consegue acrescentar um fato pessoal. Experiência e formação mantêm a ordem cronológica. Até 2 rodadas: recompila, reavalia e guarda a melhor. Sem IA configurada (provider `rules`) ou se a IA falhar, regras simples (compactar quando passa de 2 páginas ou 1000 palavras) assumem, e `ats.aiStatus` registra `unavailable`, `failed`, `completed` ou `skipped`.
+4. **Registro.** `cv_generations` guarda snapshot, versão da vaga, template, versão do compilador, preferências, o documento final enviado ao template, a nota por checagem e cada iteração (`ats`). O `input_hash` cobre documento, preferências, análise da vaga e template: entrada idêntica reaproveita a geração (`200`, `reused: true`), sem IA, sem compilar e sem gastar cota anônima; entrada nova responde `201`. A cota é consumida antes da esteira e devolvida se ela falhar. A esteira roda fora de transação de banco.
+
+**Template Typst editável com prévia ao vivo.** `cv-templates/classic-v1.typ` (uma coluna, texto real, cabeçalhos padrão; sem tabelas, imagens nem ícones) é registrado em `cv_templates` e é imutável. Na aba **Typst** do gerador a pessoa edita o código e recebe uma cópia materializada dos textos aprovados em blocos Typst legíveis; a cada pausa, `POST /v1/cv/generations/{id}/preview` compila o código e devolve o PDF. Erros do compilador voltam como `422` com os diagnósticos em `details`, e o último PDF válido permanece na tela. Prévia não grava nada nem consome cota. “Salvar e gerar de novo” cria a próxima versão de `custom` do owner (`POST /v1/cv/templates`; o mesmo conteúdo não cria versão) e gera outro currículo com ela; “Restaurar template padrão” recarrega o embarcado. O template usa `data.json` como fallback para fontes que ainda dependem dele, sem interpolar texto não confiável em código Typst. Código com pacotes remotos (`@preview/…`, `@local/…`) é recusado, o compilador roda em diretório temporário usado como `--root`, com timeout de 30 s e 64 KB de código. Visitantes podem editar (até 20 versões); a limpeza por TTL as apaga. O template atual é em português (títulos de seção fixos).
+
+**Artefatos, histórico e exclusão.** PDF e Markdown (o mesmo conteúdo, com escape de formatação) vão para o Garage em `owners/{ownerId}/generated/…` e têm linha em `stored_objects` (`CV_PDF`, `CV_MARKDOWN`); para visitantes herdam o TTL da sessão. `GET /v1/cv/generations/owner/{ownerId}`, `GET /v1/cv/generations/{id}`, `GET /v1/cv/generations/{id}/download?format=pdf|markdown` e `DELETE /v1/cv/generations/{id}` alimentam “Meus Currículos” e a lista da home. A purga e o TTL apagam gerações, arquivos e templates do visitante; a migração para conta leva só o snapshot revisado, não as gerações.
+
+**Pendente:** exclusão de Currículo Base que apague as gerações derivadas (essa exclusão ainda não existe); escolha de idioma/outros templates; um avaliador de ATS externo ou treinado (o atual é por regras); o teste e2e `quick-review.spec.ts`, que ainda descreve a prévia fictícia anterior (incluindo o rótulo do botão, hoje “Gerar currículo”). A compilação com o Typst real só é exercida nos testes quando o CLI está instalado no PATH; no desenvolvimento local, o script `services/api/bin/typst-docker` usa a imagem `ghcr.io/typst/typst:latest`.
 
 ## Requisitos
 
@@ -193,11 +210,11 @@ Na página do Gerador, "Detalhes da Vaga Alvo" mostra, depois de gerar (ou ao ab
 | --- | --- | --- | --- | --- |
 | RF01 | Ingestão de vaga | Aceitar descrição da vaga por texto ou URL. | Alta | Implementado: URL ou texto colado, persistência por versão e análise por IA (`POST /v1/job-postings`); falta usar a versão da vaga na geração |
 | RF02 | Extração de requisitos | Identificar responsabilidades, qualificações e palavras-chave relevantes. | Alta | Planejado |
-| RF03 | Geração de currículo | Produzir currículo personalizado a partir dos requisitos e do perfil base. | Alta | Planejado |
+| RF03 | Geração de currículo | Produzir currículo personalizado a partir dos requisitos e do perfil base. | Alta | Implementado: esteira com avaliação de ATS e IA de layout, PDF/Markdown do snapshot aprovado e da versão da vaga |
 | RF04 | Exportação | Disponibilizar o currículo em PDF e Markdown. | Média | Planejado |
 | RF05 | Metadados e histórico | Salvar autoria, data, status, template e referência do arquivo gerado. | Média | Planejado |
 | RF06 | Integração com Second Brain | Copiar/registrar artefatos em `B03 Resources/CVs/` e criar link para uso no Obsidian. | Alta | Planejado |
-| RF07 | Acesso e autenticação | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta | Parcial: conta, papéis e acesso anônimo (servidor e interface: sessão, limites, TTL, limpeza, migração) implementados; limite de gerações aplicado quando a geração existir |
+| RF07 | Acesso e autenticação | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta | Parcial: conta, papéis e acesso anônimo (servidor e interface: sessão, limites, TTL, limpeza, migração) implementados; limite de gerações aplicado em `POST /v1/cv/generate` |
 | RF08 | Due diligence de empresas | Consolidar sinais públicos para apoiar a decisão de candidatura, com fatores e fontes rastreáveis. | A definir | Backlog |
 
 ### Requisitos não funcionais
@@ -224,7 +241,8 @@ Na página do Gerador, "Detalhes da Vaga Alvo" mostra, depois de gerar (ou ao ab
 | `job_posting_versions` | `id`, `job_posting_id`, `version_number`, `content_hash`, `details` (JSONB), `analysis` (JSONB), `analysis_status`, `analyzer_version`, `analyzed_at`, `created_at`, `last_checked_at` | Leitura imutável da vaga mais a análise por IA, que pode ser refeita. |
 | `roles` | `id`, `name` | Papéis de acesso, como `ADMIN` e `USER`. |
 | `user_roles` | `user_id`, `role_id` | Associação muitos-para-muitos entre usuários e papéis. |
-| `cv_templates` | `id`, `name`, `content`, `version` | Templates Typst versionados para apresentação; os fatos aprovados do Currículo Base são o Ground Truth. |
+| `cv_templates` | `id`, `owner_id` (nulo no embarcado), `name`, `version`, `content`, `content_hash` | Implementado (V9, V10). Templates Typst versionados e imutáveis, embarcados ou editados por owner para apresentação; os fatos aprovados do Currículo Base são o Ground Truth. |
+| `cv_generations` | `id`, `owner_id`, `snapshot_id`, `job_posting_version_id`, `template_id`, `input_hash`, `renderer_version`, `pipeline_version`, `preferences`, `document`, `ats`, `tailoring`, `pdf_object_id`, `markdown_object_id` | Implementado (V9, V10). Histórico de gerações com as versões de snapshot, vaga e template usadas e os artefatos no Garage. |
 | `cv_metadata` | `id`, `filename`, `created_at`, `status`, `owner_id`, `template_id` | Histórico e situação de cada currículo gerado. |
 | `file_storage` | `id`, `file_path`, `cv_metadata_id` | Modelo planejado de referência a artefatos em storage S3. |
 
@@ -241,7 +259,7 @@ erDiagram
 
 ## Decisão de produto: Currículo Base como Ground Truth
 
-Esta seção descreve o **fluxo alvo**, ainda não implementado de ponta a ponta. O Currículo Base é a fonte dos fatos pessoais e profissionais; o template Typst controla apenas a apresentação. Uma conta ou sessão anônima pode ter **um Ground Truth ativo** por vez, mas versões anteriores podem existir para auditoria e para identificar a origem de currículos já gerados.
+Esta seção descreve o **fluxo alvo**. O Currículo Base é a fonte dos fatos pessoais e profissionais; o template Typst controla apenas a apresentação. Uma conta ou sessão anônima pode ter **um Ground Truth ativo** por vez, mas versões anteriores podem existir para auditoria e para identificar a origem de currículos já gerados.
 
 ### Processamento, versões e pendências
 
@@ -251,7 +269,7 @@ Esta seção descreve o **fluxo alvo**, ainda não implementado de ponta a ponta
 4. Ativar a nova versão somente depois das confirmações obrigatórias, em uma operação que desativa a anterior. Enquanto a candidata é processada ou revisada, a versão ativa anterior permanece válida. A geração usa um snapshot imutável dos fatos aprovados e registra a versão do Ground Truth e da vaga usada; ela não reexecuta OCR para cada vaga.
 5. Uma atualização do pipeline pode propor uma nova extração, sem sobrescrever silenciosamente fatos corrigidos ou confirmados. Saída em JSON válido ou com esquema rígido não equivale a exatidão factual; o snapshot aprovado evita que novas execuções da IA alterem o Ground Truth sem revisão.
 
-**Trocar**, **desativar** e **excluir** são operações diferentes. Trocar ativa uma nova versão após revisão. Desativar deixa a conta ou sessão sem Ground Truth ativo, sem apagar automaticamente o histórico. Excluir remove arquivo, texto extraído, fatos e pendências da versão solicitada; o produto deve informar o efeito sobre currículos gerados anteriormente, que também podem conter os mesmos dados pessoais. Uma solicitação de exclusão completa deve abranger esses artefatos conforme a política de retenção definida para o produto.
+**Trocar**, **desativar** e **excluir** são operações diferentes. Trocar ativa uma nova versão após revisão. Desativar deixa a conta ou sessão sem Ground Truth ativo, sem apagar automaticamente o histórico. Excluir remove arquivo, texto extraído, fatos e pendências da versão solicitada; o produto deve informar o efeito sobre currículos gerados anteriormente, que também podem conter os mesmos dados pessoais. Uma solicitação de exclusão completa deve abranger esses artefatos conforme a política de retenção definida para o produto. Hoje cada geração pode ser excluída individualmente (`DELETE /v1/cv/generations/{id}`) e a purga de visitantes as apaga, mas a exclusão de uma versão do Currículo Base ainda não existe e, quando existir, precisa remover as gerações derivadas.
 
 ### Uso sem conta e persistência
 
@@ -343,17 +361,17 @@ endpoint ou DTO do backend mudar. O código em `apps/web/src/lib/api/generated`
 
 ## Próximos passos
 
-**Ponto de partida:** cadastro, login JWT, `/v1/me`, upload autenticado no Garage, deduplicação, extração por página, revisão manual e aprovação atômica do snapshot já funcionam. Texto extraído ainda não se torna fato automaticamente, e gerações reais ainda não existem.
+**Ponto de partida:** cadastro, login JWT, `/v1/me`, upload autenticado no Garage, deduplicação, extração por página, revisão manual e aprovação atômica do snapshot já funcionam. Texto extraído ainda não se torna fato automaticamente, e a geração (esteira de ATS, template editável e histórico) está implementada.
 
 **Próxima entrega recomendada: extrair fatos estruturados automaticamente e anexar evidências por campo.** A sequência abaixo separa a implementação existente do trabalho necessário para chegar à geração real:
 
 1. [x] **Fechar o ciclo do documento no frontend.** Home e `/base` usam o mesmo fluxo autenticado e mostram o status do upload atual. A interface não lista documentos antigos nem oferece prévia remota; o estado local desaparece ao recarregar.
 2. [x] **Criar a versão candidata no backend.** O upload cria ou recupera a versão no escopo do owner, com status e numeração definidos pelo servidor. Reenvio idêntico reutiliza versão e execução compatível e marca revisão temporal pendente; o snapshot ativo não é alterado. Fatos e reavaliação temporal continuam pendentes.
 3. [x] **Processar o PDF no servidor.** Fila persistente, PDFBox por página, OCR seletivo com Tesseract local, textos no Garage, hashes e métodos estão implementados. O worker só marca a execução concluída depois da interpretação IA, validação das evidências e persistência dos fatos; falha de interpretação mantém a versão candidata e execução não concluídas. A interface acompanha o status sem percentual por página; a análise nativa separa artigos/colunas e suprime texto sobreposto. Há um teste OCR real opcional com uma página escaneada representativa, executado quando Tesseract 5 e `eng` estão instalados. A detecção de texto misto e a reconstrução geral de layouts continuam limitadas. Veja o [guia da API](services/api/README.md#extração-seletiva-de-pdf).
-4. [x] **Persistir fatos e revisão por candidata.** A API armazena fatos, evidências de páginas extraídas, pendências e decisões auditadas com os estados `pendente`, `confirmado`, `corrigido` e `omitido`. `AiCurriculumInterpreter` usa OpenAI e Ollama local como fallback; `/base` permite revisar propostas reais. A extração semântica exige saída estruturada com evidência literal, mas não confirma a veracidade dos fatos. A revisão humana continua obrigatória e novos processamentos não sobrescrevem fatos revisados.
+4. [x] **Persistir fatos e revisão por candidata.** A API armazena fatos, evidências de páginas extraídas, pendências e decisões auditadas com os estados `pendente`, `confirmado`, `corrigido` e `omitido`. `AiCurriculumInterpreter` usa OpenAI e Ollama local como fallback; `/base` permite revisar propostas reais. A extração semântica exige saída estruturada com evidência literal, mas não confirma a veracidade dos fatos. Só fatos que o próprio modelo marca como ambíguos (`needsReview`: nome dividido em fragmentos, valor inferido de padrão incerto, conflito entre páginas, normalização incerta) criam pendência bloqueante; extrações diretas e inequívocas (contato em formato reconhecível, campo claramente rotulado, tecnologia sem ambiguidade de leitura) entram já confirmadas com a mesma evidência, reduzindo pendências desnecessárias nas revisões rápida e completa. A revisão humana continua obrigatória para o que fica pendente, e novos processamentos não sobrescrevem fatos revisados.
 5. [x] **Aprovar e ativar o Ground Truth.** `POST /v1/gt-snapshots/approve-version/{baseVersionId}` exige versão extraída, ao menos um fato confirmado/corrigido e nenhuma pendência bloqueante; congela os valores com hash e referências às decisões e ativa o novo snapshot na mesma transação que substitui o anterior. A rota genérica de alteração de `activeSnapshotId` foi removida. A geração baseada no snapshot segue pendente.
-6. [x] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** *Servidor concluído:* a sessão é emitida e autenticada pelo servidor (token opaco, só o hash fica no banco); upload e processamento por owner anônimo respeitam limites de tamanho, páginas, uploads, processamentos, gerações (o ponto de aplicação existe; a geração ainda é planejada) e taxa de requisições; os dados têm TTL e são apagados por um job de limpeza; o snapshot revisado pode ser migrado para uma conta antes da expiração sem repetir OCR. O processamento anônimo usa sempre a IA das variáveis de ambiente do servidor. *Interface concluída:* o visitante envia o PDF, acompanha a extração, revisa e aprova sem conta; a sessão é criada sob demanda, o token é a credencial das chamadas e, após o login, um diálogo oferece trazer o currículo aprovado para a conta ou descartá-lo. *Planejado:* a aplicação efetiva do limite de gerações, que depende de o endpoint de geração existir.
-7. [ ] **Implementar vaga e geração.** *Concluído:* receber URL ou texto, extrair requisitos (Gupy, JSON-LD, HTML genérico), versionar a vaga e analisá-la com a IA do owner. *Pendente:* o restante desta etapa, a partir da geração. Versionar o template Typst e criar `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga, sem refazer OCR nem acrescentar fatos pessoais. Gerar PDF/Markdown, persistir artefatos no Garage e disponibilizar download e histórico reais.
+6. [x] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** *Servidor concluído:* a sessão é emitida e autenticada pelo servidor (token opaco, só o hash fica no banco); upload e processamento por owner anônimo respeitam limites de tamanho, páginas, uploads, processamentos, gerações (aplicado em `POST /v1/cv/generate`) e taxa de requisições; os dados têm TTL e são apagados por um job de limpeza; o snapshot revisado pode ser migrado para uma conta antes da expiração sem repetir OCR. O processamento anônimo usa sempre a IA das variáveis de ambiente do servidor. *Interface concluída:* o visitante envia o PDF, acompanha a extração, revisa e aprova sem conta; a sessão é criada sob demanda, o token é a credencial das chamadas e, após o login, um diálogo oferece trazer o currículo aprovado para a conta ou descartá-lo. *Planejado:* a interface de geração.
+7. [x] **Implementar vaga e geração.** *Concluído:* receber URL ou texto, extrair requisitos (Gupy, JSON-LD, HTML genérico), versionar a vaga e analisá-la com a IA do owner; versionar o template Typst (`cv_templates`) e `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga, sem OCR e sem acrescentar fatos pessoais; PDF e Markdown persistidos no Garage; histórico, download e exclusão reais em `/v1/cv/generations`; cota anônima de gerações aplicada. A interface (gerador, "Meus Currículos" e a lista da home) consome esses endpoints, com esteira de ATS, template editável e prévia ao vivo. *Pendente:* escolha de template/idioma e validar a compilação com o Typst real em CI.
 8. [ ] **Fechar o ciclo dos dados.** Implementar desativação e exclusão efetiva de originais, texto, fatos, pendências e artefatos derivados, com política de retenção para contas. Cobrir as transições do fluxo com testes de API, contrato e interface.
 9. [ ] **Preparar operação e integrações.** Definir renovação ou revogação de tokens, integrar os artefatos gerados ao Second Brain/vault quando habilitado e preparar CI/CD com GitHub Actions.
 

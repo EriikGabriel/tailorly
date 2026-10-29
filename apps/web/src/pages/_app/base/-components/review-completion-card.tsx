@@ -55,9 +55,7 @@ export function ReviewCompletionCard({
           aria-describedby="review-completion-description"
           className="h-auto min-h-12 whitespace-normal rounded-xl px-6 py-3.5"
         >
-          {approving
-            ? "Aprovando..."
-            : "Aprovar Ground Truth e Voltar ao Início →"}
+          {approving ? "Aprovando..." : "Aprovar currículo base"}
         </Button>
       </div>
       {pendingCount > 0 && (

@@ -79,6 +79,10 @@ tailorly:
     max-active-sessions: ${TAILORLY_ANONYMOUS_MAX_ACTIVE_SESSIONS:1000}
     cleanup-interval: ${TAILORLY_ANONYMOUS_CLEANUP_INTERVAL:PT5M}
     cleanup-enabled: ${TAILORLY_ANONYMOUS_CLEANUP_ENABLED:true}
+  # Geração de currículos: o PDF é compilado pelo CLI do Typst (https://typst.app), que precisa estar
+  # instalado no host da API. Sem ele, POST /v1/cv/generate responde 503 e nada é gravado.
+  generation:
+    typst-command: ${TAILORLY_TYPST_COMMAND:typst}
   storage:
     endpoint: ${TAILORLY_STORAGE_ENDPOINT:http://localhost:3900}
     region: ${TAILORLY_STORAGE_REGION:garage}

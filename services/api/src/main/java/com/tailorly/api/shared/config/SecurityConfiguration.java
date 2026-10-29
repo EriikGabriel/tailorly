@@ -133,7 +133,11 @@ public class SecurityConfiguration {
       "/v1/gt-snapshots/{id}", "/v1/gt-snapshots/approve-version/{versionId}",
       "/v1/job-postings", "/v1/job-postings/extract", "/v1/job-postings/owner/{ownerId}",
       "/v1/job-postings/{id}", "/v1/job-postings/{id}/versions/{versionNumber}",
-      "/v1/job-postings/{id}/versions/{versionNumber}/analysis"
+      "/v1/job-postings/{id}/versions/{versionNumber}/analysis",
+      "/v1/cv/generate", "/v1/cv/generations/owner/{ownerId}", "/v1/cv/generations/{id}",
+      "/v1/cv/generations/{id}/download", "/v1/cv/generations/{id}/preview",
+      "/v1/cv/templates", "/v1/cv/templates/bundled", "/v1/cv/templates/owner/{ownerId}/current",
+      "/v1/cv/templates/{id}"
   };
 
   /** Autoriza qualquer autenticação, exceto a de uma sessão anônima. */

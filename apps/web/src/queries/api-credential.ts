@@ -71,3 +71,11 @@ export async function ensureCredential(
   }
   return ensureAnonymousSession();
 }
+
+/** Credencial do dono de um recurso, sem alternativa: cair no outro token acessaria o owner errado (403). */
+export function tokenForOwnerKind(ownerKind: OwnerKind | null): string | null {
+  if (ownerKind === "account") return useAuthStore.getState().accessToken;
+  if (ownerKind === "anonymous")
+    return useAnonymousSessionStore.getState().session?.token ?? null;
+  return null;
+}

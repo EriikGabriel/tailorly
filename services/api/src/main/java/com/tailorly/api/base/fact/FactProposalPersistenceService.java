@@ -1,6 +1,7 @@
 package com.tailorly.api.base.fact;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +14,8 @@ import com.tailorly.api.base.fact.evidence.FactEvidence;
 import com.tailorly.api.base.fact.evidence.FactEvidenceRepository;
 import com.tailorly.api.base.fact.group.FactRecord;
 import com.tailorly.api.base.fact.group.FactRecordRepository;
+import com.tailorly.api.base.review.ReviewDecision;
+import com.tailorly.api.base.review.ReviewDecisionRepository;
 import com.tailorly.api.base.review.ReviewIssue;
 import com.tailorly.api.base.review.ReviewIssueRepository;
 import com.tailorly.api.base.version.BaseVersion;
@@ -31,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class FactProposalPersistenceService {
   private static final String PENDING = "pendente";
+  private static final String CONFIRMED = "confirmado";
   private static final String AI_ORIGIN = "ai";
 
   private final ExtractionRunRepository runs;
@@ -40,6 +44,7 @@ public class FactProposalPersistenceService {
   private final FactRepository facts;
   private final FactEvidenceRepository evidence;
   private final ReviewIssueRepository issues;
+  private final ReviewDecisionRepository decisions;
   private final ObjectStorage storage;
 
   @Transactional
@@ -84,13 +89,18 @@ public class FactProposalPersistenceService {
               .displayOrder(nextDisplayOrder.getAndIncrement())
               .build()));
 
+      // Fatos sem ambiguidade real (ver AiCurriculumInterpreter) entram já confirmados: a pendência
+      // existe para decisões de leitura genuínas, não para repetir o que o texto já deixa claro.
+      boolean needsReview = proposal.needsReview();
       Fact fact = facts.save(Fact.builder()
           .factRecord(factRecord)
           .extractionRun(run)
           .fieldKey(proposal.fieldKey().trim())
           .extractedValue(proposal.extractedValue())
+          .reviewedValue(needsReview ? null : proposal.extractedValue())
           .origin(AI_ORIGIN)
-          .reviewState(PENDING)
+          .reviewState(needsReview ? PENDING : CONFIRMED)
+          .confirmedAt(needsReview ? null : Instant.now())
           .build());
 
       // Evidência e fato são gravados na mesma transação para não publicar um sem o outro.
@@ -104,20 +114,39 @@ public class FactProposalPersistenceService {
               "end", proposal.excerptEnd()))
           .build());
 
-      // Cada sugestão bloqueia a aprovação até uma pessoa confirmar, corrigir ou omitir o valor.
-      issues.save(ReviewIssue.builder()
-          .baseVersion(version)
-          .fact(fact)
-          .category(category)
-          .reason("Revise este fato extraído antes de usá-lo.")
-          .blocking(true)
-          .status("PENDING")
-          .questionAndChoices(Map.of(
-              "question", "Confirme, corrija ou omita este valor.",
-              "choices", List.of("confirmado", "corrigido", "omitido")))
-          .build());
+      if (needsReview) {
+        // Cada sugestão ambígua bloqueia a aprovação até uma pessoa confirmar, corrigir ou omitir o valor.
+        String reason = proposal.reviewReason();
+        issues.save(ReviewIssue.builder()
+            .baseVersion(version)
+            .fact(fact)
+            .category(category)
+            .reason(reason != null && !reason.isBlank() ? reason : "Revise este fato extraído antes de usá-lo.")
+            .blocking(true)
+            .status("PENDING")
+            .questionAndChoices(Map.of(
+                "question", "Confirme, corrija ou omita este valor.",
+                "choices", List.of("confirmado", "corrigido", "omitido")))
+            .build());
+      } else {
+        // A aprovação do Ground Truth exige uma decisão auditada por fato confirmado/corrigido;
+        // sem pendência não há resposta de pessoa, então a própria extração registra a decisão.
+        int revision = Math.addExact(version.getReviewRevision(), 1);
+        version.setReviewRevision(revision);
+        decisions.save(ReviewDecision.builder()
+            .baseVersion(version)
+            .fact(fact)
+            .actorOwner(version.getOwner())
+            .decisionResult(CONFIRMED)
+            .previousValue(null)
+            .approvedValue(proposal.extractedValue())
+            .reviewRevision(revision)
+            .decidedAt(Instant.now())
+            .build());
+      }
       persistedCount++;
     }
+    versions.save(version);
     return persistedCount;
   }
 

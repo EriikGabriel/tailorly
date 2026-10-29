@@ -74,6 +74,9 @@ public class AnonymousDataPurgeService {
     String facts = "(select f.id from facts f join fact_records r on r.id = f.record_id "
         + "where r.base_version_id in " + versions + ")";
 
+    // Currículos gerados contêm os dados pessoais do visitante; saem antes dos snapshots e da vaga que citam.
+    jdbc.update("delete from cv_generations where owner_id = ?", ownerId);
+    jdbc.update("delete from cv_templates where owner_id = ?", ownerId);
     jdbc.update("delete from gt_snapshot_items where snapshot_id in "
         + "(select id from gt_snapshots where owner_id = ?)", ownerId);
     jdbc.update("update owners set active_snapshot_id = null where id = ?", ownerId);

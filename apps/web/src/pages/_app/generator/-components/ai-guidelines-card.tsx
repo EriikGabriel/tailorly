@@ -1,48 +1,42 @@
 import { Switch } from "@animate/base/switch";
 import { Check, Plus, Target } from "@react-zero-ui/icon-sprite";
-import { useId, useState } from "react";
+import {
+  availableGuidelines,
+  useGenerationPreferencesStore,
+} from "@stores/generation-preferences-store";
+import { useId } from "react";
 import { SectionHeading } from "./section-heading";
-
-const availableGuidelines = [
-  "Destacar Liderança Técnica",
-  "Arquitetura em Nuvem & Escala",
-  "Impacto de Negócio Quantificado",
-  "Projetos Open Source",
-] as const;
 
 export function AiGuidelinesCard() {
   const atsSwitchId = useId();
-  const [active, setActive] = useState<Set<string>>(
-    () => new Set(availableGuidelines.slice(0, 3)),
+  const active = useGenerationPreferencesStore((state) => state.guidelines);
+  const optimizeForAts = useGenerationPreferencesStore(
+    (state) => state.optimizeForAts,
   );
-  const [optimizeForAts, setOptimizeForAts] = useState(true);
-
-  function toggle(label: string) {
-    setActive((current) => {
-      const next = new Set(current);
-      if (next.has(label)) next.delete(label);
-      else next.add(label);
-      return next;
-    });
-  }
+  const toggle = useGenerationPreferencesStore(
+    (state) => state.toggleGuideline,
+  );
+  const setOptimizeForAts = useGenerationPreferencesStore(
+    (state) => state.setOptimizeForAts,
+  );
 
   return (
     <div className="flex flex-col gap-3 border-b border-outline-variant/60 pb-4">
       <SectionHeading
         step={3}
         title="Diretrizes de Destaque da IA"
-        trailing={`${active.size} ${active.size === 1 ? "ativa" : "ativas"}`}
+        trailing={`${active.length} ${active.length === 1 ? "ativa" : "ativas"}`}
       />
 
       <p className="text-[13px] leading-5 text-on-surface-variant">
-        A IA prioriza essas diretrizes aplicando-as rigorosamente aos dados do
-        anúncio e do seu Currículo Base oficial.
+        A IA usa essas diretrizes só para ordenar o que já está aprovado no seu
+        Currículo Base; ela não escreve nem inventa informações.
       </p>
 
       <fieldset className="flex flex-wrap gap-1.5 border-0 p-0 m-0">
         <legend className="sr-only">Diretrizes de destaque</legend>
         {availableGuidelines.map((label) => {
-          const isActive = active.has(label);
+          const isActive = active.includes(label);
           return (
             <button
               key={label}
@@ -80,8 +74,8 @@ export function AiGuidelinesCard() {
               Otimizar rigorosamente para ATS
             </label>
             <p className="text-[13px] leading-5 text-on-surface-variant">
-              Sintaxe pura, sem colunas complexas, densidade máxima de
-              palavras-chave do anúncio.
+              A esteira mede a nota de ATS do PDF e ajusta ordem e densidade do
+              layout até melhorar (uma coluna, texto real, sem tabelas).
             </p>
           </div>
         </div>

@@ -432,6 +432,318 @@
         ]
       }
     },
+    "/v1/cv/generate": {
+      "post": {
+        "operationId": "cvGenerationGenerate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateCvRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvGenerationResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvGeneration"
+        ]
+      }
+    },
+    "/v1/cv/generations/owner/{ownerId}": {
+      "get": {
+        "operationId": "cvGenerationFindByOwner",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CvGenerationResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvGeneration"
+        ]
+      }
+    },
+    "/v1/cv/generations/{id}": {
+      "delete": {
+        "operationId": "cvGenerationDelete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "CvGeneration"
+        ]
+      },
+      "get": {
+        "operationId": "cvGenerationFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvGenerationResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvGeneration"
+        ]
+      }
+    },
+    "/v1/cv/generations/{id}/download": {
+      "get": {
+        "operationId": "cvGenerationDownload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "pdf"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvGeneration"
+        ]
+      }
+    },
+    "/v1/cv/generations/{id}/preview": {
+      "post": {
+        "operationId": "cvGenerationPreview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewCvRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvGeneration"
+        ]
+      }
+    },
+    "/v1/cv/templates": {
+      "post": {
+        "operationId": "cvTemplateSave",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCvTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvTemplateResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "CvTemplate"
+        ]
+      }
+    },
+    "/v1/cv/templates/bundled": {
+      "get": {
+        "operationId": "cvTemplateBundled",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvTemplateResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvTemplate"
+        ]
+      }
+    },
+    "/v1/cv/templates/owner/{ownerId}/current": {
+      "get": {
+        "operationId": "cvTemplateCurrent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvTemplateResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvTemplate"
+        ]
+      }
+    },
+    "/v1/cv/templates/{id}": {
+      "get": {
+        "operationId": "cvTemplateFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvTemplateResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvTemplate"
+        ]
+      }
+    },
     "/v1/extracted-pages/hash/{textHash}": {
       "get": {
         "operationId": "extractedPageFindByTextHash",
@@ -2039,6 +2351,63 @@
           "usage"
         ]
       },
+      "AtsCheck": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "maxPoints": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "points": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AtsReport": {
+        "type": "object",
+        "properties": {
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AtsCheck"
+            }
+          },
+          "matchedTerms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "missingTerms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "words": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "BaseDocumentResponse": {
         "type": "object",
         "properties": {
@@ -2395,6 +2764,126 @@
           "user"
         ]
       },
+      "CvAtsResult": {
+        "type": "object",
+        "properties": {
+          "aiStatus": {
+            "type": "string"
+          },
+          "iterations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineIteration"
+            }
+          },
+          "report": {
+            "$ref": "#/components/schemas/AtsReport"
+          }
+        }
+      },
+      "CvGenerationResponse": {
+        "type": "object",
+        "properties": {
+          "analysisStatus": {
+            "type": "string"
+          },
+          "ats": {
+            "$ref": "#/components/schemas/CvAtsResult"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "groundTruth": {
+            "$ref": "#/components/schemas/GroundTruthSource"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "job": {
+            "$ref": "#/components/schemas/JobPostingSource"
+          },
+          "markdown": {
+            "$ref": "#/components/schemas/GeneratedFile"
+          },
+          "matchedTerms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pdf": {
+            "$ref": "#/components/schemas/GeneratedFile"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/CvPreferences"
+          },
+          "rendererVersion": {
+            "type": "string"
+          },
+          "reused": {
+            "type": "boolean"
+          },
+          "template": {
+            "$ref": "#/components/schemas/TemplateSource"
+          }
+        }
+      },
+      "CvPreferences": {
+        "type": "object",
+        "properties": {
+          "guidelines": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 1
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
+          "optimizeForAts": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "guidelines"
+        ]
+      },
+      "CvTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "custom": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ExtractJobPostingRequest": {
         "type": "object",
         "properties": {
@@ -2677,6 +3166,77 @@
           "reviewedValue"
         ]
       },
+      "GenerateCvRequest": {
+        "type": "object",
+        "properties": {
+          "jobPostingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobVersionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/CvPreferences"
+          },
+          "snapshotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "jobPostingId",
+          "ownerId"
+        ]
+      },
+      "GeneratedFile": {
+        "type": "object",
+        "properties": {
+          "contentHash": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "GroundTruthSource": {
+        "type": "object",
+        "properties": {
+          "baseVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "snapshotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "snapshotNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "GtSnapshotItemResponse": {
         "type": "object",
         "properties": {
@@ -2921,6 +3481,32 @@
           }
         }
       },
+      "JobPostingSource": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "jobPostingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "JobPostingSummaryResponse": {
         "type": "object",
         "properties": {
@@ -3153,6 +3739,41 @@
           "userId"
         ]
       },
+      "PipelineIteration": {
+        "type": "object",
+        "properties": {
+          "density": {
+            "type": "string"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
+      "PreviewCvRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 64000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
       "Requirement": {
         "type": "object",
         "properties": {
@@ -3233,6 +3854,24 @@
           }
         }
       },
+      "SaveCvTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 64000,
+            "minLength": 0
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "content",
+          "ownerId"
+        ]
+      },
       "StoredObjectResponse": {
         "type": "object",
         "properties": {
@@ -3282,6 +3921,25 @@
           "sizeBytes",
           "storageKey"
         ]
+      },
+      "TemplateSource": {
+        "type": "object",
+        "properties": {
+          "custom": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "UpdateAiPreferencesRequest": {
         "type": "object",

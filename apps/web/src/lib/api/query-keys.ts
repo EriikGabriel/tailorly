@@ -42,6 +42,13 @@ export const apiQueryKeys = {
         versionNumber,
       ] as const,
   },
+  cv: {
+    all: ["cv"] as const,
+    generations: (ownerId: string) => ["cv", "generations", ownerId] as const,
+    generation: (id: string) => ["cv", "generation", id] as const,
+    template: (ownerId: string) => ["cv", "template", ownerId] as const,
+    bundledTemplate: ["cv", "template", "bundled"] as const,
+  },
   aiPreferences: {
     current: ["ai-preferences", "current"] as const,
   },

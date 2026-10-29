@@ -26,6 +26,9 @@ import type {
   CreateStoredObjectRequest,
   CreateUserRequest,
   CurrentAccountResponse,
+  CvGenerationDownloadParams,
+  CvGenerationResponse,
+  CvTemplateResponse,
   ExtractedPageResponse,
   ExtractedPageTextResponse,
   ExtractionRunResponse,
@@ -33,6 +36,7 @@ import type {
   FactEvidenceResponse,
   FactRecordResponse,
   FactResponse,
+  GenerateCvRequest,
   GtSnapshotResponse,
   IssuedAnonymousSessionResponse,
   JobPostingDetailResponse,
@@ -43,7 +47,9 @@ import type {
   LoginResponse,
   MigrateAnonymousSessionRequest,
   OwnerResponse,
+  PreviewCvRequest,
   ReviewIssueResponse,
+  SaveCvTemplateRequest,
   StoredObjectResponse,
   UpdateAiPreferencesRequest,
   UpdateDeletionStatusRequest,
@@ -402,6 +408,243 @@ export const baseVersionFindById = async (
   options?: Parameters<typeof apiRequest>[1],
 ): Promise<BaseVersionResponse> => {
   return apiRequest<BaseVersionResponse>(getBaseVersionFindByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getCvGenerationGenerateUrl = () => {
+  return `/v1/cv/generate`;
+};
+
+export const cvGenerationGenerate = async (
+  generateCvRequest: GenerateCvRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<CvGenerationResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<CvGenerationResponse>(getCvGenerationGenerateUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(generateCvRequest),
+  });
+};
+
+export const getCvGenerationFindByOwnerUrl = (ownerId: string) => {
+  return `/v1/cv/generations/owner/${encodeURIComponent(String(ownerId))}`;
+};
+
+export const cvGenerationFindByOwner = async (
+  ownerId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<CvGenerationResponse[]> => {
+  return apiRequest<CvGenerationResponse[]>(
+    getCvGenerationFindByOwnerUrl(ownerId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getCvGenerationDeleteUrl = (id: string) => {
+  return `/v1/cv/generations/${encodeURIComponent(String(id))}`;
+};
+
+export const cvGenerationDelete = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<void> => {
+  return apiRequest<void>(getCvGenerationDeleteUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getCvGenerationFindByIdUrl = (id: string) => {
+  return `/v1/cv/generations/${encodeURIComponent(String(id))}`;
+};
+
+export const cvGenerationFindById = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<CvGenerationResponse> => {
+  return apiRequest<CvGenerationResponse>(getCvGenerationFindByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getCvGenerationDownloadUrl = (
+  id: string,
+  params?: CvGenerationDownloadParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/cv/generations/${encodeURIComponent(String(id))}/download?${stringifiedParams}`
+    : `/v1/cv/generations/${encodeURIComponent(String(id))}/download`;
+};
+
+export const cvGenerationDownload = async (
+  id: string,
+  params?: CvGenerationDownloadParams,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<string> => {
+  return apiRequest<string>(getCvGenerationDownloadUrl(id, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getCvGenerationPreviewUrl = (id: string) => {
+  return `/v1/cv/generations/${encodeURIComponent(String(id))}/preview`;
+};
+
+export const cvGenerationPreview = async (
+  id: string,
+  previewCvRequest: PreviewCvRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<string> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<string>(getCvGenerationPreviewUrl(id), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(previewCvRequest),
+  });
+};
+
+export const getCvTemplateSaveUrl = () => {
+  return `/v1/cv/templates`;
+};
+
+export const cvTemplateSave = async (
+  saveCvTemplateRequest: SaveCvTemplateRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<CvTemplateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<CvTemplateResponse>(getCvTemplateSaveUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(saveCvTemplateRequest),
+  });
+};
+
+export const getCvTemplateBundledUrl = () => {
+  return `/v1/cv/templates/bundled`;
+};
+
+export const cvTemplateBundled = async (
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<CvTemplateResponse> => {
+  return apiRequest<CvTemplateResponse>(getCvTemplateBundledUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getCvTemplateCurrentUrl = (ownerId: string) => {
+  return `/v1/cv/templates/owner/${encodeURIComponent(String(ownerId))}/current`;
+};
+
+export const cvTemplateCurrent = async (
+  ownerId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<CvTemplateResponse> => {
+  return apiRequest<CvTemplateResponse>(getCvTemplateCurrentUrl(ownerId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getCvTemplateFindByIdUrl = (id: string) => {
+  return `/v1/cv/templates/${encodeURIComponent(String(id))}`;
+};
+
+export const cvTemplateFindById = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<CvTemplateResponse> => {
+  return apiRequest<CvTemplateResponse>(getCvTemplateFindByIdUrl(id), {
     ...options,
     method: "GET",
   });

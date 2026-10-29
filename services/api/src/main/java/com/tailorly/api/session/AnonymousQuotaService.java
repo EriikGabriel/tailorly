@@ -62,11 +62,19 @@ public class AnonymousQuotaService {
         ErrorCodes.Anonymous.EXTRACTION_LIMIT_REACHED);
   }
 
-  /** Ponto de aplicação do limite de gerações; a geração de currículos ainda é planejada. */
+  /** Limite de gerações de currículo (PDF e Markdown) do visitante; reaproveitar uma geração idêntica não consome. */
   @Transactional
   public void consumeGeneration(Owner owner) {
     consume(owner, properties.maxGenerations(), sessions::incrementGenerations,
         ErrorCodes.Anonymous.GENERATION_LIMIT_REACHED);
+  }
+
+  /** Devolve a geração consumida quando ela falhou antes de ser entregue; no-op para contas. */
+  @Transactional
+  public void refundGeneration(Owner owner) {
+    if (isAnonymous(owner)) {
+      sessions.decrementGenerations(owner.getId());
+    }
   }
 
   private void consume(Owner owner, int max, Increment increment, String errorCode) {

@@ -235,3 +235,21 @@ export function relevanceForFact(
   const key = itemKey(fact);
   return match.byFact.get(fact.id) ?? (key ? match.byItem.get(key) : undefined);
 }
+
+/**
+ * Quantas pendências a revisão rápida mostraria: as ligadas à vaga quando ela nomeia algo
+ * verificável nos fatos, senão todas as pendências. Mesma conta de `quickIssues.length` no
+ * diálogo, mas sobre os dados crus da API — serve para decidir a navegação antes de montar
+ * (ou não) a tela cheia da validação.
+ */
+export function countQuickReviewIssues(
+  analysis: JobAnalysis | undefined,
+  records: readonly MatchableRecord[],
+  pendingFacts: readonly Pick<MatchableFact, "id" | "recordId" | "fieldKey">[],
+): number {
+  const match = matchJobToFacts(analysis, records);
+  const canPrioritize = verifiableMatches(match).length > 0;
+  return canPrioritize
+    ? pendingFacts.filter((fact) => relevanceForFact(match, fact)).length
+    : pendingFacts.length;
+}

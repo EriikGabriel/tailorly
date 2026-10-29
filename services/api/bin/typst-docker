@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+workdir="$(pwd -P)"
+args=()
+for argument in "$@"; do
+  if [[ "$argument" == "$workdir" ]]; then
+    args+=("/work")
+  else
+    args+=("$argument")
+  fi
+done
+
+exec docker run --rm --network none \
+  --user "$(id -u):$(id -g)" \
+  --volume "$workdir:/work:rw" \
+  --workdir /work \
+  ghcr.io/typst/typst:latest \
+  "${args[@]}"

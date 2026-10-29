@@ -22,11 +22,18 @@ import {
 } from "@queries/base-review";
 import { ArrowLeft, ArrowRight } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
+import { useJobDraftStore } from "@stores/job-draft-store";
 import { usePresentationStore } from "@stores/presentation-store";
 import { useReviewDraftStore } from "@stores/review-draft-store";
 import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import type { ReviewIssue } from "@/types/review";
 import { firstStepWithPending, pendingByStep } from "@/utils/review-step-map";
 import { clearSteps } from "@/utils/review-verification";
@@ -42,11 +49,14 @@ import { PendingFieldsProvider } from "./pending-fields";
 import { ReviewCompletionCard } from "./review-completion-card";
 import { ReviewStepper } from "./review-stepper";
 
-export function ReviewWorkspace({
-  onSelectFile,
-}: {
-  onSelectFile: () => void;
-}) {
+export type ReviewWorkspaceHandle = {
+  approve: () => void;
+};
+
+export const ReviewWorkspace = forwardRef<
+  ReviewWorkspaceHandle,
+  { onSelectFile: () => void }
+>(function ReviewWorkspace({ onSelectFile }, ref) {
   const {
     sourceId,
     activeStep,
@@ -65,6 +75,9 @@ export function ReviewWorkspace({
       .filter((id): id is string => Boolean(id)),
   );
   const baseVersionId = useBaseCvStore((state) => state.baseVersionId);
+  const { mode: jobMode, jobUrl, jobText } = useJobDraftStore();
+  const hasJobTarget =
+    jobMode === "url" ? jobUrl.trim().length > 0 : jobText.trim().length > 0;
   const { review, issues: pendingIssues } = useReviewIssues();
   const answerIssue = useAnswerReviewIssue(baseVersionId ?? "");
   const invalidateReview = useInvalidateBaseReview(baseVersionId ?? "");
@@ -87,6 +100,7 @@ export function ReviewWorkspace({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [approvalError, setApprovalError] = useState<string | null>(null);
+  const approveRef = useRef<() => void>(() => {});
   const { preferences, setPreferences } = usePresentationStore();
   const reducedMotion = useReducedMotion();
 
@@ -279,13 +293,24 @@ export function ReviewWorkspace({
     setApprovalError(null);
     try {
       await approveGroundTruth.mutateAsync();
-      navigate({ to: "/" });
+      // Com uma vaga já em andamento (o caso comum de chegar aqui vindo do fluxo de geração),
+      // continua para o gerador em vez de voltar ao início e perder o contexto.
+      navigate({ to: hasJobTarget ? "/generator" : "/" });
     } catch (cause) {
       setApprovalError(
         apiErrorMessage(cause, "Não foi possível aprovar o Ground Truth."),
       );
     }
   }
+
+  approveRef.current = approve;
+  useImperativeHandle(
+    ref,
+    () => ({
+      approve: () => approveRef.current(),
+    }),
+    [],
+  );
 
   async function confirmIssue(issue: ReviewIssue) {
     setConfirmError(null);
@@ -456,4 +481,4 @@ export function ReviewWorkspace({
       </div>
     </PendingFieldsProvider>
   );
-}
+});

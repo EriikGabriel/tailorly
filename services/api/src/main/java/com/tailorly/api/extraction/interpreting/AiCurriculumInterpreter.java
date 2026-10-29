@@ -85,6 +85,8 @@ public class AiCurriculumInterpreter {
       - extractedValue
       - pageNumber
       - sourceExcerpt
+      - needsReview
+      - reviewReason
 
       ============================================================
       2. EVIDENCE AND FAITHFULNESS
@@ -111,6 +113,46 @@ public class AiCurriculumInterpreter {
 
       2.6. Do not extract unsupported soft claims or claims without meaningful
            detail.
+
+      2.7. "needsReview" is a boolean. Set it to true only when you are not
+           confident the fact is exactly right, not merely because a human
+           could double-check it. Most facts should be false.
+
+           Set it to true when, and only when:
+           - The fact depends on a layout judgment call with real uncertainty
+             (e.g. a split name/location where more than one reading is
+             plausible, a fragment that could belong to more than one fact).
+           - Two pages or sections state conflicting values for the same fact.
+           - The value had to be normalized from an unusual or nonstandard
+             wording that does not clearly match the canonical forms in
+             Section 5 (e.g. an employment type or proficiency level that is
+             worded ambiguously).
+           - A date is incomplete, inconsistent, or could be read more than
+             one way.
+           - A bullet or sentence was trimmed and the trim could have changed
+             its meaning.
+
+           Set it to false when the fact is a direct, unambiguous copy with a
+           single clear reading, such as:
+           - Contact details (email, phone, profile URLs) in a recognizable
+             format.
+           - A clearly labeled field (e.g. "Empresa: Acme" or a dated,
+             single-column job entry) with no competing interpretation.
+           - A plain technology, language, or certification name with no
+             layout ambiguity.
+           - Dates, statuses, or employment types stated in or close to their
+             canonical form.
+
+      2.8. "reviewReason" is a short string (one sentence, no more than ~160
+           characters) naming the specific uncertainty, written for the
+           person reviewing it (e.g. "Pode ser cidade ou sobrenome" or
+           "Vínculo descrito de forma atípica"). Use an empty string when
+           "needsReview" is false.
+
+      2.9. Never set "needsReview" to false to avoid writing a reason, and
+           never set it to true for a fact you are actually confident about.
+           Both directions make the review the person does afterward less
+           useful.
 
       ============================================================
       3. FACT STRUCTURE AND FIELD KEYS
@@ -353,7 +395,9 @@ public class AiCurriculumInterpreter {
 
       Before responding, verify that:
       - The output is one valid JSON object with exactly "layout" and "facts".
-      - Every fact has exactly the five required keys.
+      - Every fact has exactly the seven required keys.
+      - "needsReview" is false for every fact you are actually confident
+        about, and true only for genuine uncertainty (see 2.7-2.9).
       - Every category and fieldKey belongs to the allowed schema.
       - List-item indexes are zero-based, consistent within each item, and
         numbered independently per category.
@@ -456,6 +500,8 @@ public class AiCurriculumInterpreter {
     return (index == null ? "0" : index) + ":" + key;
   }
 
+  private static final int MAX_REVIEW_REASON_LENGTH = 280;
+
   private FactProposal toProposal(JsonNode fact, Map<Integer, ExtractedTextPage> pagesByNumber) {
     // Ignora propostas incompletas ou que apontem para uma página fora desta extração.
     Integer pageNumber = pageNumber(fact.path("pageNumber"));
@@ -480,8 +526,15 @@ public class AiCurriculumInterpreter {
     // O trecho persistido é sempre o texto original da página, nunca a versão reescrita pelo modelo.
     String verbatimExcerpt = page.text().substring(range[0], range[1]);
     Object extractedValue = objectMapper.convertValue(value, Object.class);
+    // Campo ausente ou de tipo inesperado é tratado como pendência: dado não confiável nunca libera
+    // um fato sem revisão por omissão.
+    JsonNode needsReviewNode = fact.path("needsReview");
+    boolean needsReview = !needsReviewNode.isBoolean() || needsReviewNode.asBoolean();
+    String reason = needsReview ? text(fact, "reviewReason") : null;
+    if (reason != null && reason.length() > MAX_REVIEW_REASON_LENGTH)
+      reason = reason.substring(0, MAX_REVIEW_REASON_LENGTH);
     return new FactProposal(category, fieldKey, extractedValue,
-        page.extractedPageId(), verbatimExcerpt, range[0], range[1]);
+        page.extractedPageId(), verbatimExcerpt, range[0], range[1], needsReview, reason);
   }
 
   private static Integer pageNumber(JsonNode node) {

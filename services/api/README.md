@@ -8,9 +8,9 @@ Esta pasta contém a API HTTP do Tailorly. Ela oferece cadastro de usuários, lo
 | --- | --- | --- |
 | Contas | Cadastro com owner provisionado, contexto autenticado em `/v1/me`, consulta, alteração de email, desativação, senha com BCrypt e roles persistidas | Recuperação de senha e exclusão de conta |
 | Acesso | Login com JWT Bearer HS256, autorização por conta e `ROLE_ADMIN` | Refresh token, logout e revogação individual de JWT |
-| Sessões anônimas | Emissão e autenticação no servidor (token opaco, hash no banco), TTL, cotas de upload/processamento/geração, limite de taxa, limpeza automática, encerramento pelo visitante, migração do snapshot revisado para conta e revogação administrativa | Aplicação do limite de gerações quando a geração existir |
-| Currículo Base | Upload por conta, deduplicação, versão candidata, fila persistente, extração PDFBox/Tesseract por página, revisão auditada e aprovação/ativação atômica de snapshots | Geração de currículos |
-| Geração | Nenhum endpoint | Ingestão de vaga, template Typst, PDF/Markdown e histórico |
+| Sessões anônimas | Emissão e autenticação no servidor (token opaco, hash no banco), TTL, cotas de upload/processamento/geração, limite de taxa, limpeza automática, encerramento pelo visitante, migração do snapshot revisado para conta e revogação administrativa | — |
+| Currículo Base | Upload por conta, deduplicação, versão candidata, fila persistente, extração PDFBox/Tesseract por página, revisão auditada e aprovação/ativação atômica de snapshots | Exclusão de versão com as gerações derivadas |
+| Geração | Template Typst versionado e editável por owner, `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga com esteira de ATS (avaliação sobre o texto do PDF + plano de apresentação pela IA), prévia ao vivo, PDF/Markdown no Garage, histórico, download e exclusão (`/v1/cv/*`) | Idioma e templates adicionais; avaliador de ATS externo |
 | Infraestrutura | PostgreSQL via JPA e migrations Flyway, armazenamento privado via API S3, OpenAPI, Swagger UI e Actuator | Limpeza de arquivos e observabilidade ampliada |
 
 O upload grava PDFs no Garage local pelo protocolo S3. A dependência Jsoup também está presente, mas ainda não há extração de vagas por URL.
@@ -196,6 +196,7 @@ pnpm --filter @tailorly/api dev
 | `TAILORLY_STORAGE_BUCKET` | Bucket privado, criado antes do upload | `tailorly-private` |
 | `TAILORLY_STORAGE_ACCESS_KEY` / `TAILORLY_STORAGE_SECRET_KEY` | Credenciais S3; se omitidas, usa a cadeia padrão do SDK | Vazias |
 | `TAILORLY_STORAGE_PATH_STYLE` | Endereçamento por caminho para Garage/R2 | `true` |
+| `TAILORLY_TYPST_COMMAND` | Executável/script do CLI do Typst que compila o PDF. No desenvolvimento local, `./bin/typst-docker` executa `ghcr.io/typst/typst:latest` pelo Docker; sem Docker ou Typst, `POST /v1/cv/generate` responde `503` | `typst` |
 
 O JWT expira após uma hora (`tailorly.security.jwt.ttl: PT1H`). O Flyway aplica as migrations de `src/main/resources/db/migration` e o JPA usa `ddl-auto: validate`. `baseline-on-migrate` permite adotar o Flyway em bancos locais anteriormente criados pelo Hibernate: esses bancos são marcados na versão 1 e recebem as migrations posteriores. O CORS permite `http://localhost:5173` para `/v1/**`. O Vite do frontend encaminha `/v1` para `http://localhost:8080` no ambiente local.
 
@@ -268,6 +269,14 @@ O email de cadastro deve ser válido; a senha deve ter de 8 a 128 caracteres. Lo
 | `PATCH /v1/owners/{id}/increment-revision` | Conta proprietária | Incrementar atomicamente `revision`. |
 | `POST /v1/gt-snapshots/approve-version/{baseVersionId}` | Conta proprietária ou admin | Aprovar fatos auditados da versão extraída, gerar snapshot imutável e ativá-lo atomicamente. |
 | `GET /v1/gt-snapshots/{id}` | Conta proprietária ou admin | Consultar snapshot e fatos congelados. |
+| `POST /v1/cv/generate` | Dono (conta ou sessão anônima) ou admin | Gerar PDF e Markdown; corpo `ownerId`, `jobPostingId` e, opcionais, `jobVersionNumber`, `snapshotId` (padrão: ativo), `templateId` (padrão: o último template editado do owner ou o embarcado) e `preferences` (`guidelines`, `optimizeForAts`). `201` para geração nova, `200` com `reused: true` para entrada idêntica, `400` sem snapshot ativo, `404` para vaga/snapshot de outro owner, `429` no limite anônimo, `503` sem Typst. |
+| `GET /v1/cv/generations/owner/{ownerId}` | Dono ou admin | Histórico de gerações, mais recentes primeiro, com snapshot, versão da vaga, template e arquivos. |
+| `GET /v1/cv/generations/{id}` | Dono ou admin | Consultar uma geração. |
+| `GET /v1/cv/generations/{id}/download?format=pdf\|markdown` | Dono ou admin | Baixar o arquivo como anexo (`pdf` por padrão); `Cache-Control: private, no-store`. |
+| `POST /v1/cv/generations/{id}/preview` | Dono ou admin | Compilar o código Typst do corpo (`content`) com o conteúdo final da geração e devolver o PDF; não grava nem consome cota. `422` com diagnósticos em `details` se não compilar; `400` para pacotes remotos. |
+| `GET /v1/cv/templates/bundled`, `GET /v1/cv/templates/owner/{ownerId}/current`, `GET /v1/cv/templates/{id}` | Autenticado; os do owner só ele ou admin | Consultar o template embarcado, o atual do owner (última versão editada ou embarcado) ou um por id, com o código. |
+| `POST /v1/cv/templates` | Dono ou admin | Salvar o código como a próxima versão `custom` do owner (`201`); conteúdo idêntico devolve a versão atual. Até 20 versões para visitantes. |
+| `DELETE /v1/cv/generations/{id}` | Dono ou admin | Excluir a geração e seus dois arquivos no storage; `204`. |
 | `POST /v1/anonymous-sessions` | Público, limitado por IP | Emitir sessão anônima; sem corpo. Retorna `sessionId`, `ownerId`, `token` (só nesta resposta) e `expiresAt`. Use `Authorization: Bearer <token>`. |
 | `GET /v1/anonymous-sessions/current` | Token anônimo | Consultar `expiresAt`, `usage`, `limits` e `migratable` (há snapshot revisado ativo). |
 | `DELETE /v1/anonymous-sessions/current` | Token anônimo | Encerrar a sessão e apagar na hora todos os dados do visitante; retorna `204`. |
@@ -302,7 +311,7 @@ Um owner é uma identidade de propriedade de dados: `kind` pode ser `account` ou
 
 `POST /v1/anonymous-sessions` cria, na mesma transação, um owner `anonymous` e a sessão, e devolve um token opaco (`tlr_anon_…`, 256 bits aleatórios) **uma única vez**; o banco guarda apenas o SHA-256. Cada requisição com `Authorization: Bearer tlr_anon_…` é autenticada pelo servidor (hash, expiração e revogação) e o token nunca é tratado como JWT. O TTL vem de `tailorly.anonymous.session-ttl` e também define `owner.expires_at`, herdado pelo arquivo original e pelos textos extraídos.
 
-**O que uma sessão anônima acessa.** Só as rotas de dados do Currículo Base em `/v1` (upload, versões, execuções, páginas, fatos, evidências, pendências e snapshots), e apenas do próprio owner. Usuários, owners, objetos de storage, `/v1/me`, `/v1/ai-preferences`, a migração e os aliases `/api/*` exigem conta. `OwnerAccessService` nega a uma sessão qualquer owner que não seja o seu.
+**O que uma sessão anônima acessa.** Só as rotas de dados do Currículo Base em `/v1` (upload, versões, execuções, páginas, fatos, evidências, pendências e snapshots), as vagas e as gerações de currículo, e apenas do próprio owner. Usuários, owners, objetos de storage, `/v1/me`, `/v1/ai-preferences`, a migração e os aliases `/api/*` exigem conta. `OwnerAccessService` nega a uma sessão qualquer owner que não seja o seu.
 
 **Limites aplicados no servidor** (`tailorly.anonymous.*`, variáveis `TAILORLY_ANONYMOUS_*`):
 
@@ -312,7 +321,7 @@ Um owner é uma identidade de propriedade de dados: `kind` pode ser `account` ou
 | Páginas do PDF (`max-pages`) | 3 | `400` |
 | Uploads de arquivos distintos (`max-uploads`) | 3 | `429` |
 | Processamentos novos (`max-extractions`) | 3 | `429` |
-| Gerações (`max-generations`) | 3 | `429` (ponto de aplicação pronto; a geração ainda não existe) |
+| Gerações (`max-generations`) | 3 | `429` (aplicado em `POST /v1/cv/generate`; entrada idêntica reaproveita a geração e não consome) |
 | Requisições por sessão (`requests-per-minute`) | 300 | `429` com `Retry-After` |
 | Sessões emitidas por IP (`sessions-per-ip-per-hour`) | 10 | `429` |
 | Sessões ativas no total (`max-active-sessions`) | 1000 | `429` |
@@ -343,7 +352,7 @@ As chaves de mensagem são centralizadas em `shared/exception/ErrorCodes.java`. 
 
 ## Persistência e fluxo alvo de currículo
 
-As entidades `ExtractionRun` e `ExtractedPage` persistem as execuções reais do worker e os textos por página. `pipeline_versions` guarda a configuração em `jsonb`; cada página aponta para um objeto de texto privado no Garage. Execuções antigas permanecem vinculadas à versão. A migration V5 adiciona `fact_records`, `facts`, `fact_evidence`, `review_issues`, `review_decisions`, `gt_snapshots` e `gt_snapshot_items`. A API lista fatos e evidências por agrupador, cria pendências para fatos em estado `pendente` e registra respostas como decisões versionadas. A evidência deve apontar para uma página da mesma versão/execução, e seu trecho precisa existir no texto extraído. `/base` edita os campos existentes e salva fatos na API; a revisão rápida usa as pendências persistidas. `POST /v1/gt-snapshots/approve-version/{baseVersionId}` só aprova versões extraídas sem pendências bloqueantes, cria itens imutáveis vinculados às decisões e ativa o novo snapshot na mesma transação que substitui o anterior. O hash SHA-256 cobre os fatos aprovados ordenados por categoria, ordem e campo. O pipeline ainda não classifica texto em fatos automaticamente e não há geração baseada em snapshot.
+As entidades `ExtractionRun` e `ExtractedPage` persistem as execuções reais do worker e os textos por página. `pipeline_versions` guarda a configuração em `jsonb`; cada página aponta para um objeto de texto privado no Garage. Execuções antigas permanecem vinculadas à versão. A migration V5 adiciona `fact_records`, `facts`, `fact_evidence`, `review_issues`, `review_decisions`, `gt_snapshots` e `gt_snapshot_items`. A API lista fatos e evidências por agrupador, cria pendências para fatos em estado `pendente` e registra respostas como decisões versionadas. A evidência deve apontar para uma página da mesma versão/execução, e seu trecho precisa existir no texto extraído. `/base` edita os campos existentes e salva fatos na API; a revisão rápida usa as pendências persistidas. `POST /v1/gt-snapshots/approve-version/{baseVersionId}` só aprova versões extraídas sem pendências bloqueantes, cria itens imutáveis vinculados às decisões e ativa o novo snapshot na mesma transação que substitui o anterior. O hash SHA-256 cobre os fatos aprovados ordenados por categoria, ordem e campo. O pipeline ainda não classifica texto em fatos automaticamente. As migrations V9 e V10 adicionam `cv_templates` (embarcados e editados por owner) e `cv_generations` (com `preferences`, `document`, `ats` e `pipeline_version`): cada geração aponta para o snapshot, a versão da vaga e a versão do template usados, e para os dois objetos (`CV_PDF`, `CV_MARKDOWN`) no Garage; o `input_hash` (conteúdo montado + hash do template) evita gerar de novo uma entrada idêntica. A geração só lê `gt_snapshot_items`; nunca consulta páginas extraídas, OCR ou IA.
 
 `users` guarda o hash BCrypt da senha e o estado `enabled`; `user_roles` relaciona as roles; `owners` guarda tipo, vínculo opcional com a conta, revisão, expiração e o UUID do snapshot ativo; `anonymous_sessions` guarda hash de token, expiração e revogação. `stored_objects` modela metadados de storage; cada `base_documents` exige um objeto original, e cada objeto pode ser original de no máximo um documento (`original_object_id` único). O hash do documento é único por owner. O upload cria no máximo uma nova `base_versions` por documento; versões legadas duplicadas podem continuar presentes. A numeração é única por owner. A migration V5 persiste fatos agrupados por versão, evidências por página, pendências e decisões de revisão e snapshots aprovados com seus itens congelados. A API aprova snapshots pela operação de domínio; a geração baseada neles ainda não existe.
 

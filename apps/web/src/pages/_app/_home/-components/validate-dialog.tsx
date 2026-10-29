@@ -11,9 +11,12 @@ import {
   useReviewIssues,
   useSubmitReviewAnswers,
 } from "@hooks/use-review-issues";
+import { ApiClientError } from "@lib/api/client";
 import { apiErrorMessage } from "@lib/api/error-message";
+import { useGenerateCv } from "@queries/cv-generation";
 import {
   ArrowRight,
+  CheckCheck,
   IconExclamationMark,
   ListTodo,
   Sparkles,
@@ -53,6 +56,7 @@ export function ValidateDialog({
     jobVersion,
   } = useReviewIssues();
   const submitAnswers = useSubmitReviewAnswers(baseVersionId ?? "");
+  const generateCv = useGenerateCv();
   const { revision: jobRevision, saveDraft: onSaveDraft } = useJobDraftStore();
   const {
     open,
@@ -85,8 +89,7 @@ export function ValidateDialog({
     prioritized || apiIssues.length > 0
       ? allIssues
       : selectQuickReviewIssues(allIssues);
-  const needsFullReview =
-    requiresFullReview || quickIssues.length < allIssues.length;
+  const needsFullReview = requiresFullReview || quickIssues.length > 0;
   const reviewComplete = quickIssues.every((issue) =>
     isReviewIssueComplete(issue, answers[issue.id]),
   );
@@ -94,6 +97,24 @@ export function ValidateDialog({
 
   function updateAnswer(id: string, answer: ReviewAnswer) {
     setAnswer(contextKey, id, answer);
+  }
+
+  async function confirmAll() {
+    if (!baseVersionId) {
+      setError("Envie o Currículo Base antes de confirmar os dados.");
+      return;
+    }
+    setError(null);
+    try {
+      await submitAnswers.submit(
+        quickIssues.map((issue) => ({
+          issue,
+          answer: { choice: "confirmado" as const, correction: "" },
+        })),
+      );
+    } catch (cause) {
+      setError(apiErrorMessage(cause, "Não foi possível confirmar os dados."));
+    }
   }
 
   async function finishReview() {
@@ -113,6 +134,18 @@ export function ValidateDialog({
       return;
     }
     onSaveDraft();
+    // A esteira roda no servidor (IA de layout, compilação e nota de ATS) e leva alguns segundos.
+    try {
+      await generateCv.mutateAsync();
+    } catch (cause) {
+      if (cause instanceof ApiClientError && cause.status === 400) {
+        onOpenChange(false);
+        navigate({ to: "/base" });
+        return;
+      }
+      setError(apiErrorMessage(cause, "Não foi possível gerar o currículo."));
+      return;
+    }
     onOpenChange(false);
     navigate({ to: "/generator" });
   }
@@ -130,7 +163,7 @@ export function ValidateDialog({
       <DialogPortal>
         <DialogBackdrop className="fixed inset-0 z-50 bg-primary-950/65 backdrop-blur-sm" />
         <DialogPopup
-          className="flex max-h-[min(90dvh,760px)] w-[min(680px,calc(100vw-2rem))] max-w-none flex-col gap-0 overflow-hidden rounded-xl border border-primary-200 bg-card p-0 text-primary-950 shadow-2xl"
+          className="flex max-h-[min(90dvh,760px)] w-[min(800px,calc(100vw-2rem))] max-w-none flex-col gap-0 overflow-hidden rounded-xl border border-primary-200 bg-card p-0 text-primary-950 shadow-2xl"
           style={{
             position: "fixed",
             top: "50%",
@@ -139,7 +172,7 @@ export function ValidateDialog({
             zIndex: 51,
           }}
         >
-          <div className="shrink-0 border-b border-outline-variant/30 bg-surface-container-low px-5 py-5 sm:px-7">
+          <div className="shrink-0 border-b border-outline-variant/30 bg-surface-container-low p-5 sm:px-7">
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-2">
                 <DialogTitle className="flex items-center gap-2 text-lg font-semibold leading-6">
@@ -169,7 +202,7 @@ export function ValidateDialog({
             </div>
           </div>
 
-          <div className="min-h-0 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7">
+          <div className="min-h-0 space-y-4 overflow-y-auto overscroll-contain p-5 sm:px-7">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/30 pb-1.5">
               <p className="flex items-center text-xs font-bold uppercase tracking-wide text-secondary-700">
                 <IconExclamationMark className="size-4.5 stroke-3 text-tertiary" />
@@ -253,7 +286,7 @@ export function ValidateDialog({
             )}
           </div>
 
-          <div className="flex shrink-0 flex-col gap-3 bg-surface-container-low border-t border-outline-variant/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+          <div className="flex shrink-0 flex-col  bg-surface-container-low border-t border-outline-variant/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
             <Link
               to="/base"
               onClick={() => {
@@ -264,16 +297,37 @@ export function ValidateDialog({
             >
               Revisar currículo completo
             </Link>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-6">
               <Button
                 variant="outline"
                 type="button"
                 onClick={() => onOpenChange(false)}
-                className="rounded-xl border border-outline-variant/50 px-6 py-6 text-sm font-medium hover:bg-surface-container"
+                className="rounded-xl border border-outline-variant/50 p-6 text-sm font-medium hover:bg-surface-container"
                 disableZoom
               >
                 Agora não
               </Button>
+              {!needsFullReview && quickIssues.length > 0 && (
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={confirmAll}
+                  disabled={
+                    !baseVersionId ||
+                    review.issues.isLoading ||
+                    submitAnswers.isPending
+                  }
+                  className="rounded-xl border border-tertiary-200 bg-tertiary-50 p-6 text-sm font-medium text-tertiary-900 hover:bg-tertiary-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  disableZoom
+                >
+                  <CheckCheck
+                    strokeWidth={1.5}
+                    className="size-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                  Confirmar todos
+                </Button>
+              )}
               {needsFullReview ? (
                 <Link
                   to="/base"
@@ -281,7 +335,7 @@ export function ValidateDialog({
                     onSaveDraft();
                     onOpenChange(false);
                   }}
-                  className="rounded-xl bg-primary-900 px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-800"
+                  className="rounded-xl flex justify-center items-center bg-primary-900 p-4 text-sm font-semibold text-primary-foreground hover:bg-primary-800"
                 >
                   Ir para revisão completa
                 </Link>
@@ -293,20 +347,23 @@ export function ValidateDialog({
                     !reviewComplete ||
                     !baseVersionId ||
                     review.issues.isLoading ||
-                    submitAnswers.isPending
+                    submitAnswers.isPending ||
+                    generateCv.isPending
                   }
-                  className="rounded-xl bg-primary-900 px-6! py-6 text-sm font-semibold text-primary-foreground hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-xl bg-primary-900 p-6 text-sm font-semibold text-primary-foreground hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40"
                   disableZoom
                 >
                   <Sparkles
-                    strokeWidth={1.75}
-                    className="size-5 shrink-0"
+                    strokeWidth={1.5}
+                    className="size-4 shrink-0"
                     aria-hidden="true"
                   />
-                  Continuar para prévia
+                  {generateCv.isPending
+                    ? "Gerando currículo..."
+                    : "Gerar currículo"}
                   <ArrowRight
-                    strokeWidth={1.75}
-                    className="size-5 shrink-0"
+                    strokeWidth={1.5}
+                    className="size-4 shrink-0"
                     aria-hidden="true"
                   />
                 </Button>

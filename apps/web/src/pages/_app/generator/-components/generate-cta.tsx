@@ -32,7 +32,7 @@ export function GenerateCta() {
             aria-hidden="true"
             className="size-1.5 rounded-full bg-on-tertiary-container"
           />
-          Motor: GPT-4o + Ground Truth Validator
+          Esteira: Ground Truth → IA de layout → avaliação de ATS
         </span>
       </div>
     </div>
