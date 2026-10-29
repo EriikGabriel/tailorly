@@ -24,9 +24,10 @@ import { useBaseCvStore } from "@stores/base-cv-store";
 import { useCvGenerationStore } from "@stores/cv-generation-store";
 import { useJobDraftStore } from "@stores/job-draft-store";
 import { skipToken, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AtsScoreCard } from "./ats-score-card";
 import { CvPreview } from "./cv-preview";
+import { formatTypstTemplate } from "./format-typst";
 import { TypstEditor } from "./typst-editor";
 
 export type ViewMode = "visual" | "typst" | "split";
@@ -63,18 +64,23 @@ export function DocumentStage({
     staleTime: Number.POSITIVE_INFINITY,
   });
   const bundled = useBundledCvTemplate(token);
+  const rawBaseline =
+    generation.data?.template?.content ?? template.data?.content ?? null;
+  // A prévia do código começa já formatada: facilita ver e editar cada variável.
+  const formattedBaseline = useMemo(
+    () => (rawBaseline !== null ? formatTypstTemplate(rawBaseline) : null),
+    [rawBaseline],
+  );
   const [draft, setDraft] = useState<string | null>(null);
   useEffect(() => {
-    setDraft(
-      generation.data?.template?.content ?? template.data?.content ?? null,
-    );
-  }, [generation.data?.template?.content, template.data?.content]);
+    setDraft(formattedBaseline);
+  }, [formattedBaseline]);
 
   const preview = useCvPreview(generationId, draft, token);
   const save = useSaveCvTemplate();
   const regenerate = useGenerateCv();
   const [actionError, setActionError] = useState<string | null>(null);
-  const dirty = draft !== null && draft !== template.data?.content;
+  const dirty = draft !== null && draft !== formattedBaseline;
 
   async function saveAndRegenerate() {
     if (!generation.data?.ownerId || !token || draft === null) return;
@@ -214,7 +220,12 @@ export function DocumentStage({
           <Button
             type="button"
             onClick={() =>
-              bundled.data && setDraft(bundled.data.content ?? null)
+              bundled.data &&
+              setDraft(
+                bundled.data.content
+                  ? formatTypstTemplate(bundled.data.content)
+                  : null,
+              )
             }
             disabled={!bundled.data}
             className="h-9 rounded-lg bg-surface-container px-3 text-xs font-semibold text-on-surface disabled:opacity-40"

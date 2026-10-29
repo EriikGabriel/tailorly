@@ -32,6 +32,7 @@ seis dimensões, revisão rápida de pendências e preparação para a geração
 | Primitivos de UI | Base UI (`@base-ui/react`) e Animate UI vendorizado |
 | Ícones | `@react-zero-ui/icon-sprite` (Lucide + Tabler) |
 | Movimento | `motion` (Motion for React) |
+| Editor Typst | CodeMirror 6 com `codemirror-lang-typst` (parser Lezer, autocomplete e linting) |
 | Formatação/lint | Biome 2.5 (sem ESLint/Prettier) |
 | Validação de esquema | `zod` 4 (dependência declarada; ainda sem uso no estado atual) |
 

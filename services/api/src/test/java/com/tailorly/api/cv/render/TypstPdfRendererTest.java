@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.cv.template.CvTemplateCatalog;
+import com.tailorly.api.cv.template.TypstTemplateMaterializer;
 import com.tailorly.api.shared.exception.ServiceUnavailableException;
 import com.tailorly.api.shared.exception.UnprocessableRequestException;
 import org.junit.jupiter.api.DisplayName;
@@ -103,8 +104,10 @@ class TypstPdfRendererTest {
             new CvDocument.Entry("Inglês", "Avançado", null, null, List.of(), null)))));
     String template = new String(CvTemplateCatalog.class.getClassLoader()
         .getResourceAsStream("cv-templates/classic-v1.typ").readAllBytes(), StandardCharsets.UTF_8);
+    // O conteúdo aprovado agora entra como texto literal no corpo, então materializa antes de compilar.
+    String materialized = TypstTemplateMaterializer.materialize(template, document);
 
-    byte[] pdf = new TypstPdfRenderer("typst", MAPPER).render(template, document);
+    byte[] pdf = new TypstPdfRenderer("typst", MAPPER).render(materialized, document);
 
     assertArrayEquals("%PDF-".getBytes(StandardCharsets.US_ASCII), java.util.Arrays.copyOf(pdf, 5));
   }
