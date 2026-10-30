@@ -52,4 +52,12 @@ export const apiQueryKeys = {
   aiPreferences: {
     current: ["ai-preferences", "current"] as const,
   },
+  groundTruth: {
+    snapshot: (snapshotId: string) =>
+      ["ground-truth", "snapshot", snapshotId] as const,
+    version: (versionId: string) =>
+      ["ground-truth", "version", versionId] as const,
+    document: (documentId: string) =>
+      ["ground-truth", "document", documentId] as const,
+  },
 } as const;

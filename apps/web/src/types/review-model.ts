@@ -7,7 +7,6 @@ export const reviewSteps = [
   { id: "projects", title: "Projetos & Métricas" },
   { id: "education", title: "Formação & Certificados" },
   { id: "skills", title: "Competências & Idiomas" },
-  { id: "preferences", title: "Preferências" },
 ] as const;
 
 export type ReviewStepId = (typeof reviewSteps)[number]["id"];
@@ -89,18 +88,4 @@ export type CollectionProps = {
   collectionKey: DraftCollection;
   records: DraftRecord[];
   onChange: (records: DraftRecord[]) => void;
-};
-
-export type PresentationPreferences = {
-  nameFormat: "short" | "full";
-  language: "pt-BR" | "en-US" | "es-ES";
-  links: { linkedin: boolean; github: boolean; whatsapp: boolean };
-  hideOlderRoles: boolean;
-};
-
-export const initialPreferences: PresentationPreferences = {
-  nameFormat: "short",
-  language: "pt-BR",
-  links: { linkedin: true, github: true, whatsapp: false },
-  hideOlderRoles: true,
 };

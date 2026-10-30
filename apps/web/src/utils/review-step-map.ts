@@ -9,7 +9,6 @@ const STEP_BY_CATEGORY: Record<ReviewCategory, ReviewStepId> = {
   education: "education",
   skills: "skills",
   languages: "skills",
-  presentation: "preferences",
 };
 
 export function stepForReviewCategory(category: ReviewCategory): ReviewStepId {
@@ -28,7 +27,6 @@ export const REVIEW_STEP_ORDER: readonly ReviewStepId[] = [
   "projects",
   "education",
   "skills",
-  "preferences",
 ];
 
 /** Contagem de pendências por etapa da auditoria, com as ligadas à vaga em separado. */

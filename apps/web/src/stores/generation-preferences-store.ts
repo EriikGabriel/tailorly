@@ -13,6 +13,7 @@ interface GenerationPreferencesState {
   optimizeForAts: boolean;
   toggleGuideline: (label: string) => void;
   setOptimizeForAts: (value: boolean) => void;
+  reset: () => void;
 }
 
 /** Preferências de interface enviadas a cada geração; o servidor as registra com o currículo gerado. */
@@ -27,4 +28,9 @@ export const useGenerationPreferencesStore =
           : [...state.guidelines, label],
       })),
     setOptimizeForAts: (optimizeForAts) => set({ optimizeForAts }),
+    reset: () =>
+      set({
+        guidelines: availableGuidelines.slice(0, 3),
+        optimizeForAts: true,
+      }),
   }));

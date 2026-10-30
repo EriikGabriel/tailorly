@@ -104,7 +104,7 @@ export const ReviewWorkspace = forwardRef<
             activeStep={activeStep}
             onStepChange={setActiveStep}
           />
-          {activeStep === "preferences" && (
+          {activeStep === "skills" && (
             <ReviewCompletionCard
               onSave={draftSave.save}
               onApprove={approval.approve}

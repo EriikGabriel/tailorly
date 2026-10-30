@@ -1,15 +1,5 @@
 import type { InterpretationProvider } from "../constants/ai-providers";
 
-export interface IdentityFields {
-  fullName: string;
-  email: string;
-  phone: string;
-  headline: string;
-  location: string;
-  linkedinUrl: string;
-  githubUrl: string;
-}
-
 export interface RemoteDraft {
   endpoint: string;
   model: string;

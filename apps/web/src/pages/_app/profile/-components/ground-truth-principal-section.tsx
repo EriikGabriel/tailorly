@@ -1,115 +1,142 @@
-import { Button } from "@animate/buttons/button";
+import { useActiveGroundTruth } from "@queries/ground-truth";
 import {
+  ArrowRight,
   Award,
   Briefcase,
   ClipboardCheck,
   GraduationCap,
-  Settings2,
 } from "@react-zero-ui/icon-sprite";
-import { previewGroundTruthFacts } from "@/data/profile-preview";
+import { Link } from "@tanstack/react-router";
+import { formatPeriod, isCurrentStatus } from "@/utils/review-format";
 import { SectionCard } from "./section-card";
 
 export function GroundTruthPrincipalSection() {
-  const facts = previewGroundTruthFacts;
+  const { isLoading, hasActiveSnapshot, facts } = useActiveGroundTruth();
 
   return (
     <SectionCard
       icon={ClipboardCheck}
       title="2. Ground Truth Principal (Verdade Absoluta)"
-      description="Todos os fatos foram auditados contra o PDF mestre. A IA é matematicamente restrita a usar apenas dados validados nesta curadoria."
+      description="Fatos aprovados no Currículo Base. A IA é restrita a usar apenas dados validados nesta curadoria."
       trailing={
-        <Button size="lg">
-          <Settings2 aria-hidden="true" className="size-4" />
-          Curar &amp; Auditar Dossiê de Fatos (Split-View)
-        </Button>
+        <Link
+          to="/base"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-label-md font-semibold text-primary-foreground hover:bg-primary/90"
+        >
+          Curar &amp; Auditar Dossiê de Fatos
+          <ArrowRight aria-hidden="true" className="size-3.5" />
+        </Link>
       }
     >
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2 rounded-lg bg-surface-container-low p-4">
-          <div className="flex items-center gap-2">
-            <ClipboardCheck
-              aria-hidden="true"
-              className="size-4 text-on-surface-variant"
-            />
-            <h3 className="text-title-md font-semibold text-primary-950">
-              Resumo Executivo Base
-            </h3>
-            <span className="ml-auto rounded bg-card px-2 py-0.5 text-label-sm font-medium text-on-secondary-container">
-              Validado
-            </span>
-          </div>
-          <p className="text-body-sm text-on-surface-variant">
-            &quot;{facts.executiveSummary}&quot;
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 rounded-lg bg-surface-container-low p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Briefcase
-                aria-hidden="true"
-                className="size-4 text-on-surface-variant"
-              />
-              <h3 className="text-title-md font-semibold text-primary-950">
-                Histórico Profissional Mapeado ({facts.totalPositions} Posições)
-              </h3>
-            </div>
-            <span className="text-label-sm font-medium text-on-surface-variant">
-              {facts.timelineRangeLabel}
-            </span>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {facts.positions.map((position) => (
-              <div
-                key={position.role}
-                className="flex flex-col gap-1 rounded-lg bg-card p-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-label-md font-semibold text-primary-950">
-                    {position.role}
-                  </span>
-                  <span className="shrink-0 text-label-sm font-medium text-on-secondary-container">
-                    {position.period}
-                  </span>
-                </div>
-                <p className="text-body-sm text-on-surface-variant">
-                  {position.company}
-                </p>
-                <p className="text-label-sm font-medium text-on-surface-variant">
-                  {position.highlight}
-                </p>
+      {isLoading ? (
+        <p className="text-body-sm text-on-surface-variant">Carregando...</p>
+      ) : !hasActiveSnapshot || !facts ? (
+        <p className="rounded-lg bg-surface-container-low p-4 text-body-sm text-on-surface-variant">
+          Sem Ground Truth ativo. Envie e aprove um Currículo Base para ver
+          seus fatos aqui.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {facts.identity.summary && (
+            <div className="flex flex-col gap-2 rounded-lg bg-surface-container-low p-4">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck
+                  aria-hidden="true"
+                  className="size-4 text-on-surface-variant"
+                />
+                <h3 className="text-title-md font-semibold text-primary-950">
+                  Resumo Executivo Base
+                </h3>
               </div>
-            ))}
-          </div>
-        </div>
+              <p className="text-body-sm text-on-surface-variant">
+                &quot;{facts.identity.summary}&quot;
+              </p>
+            </div>
+          )}
 
-        <div className="flex flex-col gap-2 rounded-lg bg-surface-container-low p-4">
-          <div className="flex items-center gap-2">
-            <GraduationCap
-              aria-hidden="true"
-              className="size-4 text-on-surface-variant"
-            />
-            <h3 className="text-title-md font-semibold text-primary-950">
-              Formação Acadêmica &amp; Certificações Globais
-            </h3>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded bg-card px-3 py-1.5 text-label-sm font-semibold text-primary-container">
-              <GraduationCap aria-hidden="true" className="size-3.5" />
-              {facts.education}
-            </span>
-            {facts.certifications.map((certification) => (
-              <span
-                key={certification}
-                className="inline-flex items-center gap-1.5 rounded bg-card px-3 py-1.5 text-label-sm font-semibold text-primary-container"
-              >
-                <Award aria-hidden="true" className="size-3.5" />
-                {certification}
-              </span>
-            ))}
-          </div>
+          {facts.experience.length > 0 && (
+            <div className="flex flex-col gap-3 rounded-lg bg-surface-container-low p-4">
+              <div className="flex items-center gap-2">
+                <Briefcase
+                  aria-hidden="true"
+                  className="size-4 text-on-surface-variant"
+                />
+                <h3 className="text-title-md font-semibold text-primary-950">
+                  Histórico Profissional Mapeado ({facts.experience.length}{" "}
+                  Posições)
+                </h3>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {facts.experience.map((position, index) => (
+                  <div
+                    // biome-ignore lint/suspicious/noArrayIndexKey: fatos não têm identificador próprio aqui, só a ordem aprovada.
+                    key={index}
+                    className="flex flex-col gap-1 rounded-lg bg-card p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-label-md font-semibold text-primary-950">
+                        {position.role ?? "—"}
+                      </span>
+                      <span className="shrink-0 text-label-sm font-medium text-on-secondary-container">
+                        {formatPeriod(
+                          position.start,
+                          position.end,
+                          isCurrentStatus(position.status),
+                        )}
+                      </span>
+                    </div>
+                    <p className="text-body-sm text-on-surface-variant">
+                      {position.company}
+                    </p>
+                    {position.description && (
+                      <p className="text-label-sm font-medium text-on-surface-variant">
+                        {position.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(facts.degrees.length > 0 || facts.certifications.length > 0) && (
+            <div className="flex flex-col gap-2 rounded-lg bg-surface-container-low p-4">
+              <div className="flex items-center gap-2">
+                <GraduationCap
+                  aria-hidden="true"
+                  className="size-4 text-on-surface-variant"
+                />
+                <h3 className="text-title-md font-semibold text-primary-950">
+                  Formação Acadêmica &amp; Certificações
+                </h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {facts.degrees.map((degree, index) => (
+                  <span
+                    // biome-ignore lint/suspicious/noArrayIndexKey: fatos não têm identificador próprio aqui, só a ordem aprovada.
+                    key={index}
+                    className="inline-flex items-center gap-1.5 rounded bg-card px-3 py-1.5 text-label-sm font-semibold text-primary-container"
+                  >
+                    <GraduationCap aria-hidden="true" className="size-3.5" />
+                    {degree.degree}
+                    {degree.institution ? ` — ${degree.institution}` : ""}
+                  </span>
+                ))}
+                {facts.certifications.map((certification, index) => (
+                  <span
+                    // biome-ignore lint/suspicious/noArrayIndexKey: fatos não têm identificador próprio aqui, só a ordem aprovada.
+                    key={index}
+                    className="inline-flex items-center gap-1.5 rounded bg-card px-3 py-1.5 text-label-sm font-semibold text-primary-container"
+                  >
+                    <Award aria-hidden="true" className="size-3.5" />
+                    {certification.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </SectionCard>
   );
 }

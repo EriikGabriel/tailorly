@@ -3,19 +3,16 @@ import type {
   DraftCollection,
   ReviewStepId,
 } from "@@types/review-model";
-import { usePresentationStore } from "@stores/presentation-store";
 import { useReviewDraftStore } from "@stores/review-draft-store";
 import { EducationReviewStep } from "../-steps/education-review-step";
 import { ExperienceReviewStep } from "../-steps/experience-review-step";
 import { IdentityReviewStep } from "../-steps/identity-review-step";
-import { PreferencesReviewStep } from "../-steps/preferences-review-step";
 import { ProjectsReviewStep } from "../-steps/projects-review-step";
 import { SkillsReviewStep } from "../-steps/skills-review-step";
 
 /** Formulário da etapa ativa, ligado ao rascunho de revisão. */
 export function ReviewStepContent({ step }: { step: ReviewStepId }) {
   const { sourceId, draft, setIdentity, setCollection } = useReviewDraftStore();
-  const { preferences, setPreferences } = usePresentationStore();
 
   function collection(key: DraftCollection): CollectionProps {
     return {
@@ -55,10 +52,6 @@ export function ReviewStepContent({ step }: { step: ReviewStepId }) {
           languages={collection("languages")}
           technologies={collection("technologies")}
         />
-      );
-    case "preferences":
-      return (
-        <PreferencesReviewStep value={preferences} onChange={setPreferences} />
       );
   }
 }

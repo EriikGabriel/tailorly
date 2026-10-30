@@ -4,7 +4,6 @@ import {
   CalendarDays,
   ChartColumnIncreasing,
   Check,
-  CircleUserRound,
   EyeOff,
   FolderBookmark,
   GraduationCap,
@@ -81,5 +80,4 @@ export const categoryIconMap: Record<
   projects: FolderBookmark,
   skills: BookOpenText,
   languages: Languages,
-  presentation: CircleUserRound,
 };

@@ -5,8 +5,7 @@ export type ReviewCategory =
   | "projects"
   | "education"
   | "skills"
-  | "languages"
-  | "presentation";
+  | "languages";
 
 export type CorrectionField = {
   label: string;

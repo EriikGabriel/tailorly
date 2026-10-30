@@ -12,7 +12,6 @@ import {
 import { useBaseCvStore as base } from "../../src/stores/base-cv-store";
 import { useDocumentViewerStore as viewer } from "../../src/stores/document-viewer-store";
 import { useJobDraftStore as job } from "../../src/stores/job-draft-store";
-import { usePresentationStore as presentation } from "../../src/stores/presentation-store";
 import { useQuickReviewStore as quick } from "../../src/stores/quick-review-store";
 import { resetClientState } from "../../src/stores/reset-client-state";
 import { useReviewDraftStore as review } from "../../src/stores/review-draft-store";
@@ -136,10 +135,6 @@ test("trocar o currículo base limpa dados dependentes e rejeita atualizações 
     .setAnswer("old", "current", { choice: "yes", correction: "" });
   viewer.getState().setZoom(150);
   job.getState().setJobText("Vaga");
-  presentation.getState().setPreferences({
-    ...presentation.getState().preferences,
-    language: "en-US",
-  });
   base.getState().selectFile(pdf("next.pdf"));
   review.getState().setIdentity(oldId, { name: "Resposta atrasada" });
   assert.notEqual(base.getState().selectionId, oldId);
@@ -150,7 +145,6 @@ test("trocar o currículo base limpa dados dependentes e rejeita atualizações 
   assert.deepEqual(quick.getState().answers, {});
   assert.equal(viewer.getState().zoom, "fit");
   assert.equal(job.getState().jobText, "Vaga");
-  assert.equal(presentation.getState().preferences.language, "en-US");
 });
 
 test("arquivos inválidos ou vazios preservam o arquivo e o rascunho atuais", () => {
@@ -224,22 +218,15 @@ test("a revisão rápida preserva respostas ao remontar e rejeita pendências an
   assert.equal(quick.getState().submittedPreview, null);
 });
 
-test("limpar a sessão apaga os contextos e restaura as preferências padrão", () => {
+test("limpar a sessão apaga os contextos e restaura os padrões", () => {
   base.getState().selectFile(pdf());
   job.getState().setJobText("Dados de uma sessão anterior");
   job.getState().saveDraft();
-  presentation.getState().setPreferences({
-    ...presentation.getState().preferences,
-    language: "es-ES",
-    links: { linkedin: false, github: false, whatsapp: true },
-  });
   workspace.getState().setActiveView("preview");
   resetClientState();
   assert.equal(base.getState().file, null);
   assert.equal(job.getState().jobText, "");
   assert.equal(job.getState().savedAt, null);
-  assert.equal(presentation.getState().preferences.language, "pt-BR");
-  assert.equal(presentation.getState().preferences.links.linkedin, true);
   assert.equal(workspace.getState().activeView, "editor");
 });
 

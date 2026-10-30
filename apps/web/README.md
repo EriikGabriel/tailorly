@@ -1,7 +1,7 @@
 # Tailorly Web — `apps/web`
 
 Interface React do Tailorly: ingestão do Currículo Base, auditoria dos fatos em
-seis dimensões, revisão rápida de pendências e preparação para a geração.
+cinco dimensões, revisão rápida de pendências e preparação para a geração.
 
 > **Estado atual:** fundação visual e de estado de interface. A home envia o PDF
 > para a API quando há uma conta autenticada; sem conta, a seleção fica apenas
@@ -244,7 +244,7 @@ Duas abordagens complementares:
 
 Componentes animados que **precisam** respeitar as duas:
 `review-stepper.tsx`, `review-workspace.tsx`, `review-draft-collection.tsx`,
-`preferences-review-step.tsx`, `review-correction-input.tsx`,
+`review-correction-input.tsx`,
 `review-month-picker.tsx`, `base-cv-picker.tsx`, `hero-ingestion-card.tsx`,
 `header.tsx`, `review-section.tsx`.
 
@@ -304,7 +304,7 @@ componentes adicionados por ele devem trocar os imports gerados para
 
 ## 5. Domínio de revisão
 
-### As seis dimensões
+### As cinco dimensões
 
 Definidas em `src/types/review-model.ts` como `reviewSteps`, e renderizadas na
 ordem pelo seletor de etapas:
@@ -316,10 +316,9 @@ ordem pelo seletor de etapas:
 | 3 | `projects` | Projetos & Métricas | `projects` |
 | 4 | `education` | Formação & Certificados | `degrees`, `certifications` |
 | 5 | `skills` | Competências & Idiomas | `languages`, `technologies` |
-| 6 | `preferences` | Preferências | fora do rascunho: `usePresentationStore` |
 
 Cada etapa renderiza dentro de `ReviewStepShell`, que exibe um número, título,
-descrição, um selo ("Aguardando revisão" ou "Ajustes editoriais") e uma
+descrição e um selo ("Aguardando revisão") e uma
 **"Regra de integridade"** — texto que declara a restrição editorial daquela
 dimensão. A etapa 3 (Projetos) recebe destaque visual na borda da regra.
 
@@ -386,9 +385,9 @@ ReviewIssue = {
 }
 ```
 
-`ReviewCategory` tem **sete** valores — `identity`, `employment`, `projects`,
-`education`, `skills`, `languages`, `presentation` — mais um que as seis
-dimensões, porque `languages` é categoria de pendência separada de `skills`.
+`ReviewCategory` tem **sete** valores — `identity`, `employment`, `volunteering`,
+`projects`, `education`, `skills`, `languages`; `languages` é categoria de
+pendência separada de `skills`.
 
 `ReviewChoice` é uma união discriminada por `result`:
 
@@ -443,10 +442,9 @@ persistente nem fonte de cotas.
 | --- | --- | --- |
 | `useAuthStore` | `accessToken`, `expiresAt` | JWT em `sessionStorage` para sobreviver ao reload da mesma aba; expiração e logout removem o token |
 | `useBaseCvStore` | `file`, `selectionId`, `uploadedSelectionId`, `error` | Seleção local, ID do upload atual e guarda contra respostas atrasadas; não lista histórico remoto |
-| `useReviewDraftStore` | `sourceId`, `draft`, `activeStep`, `expandedRecords` | Rascunhos das seis dimensões, etapa ativa, cartões expandidos — ligados a `sourceId` |
+| `useReviewDraftStore` | `sourceId`, `draft`, `activeStep`, `expandedRecords` | Rascunhos das cinco dimensões, etapa ativa, cartões expandidos — ligados a `sourceId` |
 | `useQuickReviewStore` | `open`, `contextKey`, `issues`, `preview`, `answers`, `submittedPreview` | Abertura, pendências, respostas e snapshot da prévia, vinculados a `contextKey` |
 | `useJobDraftStore` | `mode`, `jobUrl`, `jobText`, `revision`, `savedAt` | URL/texto da vaga, modo de entrada, revisão e horário da última ação de salvar (em memória) |
-| `usePresentationStore` | `preferences` | Formato do nome, idioma, links de saída, filtro de senioridade. Preferências **editoriais**, independentes dos fatos |
 | `useDocumentViewerStore` | `zoom` | Zoom compartilhado; `"fit"` ou número limitado a 50–200 |
 | `useWorkspaceStore` | `activeView` | Modo `editor` / `preview` do workspace |
 
@@ -534,16 +532,13 @@ e, em cada render, só usa as respostas armazenadas se
 - Trocar o Currículo Base **não** altera a vaga nem as preferências
   editoriais — coberto por teste.
 
-### Preferências de apresentação
+### Preferências fora do Currículo Base
 
-`PresentationPreferences` = `{ nameFormat: "short" | "full", language: "pt-BR" |
-"en-US" | "es-ES", links: { linkedin, github, whatsapp }, hideOlderRoles }`.
-Padrões em `initialPreferences`: nome curto, `pt-BR`, LinkedIn e GitHub ativos,
-WhatsApp inativo, ocultar cargos antigos **ativo**.
-
-`usePresentationStore` clona `links` na escrita e usa uma função `defaults()`
-que faz spread profundo de `links`, para que duas stores nunca compartilhem
-referência.
+Preferências editoriais não fazem parte da revisão do Currículo Base nem são
+exigidas no acesso anônimo. As opções específicas de uma geração ficam no
+gerador (`useGenerationPreferencesStore`) e as configurações de conta ficam no
+Profile quando houver suporte persistente; os defaults do gerador permitem
+seguir sem configuração manual.
 
 ### `resetClientState()`
 
@@ -551,7 +546,7 @@ Em `src/stores/reset-client-state.ts`. Limpa primeiro `useAuthStore`, inclusive
 o JWT em `sessionStorage`, e então
 reseta `useBaseCvStore`
 (que em cascata limpa rascunhos, revisão rápida e visualizador),
-`useJobDraftStore`, `usePresentationStore`, `useWorkspaceStore`. Depois remove
+`useJobDraftStore`, `useWorkspaceStore`. Depois remove
 duas chaves **legadas** de `sessionStorage` —
 `tailorly:job-draft` e `tailorly:review-preview` — deixadas pela antiga
 implementação com drafts por componente. O `try/catch` existe porque o navegador
@@ -750,7 +745,7 @@ transpila via o TypeScript do próprio projeto. A suíte de navegador usa
 | 7 | Remover arquivo limpa rascunhos, revisão rápida e visualizador | `selectionId` e `file` viram `null`; `open` fecha |
 | 8 | Mudança de vaga invalida revisão rápida sem apagar o draft do Currículo Base | `revision` incrementa, respostas zeram, identidade preservada |
 | 9 | Revisão rápida mantém respostas ao remontar e rejeita issues antigas/desconhecidas | Reconfigurar com a **mesma** chave preserva; trocar de chave zera; `setAnswer` com chave ou id inválido é ignorado |
-| 10 | Reset de sessão limpa todos os contextos e restaura padrões | Preferências voltam a `pt-BR` com LinkedIn ativo; workspace volta a `editor` |
+| 10 | Reset de sessão limpa todos os contextos e restaura padrões | Workspace volta a `editor` |
 | 11 | Visualizador impõe zoom suportado e ignora valores numéricos inválidos | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"` |
 
 **Toda mudança nas stores ou em `reset-client-state.ts` precisa vir acompanhada

@@ -8,7 +8,6 @@ export const reviewCategories = {
   education: "Formação e certificações",
   skills: "Competências",
   languages: "Idiomas",
-  presentation: "Apresentação do currículo",
 } as const satisfies Record<ReviewCategory, string>;
 
 export function selectQuickReviewIssues(issues: readonly ReviewIssue[]) {

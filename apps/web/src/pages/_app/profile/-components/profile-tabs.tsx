@@ -2,12 +2,15 @@ import {
   Highlight,
   HighlightItem,
 } from "@animate/primitives/effects/highlight";
+import { useBaseReview } from "@queries/base-review";
+import { useActiveGroundTruth } from "@queries/ground-truth";
 import {
   Cpu,
   Network,
   ShieldCheck,
   UserRound,
 } from "@react-zero-ui/icon-sprite";
+import { useProfileSettingsStore } from "@stores/profile-settings-store";
 import { useReducedMotion } from "motion/react";
 import { type ComponentType, useEffect, useState } from "react";
 
@@ -15,7 +18,6 @@ type Tab = {
   id: string;
   label: string;
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  dot?: true;
   badge?: string;
   sectionId?: string;
 };
@@ -31,7 +33,6 @@ const tabs: Tab[] = [
     id: "ground-truth",
     label: "Currículo Base (Ground Truth)",
     icon: ShieldCheck,
-    dot: true,
     sectionId: "section-ground-truth",
   },
   {
@@ -53,6 +54,20 @@ const tabs: Tab[] = [
 export function ProfileTabs() {
   const [active, setActive] = useState("overview");
   const reduceMotion = useReducedMotion();
+  const { version } = useActiveGroundTruth();
+  const review = useBaseReview(version?.id);
+  const aiPreferencesDirty = useProfileSettingsStore((state) => state.isDirty);
+  const pendingSections = new Set<Tab["id"]>(
+    (review.issues.data ?? [])
+      .filter(
+        (issue) =>
+          issue.status.toUpperCase() === "PENDING" && issue.fact !== null,
+      )
+      .map((issue) =>
+        issue.category === "identity" ? "overview" : "ground-truth",
+      ),
+  );
+  if (aiPreferencesDirty) pendingSections.add("ai-preferences");
 
   useEffect(() => {
     const sectionMap = new Map(
@@ -125,12 +140,12 @@ export function ProfileTabs() {
                 >
                   <Icon aria-hidden className="size-4 shrink-0" />
                   {label}
-                  {tab.dot && (
+                  {pendingSections.has(tab.id) ? (
                     <span
                       aria-hidden="true"
                       className="size-2 shrink-0 rounded-full bg-on-secondary-container"
                     />
-                  )}
+                  ) : null}
                   {tab.badge && (
                     <span className="shrink-0 rounded-full bg-surface-container-high px-1.5 py-0.5 text-label-sm text-on-surface-variant">
                       {tab.badge}

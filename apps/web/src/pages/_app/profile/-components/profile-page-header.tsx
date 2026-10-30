@@ -1,12 +1,6 @@
 import { Button } from "@animate/buttons/button";
 import { useLogout } from "@queries/authentication";
-import {
-  Eye,
-  House,
-  LogOut,
-  Save,
-  ShieldCheck,
-} from "@react-zero-ui/icon-sprite";
+import { House, LogOut, ShieldCheck } from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
 
 export function ProfilePageHeader() {
@@ -62,14 +56,6 @@ export function ProfilePageHeader() {
         >
           <LogOut aria-hidden="true" className="size-4" />
           Sair
-        </Button>
-        <Button variant="accent" size="lg" className="text-primary-950">
-          <Eye aria-hidden="true" className="size-4" />
-          Pré-visualizar Perfil
-        </Button>
-        <Button size="lg">
-          <Save aria-hidden="true" className="size-4" />
-          Salvar Alterações
         </Button>
       </div>
     </div>

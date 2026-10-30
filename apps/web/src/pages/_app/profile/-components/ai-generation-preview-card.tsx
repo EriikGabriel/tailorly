@@ -1,4 +1,4 @@
-import { Clock, FileText } from "@react-zero-ui/icon-sprite";
+import { CircleCheck, FileText } from "@react-zero-ui/icon-sprite";
 import { AiGenerationDefaultsCard } from "./ai-generation-defaults-card";
 
 export function AiGenerationPreviewCard() {
@@ -9,21 +9,17 @@ export function AiGenerationPreviewCard() {
           <FileText aria-hidden="true" className="size-4" />
           Geração de Currículo sob ATS
         </h3>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-2.5 py-0.5 text-label-sm font-medium text-on-surface-variant">
-          <Clock aria-hidden="true" className="size-3" />
-          Planejado (RF03)
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-on-tertiary-container/20 border border-on-tertiary-container px-2.5 py-0.5 text-label-sm font-medium text-on-tertiary-container">
+          <CircleCheck aria-hidden="true" className="size-3" />
+          Ativo
         </span>
       </div>
       <p className="text-body-sm text-on-surface-variant">
-        Ainda não existe endpoint de geração (<code>POST /v1/cv/generate</code>)
-        no backend. Quando implementado, deve reutilizar o mesmo par
-        OpenAI/Ollama configurado na extração acima (RNF07). Os campos abaixo
-        mostram como a configuração vai funcionar, mas estão desativados nesta
-        prévia.
+        Essas diretrizes são aplicadas imediatamente ao próximo currículo
+        gerado. A otimização mede a nota ATS do PDF no servidor; a IA só
+        reorganiza fatos já aprovados no Currículo Base.
       </p>
-      <div aria-disabled="true" className="pointer-events-none opacity-60">
-        <AiGenerationDefaultsCard />
-      </div>
+      <AiGenerationDefaultsCard />
     </div>
   );
 }

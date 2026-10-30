@@ -7,7 +7,6 @@ export const STEP_CATEGORIES: Record<ReviewStepId, readonly string[]> = {
   projects: ["projects"],
   education: ["degrees", "certifications"],
   skills: ["languages", "technologies"],
-  preferences: [],
 };
 
 export const CATEGORY_LABELS: Record<string, string> = {

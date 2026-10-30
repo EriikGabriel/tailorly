@@ -1,20 +1,20 @@
 import { Switch } from "@animate/base/switch";
-import { Select } from "@base-ui-components/react/select";
-import { Check, ChevronDown } from "@react-zero-ui/icon-sprite";
-import { useState } from "react";
-import {
-  languageOptions,
-  typographyOptions,
-} from "@/constants/generation-options";
-import { FieldLabel } from "./section-card";
+import { useGenerationPreferencesStore } from "@stores/generation-preferences-store";
 
 export function AiGenerationDefaultsCard() {
-  const [strictAts, setStrictAts] = useState(true);
-  const [quantifiedResults, setQuantifiedResults] = useState(true);
-  const [typography, setTypography] = useState<string>(
-    typographyOptions[0].value,
+  const optimizeForAts = useGenerationPreferencesStore(
+    (state) => state.optimizeForAts,
   );
-  const [language, setLanguage] = useState<string>(languageOptions[0].value);
+  const guidelines = useGenerationPreferencesStore((state) => state.guidelines);
+  const setOptimizeForAts = useGenerationPreferencesStore(
+    (state) => state.setOptimizeForAts,
+  );
+  const toggleGuideline = useGenerationPreferencesStore(
+    (state) => state.toggleGuideline,
+  );
+  const quantifiedResults = guidelines.includes(
+    "Impacto de Negócio Quantificado",
+  );
 
   return (
     <div className="flex flex-col gap-3 pt-2">
@@ -23,37 +23,24 @@ export function AiGenerationDefaultsCard() {
           Diretrizes Padrão de Formatação ATS
         </h3>
         <span className="text-label-sm font-semibold text-on-surface-variant">
-          Injeção de Prompt Universal
+          Aplicadas na próxima geração
         </span>
       </div>
 
       <div className="flex flex-col gap-2">
         <ToggleRow
           title="Otimização Rigorosa para Robôs ATS (Workday, Greenhouse, Lever, Taleo)"
-          description="Garante fonte padrão, hierarquia monocromática clara e ausência de tabelas complexas que quebram parsers."
-          checked={strictAts}
-          onCheckedChange={setStrictAts}
+          description="Mede a nota do PDF e ajusta a ordem e a densidade do layout sem alterar fatos aprovados."
+          checked={optimizeForAts}
+          onCheckedChange={setOptimizeForAts}
         />
         <ToggleRow
-          title="Priorizar Resultados Quantificados (Framework XYZ do Google)"
-          description='Estrutura bullets com: "Conquistou [X], medido por [Y], realizando [Z]".'
+          title="Priorizar Resultados Quantificados"
+          description="Pede à IA para destacar, por ordem de apresentação, os fatos aprovados que já têm impacto mensurável."
           checked={quantifiedResults}
-          onCheckedChange={setQuantifiedResults}
-        />
-      </div>
-
-      <div className="grid gap-4 pt-2 sm:grid-cols-2">
-        <SettingsSelect
-          label="Modelo Tipográfico Padrão"
-          value={typography}
-          onChange={setTypography}
-          options={typographyOptions}
-        />
-        <SettingsSelect
-          label="Idioma de Síntese Padrão"
-          value={language}
-          onChange={setLanguage}
-          options={languageOptions}
+          onCheckedChange={() =>
+            toggleGuideline("Impacto de Negócio Quantificado")
+          }
         />
       </div>
     </div>
@@ -78,64 +65,6 @@ function ToggleRow({
         <p className="text-body-sm text-on-surface-variant">{description}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
-    </div>
-  );
-}
-
-function SettingsSelect({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: readonly { value: string; label: string }[];
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <FieldLabel>{label}</FieldLabel>
-      <Select.Root
-        value={value}
-        onValueChange={(next) => onChange(next ?? value)}
-      >
-        <Select.Trigger className="flex w-full items-center justify-between gap-2 rounded-lg bg-surface-container-low px-4 py-2.5 text-body-md text-primary-950 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 data-popup-open:text-primary">
-          <Select.Value className="truncate text-left">
-            {(selected: string) =>
-              options.find((option) => option.value === selected)?.label ??
-              "Selecione uma opção"
-            }
-          </Select.Value>
-          <Select.Icon className="shrink-0 text-on-surface-variant transition-transform duration-200 group-data-popup-open:rotate-180">
-            <ChevronDown className="size-4" aria-hidden="true" />
-          </Select.Icon>
-        </Select.Trigger>
-        <Select.Portal>
-          <Select.Positioner
-            alignItemWithTrigger={false}
-            sideOffset={6}
-            className="z-70"
-          >
-            <Select.Popup className="w-(--anchor-width) min-w-64 origin-(--transform-origin) rounded-lg border border-outline-variant/60 bg-card p-1 text-primary-950 shadow-xl outline-none transition-[opacity,transform] duration-150 data-starting-style:translate-y-1 data-starting-style:opacity-0 data-ending-style:opacity-0">
-              <Select.List>
-                {options.map((option) => (
-                  <Select.Item
-                    key={option.value}
-                    value={option.value}
-                    className="flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-sm outline-none transition-colors data-highlighted:bg-surface-container data-selected:bg-primary data-selected:text-primary-foreground"
-                  >
-                    <Select.ItemText>{option.label}</Select.ItemText>
-                    <Select.ItemIndicator>
-                      <Check className="size-4" aria-hidden="true" />
-                    </Select.ItemIndicator>
-                  </Select.Item>
-                ))}
-              </Select.List>
-            </Select.Popup>
-          </Select.Positioner>
-        </Select.Portal>
-      </Select.Root>
     </div>
   );
 }

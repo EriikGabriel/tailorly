@@ -41,7 +41,7 @@ export function ReviewStepper({
         }
         className="pointer-events-none rounded-xl bg-primary-950 shadow-lg ring-2 ring-primary-950"
       >
-        <ol className="grid grid-cols-1 gap-2 @xs:grid-cols-2 @xl:grid-cols-3 @[68rem]:grid-cols-6">
+        <ol className="grid grid-cols-1 gap-2 @xs:grid-cols-2 @xl:grid-cols-3 @[68rem]:grid-cols-5">
           {steps.map((step, index) => {
             const active = step.id === activeStep;
             const number = String(index + 1).padStart(2, "0");
@@ -77,7 +77,7 @@ export function ReviewStepper({
                         {active ? " (atual)" : ""}
                       </span>
                       <span
-                        className={`text-xs font-bold leading-5 ${active ? "text-primary-foreground" : "text-primary-950"}`}
+                        className={`text-sm font-bold leading-5 ${active ? "text-primary-foreground" : "text-primary-950"}`}
                       >
                         {step.title}
                       </span>
@@ -117,8 +117,6 @@ export function ReviewStepper({
                             />
                             Validado
                           </span>
-                        ) : step.id === "preferences" ? (
-                          "Ajustes editoriais"
                         ) : (
                           "Aguardando revisão"
                         )}
