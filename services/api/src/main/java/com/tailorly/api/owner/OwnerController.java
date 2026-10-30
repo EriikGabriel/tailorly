@@ -37,4 +37,9 @@ public class OwnerController {
   public OwnerResponse incrementRevision(@PathVariable UUID id) {
     return ownerService.incrementRevision(id);
   }
+
+  @PatchMapping("/{id}/deactivate-snapshot")
+  public OwnerResponse deactivateSnapshot(@PathVariable UUID id) {
+    return ownerService.deactivateActiveSnapshot(id);
+  }
 }

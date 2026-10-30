@@ -1,3 +1,8 @@
+logging:
+  level:
+    # A autenticação usa um AuthenticationProvider próprio (JWT), não um UserDetailsService; o
+    # warning do Spring Security a cada start é esperado e não indica um problema de config.
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
 spring:
   application:
     name: tailorly-api
@@ -17,6 +22,7 @@ spring:
       max-file-size: 7MB
       max-request-size: 8MB
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: create
     show-sql: false
@@ -39,7 +45,12 @@ management:
 springdoc:
   paths-to-match: /v1/**
   writer-with-order-by-keys: true
+  # Explícito para não disparar o warning de "enabled by default" a cada start; desative em
+  # produção com TAILORLY_API_DOCS_ENABLED=false.
+  api-docs:
+    enabled: ${TAILORLY_API_DOCS_ENABLED:true}
   swagger-ui:
+    enabled: ${TAILORLY_API_DOCS_ENABLED:true}
     display-operation-id: true
 tailorly:
   extraction:
@@ -49,7 +60,7 @@ tailorly:
     ocr-revision: ${TAILORLY_OCR_REVISION:local-1}
     poll-delay-ms: 2000
   interpretation:
-    # rules (padrão, sem IA)
+    # rules (sem IA)
     # remote (só provedor remoto)
     # remote-with-ollama-fallback (recomendado: remoto com fallback automático para o Ollama local)
     # ollama-only (só o Ollama local, sem chamada remota)
@@ -79,6 +90,13 @@ tailorly:
     max-active-sessions: ${TAILORLY_ANONYMOUS_MAX_ACTIVE_SESSIONS:1000}
     cleanup-interval: ${TAILORLY_ANONYMOUS_CLEANUP_INTERVAL:PT5M}
     cleanup-enabled: ${TAILORLY_ANONYMOUS_CLEANUP_ENABLED:true}
+  # Retenção de contas: depois que uma conta fica desativada (PATCH /v1/users/{id}/disable) por
+  # mais que retention-period, o job de retenção apaga o currículo base, os snapshots, as vagas e
+  # os currículos gerados do owner da conta. A linha de users/owners continua existindo, desativada.
+  account:
+    retention-period: ${TAILORLY_ACCOUNT_RETENTION_PERIOD:P30D}
+    cleanup-interval: ${TAILORLY_ACCOUNT_CLEANUP_INTERVAL:P1D}
+    cleanup-enabled: ${TAILORLY_ACCOUNT_CLEANUP_ENABLED:true}
   # Geração de currículos: o PDF é compilado pelo CLI do Typst (https://typst.app), que precisa estar
   # instalado no host da API. Sem ele, POST /v1/cv/generate responde 503 e nada é gravado.
   generation:

@@ -23,6 +23,7 @@ public final class ErrorCodes {
     public static final String ACCOUNT_MISMATCH = "error.owner.account_mismatch";
     public static final String ACCESS_DENIED = "error.owner.access_denied";
     public static final String INVALID_KIND = "error.owner.invalid_kind";
+    public static final String NO_ACTIVE_SNAPSHOT = "error.owner.no_active_snapshot";
 
     private Owner() {
     }

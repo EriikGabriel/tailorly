@@ -1,6 +1,10 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
 import { AnonymousNotice } from "@components/anonymous-notice";
 import { useSelectBaseDocumentFile } from "@queries/base-document";
+import {
+  useDeactivateGroundTruth,
+  useDeleteBaseVersion,
+} from "@queries/base-version";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { createFileRoute } from "@tanstack/react-router";
 import { useReducedMotion } from "motion/react";
@@ -27,6 +31,8 @@ function RouteComponent() {
     useBaseCvStore();
   const { selectFile, upload } = useSelectBaseDocumentFile();
   const picker = usePdfFilePicker(selectFile);
+  const deactivate = useDeactivateGroundTruth();
+  const deleteVersion = useDeleteBaseVersion();
   const reducedMotion = useReducedMotion();
   const reviewWorkspaceRef = useRef<ReviewWorkspaceHandle>(null);
   const uploadPending =
@@ -61,6 +67,14 @@ function RouteComponent() {
             hasFile={file !== null}
             canApprove={Boolean(baseVersionId) && !uploadPending}
             onApprove={() => reviewWorkspaceRef.current?.approve()}
+            canDeactivate={Boolean(baseVersionId) && !uploadPending}
+            onDeactivate={() => deactivate.mutate()}
+            deactivating={deactivate.isPending}
+            canDelete={Boolean(baseVersionId) && !uploadPending}
+            onDelete={() => {
+              if (baseVersionId) deleteVersion.mutate(baseVersionId);
+            }}
+            deleting={deleteVersion.isPending}
           />
         </div>
         <AutoHeight

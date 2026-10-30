@@ -49,6 +49,14 @@ public class User {
   @Column(name = "enabled", nullable = false)
   private boolean enabled;
 
+  /** Quando a conta foi desativada; nulo enquanto {@code enabled} é verdadeiro. */
+  @Column(name = "disabled_at")
+  private Instant disabledAt;
+
+  /** Quando a retenção de conta apagou os dados pessoais do owner; nulo até acontecer. */
+  @Column(name = "data_purged_at")
+  private Instant dataPurgedAt;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;

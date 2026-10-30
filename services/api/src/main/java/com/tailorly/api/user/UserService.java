@@ -1,5 +1,6 @@
 package com.tailorly.api.user;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -121,6 +122,7 @@ public class UserService {
 
     requireSelf(user.getEmail());
     user.setEnabled(false);
+    user.setDisabledAt(Instant.now());
   }
 
   private void requireSelf(String email) {

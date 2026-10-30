@@ -3,9 +3,7 @@ package com.tailorly.api.session;
 import java.util.List;
 import java.util.UUID;
 
-import com.tailorly.api.objects.storage.ObjectStorage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.tailorly.api.shared.retention.OwnerDataEraser;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -16,45 +14,41 @@ import org.springframework.transaction.support.TransactionTemplate;
  * evidências, pendências, decisões, snapshots, vagas lidas (com versões e análises), a sessão e o
  * próprio owner.
  *
- * <p>Os objetos do storage são removidos antes das linhas do banco: se a remoção falhar, nada
- * foi apagado no banco e a limpeza tenta de novo no próximo ciclo, sem deixar bytes órfãos sem
- * registro. Depois do commit, uma varredura por prefixo remove o que um worker em andamento
- * possa ter gravado nesse intervalo. Só owners {@code KIND_ANONYMOUS} podem ser apagados por
- * aqui, para que um erro de chamada nunca apague uma conta.</p>
+ * <p>A exclusão dos dados pessoais em si (currículo base, snapshots, gerações, vagas) é
+ * compartilhada com a retenção de contas via {@link OwnerDataEraser}; aqui só se adiciona a
+ * remoção da própria sessão e do owner, que a retenção de conta não faz. Só owners
+ * {@code KIND_ANONYMOUS} podem ser apagados por aqui, para que um erro de chamada nunca apague
+ * uma conta.</p>
  */
 @Service
 public class AnonymousDataPurgeService {
-  private static final Logger log = LoggerFactory.getLogger(AnonymousDataPurgeService.class);
-
   private final JdbcTemplate jdbc;
-  private final ObjectStorage storage;
+  private final OwnerDataEraser eraser;
   private final TransactionTemplate transaction;
 
-  public AnonymousDataPurgeService(JdbcTemplate jdbc, ObjectStorage storage,
+  public AnonymousDataPurgeService(JdbcTemplate jdbc, OwnerDataEraser eraser,
       PlatformTransactionManager transactionManager) {
     this.jdbc = jdbc;
-    this.storage = storage;
+    this.eraser = eraser;
     this.transaction = new TransactionTemplate(transactionManager);
   }
 
   public void purgeOwner(UUID ownerId) {
     assertAnonymous(ownerId);
 
-    List<String> keys = jdbc.queryForList(
-        "select storage_key from stored_objects where owner_id = ?", String.class, ownerId);
-    keys.forEach(storage::delete);
+    eraser.deleteFiles(ownerId);
 
-    transaction.executeWithoutResult(status -> deleteRows(ownerId));
+    transaction.executeWithoutResult(status -> {
+      eraser.eraseOwnerData(ownerId);
+      jdbc.update("delete from anonymous_sessions where owner_id = ?", ownerId);
+      jdbc.update("delete from owners where id = ? and kind = 'KIND_ANONYMOUS'", ownerId);
+    });
 
-    try {
-      storage.deleteByPrefix(prefix(ownerId));
-    } catch (RuntimeException exception) {
-      log.warn("Could not sweep storage prefix of purged anonymous owner {}", ownerId, exception);
-    }
+    eraser.sweepStoragePrefix(OwnerDataEraser.prefix(ownerId));
   }
 
   public static String prefix(UUID ownerId) {
-    return "owners/" + ownerId + "/";
+    return OwnerDataEraser.prefix(ownerId);
   }
 
   private void assertAnonymous(UUID ownerId) {
@@ -66,37 +60,5 @@ public class AnonymousDataPurgeService {
     if (!"KIND_ANONYMOUS".equals(kinds.getFirst())) {
       throw new IllegalStateException("Refusing to purge a non-anonymous owner");
     }
-  }
-
-  private void deleteRows(UUID ownerId) {
-    String versions = "(select id from base_versions where owner_id = ?)";
-    String runs = "(select id from extraction_runs where base_version_id in " + versions + ")";
-    String facts = "(select f.id from facts f join fact_records r on r.id = f.record_id "
-        + "where r.base_version_id in " + versions + ")";
-
-    // Currículos gerados contêm os dados pessoais do visitante; saem antes dos snapshots e da vaga que citam.
-    jdbc.update("delete from cv_generations where owner_id = ?", ownerId);
-    jdbc.update("delete from cv_templates where owner_id = ?", ownerId);
-    jdbc.update("delete from gt_snapshot_items where snapshot_id in "
-        + "(select id from gt_snapshots where owner_id = ?)", ownerId);
-    jdbc.update("update owners set active_snapshot_id = null where id = ?", ownerId);
-    jdbc.update("delete from gt_snapshots where owner_id = ?", ownerId);
-    jdbc.update("delete from review_decisions where actor_owner_id = ? or base_version_id in "
-        + versions, ownerId, ownerId);
-    jdbc.update("delete from review_issues where base_version_id in " + versions, ownerId);
-    jdbc.update("delete from fact_evidence where fact_id in " + facts, ownerId);
-    jdbc.update("delete from facts where id in " + facts, ownerId);
-    jdbc.update("delete from fact_records where base_version_id in " + versions, ownerId);
-    jdbc.update("delete from extracted_pages where extraction_run_id in " + runs, ownerId);
-    jdbc.update("delete from extraction_runs where base_version_id in " + versions, ownerId);
-    jdbc.update("delete from base_versions where owner_id = ?", ownerId);
-    jdbc.update("delete from base_documents where owner_id = ?", ownerId);
-    jdbc.update("delete from stored_objects where owner_id = ?", ownerId);
-    jdbc.update("delete from job_posting_versions where job_posting_id in "
-        + "(select id from job_postings where owner_id = ?)", ownerId);
-    jdbc.update("delete from job_postings where owner_id = ?", ownerId);
-    jdbc.update("delete from ai_preferences where owner_id = ?", ownerId);
-    jdbc.update("delete from anonymous_sessions where owner_id = ?", ownerId);
-    jdbc.update("delete from owners where id = ? and kind = 'KIND_ANONYMOUS'", ownerId);
   }
 }

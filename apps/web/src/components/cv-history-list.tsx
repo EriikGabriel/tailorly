@@ -1,3 +1,14 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@animate/base/alert-dialog";
 import { Button } from "@animate/buttons/button";
 import { apiErrorMessage } from "@lib/api/error-message";
 import {
@@ -117,24 +128,52 @@ export function CvHistoryList({ limit }: { limit?: number }) {
               >
                 <Download strokeWidth={1.5} className="size-4.5" />
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                aria-label="Excluir currículo e arquivos"
-                disabled={remove.isPending}
-                onClick={() =>
-                  cv.id &&
-                  remove.mutate(cv.id, {
-                    onError: (cause) =>
-                      setError(
-                        apiErrorMessage(cause, "Não foi possível excluir."),
-                      ),
-                  })
-                }
-                className="flex size-8 items-center justify-center rounded-lg text-primary-950"
-              >
-                <X strokeWidth={1.5} className="size-4" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      aria-label="Excluir currículo e arquivos"
+                      disabled={remove.isPending}
+                      className="flex size-8 items-center justify-center rounded-lg text-primary-950"
+                    >
+                      <X strokeWidth={1.5} className="size-4" />
+                    </Button>
+                  }
+                />
+                <AlertDialogPopup>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Excluir este currículo gerado?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      O PDF e o Markdown são apagados e não podem ser
+                      recuperados. O Currículo Base que deu origem a eles não é
+                      afetado.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() =>
+                        cv.id &&
+                        remove.mutate(cv.id, {
+                          onError: (cause) =>
+                            setError(
+                              apiErrorMessage(
+                                cause,
+                                "Não foi possível excluir.",
+                              ),
+                            ),
+                        })
+                      }
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogPopup>
+              </AlertDialog>
             </div>
           </li>
         ))}

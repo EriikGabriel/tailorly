@@ -399,6 +399,20 @@ export const baseDocumentFindById = async (
   });
 };
 
+export const getBaseVersionDeleteUrl = (id: string) => {
+  return `/v1/base-versions/${encodeURIComponent(String(id))}`;
+};
+
+export const baseVersionDelete = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<void> => {
+  return apiRequest<void>(getBaseVersionDeleteUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
 export const getBaseVersionFindByIdUrl = (id: string) => {
   return `/v1/base-versions/${encodeURIComponent(String(id))}`;
 };
@@ -1731,6 +1745,20 @@ export const userDisableUser = async (
   options?: Parameters<typeof apiRequest>[1],
 ): Promise<void> => {
   return apiRequest<void>(getUserDisableUserUrl(id), {
+    ...options,
+    method: "PATCH",
+  });
+};
+
+export const getOwnerDeactivateSnapshotUrl = (id: string) => {
+  return `/v1/owners/${encodeURIComponent(String(id))}/deactivate-snapshot`;
+};
+
+export const ownerDeactivateSnapshot = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<OwnerResponse> => {
+  return apiRequest<OwnerResponse>(getOwnerDeactivateSnapshotUrl(id), {
     ...options,
     method: "PATCH",
   });

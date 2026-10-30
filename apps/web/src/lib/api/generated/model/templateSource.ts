@@ -7,9 +7,9 @@
  */
 
 export interface TemplateSource {
-  content?: string;
   custom?: boolean;
   id?: string;
   name?: string;
   version?: number;
+  content?: string;
 }

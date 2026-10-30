@@ -3,6 +3,7 @@ package com.tailorly.api.owner;
 import java.util.Locale;
 import java.util.UUID;
 
+import com.tailorly.api.base.version.BaseVersionRepository;
 import com.tailorly.api.owner.dto.CreateOwnerRequest;
 import com.tailorly.api.owner.dto.OwnerResponse;
 import com.tailorly.api.shared.exception.BadRequestException;
@@ -28,8 +29,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class OwnerService {
+  private static final String ACTIVE = "ACTIVE";
+  private static final String DEACTIVATED = "DEACTIVATED";
+
   private final OwnerRepository ownerRepository;
   private final UserRepository userRepository;
+  private final BaseVersionRepository baseVersionRepository;
 
   /**
    * Cria um owner. Para {@code KIND_ACCOUNT}, exige autenticação e é idempotente: se a conta
@@ -87,6 +92,28 @@ public class OwnerService {
     if (ownerRepository.incrementRevision(id) == 0) {
       throw new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND);
     }
+    return OwnerResponse.from(getOwner(id));
+  }
+
+  /**
+   * Desativa o Ground Truth ativo do owner: zera {@code activeSnapshotId} e marca a versão que
+   * estava {@code ACTIVE} como {@code DEACTIVATED}. Diferente da exclusão de versão, nada é
+   * apagado — o snapshot, os fatos e as pendências continuam disponíveis para auditoria, e um
+   * novo snapshot aprovado no futuro volta a ativar o Ground Truth.
+   */
+  @Transactional
+  public OwnerResponse deactivateActiveSnapshot(UUID id) {
+    Owner owner = getOwner(id);
+    if (owner.getActiveSnapshotId() == null) {
+      throw new BadRequestException(ErrorCodes.Owner.NO_ACTIVE_SNAPSHOT);
+    }
+
+    baseVersionRepository.updateStatusByOwnerAndStatus(id, ACTIVE, DEACTIVATED);
+    if (ownerRepository.updateActiveSnapshot(id, null) == 0) {
+      throw new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND);
+    }
+    ownerRepository.incrementRevision(id);
+
     return OwnerResponse.from(getOwner(id));
   }
 
