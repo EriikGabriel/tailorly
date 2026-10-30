@@ -7,8 +7,8 @@ import { apiQueryKeys } from "@lib/api/query-keys";
 import { useAuthStore } from "@stores/auth-store";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import {
-  groupSnapshotItems,
   type GroundTruthFacts,
+  groupSnapshotItems,
 } from "@/utils/ground-truth-facts";
 import { useCurrentAccount } from "./current-account";
 
@@ -56,8 +56,7 @@ export function useActiveGroundTruth() {
     : null;
 
   return {
-    isLoading:
-      account.isLoading || (Boolean(snapshotId) && snapshot.isLoading),
+    isLoading: account.isLoading || (Boolean(snapshotId) && snapshot.isLoading),
     /** false enquanto a conta não tiver nenhum Ground Truth ativo. */
     hasActiveSnapshot: Boolean(snapshotId),
     snapshot: snapshot.data ?? null,

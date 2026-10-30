@@ -14,6 +14,7 @@ function getStrictContext<T>(
 ] {
   const Context = React.createContext<T | undefined>(undefined);
 
+  // biome-ignore lint/correctness/noComponentHookFactories: this utility intentionally returns a provider bound to the created context.
   const Provider = ({
     value,
     children,
@@ -22,6 +23,7 @@ function getStrictContext<T>(
     children?: React.ReactNode;
   }) => <Context.Provider value={value}>{children}</Context.Provider>;
 
+  // biome-ignore lint/correctness/noComponentHookFactories: this utility intentionally returns a hook bound to the created context.
   const useSafeContext = () => {
     const ctx = React.useContext(Context);
     if (ctx === undefined) {

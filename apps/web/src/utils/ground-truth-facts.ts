@@ -86,7 +86,11 @@ export function groupSnapshotItems(
     if (!match) continue;
     const index = Number(match[1]);
     const key = match[2];
-    const bucket = (lists[item.category] ??= new Map());
+    let bucket = lists[item.category];
+    if (!bucket) {
+      bucket = new Map();
+      lists[item.category] = bucket;
+    }
     const record = bucket.get(index) ?? {};
     record[key] = value;
     bucket.set(index, record);

@@ -93,8 +93,6 @@ test("RF09: envia PDF na home e reutiliza o fluxo em /base após reload", {
     mimeType: "application/pdf",
     buffer: Buffer.concat([nextPdf, Buffer.from("\n% novo arquivo")]),
   });
-  await expect(
-    page.getByText("PDF enviado", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("PDF enviado", { exact: true })).toBeVisible();
   expect(uploads).toBe(2);
 });

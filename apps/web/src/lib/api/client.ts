@@ -109,7 +109,10 @@ async function apiFetch(
   const requestHeaders = new Headers(headers);
   requestHeaders.set("Accept", accept);
   requestHeaders.set("Accept-Language", language);
-  if (accessToken) requestHeaders.set("Authorization", "Bearer " + accessToken);
+  if (accessToken) {
+    const authScheme = "Bearer";
+    requestHeaders.set("Authorization", `${authScheme} ${accessToken}`);
+  }
 
   const response = await fetch(path, { ...init, headers: requestHeaders });
   if (!response.ok) {
