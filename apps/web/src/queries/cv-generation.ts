@@ -1,4 +1,5 @@
 import { ApiClientError, apiBlob } from "@lib/api/client";
+import { SESSION_EXPIRED_MESSAGE } from "@lib/api/error-message";
 import type {
   CvGenerationResponse,
   CvTemplateResponse,
@@ -15,7 +16,10 @@ import {
   getCvGenerationPreviewUrl,
 } from "@lib/api/generated/tailorly";
 import { apiQueryKeys } from "@lib/api/query-keys";
-import { useAnonymousSessionStore } from "@stores/anonymous-session-store";
+import {
+  isAnonymousSessionActive,
+  useAnonymousSessionStore,
+} from "@stores/anonymous-session-store";
 import { useAuthStore } from "@stores/auth-store";
 import type { OwnerKind } from "@stores/base-cv-store";
 import { useCvGenerationStore } from "@stores/cv-generation-store";
@@ -37,7 +41,9 @@ export function useViewer(): {
   kind: OwnerKind | null;
 } {
   const accountToken = useAuthStore((state) => state.accessToken);
-  const session = useAnonymousSessionStore((state) => state.session);
+  const session = useAnonymousSessionStore((state) =>
+    isAnonymousSessionActive(state.session) ? state.session : null,
+  );
   const accountOwnerId = useCurrentOwnerId().data ?? null;
   if (accountToken)
     return { ownerId: accountOwnerId, token: accountToken, kind: "account" };
@@ -145,8 +151,10 @@ export function useDeleteCvGeneration() {
   const viewer = useViewer();
 
   return useMutation<void, Error, string>({
-    mutationFn: (id) =>
-      cvGenerationDelete(id, { accessToken: viewer.token ?? undefined }),
+    mutationFn: (id) => {
+      if (!viewer.token) throw new Error(SESSION_EXPIRED_MESSAGE);
+      return cvGenerationDelete(id, { accessToken: viewer.token });
+    },
     onSuccess: (_, id) => {
       if (useCvGenerationStore.getState().selected?.id === id) {
         useCvGenerationStore.getState().clear();

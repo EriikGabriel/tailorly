@@ -35,7 +35,7 @@ export function DocumentStage({
   const token = tokenForOwnerKind(selected?.ownerKind ?? null);
 
   const templateDraft = useTypstTemplateDraft(generation.data, token);
-  const { draft, template } = templateDraft;
+  const { draft } = templateDraft;
   const preview = useCvPreview(generation.data?.id ?? null, draft, token);
   const actions = useDocumentActions(generation.data, token, draft);
 
@@ -68,10 +68,7 @@ export function DocumentStage({
           {showsPreview && <CvPreview preview={preview} />}
         </div>
       ) : (
-        <EmptyDocumentState
-          ready={ready}
-          loading={generation.isLoading || template.isLoading}
-        />
+        <EmptyDocumentState ready={ready} loading={generation.isLoading} />
       )}
 
       {showsEditor && generation.data && (
@@ -80,7 +77,7 @@ export function DocumentStage({
           busy={actions.busy}
           regenerating={actions.regenerating}
           canRestore={templateDraft.canRestore}
-          templateLabel={`Template ${template.data?.name} v${template.data?.version}`}
+          templateLabel={templateDraft.templateLabel}
           onSave={actions.saveAndRegenerate}
           onRestore={templateDraft.restore}
         />

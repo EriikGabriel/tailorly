@@ -1,6 +1,10 @@
 import { anonymousSessionCreate } from "@lib/api/generated/tailorly";
 import { pickToken } from "@stores/active-token";
-import { useAnonymousSessionStore } from "@stores/anonymous-session-store";
+import {
+  activeAnonymousToken,
+  isAnonymousSessionActive,
+  useAnonymousSessionStore,
+} from "@stores/anonymous-session-store";
 import { useAuthStore } from "@stores/auth-store";
 import { type OwnerKind, useBaseCvStore } from "@stores/base-cv-store";
 import type { QueryClient } from "@tanstack/react-query";
@@ -15,8 +19,8 @@ export interface ApiCredential {
 /** Token que acessa os dados do Currículo Base atual (conta ou sessão anônima). */
 export function useApiToken(): string | null {
   const accountToken = useAuthStore((state) => state.accessToken);
-  const anonymousToken = useAnonymousSessionStore(
-    (state) => state.session?.token ?? null,
+  const anonymousToken = useAnonymousSessionStore((state) =>
+    isAnonymousSessionActive(state.session) ? state.session.token : null,
   );
   const ownerKind = useBaseCvStore((state) => state.ownerKind);
   return pickToken({ accountToken, anonymousToken, ownerKind });
@@ -26,7 +30,9 @@ let pendingAnonymousSession: Promise<ApiCredential> | null = null;
 
 // Evita emitir várias sessões quando duas chamadas pedem a credencial ao mesmo tempo.
 function ensureAnonymousSession(): Promise<ApiCredential> {
-  const existing = useAnonymousSessionStore.getState().session;
+  // Sessão vencida não é reaproveitada: emite uma nova em vez de gastar uma chamada que daria 401.
+  const stored = useAnonymousSessionStore.getState().session;
+  const existing = isAnonymousSessionActive(stored) ? stored : null;
   if (existing) {
     return Promise.resolve({
       kind: "anonymous",
@@ -75,7 +81,6 @@ export async function ensureCredential(
 /** Credencial do dono de um recurso, sem alternativa: cair no outro token acessaria o owner errado (403). */
 export function tokenForOwnerKind(ownerKind: OwnerKind | null): string | null {
   if (ownerKind === "account") return useAuthStore.getState().accessToken;
-  if (ownerKind === "anonymous")
-    return useAnonymousSessionStore.getState().session?.token ?? null;
+  if (ownerKind === "anonymous") return activeAnonymousToken();
   return null;
 }

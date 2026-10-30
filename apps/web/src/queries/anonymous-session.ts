@@ -5,7 +5,10 @@ import {
   anonymousSessionMigrate,
 } from "@lib/api/generated/tailorly";
 import { apiQueryKeys } from "@lib/api/query-keys";
-import { useAnonymousSessionStore } from "@stores/anonymous-session-store";
+import {
+  isAnonymousSessionActive,
+  useAnonymousSessionStore,
+} from "@stores/anonymous-session-store";
 import { useAuthStore } from "@stores/auth-store";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useJobPostingStore } from "@stores/job-posting-store";
@@ -13,7 +16,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 /** Uso, limites e se há snapshot revisado migrável da sessão anônima atual. */
 export function useAnonymousSessionStatus() {
-  const token = useAnonymousSessionStore((state) => state.session?.token);
+  const token = useAnonymousSessionStore((state) =>
+    isAnonymousSessionActive(state.session) ? state.session.token : undefined,
+  );
 
   return useQuery({
     queryKey: [...apiQueryKeys.anonymousSession.current, token ?? ""],
@@ -51,9 +56,15 @@ export function useMigrateAnonymousSession() {
     mutationFn: ({ replaceActive }) => {
       const session = useAnonymousSessionStore.getState().session;
       const accountToken = useAuthStore.getState().accessToken;
-      if (!session || !accountToken) {
+      if (!accountToken) {
         throw new Error(
           "Entre na sua conta para trazer o currículo de visitante.",
+        );
+      }
+      // Sessão vencida já foi apagada no servidor: migrar só levaria uma recusa.
+      if (!isAnonymousSessionActive(session)) {
+        throw new Error(
+          "A sessão de visitante expirou e os dados dela foram removidos.",
         );
       }
       return anonymousSessionMigrate(
@@ -80,7 +91,8 @@ export function useDiscardAnonymousSession() {
   return useMutation<void, Error, void>({
     mutationFn: async () => {
       const session = useAnonymousSessionStore.getState().session;
-      if (!session) return;
+      // Sem sessão ou já vencida (o servidor apagou os dados): basta limpar o cliente.
+      if (!isAnonymousSessionActive(session)) return;
       await anonymousSessionEnd({ accessToken: session.token });
     },
     onSuccess: () => {

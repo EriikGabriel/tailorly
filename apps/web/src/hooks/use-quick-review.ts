@@ -94,7 +94,9 @@ export function useQuickReview({
     if (
       needsFullReview ||
       !reviewComplete ||
-      quickReview.contextKey !== contextKey
+      quickReview.contextKey !== contextKey ||
+      submitAnswers.isPending ||
+      generateCv.isPending
     )
       return;
     if (!baseVersionId) {

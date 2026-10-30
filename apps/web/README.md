@@ -482,6 +482,29 @@ e, em `/base`, disponibiliza o texto bruto por página após a conclusão. A
 extração não aprova Ground Truth. Trocar a seleção local não apaga documentos
 remotos.
 
+### Evitar chamadas desnecessárias e erros previsíveis
+
+Regras aplicadas na camada `queries/` e em `lib/`; o servidor continua sendo a
+garantia, o cliente só evita pedir o que ele recusaria ou já respondeu:
+
+| Medida | Onde | Efeito |
+| --- | --- | --- |
+| Padrões do `QueryClient` | `lib/query-client.ts` | `staleTime` de 30 s, sem refetch ao focar a janela; consultas com polling ou cache infinito declaram o próprio comportamento |
+| Política de retry | `lib/api/retry-policy.ts` | só falha de rede e 5xx, uma vez; 4xx (401, 403, 404, 422, 429) e erros de pré-condição nunca são repetidos |
+| Credencial verificada antes de chamar | `queries/*` | consultas usam `skipToken`/`enabled`; mutations lançam `SESSION_EXPIRED_MESSAGE` sem token em vez de enviar um 401 |
+| Sessão anônima vencida | `stores/anonymous-session-store.ts` (`isAnonymousSessionActive`, `activeAnonymousToken`) | não é enviada, não é migrada nem encerrada no servidor (que já apagou os dados); `ensureCredential` emite outra |
+| Entrada da vaga validada | `utils/job-posting-input.ts`, usada em `useAnalyzeJobPosting` | link inválido, texto vazio ou acima de 50 000 caracteres falham antes de qualquer chamada, inclusive a que emitiria a sessão anônima |
+| Aprovar o Ground Truth | `useApproveGroundTruth` | exige token e versão do Currículo Base |
+| Cliques repetidos | `use-job-target.ts`, `use-quick-review.ts` | gerar ou concluir a revisão ignora novos pedidos enquanto há análise, envio ou geração em andamento |
+| Polling da extração | `utils/extraction-polling.ts` | só a execução é consultada a cada 1,5 s; fatos e pendências são buscados **uma vez** na transição para `COMPLETED` (eles só são gravados ao concluir), com reconsulta curta se o resultado vier vazio logo após concluir |
+| Template do gerador | `use-typst-template-draft.ts` | nome, versão e código vêm da própria geração (sem `GET /cv-templates/{id}`); o template padrão só é buscado com uma geração aberta |
+| Prévia do Typst | `hooks/use-cv-preview.ts` | o mesmo código já compilado para a geração não é compilado de novo |
+| Reenvio do mesmo arquivo | `useSelectBaseDocumentFile` | o mesmo objeto `File` já enviado ou em envio não é reenviado |
+
+O reenvio de um **arquivo idêntico escolhido de novo** continua indo ao servidor
+de propósito: ele reaproveita OCR e fatos, mas reavalia os fatos sensíveis ao
+tempo (ver AGENTS.md); deduplicar isso no cliente esconderia essa reavaliação.
+
 ### Guardas de contexto obsoleto
 
 Dois mecanismos independentes impedem callbacks atrasados de sujar o rascunho atual:

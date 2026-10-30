@@ -56,7 +56,8 @@ export function useJobTarget() {
   const canGenerate = blockReason === null;
 
   async function generate() {
-    if (!canGenerate || analyze.isPending) return;
+    // Clique repetido durante a leitura ou a geração não pode disparar um segundo pedido.
+    if (!canGenerate || analyze.isPending || generateCv.isPending) return;
     let analysis: Awaited<ReturnType<typeof analyze.mutateAsync>>["analysis"];
     try {
       const result = await analyze.mutateAsync(

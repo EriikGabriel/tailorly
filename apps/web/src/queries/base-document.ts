@@ -7,6 +7,7 @@ import {
 import { apiQueryKeys } from "@lib/api/query-keys";
 import { type OwnerKind, useBaseCvStore } from "@stores/base-cv-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { extractionRunInterval } from "@/utils/extraction-polling";
 import {
   type ApiCredential,
   ensureCredential,
@@ -76,7 +77,16 @@ export function useSelectBaseDocumentFile() {
   return {
     upload,
     selectFile: (file: File) => {
+      const store = useBaseCvStore.getState();
+      const sameFile = store.file === file;
       if (!selectFile(file)) return false;
+      // O mesmo arquivo já enviado (ou em envio) não é enviado de novo. Um arquivo escolhido de novo
+      // no seletor é outro objeto `File`, então o reenvio idêntico continua indo ao servidor, que
+      // reavalia os fatos sensíveis ao tempo.
+      const alreadySent =
+        store.selectionId !== null &&
+        store.uploadedSelectionId === store.selectionId;
+      if (sameFile && (alreadySent || upload.isPending)) return true;
 
       upload.mutate(file, {
         onError: (error) => {
@@ -105,11 +115,6 @@ export function useBaseDocumentExtraction(versionId?: string) {
       return extractionRunFindByVersion(versionId, { accessToken });
     },
     enabled: Boolean(accessToken && versionId),
-    refetchInterval: (query) => {
-      const run = query.state.data?.[0];
-      return run && ["QUEUED", "PROCESSING"].includes(run.status)
-        ? 1500
-        : false;
-    },
+    refetchInterval: (query) => extractionRunInterval(query.state.data?.[0]),
   });
 }

@@ -1,4 +1,4 @@
-import type { JobPostingVersionResponse } from "@lib/api/generated/model";
+import type { JobPostingVersionResponse } from "../lib/api/generated/model";
 import type { OwnerKind } from "../stores/base-cv-store";
 
 /** Vaga informada pela pessoa: o link da página ou o texto colado. */

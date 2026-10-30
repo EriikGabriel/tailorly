@@ -14,6 +14,12 @@ import {
 } from "@lib/api/generated/tailorly";
 import { apiQueryKeys } from "@lib/api/query-keys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import {
+  extractionJustCompleted,
+  extractionRunInterval,
+  interpretationRefetchInterval,
+} from "@/utils/extraction-polling";
 import { useApiToken } from "./api-credential";
 
 // Centraliza as mutações da revisão para invalidar os dados exibidos na tela.
@@ -67,6 +73,7 @@ export function useInvalidateBaseReview(versionId: string) {
 
 export function useBaseReview(versionId?: string) {
   const accessToken = useApiToken();
+  const queryClient = useQueryClient();
   const runs = useQuery({
     queryKey: apiQueryKeys.extractionRuns.byVersion(versionId ?? ""),
     queryFn: () =>
@@ -74,33 +81,34 @@ export function useBaseReview(versionId?: string) {
         accessToken: accessToken ?? undefined,
       }),
     enabled: Boolean(accessToken && versionId),
-    refetchInterval: (query) =>
-      query.state.data?.[0] &&
-      ["QUEUED", "PROCESSING"].includes(query.state.data[0].status)
-        ? 1500
-        : false,
+    refetchInterval: (query) => extractionRunInterval(query.state.data?.[0]),
   });
   const completedRun = runs.data?.find((run) => run.status === "COMPLETED");
   const latestRun = runs.data?.[0];
 
-  function refetchPendingInterpretation<T extends { length: number }>(query: {
-    state: { data?: T; dataUpdatedAt: number };
-  }) {
-    if (latestRun && ["QUEUED", "PROCESSING"].includes(latestRun.status)) {
-      return 1500;
+  // Os fatos só existem quando a execução conclui: em vez de consultá-los a cada ciclo enquanto ela
+  // roda, busca uma vez na transição para "concluída".
+  const previousStatus = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const status = latestRun?.status;
+    if (versionId && extractionJustCompleted(previousStatus.current, status)) {
+      queryClient.invalidateQueries({
+        queryKey: apiQueryKeys.baseReview.records(versionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: apiQueryKeys.baseReview.issues(versionId),
+      });
     }
+    previousStatus.current = status;
+  }, [latestRun?.status, versionId, queryClient]);
 
-    if (
-      latestRun?.status === "COMPLETED" &&
-      query.state.data?.length === 0 &&
-      latestRun.finishedAt &&
-      Date.now() - Date.parse(latestRun.finishedAt) < 60_000
-    ) {
-      return 1500;
-    }
-
-    return false;
-  }
+  const refetchPendingInterpretation = (query: {
+    state: { data?: { length: number } };
+  }) =>
+    interpretationRefetchInterval({
+      latestRun,
+      loadedCount: query.state.data?.length,
+    });
 
   const pages = useQuery({
     queryKey: apiQueryKeys.baseReview.pages(completedRun?.id ?? ""),
@@ -198,11 +206,17 @@ export function useApproveGroundTruth(versionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<GroundTruthSnapshot, Error, void>({
-    mutationFn: () =>
-      apiRequest<GroundTruthSnapshot>(
+    mutationFn: () => {
+      // Sem credencial ou versão a chamada só voltaria 401/404; avisa antes, com a orientação certa.
+      if (!accessToken) throw new Error(SESSION_EXPIRED_MESSAGE);
+      if (!versionId) {
+        throw new Error("Envie o Currículo Base antes de aprová-lo.");
+      }
+      return apiRequest<GroundTruthSnapshot>(
         `/v1/gt-snapshots/approve-version/${encodeURIComponent(versionId)}`,
-        { method: "POST", accessToken: accessToken ?? undefined },
-      ),
+        { method: "POST", accessToken },
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: apiQueryKeys.baseReview.records(versionId),

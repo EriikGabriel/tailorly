@@ -13,7 +13,10 @@ import {
   jobPostingReanalyze,
 } from "@lib/api/generated/tailorly";
 import { apiQueryKeys } from "@lib/api/query-keys";
-import { useAnonymousSessionStore } from "@stores/anonymous-session-store";
+import {
+  isAnonymousSessionActive,
+  useAnonymousSessionStore,
+} from "@stores/anonymous-session-store";
 import { useAuthStore } from "@stores/auth-store";
 import { useJobPostingStore } from "@stores/job-posting-store";
 import {
@@ -23,6 +26,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { jobPostingInputError } from "@/utils/job-posting-input";
 import {
   type ApiCredential,
   ensureCredential,
@@ -48,6 +52,11 @@ export function useAnalyzeJobPosting() {
   return useMutation<AnalyzeResult, Error, JobPostingInput>({
     mutationKey: [...apiQueryKeys.jobPostings.all, "create"],
     mutationFn: async (input) => {
+      // Antes de qualquer chamada (inclusive a que emite a sessão anônima): o que o servidor
+      // recusaria não deve gastar requisição, cota nem uma sessão nova.
+      const invalid = jobPostingInputError(input);
+      if (invalid) throw new Error(invalid);
+
       const send = async (
         credential: ApiCredential,
       ): Promise<AnalyzeResult> => ({
@@ -101,8 +110,8 @@ export function useAnalyzeJobPosting() {
 export function useSelectedJobPosting() {
   const selected = useJobPostingStore((state) => state.selected);
   const accountToken = useAuthStore((state) => state.accessToken);
-  const anonymousToken = useAnonymousSessionStore(
-    (state) => state.session?.token ?? null,
+  const anonymousToken = useAnonymousSessionStore((state) =>
+    isAnonymousSessionActive(state.session) ? state.session.token : null,
   );
   const token =
     selected?.ownerKind === "account"
@@ -216,7 +225,9 @@ export function useDeleteJobPosting() {
 /** Vagas salvas do owner atual (conta ou sessão anônima já emitida). */
 export function useJobPostingList() {
   const accountOwnerId = useCurrentOwnerId().data;
-  const anonymousSession = useAnonymousSessionStore((state) => state.session);
+  const anonymousSession = useAnonymousSessionStore((state) =>
+    isAnonymousSessionActive(state.session) ? state.session : null,
+  );
   const accountToken = useAuthStore((state) => state.accessToken);
 
   const ownerId = accountToken ? accountOwnerId : anonymousSession?.ownerId;

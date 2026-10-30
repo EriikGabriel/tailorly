@@ -15,6 +15,14 @@ interface AnonymousSessionState {
 
 export const ANONYMOUS_TOKEN_PREFIX = "tlr_anon_";
 
+/** A sessão ainda vale? Uma sessão vencida só levaria um 401 do servidor. */
+export function isAnonymousSessionActive(
+  session: AnonymousSession | null | undefined,
+  now = Date.now(),
+): session is AnonymousSession {
+  return session != null && Date.parse(session.expiresAt) > now;
+}
+
 const SESSION_KEY = "tailorly:anonymous-session";
 
 function isValidSession(value: unknown): value is AnonymousSession {
@@ -55,6 +63,18 @@ function saveStoredSession(session: AnonymousSession | null) {
   } catch {
     // O navegador pode bloquear o storage; a sessão segue válida em memória.
   }
+}
+
+/**
+ * Token da sessão anônima, só se ainda válida. Uma sessão vencida é descartada aqui mesmo, antes de
+ * qualquer chamada, em vez de esperar o 401 do servidor.
+ */
+export function activeAnonymousToken(): string | null {
+  const { session, clear } = useAnonymousSessionStore.getState();
+  if (!session) return null;
+  if (isAnonymousSessionActive(session)) return session.token;
+  clear();
+  return null;
 }
 
 export const useAnonymousSessionStore = create<AnonymousSessionState>()(

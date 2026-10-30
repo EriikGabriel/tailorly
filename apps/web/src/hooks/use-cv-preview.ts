@@ -30,6 +30,8 @@ export function useCvPreview(
     isCompiling: false,
   });
   const urlRef = useRef<string | null>(null);
+  // Geração + código do PDF exibido: o mesmo código não é compilado de novo (ex.: desfazer até ele).
+  const compiledRef = useRef<string | null>(null);
 
   // Descarta o PDF ao trocar de geração e libera o último ao sair.
   // biome-ignore lint/correctness/useExhaustiveDependencies: o efeito deve reiniciar a cada geração
@@ -37,12 +39,22 @@ export function useCvPreview(
     return () => {
       if (urlRef.current) URL.revokeObjectURL(urlRef.current);
       urlRef.current = null;
+      compiledRef.current = null;
       setState({ url: null, diagnostics: [], error: null, isCompiling: false });
     };
   }, [generationId]);
 
   useEffect(() => {
     if (!generationId || source === null || !token) return;
+    const key = `${generationId}\u0000${source}`;
+    if (compiledRef.current === key) {
+      setState((current) =>
+        current.isCompiling || current.error
+          ? { ...current, isCompiling: false, error: null, diagnostics: [] }
+          : current,
+      );
+      return;
+    }
     const controller = new AbortController();
     setState((current) => ({ ...current, isCompiling: true }));
 
@@ -57,6 +69,7 @@ export function useCvPreview(
         const next = URL.createObjectURL(blob);
         if (urlRef.current) URL.revokeObjectURL(urlRef.current);
         urlRef.current = next;
+        compiledRef.current = key;
         setState({
           url: next,
           diagnostics: [],
