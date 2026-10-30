@@ -186,7 +186,9 @@ class JobPostingPersistenceIntegrationTest {
     assertEquals("completed", first.version().analysisStatus());
     assertTrue(first.version().analysis().requirements().getFirst().text().contains("Java"));
     assertEquals(1, jdbc.queryForObject("select count(*) from job_postings where owner_id = ?", Integer.class, ownerId));
-    assertEquals(1, jdbc.queryForObject("select count(*) from job_posting_versions", Integer.class));
+    // Contagem por owner, não global: outras classes de teste compartilham o mesmo banco na CI.
+    assertEquals(1, jdbc.queryForObject("select count(*) from job_posting_versions v "
+        + "join job_postings p on p.id = v.job_posting_id where p.owner_id = ?", Integer.class, ownerId));
 
     PAGES.put("https://acme.gupy.io/jobs/77?jobBoardSource=a", page("Segunda, texto mudou", "2999-01-01"));
     var changed = service.create(new CreateJobPostingRequest(ownerId, "https://acme.gupy.io/jobs/77?jobBoardSource=a", null, null, null));
