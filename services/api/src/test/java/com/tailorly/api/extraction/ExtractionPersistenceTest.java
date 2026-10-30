@@ -28,6 +28,10 @@ import org.springframework.transaction.support.TransactionTemplate;
     "spring.datasource.username=${TAILORLY_TEST_DATABASE_USER}",
     "spring.datasource.password=${TAILORLY_TEST_DATABASE_PASSWORD}",
     "spring.jpa.show-sql=false",
+    // Sem isto, herda `ddl-auto: create` do application.yml padrão e recria o schema a partir
+    // das entidades JPA, descartando os DEFAULTs do Flyway (ex.: anonymous_sessions.extractions_count)
+    // para qualquer outro teste de integração que reuse o mesmo TAILORLY_TEST_DATABASE_URL.
+    "spring.jpa.hibernate.ddl-auto=validate",
     "tailorly.extraction.enabled=false",
     "tailorly.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 })
