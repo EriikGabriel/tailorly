@@ -57,10 +57,16 @@ jobs:
           curl -fsSL "https://github.com/typst/typst/releases/download/${tag}/typst-x86_64-unknown-linux-musl.tar.xz" \
             | tar -xJ --strip-components=1 -C /usr/local/bin "typst-x86_64-unknown-linux-musl/typst"
           typst --version
+      - name: Create a separate disposable database for Postgres-backed tests
+        run: PGPASSWORD=tailorly psql -h localhost -U tailorly -d tailorly -c "CREATE DATABASE tailorly_test"
       - name: Run API tests against Postgres
         working-directory: services/api
         env:
-          TAILORLY_TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/tailorly
+          # Banco dedicado e descartável, igual ao uso local documentado no README da API: não
+          # pode ser o mesmo `tailorly` usado pelo datasource padrão, porque contextos Spring que
+          # carregam `ddl-auto: create` recriam o schema e colidem com os dados dos testes de
+          # integração (chaves duplicadas, colunas sem o default do Flyway, cotas já consumidas).
+          TAILORLY_TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/tailorly_test
           TAILORLY_TEST_DATABASE_USER: tailorly
           TAILORLY_TEST_DATABASE_PASSWORD: tailorly
         run: ./mvnw -B test
