@@ -182,6 +182,13 @@ public final class ErrorCodes {
     }
   }
 
+  public static final class RefreshToken {
+    public static final String NOT_FOUND = "error.refresh_token.not_found";
+
+    private RefreshToken() {
+    }
+  }
+
   public static final class Security {
     public static final String AUTHENTICATION_REQUIRED = "error.security.authentication_required";
     public static final String ACCESS_DENIED = "error.security.access_denied";

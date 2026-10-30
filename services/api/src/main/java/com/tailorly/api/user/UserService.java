@@ -93,6 +93,13 @@ public class UserService {
         .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.User.NOT_FOUND));
   }
 
+  /** Usado só pelo fluxo de refresh: o id já veio de um refresh token validado, sem {@code requireSelf}. */
+  public UserResponse findByIdForAuthentication(UUID id) {
+    return userRepository.findById(id)
+        .map(UserResponse::from)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.User.NOT_FOUND));
+  }
+
   @Transactional
   public UserResponse update(UUID id, @NonNull UpdateUserRequest requestUser) {
     User user = userRepository.findById(id)

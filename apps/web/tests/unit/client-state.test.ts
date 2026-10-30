@@ -36,6 +36,7 @@ test("limpar a sessão remove o token de autenticação", () => {
   auth.getState().setSession({
     accessToken: "test-token",
     expiresAt: "2030-01-01T00:00:00Z",
+    refreshToken: "test-refresh-token",
   });
 
   resetClientState();
@@ -62,10 +63,15 @@ test("a sessão válida pode ser recuperada no reload e a expirada é descartada
 
   try {
     const expiresAt = new Date(Date.now() + 60_000).toISOString();
-    auth.getState().setSession({ accessToken: "test-token", expiresAt });
+    auth.getState().setSession({
+      accessToken: "test-token",
+      expiresAt,
+      refreshToken: "test-refresh-token",
+    });
     assert.deepEqual(readStoredSession(), {
       accessToken: "test-token",
       expiresAt,
+      refreshToken: "test-refresh-token",
     });
     auth.getState().clearSession();
     assert.equal(storage.getItem("tailorly:auth-session"), null);

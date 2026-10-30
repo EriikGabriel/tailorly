@@ -94,7 +94,8 @@ public class SecurityConfiguration {
             .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             .requestMatchers(HttpMethod.POST, "/v1/users").permitAll()
-            .requestMatchers(HttpMethod.POST, "/v1/auth/register", "/v1/auth/login").permitAll()
+            .requestMatchers(HttpMethod.POST, "/v1/auth/register", "/v1/auth/login",
+                "/v1/auth/refresh", "/v1/auth/logout").permitAll()
             .requestMatchers(HttpMethod.POST, "/v1/owners").permitAll()
             .requestMatchers(HttpMethod.POST, "/v1/anonymous-sessions").permitAll()
             .requestMatchers("/v1/anonymous-sessions/current").authenticated()

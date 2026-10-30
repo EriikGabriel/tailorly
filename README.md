@@ -2,7 +2,7 @@
 
 Monorepo para gerar currículos personalizados para cada vaga. O produto recebe uma descrição ou URL de oportunidade, extrai os requisitos, adapta um currículo a partir de um template versionado e disponibiliza os artefatos para download e acompanhamento no Second Brain.
 
-> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator, autenticação JWT e os serviços locais de PostgreSQL e Garage já existem. A geração de PDF/Markdown com esteira de ATS, o template Typst editável com prévia ao vivo e o histórico estão implementados (ver [Geração de currículos](#geração-de-currículos)). O vault e outras integrações externas continuam planejados.
+> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator, autenticação JWT com refresh/revogação e os serviços locais de PostgreSQL e Garage já existem. A geração de PDF/Markdown com esteira de ATS, o template Typst editável com prévia ao vivo e o histórico estão implementados (ver [Geração de currículos](#geração-de-currículos)). A exportação para o Second Brain/vault existe e é opcional (ver [Integração com o Second Brain / vault](#integração-com-o-second-brain--vault)); deploy automatizado continua planejado.
 
 ## Objetivo e escopo
 
@@ -51,10 +51,12 @@ Os blocos de templates, geração de PDF e vault representam a arquitetura plane
 | Integração local | Proxy de `/v1` para `http://localhost:8080` |
 
 O botão de conta no cabeçalho oferece cadastro, login e logout. O frontend
-guarda o JWT em `sessionStorage` para manter o login ao recarregar a mesma aba,
-desde que o token ainda seja válido. O logout e respostas `401` da consulta de
-conta limpam esse estado. O token expira após uma hora; renovação de sessão
-ainda não foi implementada.
+guarda o JWT e o refresh token em `sessionStorage` para manter o login ao
+recarregar a mesma aba, desde que o access token ainda seja válido. Uma
+resposta `401` de uma chamada autenticada tenta renovar o access token uma
+vez via `POST /v1/auth/refresh` antes de desistir; só então o logout e o
+estado de "deslogado" se aplicam. O logout chama `POST /v1/auth/logout` para
+revogar a sessão no servidor antes de limpar o estado local.
 
 A home fica em `apps/web/src/pages/_app/_home/index.tsx` e corresponde a `/`; rotas dinâmicas usam `$id.tsx`; e `pages/__root.tsx` define o layout raiz. O prefixo de arquivo `_app` não aparece na URL. O arquivo `apps/web/src/routeTree.gen.ts` é gerado pelo plugin do TanStack Router e não deve ser alterado manualmente.
 
@@ -71,11 +73,13 @@ A documentação detalhada da implementação Spring Boot está em [`services/ap
 | Runtime | Java 21 e Spring Boot 3.5 | — |
 | HTTP e validação | Spring Web, Validation, endpoints de usuários e owners, OpenAPI/Swagger UI | Idioma/templates adicionais |
 | Saúde | Spring Actuator com `health` e `info` expostos | Métricas e logs estruturados |
-| Acesso web | CORS, JWT Bearer e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente e renovação de tokens |
+| Acesso web | CORS, JWT Bearer, refresh token rotativo e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente |
 | Parsing de páginas | Jsoup | Leitura de vagas por link implementada (Gupy, JSON-LD `JobPosting` e HTML genérico), com análise por IA e versionamento |
 | Dados e arquivos | PostgreSQL/Flyway; PDFs e textos por página no Garage; fila PDFBox/OCR seletivo, revisão auditada e snapshots aprovados | Extração semântica de fatos |
 
-O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. A especificação OpenAPI está em `http://localhost:8080/v3/api-docs` e a interface Swagger UI em `http://localhost:8080/swagger-ui.html`. A API inclui operações de usuários, owners e sessões anônimas. Cadastro (`POST /v1/auth/register` e o caminho existente `POST /v1/users`), login (`POST /v1/auth/login`), saúde, documentação e criação/validação de sessões anônimas são públicos; consulta e revogação de sessões exigem `ROLE_ADMIN`. O login valida email e senha e retorna `accessToken`, `tokenType: Bearer`, `expiresAt` e os dados públicos do usuário. Nas chamadas protegidas, envie `Authorization: Bearer <accessToken>`. O token é assinado com HS256, expira após uma hora e inclui o ID do usuário como sujeito. A API consulta a conta e as roles atuais em cada chamada protegida; contas desativadas perdem acesso imediatamente. Como a autenticação usa apenas o cabeçalho Bearer, não há cookie de login nem token CSRF. Ainda não há refresh token, logout ou revogação individual de JWTs.
+O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. A especificação OpenAPI está em `http://localhost:8080/v3/api-docs` e a interface Swagger UI em `http://localhost:8080/swagger-ui.html`. A API inclui operações de usuários, owners e sessões anônimas. Cadastro (`POST /v1/auth/register` e o caminho existente `POST /v1/users`), login (`POST /v1/auth/login`), renovação (`POST /v1/auth/refresh`), logout (`POST /v1/auth/logout`), saúde, documentação e criação/validação de sessões anônimas são públicos; consulta e revogação de sessões anônimas exigem `ROLE_ADMIN`. O login valida email e senha e retorna `accessToken`, `tokenType: Bearer`, `expiresAt`, os dados públicos do usuário e um `refreshToken` opaco. Nas chamadas protegidas, envie `Authorization: Bearer <accessToken>`. O access token é assinado com HS256, expira após uma hora e inclui o ID do usuário como sujeito. A API consulta a conta e as roles atuais em cada chamada protegida; contas desativadas perdem acesso imediatamente. Como a autenticação usa apenas o cabeçalho Bearer, não há cookie de login nem token CSRF.
+
+**Renovação e revogação de sessão.** `refreshToken` é um token opaco (prefixo `tlr_rt_`), guardado só como hash SHA-256 em `user_sessions` (`TAILORLY_REFRESH_TTL`, padrão 30 dias). `POST /v1/auth/refresh` rotaciona o token a cada uso e devolve um novo par de tokens; apresentar um refresh token já rotacionado ou revogado ("reuso") revoga todas as sessões da conta, por segurança. `POST /v1/auth/logout` revoga a sessão do refresh token informado. `GET /v1/me/sessions` lista as sessões ativas da conta autenticada e `DELETE /v1/me/sessions/{id}` revoga uma delas — ambas exigem ser o próprio dono da sessão. Trocar `TAILORLY_JWT_SECRET` continua invalidando todos os access tokens já emitidos; a revogação individual passa pelo refresh token, não pelo JWT.
 
 Antes de iniciar a API, defina uma chave Base64 com pelo menos 32 bytes e mantenha-a estável entre reinicializações:
 
@@ -107,8 +111,12 @@ Isso inclui validação, erros de domínio, autenticação (`401`) e autorizaç�
 | Endpoint | Método | Operação |
 | --- | --- | --- |
 | `/v1/auth/register` | `POST` | Cadastrar usuário (`email`, `password`); retorna `201` e dados públicos. `/v1/users` continua disponível. |
-| `/v1/auth/login` | `POST` | Validar `email` e `password`; retorna JWT Bearer, expiração e dados públicos ou `401`. |
+| `/v1/auth/login` | `POST` | Validar `email` e `password`; retorna JWT Bearer, refresh token, expiração e dados públicos ou `401`. |
+| `/v1/auth/refresh` | `POST` | Rotacionar um refresh token válido; devolve um novo par de tokens ou `401` (inválido, expirado ou reuso). |
+| `/v1/auth/logout` | `POST` | Revogar a sessão do refresh token informado. |
 | `/v1/me` | `GET` | Consultar o usuário autenticado e seu owner único; cria o owner para contas antigas quando necessário. |
+| `/v1/me/sessions` | `GET` | Listar as sessões de refresh token ativas da conta autenticada. |
+| `/v1/me/sessions/{id}` | `DELETE` | Revogar uma sessão da própria conta. |
 | `/v1/base-documents/upload` | `POST` | Receber PDF da conta, gravar no Garage, criar ou recuperar a versão e enfileirar/reutilizar a extração. |
 | `/v1/owners` | `POST` | Criar owner (`kind`, `userId` opcional); snapshot ativo só muda pela aprovação |
 | `/v1/owners/{id}` | `GET` | Consultar owner |
@@ -204,6 +212,14 @@ Na página do Gerador, "Detalhes da Vaga Alvo" mostra, depois de gerar (ou ao ab
 
 **Pendente:** escolha de idioma/outros templates; um avaliador de ATS externo ou treinado (o atual é por regras); o teste e2e `quick-review.spec.ts`, que ainda descreve a prévia fictícia anterior (incluindo o rótulo do botão, hoje “Gerar currículo”). A compilação com o Typst real só é exercida nos testes quando o CLI está instalado no PATH; no desenvolvimento local, o script `services/api/bin/typst-docker` usa a imagem `ghcr.io/typst/typst:latest`.
 
+## Integração com o Second Brain / vault
+
+**Implementada, desligada por padrão.** Quando `TAILORLY_VAULT_ENABLED=true` e `TAILORLY_VAULT_PATH` apontam para um diretório local, cada geração de currículo de uma conta (nunca de uma sessão anônima) grava uma cópia do PDF e do Markdown em `{TAILORLY_VAULT_PATH}/{TAILORLY_VAULT_SUBFOLDER}` (padrão `B03 Resources/CVs`, o caminho citado na arquitetura alvo). A cópia Markdown recebe um frontmatter YAML (título da vaga, empresa, data, nota de ATS e id da geração); o objeto original no Garage nunca é alterado. Cada exportação é registrada em log; falhas de E/S são absorvidas e nunca derrubam `POST /v1/cv/generate`. Essa é uma pasta local qualquer — para usá-la com um vault Obsidian pessoal, aponte `TAILORLY_VAULT_PATH` para a raiz do vault; a decisão de habilitar e para onde apontar é de quem opera a API, nunca automática.
+
+## CI/CD
+
+`.github/workflows/ci.yml` roda em push/PR para `main`: `lint` (Biome), `api` (testes Maven contra um Postgres de serviço, com o CLI real do Typst instalado no runner), `web` (build e testes de store) e `e2e` (Playwright contra a stack completa — web, API, Postgres e Garage via `compose.yaml`). Ainda não há deploy automatizado.
+
 ## Requisitos
 
 ### Requisitos funcionais
@@ -215,8 +231,8 @@ Na página do Gerador, "Detalhes da Vaga Alvo" mostra, depois de gerar (ou ao ab
 | RF03 | Geração de currículo | Produzir currículo personalizado a partir dos requisitos e do perfil base. | Alta | Implementado: esteira com avaliação de ATS e IA de layout, PDF/Markdown do snapshot aprovado e da versão da vaga |
 | RF04 | Exportação | Disponibilizar o currículo em PDF e Markdown. | Média | Planejado |
 | RF05 | Metadados e histórico | Salvar autoria, data, status, template e referência do arquivo gerado. | Média | Planejado |
-| RF06 | Integração com Second Brain | Copiar/registrar artefatos em `B03 Resources/CVs/` e criar link para uso no Obsidian. | Alta | Planejado |
-| RF07 | Acesso e autenticação | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta | Parcial: conta, papéis e acesso anônimo (servidor e interface: sessão, limites, TTL, limpeza, migração) implementados; limite de gerações aplicado em `POST /v1/cv/generate` |
+| RF06 | Integração com Second Brain | Copiar/registrar artefatos em `B03 Resources/CVs/` e criar link para uso no Obsidian. | Alta | Parcial: exportação local opcional (`tailorly.vault.*`, desligada por padrão) copia PDF e Markdown com frontmatter; criar link de volta no vault (por exemplo nota própria com backlinks) ainda é planejado |
+| RF07 | Acesso e autenticação | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta | Parcial: conta, papéis, refresh/revogação de sessão e acesso anônimo (servidor e interface: sessão, limites, TTL, limpeza, migração) implementados; limite de gerações aplicado em `POST /v1/cv/generate` |
 | RF08 | Due diligence de empresas | Consolidar sinais públicos para apoiar a decisão de candidatura, com fatores e fontes rastreáveis. | A definir | Backlog |
 
 ### Requisitos não funcionais
@@ -239,6 +255,7 @@ Na página do Gerador, "Detalhes da Vaga Alvo" mostra, depois de gerar (ou ao ab
 | `users` | `id`, `email`, `password_hash`, `enabled` | Credenciais e estado da conta. |
 | `owners` | `id`, `kind`, `user_id`, `active_snapshot_id`, `revision`, `expires_at` | Identidade proprietária de dados; `user_id` é opcional e único. `active_snapshot_id` aponta para o snapshot aprovado quando o modelo de snapshots existir. |
 | `anonymous_sessions` | `id`, `owner_id`, `token_hash`, `expires_at`, `revoked_at`, `created_at`, `uploads_count`, `extractions_count`, `generations_count` | Sessão anônima emitida pelo servidor, com token armazenado só como hash, expiração/revogação e contadores de uso para as cotas; cada owner tem no máximo uma sessão. |
+| `user_sessions` | `id`, `user_id`, `token_hash`, `expires_at`, `revoked_at`, `rotated_from`, `user_agent`, `created_at` | Sessão de refresh token de uma conta; `rotated_from` liga a cadeia de rotação e permite detectar reuso. Uma conta pode ter várias sessões (dispositivos). |
 | `job_postings` | `id`, `owner_id`, `source_kind` (`url`/`text`), `source_key`, `title`, `company_name`, `expires_at`, `latest_version_number`, `created_at`, `updated_at` | Vaga de um owner, única por `(owner_id, source_key)`; título, empresa e prazo são cópias da última versão, para listagem. |
 | `job_posting_versions` | `id`, `job_posting_id`, `version_number`, `content_hash`, `details` (JSONB), `analysis` (JSONB), `analysis_status`, `analyzer_version`, `analyzed_at`, `created_at`, `last_checked_at` | Leitura imutável da vaga mais a análise por IA, que pode ser refeita. |
 | `roles` | `id`, `name` | Papéis de acesso, como `ADMIN` e `USER`. |
@@ -375,6 +392,6 @@ endpoint ou DTO do backend mudar. O código em `apps/web/src/lib/api/generated`
 6. [x] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** *Servidor concluído:* a sessão é emitida e autenticada pelo servidor (token opaco, só o hash fica no banco); upload e processamento por owner anônimo respeitam limites de tamanho, páginas, uploads, processamentos, gerações (aplicado em `POST /v1/cv/generate`) e taxa de requisições; os dados têm TTL e são apagados por um job de limpeza; o snapshot revisado pode ser migrado para uma conta antes da expiração sem repetir OCR. O processamento anônimo usa sempre a IA das variáveis de ambiente do servidor. *Interface concluída:* o visitante envia o PDF, acompanha a extração, revisa e aprova sem conta; a sessão é criada sob demanda, o token é a credencial das chamadas e, após o login, um diálogo oferece trazer o currículo aprovado para a conta ou descartá-lo. *Planejado:* a interface de geração.
 7. [x] **Implementar vaga e geração.** *Concluído:* receber URL ou texto, extrair requisitos (Gupy, JSON-LD, HTML genérico), versionar a vaga e analisá-la com a IA do owner; versionar o template Typst (`cv_templates`) e `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga, sem OCR e sem acrescentar fatos pessoais; PDF e Markdown persistidos no Garage; histórico, download e exclusão reais em `/v1/cv/generations`; cota anônima de gerações aplicada. A interface (gerador, "Meus Currículos" e a lista da home) consome esses endpoints, com esteira de ATS, template editável e prévia ao vivo. *Pendente:* escolha de template/idioma e validar a compilação com o Typst real em CI.
 8. [x] **Fechar o ciclo dos dados.** Desativação (`PATCH /v1/owners/{id}/deactivate-snapshot`) e exclusão efetiva (`DELETE /v1/base-versions/{id}`) de originais, texto, fatos, pendências e artefatos derivados implementadas, com política de retenção agendada para contas desativadas (`AccountRetentionJob`). Cobertura: testes de serviço/API contra Postgres real (`BaseVersionDeletionServiceTest`, `OwnerLifecycleIntegrationTest`, `AccountRetentionJobTest`), um teste de contrato que confere os novos paths em `/v3/api-docs` (`DataLifecycleContractTest`) e os botões de desativar/excluir em `/base`, com confirmação, na interface. *Pendente:* os novos testes de serviço não puderam ser executados neste ambiente (ver nota de verificação abaixo) e não há teste e2e de Playwright dedicado às duas novas ações.
-9. [ ] **Preparar operação e integrações.** Definir renovação ou revogação de tokens, integrar os artefatos gerados ao Second Brain/vault quando habilitado e preparar CI/CD com GitHub Actions.
+9. [x] **Preparar operação e integrações.** Refresh token opaco e rotativo (`POST /v1/auth/refresh`), logout e revogação (`POST /v1/auth/logout`, `/v1/me/sessions`), com detecção de reuso; exportação opcional dos artefatos gerados para uma pasta local (vault) desligada por padrão (`tailorly.vault.*`); CI em GitHub Actions (`lint`, `api`, `web`, `e2e`). *Pendente:* deploy automatizado e uma integração mais rica com o vault (por exemplo, nota própria com backlinks em vez de só frontmatter).
 
 Após alterar endpoints ou DTOs, execute `pnpm api:sync` com a API ativa para atualizar o contrato OpenAPI e o cliente gerado. Atualize os READMEs da web e da API conforme cada etapa passar de planejada a implementada.

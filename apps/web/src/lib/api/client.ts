@@ -55,16 +55,57 @@ export async function apiRequest<T>(
   return (await response.json()) as T;
 }
 
+/**
+ * No máximo uma renovação de refresh token por vez: chamadas concorrentes que expiram juntas
+ * reaproveitam a mesma promessa em vez de rotacionar o token várias vezes (o backend invalida o
+ * token anterior a cada rotação).
+ */
+let refreshInFlight: Promise<string | null> | null = null;
+
+/** Troca o refresh token guardado por um novo par; `null` se não havia um para tentar ou falhou. */
+function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = useAuthStore.getState().refreshToken;
+  if (!refreshToken) return Promise.resolve(null);
+
+  if (!refreshInFlight) {
+    refreshInFlight = fetch("/v1/auth/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          useAuthStore.getState().clearSession();
+          return null;
+        }
+        const session = (await response.json()) as {
+          accessToken: string;
+          expiresAt: string;
+          refreshToken: string;
+        };
+        useAuthStore.getState().setSession(session);
+        return session.accessToken;
+      })
+      .catch(() => null)
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+}
+
 async function apiFetch(
   path: string,
-  {
+  options: ApiRequestOptions,
+  retrying = false,
+): Promise<Response> {
+  const {
     accessToken,
     language = "pt-BR",
     accept = "application/json",
     headers,
     ...init
-  }: ApiRequestOptions,
-): Promise<Response> {
+  } = options;
   const requestHeaders = new Headers(headers);
   requestHeaders.set("Accept", accept);
   requestHeaders.set("Accept-Language", language);
@@ -72,6 +113,20 @@ async function apiFetch(
 
   const response = await fetch(path, { ...init, headers: requestHeaders });
   if (!response.ok) {
+    // Um JWT de conta expirado tenta renovar pelo refresh token, uma única vez, antes de desistir.
+    if (
+      response.status === 401 &&
+      !retrying &&
+      accessToken &&
+      !accessToken.startsWith(ANONYMOUS_TOKEN_PREFIX) &&
+      useAuthStore.getState().accessToken === accessToken
+    ) {
+      const renewedToken = await refreshAccessToken();
+      if (renewedToken) {
+        return apiFetch(path, { ...options, accessToken: renewedToken }, true);
+      }
+    }
+
     let error: Partial<ApiErrorResponse> = {};
     try {
       error = (await response.json()) as ApiErrorResponse;
@@ -88,8 +143,8 @@ async function apiFetch(
         useAnonymousSessionStore.getState().clear();
       }
     }
-    // Idem para o JWT da conta (expirou ou a conta deixou de existir): a interface deixa de se
-    // mostrar logada, em vez de repetir chamadas que o servidor recusa.
+    // Idem para o JWT da conta (a renovação falhou, ou já era o próprio retry): a interface
+    // deixa de se mostrar logada, em vez de repetir chamadas que o servidor recusa.
     if (
       response.status === 401 &&
       accessToken &&

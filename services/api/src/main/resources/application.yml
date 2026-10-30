@@ -101,6 +101,14 @@ tailorly:
   # instalado no host da API. Sem ele, POST /v1/cv/generate responde 503 e nada é gravado.
   generation:
     typst-command: ${TAILORLY_TYPST_COMMAND:typst}
+  # Exportação opcional dos currículos gerados para uma pasta local (por exemplo um vault Obsidian
+  # como o Second Brain, em B03 Resources/CVs). Desligada por padrão; nunca escreve automaticamente
+  # no vault pessoal de alguém sem que a própria pessoa aponte TAILORLY_VAULT_PATH para lá. Só
+  # exporta gerações de contas (nunca de sessões anônimas) e nunca sobrescreve o objeto no Garage.
+  vault:
+    enabled: ${TAILORLY_VAULT_ENABLED:false}
+    path: ${TAILORLY_VAULT_PATH:}
+    subfolder: ${TAILORLY_VAULT_SUBFOLDER:B03 Resources/CVs}
   storage:
     endpoint: ${TAILORLY_STORAGE_ENDPOINT:http://localhost:3900}
     region: ${TAILORLY_STORAGE_REGION:garage}
@@ -114,5 +122,9 @@ tailorly:
       secret: ${TAILORLY_JWT_SECRET}
       issuer: ${TAILORLY_JWT_ISSUER:http://localhost:8080}
       ttl: PT1H
+    # Refresh token opaco e rotativo (POST /v1/auth/refresh); revogado em POST /v1/auth/logout ou
+    # DELETE /v1/me/sessions/{id}. Reuso de um token já rotacionado revoga todas as sessões da conta.
+    refresh:
+      ttl: ${TAILORLY_REFRESH_TTL:P30D}
     # Criptografa chaves de API de provedores de IA guardadas por conta (ai_preferences).
     secrets-key: ${TAILORLY_SECRETS_KEY}

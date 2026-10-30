@@ -10,6 +10,7 @@ import type { UserResponse } from "./userResponse";
 export interface LoginResponse {
   accessToken: string;
   expiresAt: string;
+  refreshToken: string;
   tokenType: string;
   user: UserResponse;
 }

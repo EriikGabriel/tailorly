@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Segredos só de CI, sem uso em produção; precisam decodificar para >= 32 bytes (ver
+  # SecurityConfiguration.jwtSecretKey). Gerados uma vez com `openssl rand -base64 32`.
+  TAILORLY_JWT_SECRET: "mEAlZ0UVRsynN0qLg0UCj3IFlcwDz4/Uchg/JU0bpAg="
+  TAILORLY_SECRETS_KEY: "sIuLq2PxLm0K2wP8CJuP+UoRxd8nf41yoy9LyQzj6Vk="
+  DATABASE_USERNAME: tailorly
+  DATABASE_PASSWORD: tailorly
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+  api:
+    needs: lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: tailorly
+          POSTGRES_USER: tailorly
+          POSTGRES_PASSWORD: tailorly
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U tailorly -d tailorly"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Install the Typst CLI
+        run: |
+          tag=$(curl -fsSL https://api.github.com/repos/typst/typst/releases/latest | grep -m1 '"tag_name"' | cut -d '"' -f4)
+          curl -fsSL "https://github.com/typst/typst/releases/download/${tag}/typst-x86_64-unknown-linux-musl.tar.xz" \
+            | tar -xJ --strip-components=1 -C /usr/local/bin "typst-x86_64-unknown-linux-musl/typst"
+          typst --version
+      - name: Run API tests against Postgres
+        working-directory: services/api
+        env:
+          TAILORLY_TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/tailorly
+          TAILORLY_TEST_DATABASE_USER: tailorly
+          TAILORLY_TEST_DATABASE_PASSWORD: tailorly
+        run: ./mvnw -B test
+
+  web:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @tailorly/web build
+      - run: pnpm --filter @tailorly/web run test:stores
+
+  e2e:
+    needs: [api, web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install the Typst CLI
+        run: |
+          tag=$(curl -fsSL https://api.github.com/repos/typst/typst/releases/latest | grep -m1 '"tag_name"' | cut -d '"' -f4)
+          curl -fsSL "https://github.com/typst/typst/releases/download/${tag}/typst-x86_64-unknown-linux-musl.tar.xz" \
+            | tar -xJ --strip-components=1 -C /usr/local/bin "typst-x86_64-unknown-linux-musl/typst"
+          typst --version
+
+      - name: Generate local Garage credentials
+        run: |
+          bash services/api/init-garage-env.sh
+          cat services/api/.env.garage >> "$GITHUB_ENV"
+
+      - name: Start Postgres and Garage
+        run: |
+          docker compose -f compose.yaml up -d postgres garage
+          timeout 60 bash -c 'until docker compose -f compose.yaml exec -T postgres pg_isready -U tailorly -d tailorly; do sleep 2; done'
+          timeout 60 bash -c 'until (echo > /dev/tcp/localhost/3900) 2>/dev/null; do sleep 2; done'
+
+      - name: Start the API
+        working-directory: services/api
+        run: |
+          nohup ./mvnw -B spring-boot:run -Dspring-boot.run.profiles=local > /tmp/api.log 2>&1 &
+          timeout 90 bash -c 'until curl -fsS http://localhost:8080/actuator/health | grep -q "\"status\":\"UP\""; do sleep 2; done' \
+            || { cat /tmp/api.log; exit 1; }
+
+      - run: pnpm --filter @tailorly/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @tailorly/web test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

@@ -36,9 +36,13 @@ import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
+import com.tailorly.api.vault.VaultExportService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -75,13 +79,14 @@ public class CvGenerationService {
   private final CvPipeline pipeline;
   private final AnonymousQuotaService quota;
   private final TransactionTemplate transaction;
+  private final ObjectProvider<VaultExportService> vaultExport;
 
   public CvGenerationService(OwnerRepository owners, OwnerAccessService access, GtSnapshotRepository snapshots,
       JobPostingVersionRepository jobVersions, CvInputResolver inputs, CvInputHasher inputHasher,
       GeneratedCvFileStore fileStore, CvTemplateService templates, CvGenerationRepository generations,
       StoredObjectRepository objects, ObjectStorage storage, PdfRenderer pdfRenderer,
       MarkdownCvRenderer markdownRenderer, CvPipeline pipeline, AnonymousQuotaService quota,
-      PlatformTransactionManager transactionManager) {
+      PlatformTransactionManager transactionManager, ObjectProvider<VaultExportService> vaultExport) {
     this.owners = owners;
     this.access = access;
     this.snapshots = snapshots;
@@ -98,6 +103,7 @@ public class CvGenerationService {
     this.pipeline = pipeline;
     this.quota = quota;
     this.transaction = new TransactionTemplate(transactionManager);
+    this.vaultExport = vaultExport;
   }
 
   /** Resultado de {@link #generate}: a geração e se foi produzida agora ou reaproveitada. */
@@ -199,7 +205,31 @@ public class CvGenerationService {
         .markdownObject(markdownObject)
         .createdAt(Instant.now())
         .build());
+    scheduleVaultExport(owner, generation, jobVersion, outcome.pdf(), markdown);
     return new Result(CvGenerationResponse.from(generation, false), true);
+  }
+
+  /**
+   * Exporta para o vault local só depois do commit, e nunca para owners anônimos. Os dados
+   * simples usados na exportação são lidos aqui, dentro da transação, porque o callback roda
+   * depois que a sessão do Hibernate já fechou.
+   */
+  private void scheduleVaultExport(Owner owner, CvGeneration generation, JobPostingVersion jobVersion,
+      byte[] pdf, byte[] markdown) {
+    if (AnonymousQuotaService.isAnonymous(owner)) {
+      return;
+    }
+    VaultExportService.Request request = new VaultExportService.Request(
+        generation.getId(), owner.getId(), jobVersion.getJobPosting().getTitle(),
+        jobVersion.getJobPosting().getCompanyName(), generation.getAts().report().score(),
+        generation.getCreatedAt());
+    vaultExport.ifAvailable(export -> TransactionSynchronizationManager.registerSynchronization(
+        new TransactionSynchronization() {
+          @Override
+          public void afterCommit() {
+            export.export(request, pdf, markdown);
+          }
+        }));
   }
 
   /** Compila o código Typst informado com o conteúdo final de uma geração; não grava nada nem gasta cota. */

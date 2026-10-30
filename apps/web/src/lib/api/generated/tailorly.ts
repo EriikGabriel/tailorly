@@ -48,8 +48,10 @@ import type {
   MigrateAnonymousSessionRequest,
   OwnerResponse,
   PreviewCvRequest,
+  RefreshRequest,
   ReviewIssueResponse,
   SaveCvTemplateRequest,
+  SessionResponse,
   StoredObjectResponse,
   UpdateAiPreferencesRequest,
   UpdateDeletionStatusRequest,
@@ -272,6 +274,86 @@ export const authenticationLogin = async (
       ...getHeaders(options?.headers),
     },
     body: JSON.stringify(loginRequest),
+  });
+};
+
+export const getAuthenticationLogoutUrl = () => {
+  return `/v1/auth/logout`;
+};
+
+export const authenticationLogout = async (
+  refreshRequest: RefreshRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<void> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<void>(getAuthenticationLogoutUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(refreshRequest),
+  });
+};
+
+export const getAuthenticationRefreshUrl = () => {
+  return `/v1/auth/refresh`;
+};
+
+export const authenticationRefresh = async (
+  refreshRequest: RefreshRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<LoginResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<LoginResponse>(getAuthenticationRefreshUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(refreshRequest),
   });
 };
 
@@ -1361,6 +1443,33 @@ export const currentAccountCurrent = async (
   });
 };
 
+export const getSessionListUrl = () => {
+  return `/v1/me/sessions`;
+};
+
+export const sessionList = async (
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<SessionResponse[]> => {
+  return apiRequest<SessionResponse[]>(getSessionListUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getSessionRevokeUrl = (id: string) => {
+  return `/v1/me/sessions/${encodeURIComponent(String(id))}`;
+};
+
+export const sessionRevoke = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<void> => {
+  return apiRequest<void>(getSessionRevokeUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
 export const getOwnerCreateUrl = () => {
   return `/v1/owners`;
 };
@@ -1412,6 +1521,20 @@ export const ownerFindById = async (
   return apiRequest<OwnerResponse>(getOwnerFindByIdUrl(id), {
     ...options,
     method: "GET",
+  });
+};
+
+export const getOwnerDeactivateSnapshotUrl = (id: string) => {
+  return `/v1/owners/${encodeURIComponent(String(id))}/deactivate-snapshot`;
+};
+
+export const ownerDeactivateSnapshot = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<OwnerResponse> => {
+  return apiRequest<OwnerResponse>(getOwnerDeactivateSnapshotUrl(id), {
+    ...options,
+    method: "PATCH",
   });
 };
 
@@ -1745,20 +1868,6 @@ export const userDisableUser = async (
   options?: Parameters<typeof apiRequest>[1],
 ): Promise<void> => {
   return apiRequest<void>(getUserDisableUserUrl(id), {
-    ...options,
-    method: "PATCH",
-  });
-};
-
-export const getOwnerDeactivateSnapshotUrl = (id: string) => {
-  return `/v1/owners/${encodeURIComponent(String(id))}/deactivate-snapshot`;
-};
-
-export const ownerDeactivateSnapshot = async (
-  id: string,
-  options?: Parameters<typeof apiRequest>[1],
-): Promise<OwnerResponse> => {
-  return apiRequest<OwnerResponse>(getOwnerDeactivateSnapshotUrl(id), {
     ...options,
     method: "PATCH",
   });

@@ -57,6 +57,9 @@ class BearerSecurityTest {
   @MockitoBean
   private CurrentAccountService currentAccountService;
 
+  @MockitoBean
+  private RefreshTokenService refreshTokenService;
+
   @Test
   void loginChecksPasswordAndReturnsSignedToken() throws Exception {
     UUID id = UUID.randomUUID();
@@ -70,6 +73,8 @@ class BearerSecurityTest {
     when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
     when(userService.findByEmailForAuthentication(user.getEmail())).thenReturn(
         new UserResponse(id, user.getEmail(), true, List.of("ROLE_USER")));
+    when(refreshTokenService.issue(id)).thenReturn(
+        new RefreshTokenService.Issued("tlr_rt_test", java.time.Instant.now().plusSeconds(60)));
 
     mvc.perform(post("/v1/auth/login")
             .contentType(MediaType.APPLICATION_JSON)
@@ -96,7 +101,7 @@ class BearerSecurityTest {
     when(userService.findById(id)).thenReturn(
         new UserResponse(id, user.getEmail(), true, List.of("ROLE_USER")));
     String token = jwtTokenService.issue(
-        new UserResponse(id, user.getEmail(), true, List.of("ROLE_USER"))).accessToken();
+        new UserResponse(id, user.getEmail(), true, List.of("ROLE_USER")), "tlr_rt_test").accessToken();
 
     mvc.perform(get("/v1/users/{id}", id))
         .andExpect(status().isUnauthorized());
@@ -128,7 +133,7 @@ class BearerSecurityTest {
         new CurrentAccountResponse(
             userResponse,
             new OwnerResponse(ownerId, "account", userId, null, 0, null)));
-    String token = jwtTokenService.issue(userResponse).accessToken();
+    String token = jwtTokenService.issue(userResponse, "tlr_rt_test").accessToken();
 
     mvc.perform(get("/v1/me"))
         .andExpect(status().isUnauthorized());

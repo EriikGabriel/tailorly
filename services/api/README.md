@@ -7,7 +7,7 @@ Esta pasta contém a API HTTP do Tailorly. Ela oferece cadastro de usuários, lo
 | Área | Implementado | Ainda planejado |
 | --- | --- | --- |
 | Contas | Cadastro com owner provisionado, contexto autenticado em `/v1/me`, consulta, alteração de email, desativação, senha com BCrypt e roles persistidas | Recuperação de senha e exclusão de conta |
-| Acesso | Login com JWT Bearer HS256, autorização por conta e `ROLE_ADMIN` | Refresh token, logout e revogação individual de JWT |
+| Acesso | Login com JWT Bearer HS256, refresh token opaco rotativo (`/v1/auth/refresh`), logout e revogação por sessão (`/v1/auth/logout`, `/v1/me/sessions`) com detecção de reuso, autorização por conta e `ROLE_ADMIN` | Política de expiração por ambiente |
 | Sessões anônimas | Emissão e autenticação no servidor (token opaco, hash no banco), TTL, cotas de upload/processamento/geração, limite de taxa, limpeza automática, encerramento pelo visitante, migração do snapshot revisado para conta e revogação administrativa | — |
 | Currículo Base | Upload por conta, deduplicação, versão candidata, fila persistente, extração PDFBox/Tesseract por página, revisão auditada e aprovação/ativação atômica de snapshots | Exclusão de versão com as gerações derivadas |
 | Geração | Template Typst versionado e editável por owner, `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga com esteira de ATS (avaliação sobre o texto do PDF + plano de apresentação pela IA), prévia ao vivo, PDF/Markdown no Garage, histórico, download e exclusão (`/v1/cv/*`) | Idioma e templates adicionais; avaliador de ATS externo |
@@ -190,7 +190,11 @@ pnpm --filter @tailorly/api dev
 | `SPRING_DATASOURCE_URL` | URL JDBC do PostgreSQL | `jdbc:postgresql://localhost:5432/tailorly_api_db`; no perfil `local`, `jdbc:postgresql://localhost:5432/tailorly` |
 | `TAILORLY_JWT_SECRET` | Chave Base64 para assinar e validar JWTs | Obrigatória; o perfil `local` possui uma chave exclusiva de desenvolvimento |
 | `TAILORLY_JWT_ISSUER` | Emissor (`iss`) aceito pela API | `http://localhost:8080` |
+| `TAILORLY_REFRESH_TTL` | Validade do refresh token (`POST /v1/auth/refresh`) | `P30D` |
 | `TAILORLY_ADMIN_EMAILS` | Emails administrativos separados por vírgula | Lista vazia |
+| `TAILORLY_VAULT_ENABLED` | Liga a exportação dos currículos gerados para uma pasta local | `false` |
+| `TAILORLY_VAULT_PATH` | Diretório raiz da exportação (por exemplo, a raiz de um vault Obsidian) | Vazio |
+| `TAILORLY_VAULT_SUBFOLDER` | Subpasta dentro de `TAILORLY_VAULT_PATH` onde os artefatos são copiados | `B03 Resources/CVs` |
 | `TAILORLY_STORAGE_ENDPOINT` | Endpoint S3 do Garage ou R2 | `http://localhost:3900` |
 | `TAILORLY_STORAGE_REGION` | Região de assinatura S3; para R2, use `auto` | `garage` |
 | `TAILORLY_STORAGE_BUCKET` | Bucket privado, criado antes do upload | `tailorly-private` |
@@ -198,17 +202,19 @@ pnpm --filter @tailorly/api dev
 | `TAILORLY_STORAGE_PATH_STYLE` | Endereçamento por caminho para Garage/R2 | `true` |
 | `TAILORLY_TYPST_COMMAND` | Executável/script do CLI do Typst que compila o PDF. No desenvolvimento local, `./bin/typst-docker` executa `ghcr.io/typst/typst:latest` pelo Docker; sem Docker ou Typst, `POST /v1/cv/generate` responde `503` | `typst` |
 
-O JWT expira após uma hora (`tailorly.security.jwt.ttl: PT1H`). O Flyway aplica as migrations de `src/main/resources/db/migration` e o JPA usa `ddl-auto: validate`. `baseline-on-migrate` permite adotar o Flyway em bancos locais anteriormente criados pelo Hibernate: esses bancos são marcados na versão 1 e recebem as migrations posteriores. O CORS permite `http://localhost:5173` para `/v1/**`. O Vite do frontend encaminha `/v1` para `http://localhost:8080` no ambiente local.
+O JWT expira após uma hora (`tailorly.security.jwt.ttl: PT1H`). O refresh token expira em 30 dias por padrão (`tailorly.security.refresh.ttl`, `TAILORLY_REFRESH_TTL`). O Flyway aplica as migrations de `src/main/resources/db/migration` e o JPA usa `ddl-auto: validate`. `baseline-on-migrate` permite adotar o Flyway em bancos locais anteriormente criados pelo Hibernate: esses bancos são marcados na versão 1 e recebem as migrations posteriores. O CORS permite `http://localhost:5173` para `/v1/**`. O Vite do frontend encaminha `/v1` para `http://localhost:8080` no ambiente local.
 
 ## Autenticação e autorização
 
 1. `POST /v1/auth/register` cria um usuário. `POST /v1/users` também cadastra e permanece disponível.
-2. `POST /v1/auth/login` valida email e senha pelo Spring Security e devolve `accessToken`, `tokenType`, `expiresAt` e `user`.
+2. `POST /v1/auth/login` valida email e senha pelo Spring Security e devolve `accessToken`, `tokenType`, `expiresAt`, `user` e `refreshToken`.
 3. `GET /v1/me` devolve o usuário e o owner da conta, criando o owner para contas antigas quando necessário.
 4. O cliente envia `Authorization: Bearer <accessToken>` em cada chamada protegida. HTTP Basic não está habilitado.
 5. A API valida assinatura HS256, emissor e expiração. O `sub` do JWT é o UUID da conta; a conta e suas roles são consultadas no banco em cada requisição protegida. Uma conta desativada perde acesso imediatamente.
 
-O token não é guardado em cookie pela API. A configuração atual é stateless e desabilita CSRF; não existe endpoint `/v1/csrf`. Ainda não há refresh token, logout nem revogação individual de um JWT antes de sua expiração.
+O token não é guardado em cookie pela API. A configuração atual é stateless e desabilita CSRF; não existe endpoint `/v1/csrf`.
+
+**Refresh token e revogação.** `refreshToken` é um token opaco (prefixo `tlr_rt_`, 256 bits aleatórios), guardado como SHA-256 em `user_sessions` — o mesmo padrão de `anonymous_sessions`, mas uma conta pode ter várias sessões simultâneas (um refresh token por dispositivo/login). `POST /v1/auth/refresh` (público, recebe `{"refreshToken"}`) valida a sessão, marca a atual como revogada e emite um novo par de tokens (`rotated_from` liga a cadeia). Reapresentar um refresh token já rotacionado ou revogado é tratado como roubo: a API revoga **todas** as sessões da conta e responde `401`. `POST /v1/auth/logout` (público, mesmo corpo) revoga só a sessão daquele token. `GET /v1/me/sessions` lista as sessões ativas da conta autenticada (`id`, `createdAt`, `expiresAt`, `userAgent`) e `DELETE /v1/me/sessions/{id}` revoga uma delas — a API confere que a sessão pertence a quem está autenticado. Trocar `TAILORLY_JWT_SECRET` continua invalidando todos os access tokens já emitidos imediatamente; isso não depende do refresh token.
 
 Todo cadastro recebe `ROLE_USER`. As roles `ROLE_USER` e `ROLE_ADMIN` são criadas na inicialização. Emails incluídos em `TAILORLY_ADMIN_EMAILS` recebem `ROLE_ADMIN` no cadastro ou na inicialização seguinte. Remover um email dessa lista **não remove automaticamente** uma role administrativa já persistida.
 
@@ -238,7 +244,8 @@ O cadastro retorna `201` com `id`, `email`, `enabled` e `roles`, sem a senha. A 
     "email": "pessoa@example.com",
     "enabled": true,
     "roles": ["ROLE_USER"]
-  }
+  },
+  "refreshToken": "tlr_rt_<token-opaco>"
 }
 ```
 
@@ -256,8 +263,12 @@ O email de cadastro deve ser válido; a senha deve ter de 8 a 128 caracteres. Lo
 | Método e caminho | Acesso | Operação |
 | --- | --- | --- |
 | `POST /v1/auth/register` | Público | Cadastrar conta; corpo `email`, `password`; retorna `201` e `UserResponse`. |
-| `POST /v1/auth/login` | Público | Validar credenciais; retorna JWT e `UserResponse`. |
+| `POST /v1/auth/login` | Público | Validar credenciais; retorna JWT, refresh token e `UserResponse`. |
+| `POST /v1/auth/refresh` | Público (credencial no corpo) | Rotacionar um refresh token válido; `401` se inválido, expirado ou reusado (revoga toda a conta). |
+| `POST /v1/auth/logout` | Público (credencial no corpo) | Revogar a sessão do refresh token informado; `204`. |
 | `GET /v1/me` | Conta autenticada | Retornar `user` e o owner único da conta; provisiona owner ausente para contas antigas. |
+| `GET /v1/me/sessions` | Conta autenticada | Listar as sessões de refresh token ativas da própria conta. |
+| `DELETE /v1/me/sessions/{id}` | Conta autenticada (própria sessão) | Revogar uma sessão; `204`. |
 | `POST /v1/users` | Público | Caminho de cadastro também disponível. |
 | `GET /v1/users` | Admin | Listar contas. |
 | `GET /v1/users/by-email?email=...` | Admin | Consultar por email. |
@@ -361,6 +372,10 @@ As entidades `ExtractionRun` e `ExtractedPage` persistem as execuções reais do
 O fluxo alvo parte do **Currículo Base revisado como fonte dos fatos**: upload → extração/OCR → fatos e revisão → snapshot aprovado → geração. Upload, deduplicação, versões, extração seletiva, revisão auditada, aprovação/ativação de snapshot e geração estão implementados. O acesso anônimo (sessão no servidor, limites, TTL, limpeza e migração para conta) está implementado. Desativação (`PATCH /v1/owners/{id}/deactivate-snapshot`) e exclusão (`DELETE /v1/base-versions/{id}`) de uma versão do Currículo Base, com as gerações derivadas, e uma política de retenção agendada para contas desativadas (`AccountRetentionJob`, `tailorly.account.*`, ver [`OwnerDataEraser`](src/main/java/com/tailorly/api/shared/retention/OwnerDataEraser.java)) também estão implementadas; a retenção apaga só os dados pessoais do owner, mantendo a linha de `users`/`owners`.
 
 Veja a [decisão de produto no README principal](../../README.md#decisão-de-produto-currículo-base-como-ground-truth) para os invariantes completos.
+
+## Exportação opcional para um vault local
+
+Desligada por padrão (`tailorly.vault.enabled`/`TAILORLY_VAULT_ENABLED`). Quando ligada e `TAILORLY_VAULT_PATH` aponta para um diretório, `VaultExportConfiguration` registra `VaultExportService` (`com.tailorly.api.vault`), e toda geração bem-sucedida de uma **conta** (nunca de owner anônimo, ver `AnonymousQuotaService.isAnonymous`) agenda, só depois do commit da transação (`TransactionSynchronizationManager`, mesmo mecanismo de limpeza de `GeneratedCvFileStore` em rollback), uma cópia do PDF e do Markdown em `{TAILORLY_VAULT_PATH}/{TAILORLY_VAULT_SUBFOLDER}`. A cópia Markdown recebe um frontmatter YAML (`title`, `company`, `generated_at`, `ats_score`, `generation_id`); o objeto em `stored_objects`/Garage não é tocado. Falhas de E/S são logadas (`VaultExportService`) e absorvidas — nunca derrubam `POST /v1/cv/generate`. O serviço só lê valores simples (não a entidade `CvGeneration`), porque a exportação roda depois que a sessão do Hibernate já fechou.
 
 ## Comandos de desenvolvimento
 

@@ -17,10 +17,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Cadastro e login públicos. {@link #login} delega a validação de credenciais ao
- * {@link AuthenticationManager} (que usa o {@code AuthenticationProvider} configurado em
- * {@link com.tailorly.api.shared.config.SecurityConfiguration}) e, se válido, emite o JWT com
- * {@link JwtTokenService}.
+ * Cadastro, login, renovação e revogação de sessão. {@link #login} delega a validação de
+ * credenciais ao {@link AuthenticationManager} (que usa o {@code AuthenticationProvider}
+ * configurado em {@link com.tailorly.api.shared.config.SecurityConfiguration}) e, se válido,
+ * emite o par de tokens com {@link JwtTokenService} e {@link RefreshTokenService}.
+ *
+ * <p>{@link #refresh} e {@link #logout} são públicos ({@code permitAll} em
+ * {@code SecurityConfiguration}): a credencial é o próprio refresh token no corpo, não o
+ * cabeçalho {@code Authorization} (que pode já estar expirado nesse momento).</p>
  */
 @RestController
 @RequestMapping("/v1/auth")
@@ -29,6 +33,7 @@ public class AuthenticationController {
   private final UserService userService;
   private final AuthenticationManager authenticationManager;
   private final JwtTokenService jwtTokenService;
+  private final RefreshTokenService refreshTokenService;
 
   @PostMapping("/register")
   @ResponseStatus(HttpStatus.CREATED)
@@ -41,9 +46,26 @@ public class AuthenticationController {
     authenticationManager.authenticate(
         UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
     UserResponse user = userService.findByEmailForAuthentication(request.email());
-    return jwtTokenService.issue(user);
+    String refreshToken = refreshTokenService.issue(user.id()).rawToken();
+    return jwtTokenService.issue(user, refreshToken);
+  }
+
+  @PostMapping("/refresh")
+  public LoginResponse refresh(@Valid @RequestBody RefreshRequest request) {
+    RefreshTokenService.Rotated rotated = refreshTokenService.rotate(request.refreshToken());
+    UserResponse user = userService.findByIdForAuthentication(rotated.userId());
+    return jwtTokenService.issue(user, rotated.issued().rawToken());
+  }
+
+  @PostMapping("/logout")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void logout(@Valid @RequestBody RefreshRequest request) {
+    refreshTokenService.revoke(request.refreshToken());
   }
 
   public record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {
+  }
+
+  public record RefreshRequest(@NotBlank String refreshToken) {
   }
 }

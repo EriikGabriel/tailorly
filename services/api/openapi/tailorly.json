@@ -227,6 +227,59 @@
         ]
       }
     },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "authenticationLogout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "authenticationRefresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
     "/v1/auth/register": {
       "post": {
         "operationId": "authenticationRegister",
@@ -1735,6 +1788,53 @@
         ]
       }
     },
+    "/v1/me/sessions": {
+      "get": {
+        "operationId": "sessionList",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Session"
+        ]
+      }
+    },
+    "/v1/me/sessions/{id}": {
+      "delete": {
+        "operationId": "sessionRevoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "Session"
+        ]
+      }
+    },
     "/v1/owners": {
       "post": {
         "operationId": "ownerCreate",
@@ -1768,6 +1868,37 @@
     "/v1/owners/{id}": {
       "get": {
         "operationId": "ownerFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Owner"
+        ]
+      }
+    },
+    "/v1/owners/{id}/deactivate-snapshot": {
+      "patch": {
+        "operationId": "ownerDeactivateSnapshot",
         "parameters": [
           {
             "in": "path",
@@ -2210,37 +2341,6 @@
         },
         "tags": [
           "User"
-        ]
-      }
-    },
-    "/v1/owners/{id}/deactivate-snapshot": {
-      "patch": {
-        "operationId": "ownerDeactivateSnapshot",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/OwnerResponse"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "Owner"
         ]
       }
     }
@@ -3718,6 +3818,9 @@
             "type": "string",
             "format": "date-time"
           },
+          "refreshToken": {
+            "type": "string"
+          },
           "tokenType": {
             "type": "string"
           },
@@ -3728,6 +3831,7 @@
         "required": [
           "accessToken",
           "expiresAt",
+          "refreshToken",
           "tokenType",
           "user"
         ]
@@ -3825,6 +3929,18 @@
         },
         "required": [
           "content"
+        ]
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "refreshToken"
         ]
       },
       "Requirement": {
@@ -3925,6 +4041,26 @@
           "ownerId"
         ]
       },
+      "SessionResponse": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        }
+      },
       "StoredObjectResponse": {
         "type": "object",
         "properties": {
@@ -3978,6 +4114,9 @@
       "TemplateSource": {
         "type": "object",
         "properties": {
+          "content": {
+            "type": "string"
+          },
           "custom": {
             "type": "boolean"
           },
@@ -3991,9 +4130,6 @@
           "version": {
             "type": "integer",
             "format": "int32"
-          },
-          "content": {
-            "type": "string"
           }
         }
       },

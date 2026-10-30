@@ -134,7 +134,7 @@ test("RF10: voluntariado fica separado do histórico profissional", {
   tag: "@RF10",
 }, async ({ page }) => {
   await openReview(page);
-  await step(page, /Experiência/).click();
+  await step(page, "Experiência").click();
 
   const panel = page.locator("#review-active-panel");
   const professional = panel.getByRole("region", {

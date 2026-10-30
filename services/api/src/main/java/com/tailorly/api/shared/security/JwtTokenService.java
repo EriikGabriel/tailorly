@@ -17,9 +17,10 @@ import org.springframework.stereotype.Service;
  * Emite JWTs Bearer assinados com HS256 após um login válido.
  *
  * <p>O sujeito do token é o id do usuário; emissão e expiração usam {@code tailorly.security.jwt.issuer}
- * e {@code tailorly.security.jwt.ttl} (1 hora por padrão). Não há refresh token, logout nem
- * revogação individual: trocar a chave de assinatura ({@code TAILORLY_JWT_SECRET}) invalida
- * todos os tokens já emitidos. Cada chamada autenticada revalida conta e roles atuais (veja
+ * e {@code tailorly.security.jwt.ttl} (1 hora por padrão). Trocar a chave de assinatura
+ * ({@code TAILORLY_JWT_SECRET}) invalida todos os access tokens já emitidos; a revogação
+ * individual é feita pelo refresh token (ver {@link RefreshTokenService}), não pelo JWT em si.
+ * Cada chamada autenticada revalida conta e roles atuais (veja
  * {@link com.tailorly.api.shared.config.SecurityConfiguration}), então uma conta desativada
  * perde acesso imediatamente mesmo com um token ainda válido.</p>
  */
@@ -39,8 +40,11 @@ public class JwtTokenService {
     this.ttl = ttl;
   }
 
-  /** Gera o token de acesso e a resposta de login completa para o usuário autenticado. */
-  public LoginResponse issue(UserResponse user) {
+  /**
+   * Gera o token de acesso e a resposta de login completa para o usuário autenticado, incluindo
+   * o refresh token em texto puro já emitido por {@link RefreshTokenService}.
+   */
+  public LoginResponse issue(UserResponse user, String refreshToken) {
     Instant issuedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
     Instant expiresAt = issuedAt.plus(ttl);
     JwtClaimsSet claims = JwtClaimsSet.builder()
@@ -56,6 +60,7 @@ public class JwtTokenService {
         .tokenType("Bearer")
         .expiresAt(expiresAt)
         .user(user)
+        .refreshToken(refreshToken)
         .build();
   }
 }

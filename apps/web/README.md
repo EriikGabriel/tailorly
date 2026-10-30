@@ -440,7 +440,7 @@ persistente nem fonte de cotas.
 
 | Store | Estado | Responsabilidade |
 | --- | --- | --- |
-| `useAuthStore` | `accessToken`, `expiresAt` | JWT em `sessionStorage` para sobreviver ao reload da mesma aba; expiração e logout removem o token |
+| `useAuthStore` | `accessToken`, `expiresAt`, `refreshToken` | JWT e refresh token em `sessionStorage` para sobreviver ao reload da mesma aba; `apiFetch` tenta renovar o access token uma vez em qualquer `401`, e logout/expiração removem os dois |
 | `useBaseCvStore` | `file`, `selectionId`, `uploadedSelectionId`, `error` | Seleção local, ID do upload atual e guarda contra respostas atrasadas; não lista histórico remoto |
 | `useReviewDraftStore` | `sourceId`, `draft`, `activeStep`, `expandedRecords` | Rascunhos das cinco dimensões, etapa ativa, cartões expandidos — ligados a `sourceId` |
 | `useQuickReviewStore` | `open`, `contextKey`, `issues`, `preview`, `answers`, `submittedPreview` | Abertura, pendências, respostas e snapshot da prévia, vinculados a `contextKey` |
@@ -553,9 +553,10 @@ implementação com drafts por componente. O `try/catch` existe porque o navegad
 pode negar acesso ao storage; a memória é limpa de todo modo.
 
 É chamado pelo fluxo cliente de saída e deve ser reutilizado em troca de conta
-e expiração. O logout atual é local porque a API ainda não revoga um JWT
-individualmente; a função **não** representa exclusão de arquivos ou artefatos
-no servidor.
+e expiração. `useLogout` chama `POST /v1/auth/logout` com o refresh token
+guardado (melhor esforço, sem bloquear a navegação) antes de chamar
+`resetClientState()`, para revogar a sessão no servidor; a função **não**
+representa exclusão de arquivos ou artefatos no servidor.
 
 ### Estado que é deliberadamente local
 

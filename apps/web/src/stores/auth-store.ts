@@ -4,13 +4,15 @@ import type { LoginResponse } from "../lib/api/generated/model";
 interface AuthState {
   accessToken: string | null;
   expiresAt: string | null;
-  setSession: (
-    session: Pick<LoginResponse, "accessToken" | "expiresAt">,
-  ) => void;
+  refreshToken: string | null;
+  setSession: (session: StoredSession) => void;
   clearSession: () => void;
 }
 
-type StoredSession = Pick<LoginResponse, "accessToken" | "expiresAt">;
+type StoredSession = Pick<
+  LoginResponse,
+  "accessToken" | "expiresAt" | "refreshToken"
+>;
 
 const SESSION_KEY = "tailorly:auth-session";
 
@@ -20,6 +22,8 @@ function isValidSession(value: unknown): value is StoredSession {
   return (
     typeof session.accessToken === "string" &&
     session.accessToken.length > 0 &&
+    typeof session.refreshToken === "string" &&
+    session.refreshToken.length > 0 &&
     typeof session.expiresAt === "string" &&
     Date.parse(session.expiresAt) > Date.now()
   );
@@ -55,16 +59,18 @@ const initialSession = readStoredSession();
 export const useAuthStore = create<AuthState>()((set) => ({
   accessToken: initialSession?.accessToken ?? null,
   expiresAt: initialSession?.expiresAt ?? null,
+  refreshToken: initialSession?.refreshToken ?? null,
   setSession: (session) => {
     const activeSession = isValidSession(session) ? session : null;
     saveStoredSession(activeSession);
     set({
       accessToken: activeSession?.accessToken ?? null,
       expiresAt: activeSession?.expiresAt ?? null,
+      refreshToken: activeSession?.refreshToken ?? null,
     });
   },
   clearSession: () => {
     saveStoredSession(null);
-    set({ accessToken: null, expiresAt: null });
+    set({ accessToken: null, expiresAt: null, refreshToken: null });
   },
 }));

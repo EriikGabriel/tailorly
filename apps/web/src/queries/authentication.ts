@@ -6,6 +6,7 @@ import type {
 } from "@lib/api/generated/model";
 import {
   authenticationLogin,
+  authenticationLogout,
   authenticationRegister,
   currentAccountCurrent,
 } from "@lib/api/generated/tailorly";
@@ -72,10 +73,19 @@ export function useRegister() {
 export function useLogout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const refreshToken = useAuthStore((state) => state.refreshToken);
 
   return useCallback(() => {
+    // Revoga a sessão de refresh no servidor antes de limpar o estado local; a conexão pode
+    // já estar indo embora (navegação), então isso não bloqueia nem precisa de retorno.
+    if (refreshToken) {
+      authenticationLogout({ refreshToken }).catch(() => {
+        // Já estamos saindo; uma falha aqui não impede o logout local.
+      });
+    }
+
     resetClientState();
     queryClient.removeQueries();
     navigate({ to: "/" });
-  }, [queryClient, navigate]);
+  }, [queryClient, navigate, refreshToken]);
 }

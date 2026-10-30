@@ -40,7 +40,7 @@ class JwtSecurityTest {
     UUID userId = UUID.randomUUID();
     LoginResponse login = new JwtTokenService(
         configuration.jwtEncoder(key), "http://localhost:8080", Duration.ofHours(1))
-        .issue(new UserResponse(userId, "person@example.com", true, List.of("ROLE_USER")));
+        .issue(new UserResponse(userId, "person@example.com", true, List.of("ROLE_USER")), "tlr_rt_test");
 
     Jwt decoded = decoder.decode(login.accessToken());
     assertEquals(userId.toString(), decoded.getSubject());
