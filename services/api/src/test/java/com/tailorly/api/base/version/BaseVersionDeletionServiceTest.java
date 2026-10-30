@@ -100,7 +100,7 @@ class BaseVersionDeletionServiceTest {
         UUID.class, account.ownerId));
     assertFalse(storage.exists("owners/" + account.ownerId + "/generated/cv.pdf"));
     assertFalse(storage.exists("owners/" + account.ownerId + "/generated/cv.md"));
-    assertFalse(storage.exists("owners/" + account.ownerId + "/originals/cv.pdf"));
+    assertFalse(storage.exists("owners/" + account.ownerId + "/originals/cv-1.pdf"));
   }
 
   @Test
@@ -167,8 +167,10 @@ class BaseVersionDeletionServiceTest {
   }
 
   private Seed seedFullVersion(UUID ownerId, int number, String status) {
+    // A chave inclui `number` porque alguns testes chamam seedFullVersion mais de uma vez para o
+    // mesmo owner (versões "irmãs"), e cada uma precisa do seu próprio objeto original.
     UUID documentId = insertDocument(ownerId, "hash-" + UUID.randomUUID(),
-        "owners/" + ownerId + "/originals/cv.pdf");
+        "owners/" + ownerId + "/originals/cv-" + number + ".pdf");
     UUID versionId = insertVersion(ownerId, documentId, number, status);
     UUID runId = UUID.randomUUID();
     jdbc.update("insert into extraction_runs (id, base_version_id, pipeline_fingerprint, pipeline_versions, "
