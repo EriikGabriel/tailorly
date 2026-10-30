@@ -16,41 +16,41 @@ cinco dimensões, revisão rápida de pendências e preparação para a geraçã
 
 > **Regra de leitura:** este README separa sempre o **fluxo alvo** (descrito no
 > README do monorepo) da **implementação atual**. Uma funcionalidade marcada
-> como *Planejada* aqui não existe no código.
+> como _Planejada_ aqui não existe no código.
 
 ---
 
 ## 1. Stack
 
-| Aspecto | Implementação |
-| --- | --- |
-| Runtime | React 19, TypeScript 5.8, Vite 7 |
-| Estilo | Tailwind CSS 4 (config CSS-first em `src/styles.css`) |
-| Roteamento | TanStack Router 1.x, rotas por arquivo em `src/pages` |
-| Dados remotos | TanStack Query 5; `QueryClient` único no contexto do router |
-| Estado local | Zustand 5, leituras por seletor ou por desestruturação da store |
-| Primitivos de UI | Base UI (`@base-ui/react`) e Animate UI vendorizado |
-| Ícones | `@react-zero-ui/icon-sprite` (Lucide + Tabler) |
-| Movimento | `motion` (Motion for React) |
-| Editor Typst | CodeMirror 6 com `codemirror-lang-typst` (parser Lezer, autocomplete e linting) |
-| Formatação/lint | Biome 2.5 (sem ESLint/Prettier) |
-| Validação de esquema | `zod` 4 (dependência declarada; ainda sem uso no estado atual) |
+| Aspecto              | Implementação                                                                   |
+| -------------------- | ------------------------------------------------------------------------------- |
+| Runtime              | React 19, TypeScript 5.8, Vite 7                                                |
+| Estilo               | Tailwind CSS 4 (config CSS-first em `src/styles.css`)                           |
+| Roteamento           | TanStack Router 1.x, rotas por arquivo em `src/pages`                           |
+| Dados remotos        | TanStack Query 5; `QueryClient` único no contexto do router                     |
+| Estado local         | Zustand 5, leituras por seletor ou por desestruturação da store                 |
+| Primitivos de UI     | Base UI (`@base-ui/react`) e Animate UI vendorizado                             |
+| Ícones               | `@react-zero-ui/icon-sprite` (Lucide + Tabler)                                  |
+| Movimento            | `motion` (Motion for React)                                                     |
+| Editor Typst         | CodeMirror 6 com `codemirror-lang-typst` (parser Lezer, autocomplete e linting) |
+| Formatação/lint      | Biome 2.5 (sem ESLint/Prettier)                                                 |
+| Validação de esquema | `zod` 4 (dependência declarada; ainda sem uso no estado atual)                  |
 
 ### Comandos
 
-| Comando | O que faz |
-| --- | --- |
-| `pnpm dev` | Sobe o Vite em `http://localhost:5173` com proxy de `/v1` para `http://localhost:8080`. |
-| `pnpm build` | Executa `prebuild` (`zero-icons`) e depois `vite build && tsc -b`. |
-| `pnpm lint` | `biome lint` |
-| `pnpm check` | `biome check` (formatação + lint) |
-| `pnpm test:stores` | Suite de estado do cliente. Ver §11. |
-| `pnpm test:e2e:install` | Instala Chromium para Playwright. |
-| `pnpm test:e2e` | Testes de navegador para RF09 e RF16. Ver §11. |
-| `pnpm test:e2e:ui` | Modo interativo do Playwright para TDD. |
-| `pnpm test` | Executa stores e Playwright. |
-| `pnpm api:generate` | Gera os tipos e as funções `fetch` com Orval a partir do snapshot versionado. |
-| `pnpm api:sync` | Atualiza o snapshot pela API local e então executa a geração. |
+| Comando                 | O que faz                                                                               |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| `pnpm dev`              | Sobe o Vite em `http://localhost:5173` com proxy de `/v1` para `http://localhost:8080`. |
+| `pnpm build`            | Executa `prebuild` (`zero-icons`) e depois `vite build && tsc -b`.                      |
+| `pnpm lint`             | `biome lint`                                                                            |
+| `pnpm check`            | `biome check` (formatação + lint)                                                       |
+| `pnpm test:stores`      | Suite de estado do cliente. Ver §11.                                                    |
+| `pnpm test:e2e:install` | Instala Chromium para Playwright.                                                       |
+| `pnpm test:e2e`         | Testes de navegador para RF09 e RF16. Ver §11.                                          |
+| `pnpm test:e2e:ui`      | Modo interativo do Playwright para TDD.                                                 |
+| `pnpm test`             | Executa stores e Playwright.                                                            |
+| `pnpm api:generate`     | Gera os tipos e as funções `fetch` com Orval a partir do snapshot versionado.           |
+| `pnpm api:sync`         | Atualiza o snapshot pela API local e então executa a geração.                           |
 
 ---
 
@@ -95,15 +95,15 @@ tests/e2e/                      # jornadas de interface com Playwright
 Cada tipo de código mora num lugar só, para que dê para achar e mudar sem ler o
 resto:
 
-| Camada | Contém | Não contém |
-| --- | --- | --- |
-| Componente (`.tsx`) | JSX, estilos e a ligação entre hooks e props | regras de negócio, mapeamento de dados da API, constantes de rótulos |
-| `hooks/` ou `-hooks/` | estado, efeitos e orquestração de mutations | JSX |
-| `utils/` ou `-utils/` | funções puras (testáveis sem React) | estado, `useX`, acesso a stores |
-| `types/` ou `-types/` | tipos e interfaces de domínio | lógica |
-| `constants/` ou `-constants/` | rótulos, ícones, opções e limites estáticos | lógica de negócio |
-| `queries/` | chamadas à API e invalidação de cache | regras de apresentação |
-| `stores/` | estado de interface (nunca fonte de verdade de fatos) | chamadas à API fora de ações explícitas |
+| Camada                        | Contém                                                | Não contém                                                           |
+| ----------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------- |
+| Componente (`.tsx`)           | JSX, estilos e a ligação entre hooks e props          | regras de negócio, mapeamento de dados da API, constantes de rótulos |
+| `hooks/` ou `-hooks/`         | estado, efeitos e orquestração de mutations           | JSX                                                                  |
+| `utils/` ou `-utils/`         | funções puras (testáveis sem React)                   | estado, `useX`, acesso a stores                                      |
+| `types/` ou `-types/`         | tipos e interfaces de domínio                         | lógica                                                               |
+| `constants/` ou `-constants/` | rótulos, ícones, opções e limites estáticos           | lógica de negócio                                                    |
+| `queries/`                    | chamadas à API e invalidação de cache                 | regras de apresentação                                               |
+| `stores/`                     | estado de interface (nunca fonte de verdade de fatos) | chamadas à API fora de ações explícitas                              |
 
 Regras práticas:
 
@@ -114,7 +114,7 @@ Regras práticas:
 2. **Compartilhado sobe, específico desce.** Algo usado por uma rota só fica na
    pasta dela; ao ser usado por duas, vai para `components/`, `hooks/`, `utils/`
    ou `types/`.
-3. **Comentários em português**, explicando o *porquê* (regra de domínio,
+3. **Comentários em português**, explicando o _porquê_ (regra de domínio,
    armadilha, decisão), não o que a linha faz.
 4. **Imports relativos em quem os testes unitários alcançam.** O runner
    (`scripts/test-stores.mjs`) compila com `tsc` sem os aliases; stores, `types/`
@@ -147,20 +147,20 @@ Definidos em **três lugares que precisam concordar**: `vite.config.ts` (alias d
 runtime) e `tsconfig.json` + `tsconfig.app.json` (alias de tipo). Ao adicionar um
 alias, atualize os três.
 
-| Alias | Destino |
-| --- | --- |
-| `@components/*` | `src/components/*` |
-| `@ui/*` | `src/components/ui/*` |
-| `@animate/*` | `src/components/ui/animate/*` |
-| `@assets/*` | `src/assets/*` |
-| `@stores/*` | `src/stores/*` |
-| `@pages/*` | `src/pages/*` |
-| `@lib/*` | `src/lib/*` |
-| `@hooks/*` | `src/hooks/*` |
-| `@queries/*` | `src/queries/*` |
-| `@app/*` | `src/pages/_app/*` |
-| `@@types/*` | `src/types/*` |
-| `@/*` | `src/*` |
+| Alias           | Destino                       |
+| --------------- | ----------------------------- |
+| `@components/*` | `src/components/*`            |
+| `@ui/*`         | `src/components/ui/*`         |
+| `@animate/*`    | `src/components/ui/animate/*` |
+| `@assets/*`     | `src/assets/*`                |
+| `@stores/*`     | `src/stores/*`                |
+| `@pages/*`      | `src/pages/*`                 |
+| `@lib/*`        | `src/lib/*`                   |
+| `@hooks/*`      | `src/hooks/*`                 |
+| `@queries/*`    | `src/queries/*`               |
+| `@app/*`        | `src/pages/_app/*`            |
+| `@@types/*`     | `src/types/*`                 |
+| `@/*`           | `src/*`                       |
 
 > `@ui` e `@animate` são o mesmo prefixo em l'import: use `@animate/base/tabs`
 > para componentes Animate e `@ui/badge` para componentes soltos.
@@ -170,12 +170,12 @@ alias, atualize os três.
 `src/routeTree.gen.ts` é **gerado**. Nunca edite. O prefixo de arquivo `_app`
 não aparece na URL, e o `_home` também não.
 
-| URL | Arquivo | Estado |
-| --- | --- | --- |
-| `/` | `src/pages/_app/_home/index.tsx` | Prévia local; upload do PDF para contas |
-| `/base` | `src/pages/_app/base/index.tsx` | Upload, andamento, texto bruto por página e revisão persistida |
-| `/cvs` | `src/pages/_app/cvs/index.tsx` | Placeholder ("Meus Currículos") |
-| `/generator` | `src/pages/_app/generator/index.tsx` | Placeholder ("Gerador") |
+| URL          | Arquivo                              | Estado                                                         |
+| ------------ | ------------------------------------ | -------------------------------------------------------------- |
+| `/`          | `src/pages/_app/_home/index.tsx`     | Prévia local; upload do PDF para contas                        |
+| `/base`      | `src/pages/_app/base/index.tsx`      | Upload, andamento, texto bruto por página e revisão persistida |
+| `/cvs`       | `src/pages/_app/cvs/index.tsx`       | Placeholder ("Meus Currículos")                                |
+| `/generator` | `src/pages/_app/generator/index.tsx` | Placeholder ("Gerador")                                        |
 
 ---
 
@@ -189,11 +189,11 @@ Tailwind) e os estilos base.
 
 **Paleta "Warm Editorial Executive"** — três famílias com escala de 50 a 950:
 
-| Família | Papel | Âncora |
-| --- | --- | --- |
-| `primary` | Rich Espresso | `--primary-900: var(--material-primary)`, `--primary-950: var(--primary-container)` |
-| `secondary` | Warm Walnut | `--secondary-800: var(--material-secondary)` |
-| `tertiary` | Golden Amber | `--tertiary-600: var(--material-tertiary)` |
+| Família     | Papel         | Âncora                                                                              |
+| ----------- | ------------- | ----------------------------------------------------------------------------------- |
+| `primary`   | Rich Espresso | `--primary-900: var(--material-primary)`, `--primary-950: var(--primary-container)` |
+| `secondary` | Warm Walnut   | `--secondary-800: var(--material-secondary)`                                        |
+| `tertiary`  | Golden Amber  | `--tertiary-600: var(--material-tertiary)`                                          |
 
 Sobre elas vêm os papéis Material (`surface`, `surface-container-lowest` até
 `-highest`, `on-surface*`, `outline*`, `*-container`, `*-fixed`, `error*`, e
@@ -210,16 +210,16 @@ Sobre elas vêm os papéis Material (`surface`, `surface-container-lowest` até
 
 **Tipografia.** Inter Variable, exposta como scale semântica em `@theme inline`:
 
-| Token | Tamanho / linha |
-| --- | --- |
-| `display-lg` | 3.5rem / 4rem, 700, `-0.025em` |
-| `headline-lg` | 2rem / 2.5rem, 600 |
-| `headline-lg-mobile` | 1.625rem / 2.125rem, 600 |
-| `headline-md` | 1.5rem / 2rem, 600 |
-| `headline-sm` | 1.25rem / 1.75rem, 600 |
-| `title-md` | 1rem / 1.5rem, 600 |
-| `body-lg` / `body-md` / `body-sm` | 1.125 / 0.9375 / 0.8125rem |
-| `label-md` / `label-sm` | 0.875 / 0.75rem, com tracking |
+| Token                             | Tamanho / linha                |
+| --------------------------------- | ------------------------------ |
+| `display-lg`                      | 3.5rem / 4rem, 700, `-0.025em` |
+| `headline-lg`                     | 2rem / 2.5rem, 600             |
+| `headline-lg-mobile`              | 1.625rem / 2.125rem, 600       |
+| `headline-md`                     | 1.5rem / 2rem, 600             |
+| `headline-sm`                     | 1.25rem / 1.75rem, 600         |
+| `title-md`                        | 1rem / 1.5rem, 600             |
+| `body-lg` / `body-md` / `body-sm` | 1.125 / 0.9375 / 0.8125rem     |
+| `label-md` / `label-sm`           | 0.875 / 0.75rem, com tracking  |
 
 **Raios e espaçamento.** `--radius-sm` a `--radius-2xl` derivam de `--radius`
 (aritmética `calc`), mais `--radius-full`. Espaçamento inclui `--spacing-gutter`
@@ -262,16 +262,16 @@ components/     →  header, page-placeholder, badge, noise-texture
 
 ### `ui/animate/primitives/` — implementação
 
-| Componente | Base |
-| --- | --- |
-| `animate/slot` | Slot `asChild` sobre `motion` |
-| `animate/tabs` | Tabs com highlight animado |
-| `base/*` | `alert-dialog`, `checkbox`, `dialog`, `menu`, `progress`, `switch`, `tabs`, `toggle`, `toggle-group`, `tooltip` — primitivos Base UI com animação |
-| `buttons/button` | `motion.button` com `hoverScale` (1.025) e `tapScale` (0.98), neutros sob movimento reduzido |
-| `buttons/ripple` | Botão com ripple |
-| `effects/auto-height` | Anima altura via `useAutoHeight` |
-| `effects/highlight` | Highlight deslizante (`mode="parent"`, `controlledItems`) |
-| `texts/counting-number` | Número animado |
+| Componente              | Base                                                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `animate/slot`          | Slot `asChild` sobre `motion`                                                                                                                     |
+| `animate/tabs`          | Tabs com highlight animado                                                                                                                        |
+| `base/*`                | `alert-dialog`, `checkbox`, `dialog`, `menu`, `progress`, `switch`, `tabs`, `toggle`, `toggle-group`, `tooltip` — primitivos Base UI com animação |
+| `buttons/button`        | `motion.button` com `hoverScale` (1.025) e `tapScale` (0.98), neutros sob movimento reduzido                                                      |
+| `buttons/ripple`        | Botão com ripple                                                                                                                                  |
+| `effects/auto-height`   | Anima altura via `useAutoHeight`                                                                                                                  |
+| `effects/highlight`     | Highlight deslizante (`mode="parent"`, `controlledItems`)                                                                                         |
+| `texts/counting-number` | Número animado                                                                                                                                    |
 
 ### `ui/animate/base/` e `ui/animate/buttons/` — camada de uso
 
@@ -309,13 +309,13 @@ componentes adicionados por ele devem trocar os imports gerados para
 Definidas em `src/types/review-model.ts` como `reviewSteps`, e renderizadas na
 ordem pelo seletor de etapas:
 
-| # | `id` | Título na UI | Coleção (`DraftCollection`) |
-| --- | --- | --- | --- |
-| 1 | `identity` | Identidade & Contato | campos soltos (`DraftFields`) |
-| 2 | `experience` | Experiência & Voluntariado | `experience`, `volunteering` |
-| 3 | `projects` | Projetos & Métricas | `projects` |
-| 4 | `education` | Formação & Certificados | `degrees`, `certifications` |
-| 5 | `skills` | Competências & Idiomas | `languages`, `technologies` |
+| #   | `id`         | Título na UI               | Coleção (`DraftCollection`)   |
+| --- | ------------ | -------------------------- | ----------------------------- |
+| 1   | `identity`   | Identidade & Contato       | campos soltos (`DraftFields`) |
+| 2   | `experience` | Experiência & Voluntariado | `experience`, `volunteering`  |
+| 3   | `projects`   | Projetos & Métricas        | `projects`                    |
+| 4   | `education`  | Formação & Certificados    | `degrees`, `certifications`   |
+| 5   | `skills`     | Competências & Idiomas     | `languages`, `technologies`   |
 
 Cada etapa renderiza dentro de `ReviewStepShell`, que exibe um número, título,
 descrição e um selo ("Aguardando revisão") e uma
@@ -329,17 +329,17 @@ Definidos como `const fields: ReviewField[]` dentro de cada arquivo em `-steps/`
 maxLength?, options?, period? }`. O `type` escolhe o controle (em
 `src/components/fields/`), e o valor guardado continua sendo o texto do fato:
 
-| `type` | Controle | Observação |
-| --- | --- | --- |
-| `text` (padrão) | campo com ícone | |
-| `email` | campo de e-mail | sinaliza formato inválido |
-| `tel` | máscara de telefone brasileiro | números internacionais ficam como estão |
-| `url` | campo de link | ícone da marca (GitHub, LinkedIn), botão "abrir" e domínio/caminho formatados |
-| `month` | calendário de mês e ano (Popover do Animate UI) | aceita `YYYY-MM` ou só `YYYY`; limpar sem abrir |
-| `textarea` | área que cresce com o texto | contador quando há `maxLength` |
-| `select` | lista de opções (Base UI) | um valor extraído fora da lista continua selecionável |
-| `proficiency` | nível em 5 degraus (Toggle Group do Animate UI) | reconhece "avançado", "Advanced" etc.; outro texto é mostrado e pode ser trocado |
-| `period` | início + término + interruptor "Atualmente" | mantém o fato de situação (`Atual`/`Encerrado`, `Em andamento`/`Concluído`) em sincronia e avisa se o término for anterior ao início |
+| `type`          | Controle                                        | Observação                                                                                                                           |
+| --------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `text` (padrão) | campo com ícone                                 |                                                                                                                                      |
+| `email`         | campo de e-mail                                 | sinaliza formato inválido                                                                                                            |
+| `tel`           | máscara de telefone brasileiro                  | números internacionais ficam como estão                                                                                              |
+| `url`           | campo de link                                   | ícone da marca (GitHub, LinkedIn), botão "abrir" e domínio/caminho formatados                                                        |
+| `month`         | calendário de mês e ano (Popover do Animate UI) | aceita `YYYY-MM` ou só `YYYY`; limpar sem abrir                                                                                      |
+| `textarea`      | área que cresce com o texto                     | contador quando há `maxLength`                                                                                                       |
+| `select`        | lista de opções (Base UI)                       | um valor extraído fora da lista continua selecionável                                                                                |
+| `proficiency`   | nível em 5 degraus (Toggle Group do Animate UI) | reconhece "avançado", "Advanced" etc.; outro texto é mostrado e pode ser trocado                                                     |
+| `period`        | início + término + interruptor "Atualmente"     | mantém o fato de situação (`Atual`/`Encerrado`, `Em andamento`/`Concluído`) em sincronia e avisa se o término for anterior ao início |
 
 As dicas (`hint`) aparecem em um tooltip ao lado do rótulo e são lidas por
 leitores de tela. Os cartões das coleções (Experiência, Projetos, Formação,
@@ -351,16 +351,16 @@ opcional (`technology-chips.tsx`). A formatação (datas, período, duração,
 telefone, links, iniciais, nível) fica em `src/utils/review-format.ts`, com
 testes unitários.
 
-| Etapa | Chaves |
-| --- | --- |
-| Identidade | `name`, `headline`, `location`, `email`, `phone`, `summary`, `linkedin`, `github`, `website` |
-| Experiência | `company`, `role`, `employment`, `status`, `start`, `end`, `description` |
-| Voluntariado | `organization`, `role`, `status`, `start`, `end`, `description` |
-| Projetos | `title`, `context`, `statement`, `metric`, `link`, `source` |
-| Formação | `degree`, `institution`, `status`, `start`, `end` |
-| Certificações | `name`, `issuer`, `credential`, `issued`, `expires` |
-| Idiomas | `language`, `proficiency` |
-| Tecnologias | `name`, `context` |
+| Etapa         | Chaves                                                                                       |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| Identidade    | `name`, `headline`, `location`, `email`, `phone`, `summary`, `linkedin`, `github`, `website` |
+| Experiência   | `company`, `role`, `employment`, `status`, `start`, `end`, `description`                     |
+| Voluntariado  | `organization`, `role`, `status`, `start`, `end`, `description`                              |
+| Projetos      | `title`, `context`, `statement`, `metric`, `link`, `source`                                  |
+| Formação      | `degree`, `institution`, `status`, `start`, `end`                                            |
+| Certificações | `name`, `issuer`, `credential`, `issued`, `expires`                                          |
+| Idiomas       | `language`, `proficiency`                                                                    |
+| Tecnologias   | `name`, `context`                                                                            |
 
 Registros podem ser **adicionados, editados, recolhidos e removidos**. As
 alterações são editadas no workspace e salvas pela ação já existente no cartão
@@ -391,11 +391,11 @@ pendência separada de `skills`.
 
 `ReviewChoice` é uma união discriminada por `result`:
 
-| `result` | Forma | Efeito |
-| --- | --- | --- |
-| `"confirmed"` | `{ value, label, result }` | completa sem texto extra |
-| `"omitted"` | `{ value, label, result }` | completa; exclui o dado |
-| `"corrected"` | `{ value, label, result, correction }` | exige `CorrectionField` |
+| `result`      | Forma                                  | Efeito                   |
+| ------------- | -------------------------------------- | ------------------------ |
+| `"confirmed"` | `{ value, label, result }`             | completa sem texto extra |
+| `"omitted"`   | `{ value, label, result }`             | completa; exclui o dado  |
+| `"corrected"` | `{ value, label, result, correction }` | exige `CorrectionField`  |
 
 `CorrectionField` = `{ label, type, placeholder?, min?, max?, originalValue?,
 options? }`, com `type` em `text | email | month | number | select`.
@@ -416,13 +416,13 @@ respondida:
    `originalValue`** (é preciso mudar algo de fato).
 4. Validação por tipo:
 
-| Tipo | Regra |
-| --- | --- |
-| `month` | `^\d{4}-(0[1-9]\|1[0-2])$` e entre `min` (padrão `"0000-01"`) e `max` (padrão: mês corrente) |
-| `number` | finito, ≥ `min` (padrão 0), ≤ `max` se definido, e ≠ `originalValue` |
-| `email` | `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` |
-| `select` | deve ser um valor de `options` |
-| `text` | qualquer texto não vazio |
+| Tipo     | Regra                                                                                        |
+| -------- | -------------------------------------------------------------------------------------------- |
+| `month`  | `^\d{4}-(0[1-9]\|1[0-2])$` e entre `min` (padrão `"0000-01"`) e `max` (padrão: mês corrente) |
+| `number` | finito, ≥ `min` (padrão 0), ≤ `max` se definido, e ≠ `originalValue`                         |
+| `email`  | `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`                                                               |
+| `select` | deve ser um valor de `options`                                                               |
+| `text`   | qualquer texto não vazio                                                                     |
 
 `reviewCategories` é o mapa `ReviewCategory` → rótulo em português usado nos
 cabeçalhos da revisão rápida.
@@ -438,15 +438,15 @@ ou fechar a aba descarta tudo.
 Arquivos e rascunhos **não são** fatos aprovados, cache de OCR, histórico
 persistente nem fonte de cotas.
 
-| Store | Estado | Responsabilidade |
-| --- | --- | --- |
-| `useAuthStore` | `accessToken`, `expiresAt`, `refreshToken` | JWT e refresh token em `sessionStorage` para sobreviver ao reload da mesma aba; `apiFetch` tenta renovar o access token uma vez em qualquer `401`, e logout/expiração removem os dois |
-| `useBaseCvStore` | `file`, `selectionId`, `uploadedSelectionId`, `error` | Seleção local, ID do upload atual e guarda contra respostas atrasadas; não lista histórico remoto |
-| `useReviewDraftStore` | `sourceId`, `draft`, `activeStep`, `expandedRecords` | Rascunhos das cinco dimensões, etapa ativa, cartões expandidos — ligados a `sourceId` |
-| `useQuickReviewStore` | `open`, `contextKey`, `issues`, `preview`, `answers`, `submittedPreview` | Abertura, pendências, respostas e snapshot da prévia, vinculados a `contextKey` |
-| `useJobDraftStore` | `mode`, `jobUrl`, `jobText`, `revision`, `savedAt` | URL/texto da vaga, modo de entrada, revisão e horário da última ação de salvar (em memória) |
-| `useDocumentViewerStore` | `zoom` | Zoom compartilhado; `"fit"` ou número limitado a 50–200 |
-| `useWorkspaceStore` | `activeView` | Modo `editor` / `preview` do workspace |
+| Store                    | Estado                                                                   | Responsabilidade                                                                                                                                                                      |
+| ------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useAuthStore`           | `accessToken`, `expiresAt`, `refreshToken`                               | JWT e refresh token em `sessionStorage` para sobreviver ao reload da mesma aba; `apiFetch` tenta renovar o access token uma vez em qualquer `401`, e logout/expiração removem os dois |
+| `useBaseCvStore`         | `file`, `selectionId`, `uploadedSelectionId`, `error`                    | Seleção local, ID do upload atual e guarda contra respostas atrasadas; não lista histórico remoto                                                                                     |
+| `useReviewDraftStore`    | `sourceId`, `draft`, `activeStep`, `expandedRecords`                     | Rascunhos das cinco dimensões, etapa ativa, cartões expandidos — ligados a `sourceId`                                                                                                 |
+| `useQuickReviewStore`    | `open`, `contextKey`, `issues`, `preview`, `answers`, `submittedPreview` | Abertura, pendências, respostas e snapshot da prévia, vinculados a `contextKey`                                                                                                       |
+| `useJobDraftStore`       | `mode`, `jobUrl`, `jobText`, `revision`, `savedAt`                       | URL/texto da vaga, modo de entrada, revisão e horário da última ação de salvar (em memória)                                                                                           |
+| `useDocumentViewerStore` | `zoom`                                                                   | Zoom compartilhado; `"fit"` ou número limitado a 50–200                                                                                                                               |
+| `useWorkspaceStore`      | `activeView`                                                             | Modo `editor` / `preview` do workspace                                                                                                                                                |
 
 ### Seleção de arquivo
 
@@ -460,8 +460,8 @@ persistente nem fonte de cotas.
   `true`, preservando rascunhos. **Isto não é deduplicação por hash.**
 - **Arquivo diferente** gera um `selectionId` novo com `crypto.randomUUID()` e
   **limpa** rascunhos, respostas rápidas, cartões expandidos e zoom. O
-  comentário no código é explícito: *"A local selection ID is not a Ground Truth
-  version or a content hash."*
+  comentário no código é explícito: _"A local selection ID is not a Ground Truth
+  version or a content hash."_
 - `selectFile(null)` remove a prévia local: zera `file` e `selectionId` e reaplica as limpezas. Não exclui o PDF no servidor.
 
 DOC/DOCX permanecem parte do fluxo alvo, mas ainda não são aceitos porque a API não possui parser para esses formatos.
@@ -485,19 +485,19 @@ remotos.
 Regras aplicadas na camada `queries/` e em `lib/`; o servidor continua sendo a
 garantia, o cliente só evita pedir o que ele recusaria ou já respondeu:
 
-| Medida | Onde | Efeito |
-| --- | --- | --- |
-| Padrões do `QueryClient` | `lib/query-client.ts` | `staleTime` de 30 s, sem refetch ao focar a janela; consultas com polling ou cache infinito declaram o próprio comportamento |
-| Política de retry | `lib/api/retry-policy.ts` | só falha de rede e 5xx, uma vez; 4xx (401, 403, 404, 422, 429) e erros de pré-condição nunca são repetidos |
-| Credencial verificada antes de chamar | `queries/*` | consultas usam `skipToken`/`enabled`; mutations lançam `SESSION_EXPIRED_MESSAGE` sem token em vez de enviar um 401 |
-| Sessão anônima vencida | `stores/anonymous-session-store.ts` (`isAnonymousSessionActive`, `activeAnonymousToken`) | não é enviada, não é migrada nem encerrada no servidor (que já apagou os dados); `ensureCredential` emite outra |
-| Entrada da vaga validada | `utils/job-posting-input.ts`, usada em `useAnalyzeJobPosting` | link inválido, texto vazio ou acima de 50 000 caracteres falham antes de qualquer chamada, inclusive a que emitiria a sessão anônima |
-| Aprovar o Ground Truth | `useApproveGroundTruth` | exige token e versão do Currículo Base |
-| Cliques repetidos | `use-job-target.ts`, `use-quick-review.ts` | gerar ou concluir a revisão ignora novos pedidos enquanto há análise, envio ou geração em andamento |
-| Polling da extração | `utils/extraction-polling.ts` | só a execução é consultada a cada 1,5 s; fatos e pendências são buscados **uma vez** na transição para `COMPLETED` (eles só são gravados ao concluir), com reconsulta curta se o resultado vier vazio logo após concluir |
-| Template do gerador | `use-typst-template-draft.ts` | nome, versão e código vêm da própria geração (sem `GET /cv-templates/{id}`); o template padrão só é buscado com uma geração aberta |
-| Prévia do Typst | `hooks/use-cv-preview.ts` | o mesmo código já compilado para a geração não é compilado de novo |
-| Reenvio do mesmo arquivo | `useSelectBaseDocumentFile` | o mesmo objeto `File` já enviado ou em envio não é reenviado |
+| Medida                                | Onde                                                                                     | Efeito                                                                                                                                                                                                                   |
+| ------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Padrões do `QueryClient`              | `lib/query-client.ts`                                                                    | `staleTime` de 30 s, sem refetch ao focar a janela; consultas com polling ou cache infinito declaram o próprio comportamento                                                                                             |
+| Política de retry                     | `lib/api/retry-policy.ts`                                                                | só falha de rede e 5xx, uma vez; 4xx (401, 403, 404, 422, 429) e erros de pré-condição nunca são repetidos                                                                                                               |
+| Credencial verificada antes de chamar | `queries/*`                                                                              | consultas usam `skipToken`/`enabled`; mutations lançam `SESSION_EXPIRED_MESSAGE` sem token em vez de enviar um 401                                                                                                       |
+| Sessão anônima vencida                | `stores/anonymous-session-store.ts` (`isAnonymousSessionActive`, `activeAnonymousToken`) | não é enviada, não é migrada nem encerrada no servidor (que já apagou os dados); `ensureCredential` emite outra                                                                                                          |
+| Entrada da vaga validada              | `utils/job-posting-input.ts`, usada em `useAnalyzeJobPosting`                            | link inválido, texto vazio ou acima de 50 000 caracteres falham antes de qualquer chamada, inclusive a que emitiria a sessão anônima                                                                                     |
+| Aprovar o Ground Truth                | `useApproveGroundTruth`                                                                  | exige token e versão do Currículo Base                                                                                                                                                                                   |
+| Cliques repetidos                     | `use-job-target.ts`, `use-quick-review.ts`                                               | gerar ou concluir a revisão ignora novos pedidos enquanto há análise, envio ou geração em andamento                                                                                                                      |
+| Polling da extração                   | `utils/extraction-polling.ts`                                                            | só a execução é consultada a cada 1,5 s; fatos e pendências são buscados **uma vez** na transição para `COMPLETED` (eles só são gravados ao concluir), com reconsulta curta se o resultado vier vazio logo após concluir |
+| Template do gerador                   | `use-typst-template-draft.ts`                                                            | nome, versão e código vêm da própria geração (sem `GET /cv-templates/{id}`); o template padrão só é buscado com uma geração aberta                                                                                       |
+| Prévia do Typst                       | `hooks/use-cv-preview.ts`                                                                | o mesmo código já compilado para a geração não é compilado de novo                                                                                                                                                       |
+| Reenvio do mesmo arquivo              | `useSelectBaseDocumentFile`                                                              | o mesmo objeto `File` já enviado ou em envio não é reenviado                                                                                                                                                             |
 
 O reenvio de um **arquivo idêntico escolhido de novo** continua indo ao servidor
 de propósito: ele reaproveita OCR e fatos, mas reavalia os fatos sensíveis ao
@@ -605,11 +605,11 @@ mantém a continuação desabilitada; não exibe fixtures como fatos da pessoa.
 
 ## 8. Home (`/`)
 
-| Seção | Conteúdo |
-| --- | --- |
-| `HeroSection` | Badge "Arquitetura Ground Truth", título, e a promessa "Sem inventar fatos". |
-| `StepsSection` | Metodologia em 4 etapas: Ground Truth → due diligence da vaga → análise/ATS → síntese sob medida. |
-| `RecentCVSection` | "Últimos Currículos Gerados" com três entradas **de demonstração** codificadas em `const recentCVs` e o link "Ver todos (18)". |
+| Seção                | Conteúdo                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `HeroSection`        | Badge "Arquitetura Ground Truth", título, e a promessa "Sem inventar fatos".                                                          |
+| `StepsSection`       | Metodologia em 4 etapas: Ground Truth → due diligence da vaga → análise/ATS → síntese sob medida.                                     |
+| `RecentCVSection`    | "Últimos Currículos Gerados" com três entradas **de demonstração** codificadas em `const recentCVs` e o link "Ver todos (18)".        |
 | `SecondBrainSection` | Integração Notion/Obsidian apresentada como **recurso extra e opcional**; o botão secundário é "Continuar apenas com Currículo Base". |
 
 `BaseCvPicker` aceita **um único** PDF por input ou arraste, com contador de
@@ -619,9 +619,9 @@ o arquivo atual; o selo acompanha o resultado do upload.
 > **Desvio de invariante conhecido.** `RecentCVSection` apresenta três
 > currículos fictícios — com "96% ATS Match", empresa e data — como se fossem
 > documentos da pessoa, e um contador "(18)". Isso contraria a regra do README
-> do monorepo e do `AGENTS.md`: *a interface de "Últimos Currículos Gerados" deve
+> do monorepo e do `AGENTS.md`: _a interface de "Últimos Currículos Gerados" deve
 > mostrar estado vazio ou de prévia para visitantes sem histórico, nunca
-> exemplos como se fossem documentos reais*. A seção precisa virar estado vazio
+> exemplos como se fossem documentos reais_. A seção precisa virar estado vazio
 > ou de prévia antes de qualquer lançamento. O mesmo vale para os atalhos
 > "Testar com 1 clique" (`quickTests`), que preenchem a vaga com texto de
 > exemplo.
@@ -657,8 +657,8 @@ Fica **fora** do seletor de etapas e permanece montado ao alternar a etapa.
   existem coordenadas de evidência.
 - Link "Abrir PDF em outra aba" com `rel="noopener noreferrer"`.
 - Sem arquivo: ação de seleção e zoom desabilitado.
-- Rodapé "Cofre Factual Fechado": *"Nenhum fato, empresa, número ou métrica
-  além deste documento será inventado ou inferido pela inteligência."*
+- Rodapé "Cofre Factual Fechado": _"Nenhum fato, empresa, número ou métrica
+  além deste documento será inventado ou inferido pela inteligência."_
 
 ### Seletor de etapas
 
@@ -698,12 +698,12 @@ Ignorar `src/routeTree.gen.ts` é obrigatório: o arquivo gerado usa
 
 ### Hooks
 
-| Hook | Assinatura / propósito |
-| --- | --- |
-| `useAutoHeight<T>(deps, options)` | `{ ref, height }`. Mede com `ResizeObserver`, opcionalmente incluindo padding/borda do pai quando `box-sizing: border-box`, e compensa `devicePixelRatio` para evitar altura fracionária. `includeParentBox` padrão `true`. |
-| `useControlledState<T, Rest>(props)` | `[T, setter]` — estado controlado ou não, chamando `onChange` a partir do setter interno. |
-| `useDataState(key, ref, onChange)` | Lê `data-{key}` do elemento como `useSyncExternalStore` via `MutationObserver`; normaliza `""`/`"true"`/`"false"` para `boolean`. |
-| `useIsInView<T>(ref, { inView, inViewOnce, inViewMargin })` | `{ ref, isInView }` sobre `useInView` do Motion. |
+| Hook                                                        | Assinatura / propósito                                                                                                                                                                                                      |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useAutoHeight<T>(deps, options)`                           | `{ ref, height }`. Mede com `ResizeObserver`, opcionalmente incluindo padding/borda do pai quando `box-sizing: border-box`, e compensa `devicePixelRatio` para evitar altura fracionária. `includeParentBox` padrão `true`. |
+| `useControlledState<T, Rest>(props)`                        | `[T, setter]` — estado controlado ou não, chamando `onChange` a partir do setter interno.                                                                                                                                   |
+| `useDataState(key, ref, onChange)`                          | Lê `data-{key}` do elemento como `useSyncExternalStore` via `MutationObserver`; normaliza `""`/`"true"`/`"false"` para `boolean`.                                                                                           |
+| `useIsInView<T>(ref, { inView, inViewOnce, inViewMargin })` | `{ ref, isInView }` sobre `useInView` do Motion.                                                                                                                                                                            |
 
 `lib/get-strict-context.tsx` expõe um par `[Provider, useContext]` que **lança**
 se o contexto for `undefined` — em vez de retornar `undefined` silencioso.
@@ -735,19 +735,19 @@ transpila via o TypeScript do próprio projeto. A suíte de navegador usa
 
 `tests/unit/client-state.test.ts` tem **11 testes**, com `beforeEach(resetClientState)`:
 
-| # | Teste | O que fixa |
-| --- | --- | --- |
-| 1 | Reset de sessão remove a autenticação | Token e expiração voltam a `null` |
-| 2 | Login sobrevive ao reload enquanto válido | Restaura o JWT salvo; descarta e remove um token expirado |
-| 3 | Seleção compartilhada preserva rascunhos, etapa e zoom | Consumidores diferentes leem o mesmo estado; reselecionar a **mesma** referência não limpa |
-| 4 | ID do upload acompanha a seleção local | Resposta antiga não substitui o documento atual; logout limpa o estado de interface |
-| 5 | Trocar a fonte reseta dados dependentes e rejeita atualizações obsoletas | Drafts, expandidos, etapa, respostas e zoom voltam ao padrão; `setIdentity` com id antigo é **ignorado**; vaga e preferências **preservadas** |
-| 6 | Seleções inválidas e vazias preservam arquivo e rascunho | Arquivo vazio, DOCX e PDF acima de 7 MiB retornam `false`, não apagam o arquivo e gravam `error` |
-| 7 | Remover arquivo limpa rascunhos, revisão rápida e visualizador | `selectionId` e `file` viram `null`; `open` fecha |
-| 8 | Mudança de vaga invalida revisão rápida sem apagar o draft do Currículo Base | `revision` incrementa, respostas zeram, identidade preservada |
-| 9 | Revisão rápida mantém respostas ao remontar e rejeita issues antigas/desconhecidas | Reconfigurar com a **mesma** chave preserva; trocar de chave zera; `setAnswer` com chave ou id inválido é ignorado |
-| 10 | Reset de sessão limpa todos os contextos e restaura padrões | Workspace volta a `editor` |
-| 11 | Visualizador impõe zoom suportado e ignora valores numéricos inválidos | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"` |
+| #   | Teste                                                                              | O que fixa                                                                                                                                    |
+| --- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Reset de sessão remove a autenticação                                              | Token e expiração voltam a `null`                                                                                                             |
+| 2   | Login sobrevive ao reload enquanto válido                                          | Restaura o JWT salvo; descarta e remove um token expirado                                                                                     |
+| 3   | Seleção compartilhada preserva rascunhos, etapa e zoom                             | Consumidores diferentes leem o mesmo estado; reselecionar a **mesma** referência não limpa                                                    |
+| 4   | ID do upload acompanha a seleção local                                             | Resposta antiga não substitui o documento atual; logout limpa o estado de interface                                                           |
+| 5   | Trocar a fonte reseta dados dependentes e rejeita atualizações obsoletas           | Drafts, expandidos, etapa, respostas e zoom voltam ao padrão; `setIdentity` com id antigo é **ignorado**; vaga e preferências **preservadas** |
+| 6   | Seleções inválidas e vazias preservam arquivo e rascunho                           | Arquivo vazio, DOCX e PDF acima de 7 MiB retornam `false`, não apagam o arquivo e gravam `error`                                              |
+| 7   | Remover arquivo limpa rascunhos, revisão rápida e visualizador                     | `selectionId` e `file` viram `null`; `open` fecha                                                                                             |
+| 8   | Mudança de vaga invalida revisão rápida sem apagar o draft do Currículo Base       | `revision` incrementa, respostas zeram, identidade preservada                                                                                 |
+| 9   | Revisão rápida mantém respostas ao remontar e rejeita issues antigas/desconhecidas | Reconfigurar com a **mesma** chave preserva; trocar de chave zera; `setAnswer` com chave ou id inválido é ignorado                            |
+| 10  | Reset de sessão limpa todos os contextos e restaura padrões                        | Workspace volta a `editor`                                                                                                                    |
+| 11  | Visualizador impõe zoom suportado e ignora valores numéricos inválidos             | 500→200, 1→50, `NaN`→mantém, `"fit"`→`"fit"`                                                                                                  |
 
 **Toda mudança nas stores ou em `reset-client-state.ts` precisa vir acompanhada
 de um teste aqui.**

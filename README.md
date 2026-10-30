@@ -31,24 +31,24 @@ Os blocos de templates, geração de PDF e vault representam a arquitetura plane
 
 ## Estrutura do repositório
 
-| Caminho | Papel | Estado |
-| --- | --- | --- |
-| `apps/web` | Interface React para upload, revisão de fatos por candidata, conta e fluxo de geração planejado. | Upload, revisão, geração, prévia Typst ao vivo, nota de ATS, histórico e download usam a API |
-| `services/api` | API HTTP e orquestração do fluxo de geração. | Autenticação, upload, extração seletiva e revisão manual persistida; extração semântica e geração (`/v1/cv/*`) implementadas; o desenvolvimento local usa Typst via Docker |
-| `compose.yaml` | PostgreSQL 17 e Garage para desenvolvimento local. | Disponível |
-| `turbo.json` | Orquestra tarefas do monorepo. | Disponível |
-| `pnpm-workspace.yaml` | Define os workspaces `apps/*` e `services/*`. | Disponível |
+| Caminho               | Papel                                                                                            | Estado                                                                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web`            | Interface React para upload, revisão de fatos por candidata, conta e fluxo de geração planejado. | Upload, revisão, geração, prévia Typst ao vivo, nota de ATS, histórico e download usam a API                                                                               |
+| `services/api`        | API HTTP e orquestração do fluxo de geração.                                                     | Autenticação, upload, extração seletiva e revisão manual persistida; extração semântica e geração (`/v1/cv/*`) implementadas; o desenvolvimento local usa Typst via Docker |
+| `compose.yaml`        | PostgreSQL 17 e Garage para desenvolvimento local.                                               | Disponível                                                                                                                                                                 |
+| `turbo.json`          | Orquestra tarefas do monorepo.                                                                   | Disponível                                                                                                                                                                 |
+| `pnpm-workspace.yaml` | Define os workspaces `apps/*` e `services/*`.                                                    | Disponível                                                                                                                                                                 |
 
 ### Frontend
 
-| Aspecto | Implementação |
-| --- | --- |
-| Runtime | React 19, TypeScript e Vite 7 |
-| Estilos e componentes | Tailwind CSS 4, Base UI e componentes locais |
-| Roteamento | TanStack Router, com geração a partir de `apps/web/src/pages` |
-| Dados remotos | TanStack Query; o `QueryClient` é compartilhado no contexto do router |
-| Estado local | Zustand, com oito stores em `apps/web/src/stores` e `resetClientState()` para os fluxos de saída e expiração de sessão |
-| Integração local | Proxy de `/v1` para `http://localhost:8080` |
+| Aspecto               | Implementação                                                                                                          |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Runtime               | React 19, TypeScript e Vite 7                                                                                          |
+| Estilos e componentes | Tailwind CSS 4, Base UI e componentes locais                                                                           |
+| Roteamento            | TanStack Router, com geração a partir de `apps/web/src/pages`                                                          |
+| Dados remotos         | TanStack Query; o `QueryClient` é compartilhado no contexto do router                                                  |
+| Estado local          | Zustand, com oito stores em `apps/web/src/stores` e `resetClientState()` para os fluxos de saída e expiração de sessão |
+| Integração local      | Proxy de `/v1` para `http://localhost:8080`                                                                            |
 
 O botão de conta no cabeçalho oferece cadastro, login e logout. O frontend
 guarda o JWT e o refresh token em `sessionStorage` para manter o login ao
@@ -68,14 +68,14 @@ Os ícones da interface usam `@react-zero-ui/icon-sprite` (Lucide e Tabler). O `
 
 A documentação detalhada da implementação Spring Boot está em [`services/api/README.md`](services/api/README.md).
 
-| Aspecto | Implementação atual | Evolução prevista |
-| --- | --- | --- |
-| Runtime | Java 21 e Spring Boot 3.5 | — |
-| HTTP e validação | Spring Web, Validation, endpoints de usuários e owners, OpenAPI/Swagger UI | Idioma/templates adicionais |
-| Saúde | Spring Actuator com `health` e `info` expostos | Métricas e logs estruturados |
-| Acesso web | CORS, JWT Bearer, refresh token rotativo e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`) | Política por ambiente |
-| Parsing de páginas | Jsoup | Leitura de vagas por link implementada (Gupy, JSON-LD `JobPosting` e HTML genérico), com análise por IA e versionamento |
-| Dados e arquivos | PostgreSQL/Flyway; PDFs e textos por página no Garage; fila PDFBox/OCR seletivo, revisão auditada e snapshots aprovados | Extração semântica de fatos |
+| Aspecto            | Implementação atual                                                                                                     | Evolução prevista                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Runtime            | Java 21 e Spring Boot 3.5                                                                                               | —                                                                                                                       |
+| HTTP e validação   | Spring Web, Validation, endpoints de usuários e owners, OpenAPI/Swagger UI                                              | Idioma/templates adicionais                                                                                             |
+| Saúde              | Spring Actuator com `health` e `info` expostos                                                                          | Métricas e logs estruturados                                                                                            |
+| Acesso web         | CORS, JWT Bearer, refresh token rotativo e RBAC persistido (`ROLE_USER`/`ROLE_ADMIN`)                                   | Política por ambiente                                                                                                   |
+| Parsing de páginas | Jsoup                                                                                                                   | Leitura de vagas por link implementada (Gupy, JSON-LD `JobPosting` e HTML genérico), com análise por IA e versionamento |
+| Dados e arquivos   | PostgreSQL/Flyway; PDFs e textos por página no Garage; fila PDFBox/OCR seletivo, revisão auditada e snapshots aprovados | Extração semântica de fatos                                                                                             |
 
 O Actuator pode ser consultado em `http://localhost:8080/actuator/health`. A especificação OpenAPI está em `http://localhost:8080/v3/api-docs` e a interface Swagger UI em `http://localhost:8080/swagger-ui.html`. A API inclui operações de usuários, owners e sessões anônimas. Cadastro (`POST /v1/auth/register` e o caminho existente `POST /v1/users`), login (`POST /v1/auth/login`), renovação (`POST /v1/auth/refresh`), logout (`POST /v1/auth/logout`), saúde, documentação e criação/validação de sessões anônimas são públicos; consulta e revogação de sessões anônimas exigem `ROLE_ADMIN`. O login valida email e senha e retorna `accessToken`, `tokenType: Bearer`, `expiresAt`, os dados públicos do usuário e um `refreshToken` opaco. Nas chamadas protegidas, envie `Authorization: Bearer <accessToken>`. O access token é assinado com HS256, expira após uma hora e inclui o ID do usuário como sujeito. A API consulta a conta e as roles atuais em cada chamada protegida; contas desativadas perdem acesso imediatamente. Como a autenticação usa apenas o cabeçalho Bearer, não há cookie de login nem token CSRF.
 
@@ -108,55 +108,55 @@ Accept-Language: pt-BR
 
 Isso inclui validação, erros de domínio, autenticação (`401`) e autorização (`403`). Sem o cabeçalho, a API responde em inglês.
 
-| Endpoint | Método | Operação |
-| --- | --- | --- |
-| `/v1/auth/register` | `POST` | Cadastrar usuário (`email`, `password`); retorna `201` e dados públicos. `/v1/users` continua disponível. |
-| `/v1/auth/login` | `POST` | Validar `email` e `password`; retorna JWT Bearer, refresh token, expiração e dados públicos ou `401`. |
-| `/v1/auth/refresh` | `POST` | Rotacionar um refresh token válido; devolve um novo par de tokens ou `401` (inválido, expirado ou reuso). |
-| `/v1/auth/logout` | `POST` | Revogar a sessão do refresh token informado. |
-| `/v1/me` | `GET` | Consultar o usuário autenticado e seu owner único; cria o owner para contas antigas quando necessário. |
-| `/v1/me/sessions` | `GET` | Listar as sessões de refresh token ativas da conta autenticada. |
-| `/v1/me/sessions/{id}` | `DELETE` | Revogar uma sessão da própria conta. |
-| `/v1/base-documents/upload` | `POST` | Receber PDF da conta, gravar no Garage, criar ou recuperar a versão e enfileirar/reutilizar a extração. |
-| `/v1/owners` | `POST` | Criar owner (`kind`, `userId` opcional); snapshot ativo só muda pela aprovação |
-| `/v1/owners/{id}` | `GET` | Consultar owner |
-| `/v1/owners/{id}/increment-revision` | `PATCH` | Incrementar atomicamente a revisão |
-| `/v1/owners/{id}/deactivate-snapshot` | `PATCH` | Desativar o Ground Truth ativo do owner, sem apagar dados |
-| `/v1/gt-snapshots/approve-version/{baseVersionId}` | `POST` | Validar pendências, congelar fatos auditados e ativar o snapshot atomicamente |
-| `/v1/gt-snapshots/{id}` | `GET` | Consultar snapshot e itens aprovados |
-| `/v1/base-versions/{id}` | `GET`, `DELETE` | Consultar a versão ou excluí-la (arquivo, texto, fatos, pendências, snapshots e gerações derivadas) |
-| `/v1/job-postings` e subrotas | `POST`, `GET`, `DELETE` | Ler, gravar, versionar e analisar vagas por link ou texto; conta e sessão anônima. Veja “Vagas: leitura por link ou texto…”. |
-| `/v1/anonymous-sessions` | `POST` | Emitir sessão anônima (owner, token opaco e TTL gerados no servidor; limitado por IP) |
-| `/v1/anonymous-sessions/current` | `GET`, `DELETE` | Consultar uso, limites e se há snapshot migrável; encerrar a sessão apagando seus dados (token anônimo) |
-| `/v1/anonymous-sessions/migrate` | `POST` | Migrar o snapshot revisado da sessão para a conta autenticada, sem repetir OCR |
-| `/v1/anonymous-sessions/{id}/revoke` | `PATCH` | Revogar sessão (`ROLE_ADMIN`) |
-| `/v1/anonymous-sessions/{id}` | `GET` | Consultar sessão (`ROLE_ADMIN`) |
+| Endpoint                                           | Método                  | Operação                                                                                                                     |
+| -------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `/v1/auth/register`                                | `POST`                  | Cadastrar usuário (`email`, `password`); retorna `201` e dados públicos. `/v1/users` continua disponível.                    |
+| `/v1/auth/login`                                   | `POST`                  | Validar `email` e `password`; retorna JWT Bearer, refresh token, expiração e dados públicos ou `401`.                        |
+| `/v1/auth/refresh`                                 | `POST`                  | Rotacionar um refresh token válido; devolve um novo par de tokens ou `401` (inválido, expirado ou reuso).                    |
+| `/v1/auth/logout`                                  | `POST`                  | Revogar a sessão do refresh token informado.                                                                                 |
+| `/v1/me`                                           | `GET`                   | Consultar o usuário autenticado e seu owner único; cria o owner para contas antigas quando necessário.                       |
+| `/v1/me/sessions`                                  | `GET`                   | Listar as sessões de refresh token ativas da conta autenticada.                                                              |
+| `/v1/me/sessions/{id}`                             | `DELETE`                | Revogar uma sessão da própria conta.                                                                                         |
+| `/v1/base-documents/upload`                        | `POST`                  | Receber PDF da conta, gravar no Garage, criar ou recuperar a versão e enfileirar/reutilizar a extração.                      |
+| `/v1/owners`                                       | `POST`                  | Criar owner (`kind`, `userId` opcional); snapshot ativo só muda pela aprovação                                               |
+| `/v1/owners/{id}`                                  | `GET`                   | Consultar owner                                                                                                              |
+| `/v1/owners/{id}/increment-revision`               | `PATCH`                 | Incrementar atomicamente a revisão                                                                                           |
+| `/v1/owners/{id}/deactivate-snapshot`              | `PATCH`                 | Desativar o Ground Truth ativo do owner, sem apagar dados                                                                    |
+| `/v1/gt-snapshots/approve-version/{baseVersionId}` | `POST`                  | Validar pendências, congelar fatos auditados e ativar o snapshot atomicamente                                                |
+| `/v1/gt-snapshots/{id}`                            | `GET`                   | Consultar snapshot e itens aprovados                                                                                         |
+| `/v1/base-versions/{id}`                           | `GET`, `DELETE`         | Consultar a versão ou excluí-la (arquivo, texto, fatos, pendências, snapshots e gerações derivadas)                          |
+| `/v1/job-postings` e subrotas                      | `POST`, `GET`, `DELETE` | Ler, gravar, versionar e analisar vagas por link ou texto; conta e sessão anônima. Veja “Vagas: leitura por link ou texto…”. |
+| `/v1/anonymous-sessions`                           | `POST`                  | Emitir sessão anônima (owner, token opaco e TTL gerados no servidor; limitado por IP)                                        |
+| `/v1/anonymous-sessions/current`                   | `GET`, `DELETE`         | Consultar uso, limites e se há snapshot migrável; encerrar a sessão apagando seus dados (token anônimo)                      |
+| `/v1/anonymous-sessions/migrate`                   | `POST`                  | Migrar o snapshot revisado da sessão para a conta autenticada, sem repetir OCR                                               |
+| `/v1/anonymous-sessions/{id}/revoke`               | `PATCH`                 | Revogar sessão (`ROLE_ADMIN`)                                                                                                |
+| `/v1/anonymous-sessions/{id}`                      | `GET`                   | Consultar sessão (`ROLE_ADMIN`)                                                                                              |
 
 
 ## Vagas: leitura por link ou texto, análise por IA e versionamento
 
 **Implementado.** A vaga entra por link (Jsoup) ou por texto colado, é gravada por owner (conta ou sessão anônima) em versões imutáveis e analisada pela IA configurada. A geração de currículos a partir dela já registra a versão usada; o cruzamento automático com o Ground Truth segue pendente.
 
-| Rota | Método | Função |
-| --- | --- | --- |
-| `/v1/job-postings/extract` | `POST` | Pré-visualização: lê o link (`url`) e devolve os dados da página, sem gravar nem chamar IA. |
-| `/v1/job-postings` | `POST` | Lê (`url` **ou** `text`, com `title` e `company` opcionais para texto), grava e analisa. `201` para versão nova, `200` quando o conteúdo já existia. |
-| `/v1/job-postings/owner/{ownerId}` | `GET` | Vagas salvas do owner, da mais recente à mais antiga. |
-| `/v1/job-postings/{id}` | `GET` | Vaga com a última versão e a lista de versões. |
-| `/v1/job-postings/{id}/versions/{n}` | `GET` | Uma versão específica. |
-| `/v1/job-postings/{id}/versions/{n}/analysis` | `POST` | Refaz a análise por IA (por exemplo depois de uma falha). |
-| `/v1/job-postings/{id}` | `DELETE` | Exclui a vaga e todas as versões, com o texto lido e a análise. |
+| Rota                                          | Método   | Função                                                                                                                                               |
+| --------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/v1/job-postings/extract`                    | `POST`   | Pré-visualização: lê o link (`url`) e devolve os dados da página, sem gravar nem chamar IA.                                                          |
+| `/v1/job-postings`                            | `POST`   | Lê (`url` **ou** `text`, com `title` e `company` opcionais para texto), grava e analisa. `201` para versão nova, `200` quando o conteúdo já existia. |
+| `/v1/job-postings/owner/{ownerId}`            | `GET`    | Vagas salvas do owner, da mais recente à mais antiga.                                                                                                |
+| `/v1/job-postings/{id}`                       | `GET`    | Vaga com a última versão e a lista de versões.                                                                                                       |
+| `/v1/job-postings/{id}/versions/{n}`          | `GET`    | Uma versão específica.                                                                                                                               |
+| `/v1/job-postings/{id}/versions/{n}/analysis` | `POST`   | Refaz a análise por IA (por exemplo depois de uma falha).                                                                                            |
+| `/v1/job-postings/{id}`                       | `DELETE` | Exclui a vaga e todas as versões, com o texto lido e a análise.                                                                                      |
 
 ### Leitura da página
 
 `POST` baixa a página com Jsoup e extrai só o que ela declara, sem inferir nada. Fontes, em ordem de prioridade (cada uma só completa o que a anterior não trouxe):
 
-| Fonte | Como é reconhecida | O que fornece |
-| --- | --- | --- |
-| Gupy | JSON `__NEXT_DATA__` com `props.pageProps.job`, por conteúdo (funciona também em páginas de carreira com domínio próprio) | Título, ID, descrição, responsabilidades, requisitos, diferenciais e benefícios, modelo de trabalho (`remote`/`hybrid`/`onsite`), tipo de contrato, local, datas, etapas do processo seletivo, empresa (nome, sobre, site, logo, página de carreira, LinkedIn, Glassdoor etc.) |
-| JSON-LD | `application/ld+json` com `@type: JobPosting` (publicado por sites como Greenhouse e Lever por causa do Google Jobs) | Os campos acima quando publicados, além de salário e habilidades |
-| HTML genérico | Open Graph, `h1` e o maior bloco de texto sem navegação | Título e texto; seções só quando há títulos reconhecíveis |
-| Texto colado | Sempre texto puro (um `<` digitado não vira HTML) | Seções por títulos como "Requisitos" e "Diferenciais"; o título vem do campo ou da primeira linha, se parecer um título |
+| Fonte         | Como é reconhecida                                                                                                        | O que fornece                                                                                                                                                                                                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Gupy          | JSON `__NEXT_DATA__` com `props.pageProps.job`, por conteúdo (funciona também em páginas de carreira com domínio próprio) | Título, ID, descrição, responsabilidades, requisitos, diferenciais e benefícios, modelo de trabalho (`remote`/`hybrid`/`onsite`), tipo de contrato, local, datas, etapas do processo seletivo, empresa (nome, sobre, site, logo, página de carreira, LinkedIn, Glassdoor etc.) |
+| JSON-LD       | `application/ld+json` com `@type: JobPosting` (publicado por sites como Greenhouse e Lever por causa do Google Jobs)      | Os campos acima quando publicados, além de salário e habilidades                                                                                                                                                                                                               |
+| HTML genérico | Open Graph, `h1` e o maior bloco de texto sem navegação                                                                   | Título e texto; seções só quando há títulos reconhecíveis                                                                                                                                                                                                                      |
+| Texto colado  | Sempre texto puro (um `<` digitado não vira HTML)                                                                         | Seções por títulos como "Requisitos" e "Diferenciais"; o título vem do campo ou da primeira linha, se parecer um título                                                                                                                                                        |
 
 As listas `responsibilities`, `requirements`, `niceToHave`, `benefits` e `hiringProcess` são divisões **textuais** por títulos em português e inglês, com tratamento dos itens colados e dos autolinks falsos que a Gupy gera ("Java.Proficiência"). `descriptionText` guarda o texto completo; `warnings` indica `expired`, `job_not_published`, `limited_content` e `sections_not_detected`.
 
@@ -187,7 +187,7 @@ Tabelas `job_postings` (identidade da vaga por owner) e `job_posting_versions` (
 
 **Home e Gerador:** os dois têm a entrada da vaga (link ou texto) com validação imediata do link enquanto a pessoa digita (esquema `http(s)`, portas, credenciais e destinos internos, espelhando o servidor; o LinkedIn gera um aviso para colar o texto) e o mesmo botão de gerar. Ao clicar, a vaga é lida e analisada no servidor (`POST /v1/job-postings`) e só então abre a validação dos fatos.
 
-**Validação dos fatos orientada pela vaga:** o diálogo cruza a análise da vaga com os fatos do Currículo Base (`utils/job-fact-match.ts`, no cliente). Só o que a vaga nomeia (tecnologias e competências) é procurado nos fatos, por nome inteiro (`Java` não casa com `JavaScript`) e tolerando variações como `Node.js`/`NodeJS`; fatos omitidos nunca contam como evidência. O diálogo mostra "O que a vaga mais pede" com cada requisito como *no seu currículo* (fato confirmado), *no seu currículo, confirme abaixo* (só fato pendente) ou *não encontrado — não será inventado*, e pergunta primeiro pelos fatos pendentes ligados a requisitos obrigatórios, depois pelos desejáveis. Os demais fatos do mesmo item de lista (empresa, cargo e datas de uma experiência que cita o requisito) também entram, porque dão contexto; itens vizinhos não herdam a relevância. As pendências sem relação com a vaga não bloqueiam o fluxo, mas continuam pendentes e não entram no currículo. Sem análise por IA, ou com uma vaga que não nomeia nada procurável, o diálogo volta a listar todas as pendências.
+**Validação dos fatos orientada pela vaga:** o diálogo cruza a análise da vaga com os fatos do Currículo Base (`utils/job-fact-match.ts`, no cliente). Só o que a vaga nomeia (tecnologias e competências) é procurado nos fatos, por nome inteiro (`Java` não casa com `JavaScript`) e tolerando variações como `Node.js`/`NodeJS`; fatos omitidos nunca contam como evidência. O diálogo mostra "O que a vaga mais pede" com cada requisito como _no seu currículo_ (fato confirmado), _no seu currículo, confirme abaixo_ (só fato pendente) ou _não encontrado — não será inventado_, e pergunta primeiro pelos fatos pendentes ligados a requisitos obrigatórios, depois pelos desejáveis. Os demais fatos do mesmo item de lista (empresa, cargo e datas de uma experiência que cita o requisito) também entram, porque dão contexto; itens vizinhos não herdam a relevância. As pendências sem relação com a vaga não bloqueiam o fluxo, mas continuam pendentes e não entram no currículo. Sem análise por IA, ou com uma vaga que não nomeia nada procurável, o diálogo volta a listar todas as pendências.
 
 **Auditoria completa (`/base`):** as pendências aparecem destacadas **nos próprios campos** da etapa, sem painel separado, com o mesmo critério do diálogo. O campo pendente ganha contorno, o selo "Pendente" e, quando a vaga pede aquilo, "Obrigatório/Desejável na vaga" com o motivo; a linha do acordeão, o chip de tecnologia e a linha de idioma ganham o mesmo destaque, e o stepper mostra quantas pendências há em cada etapa (e quantas são da vaga). Resolve-se com os controles que já existem: **editar** o campo e salvar a auditoria registra a correção, **limpar/remover** e salvar omite o fato, e **"Confirmar valor"** (ou o ✓ do chip) confirma na hora. Editar ou remover um campo pendente fecha a pendência pela resposta da API (só atualizar o fato a deixaria aberta e bloquearia a aprovação), e campos que a pessoa não tocou continuam pendentes. Ao confirmar (ou corrigir), o aviso de pendência some e o campo ganha o ícone de verificado (círculo com check), também na linha do acordeão, no chip de tecnologia e na linha de idioma; alterar um campo verificado tira a marca até salvar de novo. Quando a última pendência de uma etapa é resolvida, ela passa a "Sem pendências" no stepper e no cabeçalho da etapa (uma etapa sem fatos extraídos não recebe essa marca). Responder uma pendência pelo diálogo também atualiza o rascunho da auditoria, para o próximo "Salvar" não sobrescrever a correção em silêncio.
 
@@ -224,46 +224,46 @@ Na página do Gerador, "Detalhes da Vaga Alvo" mostra, depois de gerar (ou ao ab
 
 ### Requisitos funcionais
 
-| ID | Requisito | Descrição | Prioridade | Estado |
-| --- | --- | --- | --- | --- |
-| RF01 | Ingestão de vaga | Aceitar descrição da vaga por texto ou URL. | Alta | Implementado: URL ou texto colado, persistência por versão e análise por IA (`POST /v1/job-postings`); falta usar a versão da vaga na geração |
-| RF02 | Extração de requisitos | Identificar responsabilidades, qualificações e palavras-chave relevantes. | Alta | Planejado |
-| RF03 | Geração de currículo | Produzir currículo personalizado a partir dos requisitos e do perfil base. | Alta | Implementado: esteira com avaliação de ATS e IA de layout, PDF/Markdown do snapshot aprovado e da versão da vaga |
-| RF04 | Exportação | Disponibilizar o currículo em PDF e Markdown. | Média | Planejado |
-| RF05 | Metadados e histórico | Salvar autoria, data, status, template e referência do arquivo gerado. | Média | Planejado |
-| RF06 | Integração com Second Brain | Copiar/registrar artefatos em `B03 Resources/CVs/` e criar link para uso no Obsidian. | Alta | Parcial: exportação local opcional (`tailorly.vault.*`, desligada por padrão) copia PDF e Markdown com frontmatter; criar link de volta no vault (por exemplo nota própria com backlinks) ainda é planejado |
-| RF07 | Acesso e autenticação | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta | Parcial: conta, papéis, refresh/revogação de sessão e acesso anônimo (servidor e interface: sessão, limites, TTL, limpeza, migração) implementados; limite de gerações aplicado em `POST /v1/cv/generate` |
-| RF08 | Due diligence de empresas | Consolidar sinais públicos para apoiar a decisão de candidatura, com fatores e fontes rastreáveis. | A definir | Backlog |
+| ID   | Requisito                   | Descrição                                                                                                                   | Prioridade | Estado                                                                                                                                                                                                      |
+| ---- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RF01 | Ingestão de vaga            | Aceitar descrição da vaga por texto ou URL.                                                                                 | Alta       | Implementado: URL ou texto colado, persistência por versão e análise por IA (`POST /v1/job-postings`); falta usar a versão da vaga na geração                                                               |
+| RF02 | Extração de requisitos      | Identificar responsabilidades, qualificações e palavras-chave relevantes.                                                   | Alta       | Planejado                                                                                                                                                                                                   |
+| RF03 | Geração de currículo        | Produzir currículo personalizado a partir dos requisitos e do perfil base.                                                  | Alta       | Implementado: esteira com avaliação de ATS e IA de layout, PDF/Markdown do snapshot aprovado e da versão da vaga                                                                                            |
+| RF04 | Exportação                  | Disponibilizar o currículo em PDF e Markdown.                                                                               | Média      | Planejado                                                                                                                                                                                                   |
+| RF05 | Metadados e histórico       | Salvar autoria, data, status, template e referência do arquivo gerado.                                                      | Média      | Planejado                                                                                                                                                                                                   |
+| RF06 | Integração com Second Brain | Copiar/registrar artefatos em `B03 Resources/CVs/` e criar link para uso no Obsidian.                                       | Alta       | Parcial: exportação local opcional (`tailorly.vault.*`, desligada por padrão) copia PDF e Markdown com frontmatter; criar link de volta no vault (por exemplo nota própria com backlinks) ainda é planejado |
+| RF07 | Acesso e autenticação       | Permitir uso anônimo com sessão temporária e cotas; exigir conta para histórico persistente, com papéis quando necessários. | Alta       | Parcial: conta, papéis, refresh/revogação de sessão e acesso anônimo (servidor e interface: sessão, limites, TTL, limpeza, migração) implementados; limite de gerações aplicado em `POST /v1/cv/generate`   |
+| RF08 | Due diligence de empresas   | Consolidar sinais públicos para apoiar a decisão de candidatura, com fatores e fontes rastreáveis.                          | A definir  | Backlog                                                                                                                                                                                                     |
 
 ### Requisitos não funcionais
 
-| ID | Requisito | Critério ou diretriz | Prioridade |
-| --- | --- | --- | --- |
-| RNF01 | Desempenho | Gerar um currículo em até 30 segundos, considerando o tempo de provedores externos. | Alta |
-| RNF02 | Escalabilidade | Suportar até 100 usuários simultâneos como referência inicial. | Média |
-| RNF03 | Segurança | Proteger dados e credenciais; aplicar autenticação, autorização e configuração por ambiente. | Alta |
-| RNF04 | Usabilidade | Oferecer uma interface clara para envio da vaga, revisão e download do resultado. | Média |
-| RNF05 | Manutenibilidade | Manter responsabilidades separadas, templates versionados, migrações e testes automatizados. | Média |
-| RNF06 | Compatibilidade | Suportar as versões atuais dos principais navegadores. | Média |
-| RNF07 | Resiliência | Usar Ollama como alternativa quando o provedor remoto de LLM falhar e definir recuperação para indisponibilidade do storage S3. | Média |
-| RNF08 | Observabilidade | Expor saúde da aplicação e evoluir para métricas e logs JSON. | Média |
+| ID    | Requisito        | Critério ou diretriz                                                                                                            | Prioridade |
+| ----- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| RNF01 | Desempenho       | Gerar um currículo em até 30 segundos, considerando o tempo de provedores externos.                                             | Alta       |
+| RNF02 | Escalabilidade   | Suportar até 100 usuários simultâneos como referência inicial.                                                                  | Média      |
+| RNF03 | Segurança        | Proteger dados e credenciais; aplicar autenticação, autorização e configuração por ambiente.                                    | Alta       |
+| RNF04 | Usabilidade      | Oferecer uma interface clara para envio da vaga, revisão e download do resultado.                                               | Média      |
+| RNF05 | Manutenibilidade | Manter responsabilidades separadas, templates versionados, migrações e testes automatizados.                                    | Média      |
+| RNF06 | Compatibilidade  | Suportar as versões atuais dos principais navegadores.                                                                          | Média      |
+| RNF07 | Resiliência      | Usar Ollama como alternativa quando o provedor remoto de LLM falhar e definir recuperação para indisponibilidade do storage S3. | Média      |
+| RNF08 | Observabilidade  | Expor saúde da aplicação e evoluir para métricas e logs JSON.                                                                   | Média      |
 
 ## Modelo de dados planejado
 
-| Entidade | Campos principais | Responsabilidade |
-| --- | --- | --- |
-| `users` | `id`, `email`, `password_hash`, `enabled` | Credenciais e estado da conta. |
-| `owners` | `id`, `kind`, `user_id`, `active_snapshot_id`, `revision`, `expires_at` | Identidade proprietária de dados; `user_id` é opcional e único. `active_snapshot_id` aponta para o snapshot aprovado quando o modelo de snapshots existir. |
-| `anonymous_sessions` | `id`, `owner_id`, `token_hash`, `expires_at`, `revoked_at`, `created_at`, `uploads_count`, `extractions_count`, `generations_count` | Sessão anônima emitida pelo servidor, com token armazenado só como hash, expiração/revogação e contadores de uso para as cotas; cada owner tem no máximo uma sessão. |
-| `user_sessions` | `id`, `user_id`, `token_hash`, `expires_at`, `revoked_at`, `rotated_from`, `user_agent`, `created_at` | Sessão de refresh token de uma conta; `rotated_from` liga a cadeia de rotação e permite detectar reuso. Uma conta pode ter várias sessões (dispositivos). |
-| `job_postings` | `id`, `owner_id`, `source_kind` (`url`/`text`), `source_key`, `title`, `company_name`, `expires_at`, `latest_version_number`, `created_at`, `updated_at` | Vaga de um owner, única por `(owner_id, source_key)`; título, empresa e prazo são cópias da última versão, para listagem. |
-| `job_posting_versions` | `id`, `job_posting_id`, `version_number`, `content_hash`, `details` (JSONB), `analysis` (JSONB), `analysis_status`, `analyzer_version`, `analyzed_at`, `created_at`, `last_checked_at` | Leitura imutável da vaga mais a análise por IA, que pode ser refeita. |
-| `roles` | `id`, `name` | Papéis de acesso, como `ADMIN` e `USER`. |
-| `user_roles` | `user_id`, `role_id` | Associação muitos-para-muitos entre usuários e papéis. |
-| `cv_templates` | `id`, `owner_id` (nulo no embarcado), `name`, `version`, `content`, `content_hash` | Implementado (V9, V10). Templates Typst versionados e imutáveis, embarcados ou editados por owner para apresentação; os fatos aprovados do Currículo Base são o Ground Truth. |
-| `cv_generations` | `id`, `owner_id`, `snapshot_id`, `job_posting_version_id`, `template_id`, `input_hash`, `renderer_version`, `pipeline_version`, `preferences`, `document`, `ats`, `tailoring`, `pdf_object_id`, `markdown_object_id` | Implementado (V9, V10). Histórico de gerações com as versões de snapshot, vaga e template usadas e os artefatos no Garage. |
-| `cv_metadata` | `id`, `filename`, `created_at`, `status`, `owner_id`, `template_id` | Histórico e situação de cada currículo gerado. |
-| `file_storage` | `id`, `file_path`, `cv_metadata_id` | Modelo planejado de referência a artefatos em storage S3. |
+| Entidade               | Campos principais                                                                                                                                                                                                    | Responsabilidade                                                                                                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users`                | `id`, `email`, `password_hash`, `enabled`                                                                                                                                                                            | Credenciais e estado da conta.                                                                                                                                                |
+| `owners`               | `id`, `kind`, `user_id`, `active_snapshot_id`, `revision`, `expires_at`                                                                                                                                              | Identidade proprietária de dados; `user_id` é opcional e único. `active_snapshot_id` aponta para o snapshot aprovado quando o modelo de snapshots existir.                    |
+| `anonymous_sessions`   | `id`, `owner_id`, `token_hash`, `expires_at`, `revoked_at`, `created_at`, `uploads_count`, `extractions_count`, `generations_count`                                                                                  | Sessão anônima emitida pelo servidor, com token armazenado só como hash, expiração/revogação e contadores de uso para as cotas; cada owner tem no máximo uma sessão.          |
+| `user_sessions`        | `id`, `user_id`, `token_hash`, `expires_at`, `revoked_at`, `rotated_from`, `user_agent`, `created_at`                                                                                                                | Sessão de refresh token de uma conta; `rotated_from` liga a cadeia de rotação e permite detectar reuso. Uma conta pode ter várias sessões (dispositivos).                     |
+| `job_postings`         | `id`, `owner_id`, `source_kind` (`url`/`text`), `source_key`, `title`, `company_name`, `expires_at`, `latest_version_number`, `created_at`, `updated_at`                                                             | Vaga de um owner, única por `(owner_id, source_key)`; título, empresa e prazo são cópias da última versão, para listagem.                                                     |
+| `job_posting_versions` | `id`, `job_posting_id`, `version_number`, `content_hash`, `details` (JSONB), `analysis` (JSONB), `analysis_status`, `analyzer_version`, `analyzed_at`, `created_at`, `last_checked_at`                               | Leitura imutável da vaga mais a análise por IA, que pode ser refeita.                                                                                                         |
+| `roles`                | `id`, `name`                                                                                                                                                                                                         | Papéis de acesso, como `ADMIN` e `USER`.                                                                                                                                      |
+| `user_roles`           | `user_id`, `role_id`                                                                                                                                                                                                 | Associação muitos-para-muitos entre usuários e papéis.                                                                                                                        |
+| `cv_templates`         | `id`, `owner_id` (nulo no embarcado), `name`, `version`, `content`, `content_hash`                                                                                                                                   | Implementado (V9, V10). Templates Typst versionados e imutáveis, embarcados ou editados por owner para apresentação; os fatos aprovados do Currículo Base são o Ground Truth. |
+| `cv_generations`       | `id`, `owner_id`, `snapshot_id`, `job_posting_version_id`, `template_id`, `input_hash`, `renderer_version`, `pipeline_version`, `preferences`, `document`, `ats`, `tailoring`, `pdf_object_id`, `markdown_object_id` | Implementado (V9, V10). Histórico de gerações com as versões de snapshot, vaga e template usadas e os artefatos no Garage.                                                    |
+| `cv_metadata`          | `id`, `filename`, `created_at`, `status`, `owner_id`, `template_id`                                                                                                                                                  | Histórico e situação de cada currículo gerado.                                                                                                                                |
+| `file_storage`         | `id`, `file_path`, `cv_metadata_id`                                                                                                                                                                                  | Modelo planejado de referência a artefatos em storage S3.                                                                                                                     |
 
 ```mermaid
 erDiagram
@@ -292,13 +292,13 @@ Esta seção descreve o **fluxo alvo**. O Currículo Base é a fonte dos fatos p
 
 ### Uso sem conta e persistência
 
-| Aspecto | Sessão anônima | Conta autenticada |
-| --- | --- | --- |
-| Identidade | Identificador de sessão assinado no servidor; sem cadastro. | Identidade da conta. |
-| Estado | Arquivo temporário, extração, fatos, pendências e snapshot aprovado com expiração automática (TTL). | Versões, revisões e histórico persistentes. |
-| Deduplicação | Hash reutilizado somente enquanto a sessão existir. | Hash reutilizado entre envios da mesma conta. |
-| Limites | Cotas de tamanho e páginas, processamento, gerações e taxa de requisições verificadas no servidor. | Limites do plano ou da conta. |
-| Fim do ciclo | Expiração ou remoção apaga dados temporários; não há histórico durável. | Exclusão explícita e política de retenção. |
+| Aspecto      | Sessão anônima                                                                                      | Conta autenticada                             |
+| ------------ | --------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Identidade   | Identificador de sessão assinado no servidor; sem cadastro.                                         | Identidade da conta.                          |
+| Estado       | Arquivo temporário, extração, fatos, pendências e snapshot aprovado com expiração automática (TTL). | Versões, revisões e histórico persistentes.   |
+| Deduplicação | Hash reutilizado somente enquanto a sessão existir.                                                 | Hash reutilizado entre envios da mesma conta. |
+| Limites      | Cotas de tamanho e páginas, processamento, gerações e taxa de requisições verificadas no servidor.  | Limites do plano ou da conta.                 |
+| Fim do ciclo | Expiração ou remoção apaga dados temporários; não há histórico durável.                             | Exclusão explícita e política de retenção.    |
 
 A sessão anônima pode usar armazenamento temporário no servidor, mesmo sem criar um usuário no banco relacional. `sessionStorage` no navegador guarda apenas estado de interface; não é fonte confiável para cotas, cache de OCR ou fatos aprovados. A API protege credenciais e aplica limites. Se a pessoa criar conta antes da expiração, oferecer a migração do snapshot já processado e revisado para a conta, sem repetir OCR. Sem migração, os dados expiram. A interface de “Últimos Currículos Gerados” deve mostrar um estado vazio ou de prévia para visitantes sem histórico, nunca exemplos como se fossem documentos reais da pessoa.
 
@@ -308,11 +308,11 @@ Além de `users`, templates e artefatos gerados, o domínio precisará represent
 
 ## Pré-requisitos
 
-| Ferramenta | Versão |
-| --- | --- |
-| Node.js | 22.18.0 ou superior (ou 24.11.0 ou superior) |
-| pnpm | 10.9.0 (gerenciado pelo Corepack) |
-| Java | 21 |
+| Ferramenta     | Versão                                               |
+| -------------- | ---------------------------------------------------- |
+| Node.js        | 22.18.0 ou superior (ou 24.11.0 ou superior)         |
+| pnpm           | 10.9.0 (gerenciado pelo Corepack)                    |
+| Java           | 21                                                   |
 | Docker Compose | Opcional, necessário para PostgreSQL e Garage locais |
 
 ## Desenvolvimento
@@ -328,13 +328,13 @@ pnpm install
 pnpm dev
 ```
 
-| Serviço | Endereço |
-| --- | --- |
-| Web | `http://localhost:5173` |
-| API | `http://localhost:8080` |
-| Health check | `http://localhost:8080/actuator/health` |
-| OpenAPI (JSON) | `http://localhost:8080/v3/api-docs` |
-| Swagger UI | `http://localhost:8080/swagger-ui.html` |
+| Serviço        | Endereço                                |
+| -------------- | --------------------------------------- |
+| Web            | `http://localhost:5173`                 |
+| API            | `http://localhost:8080`                 |
+| Health check   | `http://localhost:8080/actuator/health` |
+| OpenAPI (JSON) | `http://localhost:8080/v3/api-docs`     |
+| Swagger UI     | `http://localhost:8080/swagger-ui.html` |
 
 Para iniciar apenas uma aplicação:
 
@@ -354,24 +354,24 @@ O script cria `services/api/.env.garage` com credenciais de desenvolvimento não
 
 Se a porta `5432` do host estiver ocupada, inicie com `TAILORLY_POSTGRES_PORT=5433 docker compose up -d` e use `jdbc:postgresql://localhost:5433/tailorly` na API. Com `sudo`, execute `sudo env TAILORLY_POSTGRES_PORT=5433 docker compose up -d`.
 
-| Serviço | Endereço | Credenciais de desenvolvimento |
-| --- | --- | --- |
-| PostgreSQL | `localhost:5432/tailorly` | usuário `tailorly`, senha `tailorly` |
-| Garage S3 API | `http://localhost:3900` | chave e segredo em `services/api/.env.garage` |
-| Garage UI | `http://127.0.0.1:3909` | `GARAGE_ADMIN_TOKEN` em `services/api/.env.garage` |
+| Serviço       | Endereço                  | Credenciais de desenvolvimento                     |
+| ------------- | ------------------------- | -------------------------------------------------- |
+| PostgreSQL    | `localhost:5432/tailorly` | usuário `tailorly`, senha `tailorly`               |
+| Garage S3 API | `http://localhost:3900`   | chave e segredo em `services/api/.env.garage`      |
+| Garage UI     | `http://127.0.0.1:3909`   | `GARAGE_ADMIN_TOKEN` em `services/api/.env.garage` |
 
 Essas credenciais existem apenas para o ambiente local. Variáveis de ambiente e segredos de produção não devem ser versionados.
 
 ## Comandos de qualidade
 
-| Comando | Finalidade |
-| --- | --- |
-| `pnpm build` | Gera o build de todos os workspaces. |
-| `pnpm test` | Executa a suíte de testes do monorepo. |
-| `pnpm lint` | Executa as verificações de lint. |
-| `pnpm check` | Executa as checagens configuradas para os workspaces. |
+| Comando             | Finalidade                                                                        |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `pnpm build`        | Gera o build de todos os workspaces.                                              |
+| `pnpm test`         | Executa a suíte de testes do monorepo.                                            |
+| `pnpm lint`         | Executa as verificações de lint.                                                  |
+| `pnpm check`        | Executa as checagens configuradas para os workspaces.                             |
 | `pnpm api:generate` | Regenera tipos e funções HTTP TypeScript a partir do snapshot OpenAPI versionado. |
-| `pnpm api:sync` | Com a API ativa, atualiza o snapshot OpenAPI e executa o Orval. |
+| `pnpm api:sync`     | Com a API ativa, atualiza o snapshot OpenAPI e executa o Orval.                   |
 
 O contrato consumido pelo frontend fica em `services/api/openapi/tailorly.json`.
 Use `pnpm api:generate` no trabalho cotidiano e `pnpm api:sync` sempre que um
@@ -389,9 +389,9 @@ endpoint ou DTO do backend mudar. O código em `apps/web/src/lib/api/generated`
 3. [x] **Processar o PDF no servidor.** Fila persistente, PDFBox por página, OCR seletivo com Tesseract local, textos no Garage, hashes e métodos estão implementados. O worker só marca a execução concluída depois da interpretação IA, validação das evidências e persistência dos fatos; falha de interpretação mantém a versão candidata e execução não concluídas. A interface acompanha o status sem percentual por página; a análise nativa separa artigos/colunas e suprime texto sobreposto. Há um teste OCR real opcional com uma página escaneada representativa, executado quando Tesseract 5 e `eng` estão instalados. A detecção de texto misto e a reconstrução geral de layouts continuam limitadas. Veja o [guia da API](services/api/README.md#extração-seletiva-de-pdf).
 4. [x] **Persistir fatos e revisão por candidata.** A API armazena fatos, evidências de páginas extraídas, pendências e decisões auditadas com os estados `pendente`, `confirmado`, `corrigido` e `omitido`. `AiCurriculumInterpreter` usa OpenAI e Ollama local como fallback; `/base` permite revisar propostas reais. A extração semântica exige saída estruturada com evidência literal, mas não confirma a veracidade dos fatos. Só fatos que o próprio modelo marca como ambíguos (`needsReview`: nome dividido em fragmentos, valor inferido de padrão incerto, conflito entre páginas, normalização incerta) criam pendência bloqueante; extrações diretas e inequívocas (contato em formato reconhecível, campo claramente rotulado, tecnologia sem ambiguidade de leitura) entram já confirmadas com a mesma evidência, reduzindo pendências desnecessárias nas revisões rápida e completa. A revisão humana continua obrigatória para o que fica pendente, e novos processamentos não sobrescrevem fatos revisados.
 5. [x] **Aprovar e ativar o Ground Truth.** `POST /v1/gt-snapshots/approve-version/{baseVersionId}` exige versão extraída, ao menos um fato confirmado/corrigido e nenhuma pendência bloqueante; congela os valores com hash e referências às decisões e ativa o novo snapshot na mesma transação que substitui o anterior. A rota genérica de alteração de `activeSnapshotId` foi removida. A geração baseada no snapshot segue pendente.
-6. [x] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** *Servidor concluído:* a sessão é emitida e autenticada pelo servidor (token opaco, só o hash fica no banco); upload e processamento por owner anônimo respeitam limites de tamanho, páginas, uploads, processamentos, gerações (aplicado em `POST /v1/cv/generate`) e taxa de requisições; os dados têm TTL e são apagados por um job de limpeza; o snapshot revisado pode ser migrado para uma conta antes da expiração sem repetir OCR. O processamento anônimo usa sempre a IA das variáveis de ambiente do servidor. *Interface concluída:* o visitante envia o PDF, acompanha a extração, revisa e aprova sem conta; a sessão é criada sob demanda, o token é a credencial das chamadas e, após o login, um diálogo oferece trazer o currículo aprovado para a conta ou descartá-lo. *Planejado:* a interface de geração.
-7. [x] **Implementar vaga e geração.** *Concluído:* receber URL ou texto, extrair requisitos (Gupy, JSON-LD, HTML genérico), versionar a vaga e analisá-la com a IA do owner; versionar o template Typst (`cv_templates`) e `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga, sem OCR e sem acrescentar fatos pessoais; PDF e Markdown persistidos no Garage; histórico, download e exclusão reais em `/v1/cv/generations`; cota anônima de gerações aplicada. A interface (gerador, "Meus Currículos" e a lista da home) consome esses endpoints, com esteira de ATS, template editável e prévia ao vivo. *Pendente:* escolha de template/idioma e validar a compilação com o Typst real em CI.
-8. [x] **Fechar o ciclo dos dados.** Desativação (`PATCH /v1/owners/{id}/deactivate-snapshot`) e exclusão efetiva (`DELETE /v1/base-versions/{id}`) de originais, texto, fatos, pendências e artefatos derivados implementadas, com política de retenção agendada para contas desativadas (`AccountRetentionJob`). Cobertura: testes de serviço/API contra Postgres real (`BaseVersionDeletionServiceTest`, `OwnerLifecycleIntegrationTest`, `AccountRetentionJobTest`), um teste de contrato que confere os novos paths em `/v3/api-docs` (`DataLifecycleContractTest`) e os botões de desativar/excluir em `/base`, com confirmação, na interface. *Pendente:* os novos testes de serviço não puderam ser executados neste ambiente (ver nota de verificação abaixo) e não há teste e2e de Playwright dedicado às duas novas ações.
-9. [x] **Preparar operação e integrações.** Refresh token opaco e rotativo (`POST /v1/auth/refresh`), logout e revogação (`POST /v1/auth/logout`, `/v1/me/sessions`), com detecção de reuso; exportação opcional dos artefatos gerados para uma pasta local (vault) desligada por padrão (`tailorly.vault.*`); CI em GitHub Actions (`lint`, `api`, `web`, `e2e`). *Pendente:* deploy automatizado e uma integração mais rica com o vault (por exemplo, nota própria com backlinks em vez de só frontmatter).
+6. [x] **Completar o acesso anônimo antes de liberar o fluxo para visitantes.** _Servidor concluído:_ a sessão é emitida e autenticada pelo servidor (token opaco, só o hash fica no banco); upload e processamento por owner anônimo respeitam limites de tamanho, páginas, uploads, processamentos, gerações (aplicado em `POST /v1/cv/generate`) e taxa de requisições; os dados têm TTL e são apagados por um job de limpeza; o snapshot revisado pode ser migrado para uma conta antes da expiração sem repetir OCR. O processamento anônimo usa sempre a IA das variáveis de ambiente do servidor. _Interface concluída:_ o visitante envia o PDF, acompanha a extração, revisa e aprova sem conta; a sessão é criada sob demanda, o token é a credencial das chamadas e, após o login, um diálogo oferece trazer o currículo aprovado para a conta ou descartá-lo. _Planejado:_ a interface de geração.
+7. [x] **Implementar vaga e geração.** _Concluído:_ receber URL ou texto, extrair requisitos (Gupy, JSON-LD, HTML genérico), versionar a vaga e analisá-la com a IA do owner; versionar o template Typst (`cv_templates`) e `POST /v1/cv/generate` a partir do snapshot aprovado e da versão da vaga, sem OCR e sem acrescentar fatos pessoais; PDF e Markdown persistidos no Garage; histórico, download e exclusão reais em `/v1/cv/generations`; cota anônima de gerações aplicada. A interface (gerador, "Meus Currículos" e a lista da home) consome esses endpoints, com esteira de ATS, template editável e prévia ao vivo. _Pendente:_ escolha de template/idioma e validar a compilação com o Typst real em CI.
+8. [x] **Fechar o ciclo dos dados.** Desativação (`PATCH /v1/owners/{id}/deactivate-snapshot`) e exclusão efetiva (`DELETE /v1/base-versions/{id}`) de originais, texto, fatos, pendências e artefatos derivados implementadas, com política de retenção agendada para contas desativadas (`AccountRetentionJob`). Cobertura: testes de serviço/API contra Postgres real (`BaseVersionDeletionServiceTest`, `OwnerLifecycleIntegrationTest`, `AccountRetentionJobTest`), um teste de contrato que confere os novos paths em `/v3/api-docs` (`DataLifecycleContractTest`) e os botões de desativar/excluir em `/base`, com confirmação, na interface. _Pendente:_ os novos testes de serviço não puderam ser executados neste ambiente (ver nota de verificação abaixo) e não há teste e2e de Playwright dedicado às duas novas ações.
+9. [x] **Preparar operação e integrações.** Refresh token opaco e rotativo (`POST /v1/auth/refresh`), logout e revogação (`POST /v1/auth/logout`, `/v1/me/sessions`), com detecção de reuso; exportação opcional dos artefatos gerados para uma pasta local (vault) desligada por padrão (`tailorly.vault.*`); CI em GitHub Actions (`lint`, `api`, `web`, `e2e`). _Pendente:_ deploy automatizado e uma integração mais rica com o vault (por exemplo, nota própria com backlinks em vez de só frontmatter).
 
 Após alterar endpoints ou DTOs, execute `pnpm api:sync` com a API ativa para atualizar o contrato OpenAPI e o cliente gerado. Atualize os READMEs da web e da API conforme cada etapa passar de planejada a implementada.

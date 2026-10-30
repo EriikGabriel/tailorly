@@ -32,8 +32,8 @@ export function GroundTruthPrincipalSection() {
         <p className="text-body-sm text-on-surface-variant">Carregando...</p>
       ) : !hasActiveSnapshot || !facts ? (
         <p className="rounded-lg bg-surface-container-low p-4 text-body-sm text-on-surface-variant">
-          Sem Ground Truth ativo. Envie e aprove um Currículo Base para ver
-          seus fatos aqui.
+          Sem Ground Truth ativo. Envie e aprove um Currículo Base para ver seus
+          fatos aqui.
         </p>
       ) : (
         <div className="flex flex-col gap-4">

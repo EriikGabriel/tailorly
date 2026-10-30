@@ -14,6 +14,7 @@ function getStrictContext<T>(
 ] {
   const Context = React.createContext<T | undefined>(undefined);
 
+  // biome-ignore lint/correctness/noComponentHookFactories: fábrica chamada uma vez por módulo, não por render.
   const Provider = ({
     value,
     children,
@@ -22,6 +23,7 @@ function getStrictContext<T>(
     children?: React.ReactNode;
   }) => <Context.Provider value={value}>{children}</Context.Provider>;
 
+  // biome-ignore lint/correctness/noComponentHookFactories: mesma fábrica de contexto acima.
   const useSafeContext = () => {
     const ctx = React.useContext(Context);
     if (ctx === undefined) {

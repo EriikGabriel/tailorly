@@ -1,6 +1,11 @@
 import { useBaseReview } from "@queries/base-review";
 import { useActiveGroundTruth } from "@queries/ground-truth";
-import { ArrowRight, FileText, ShieldCheck, ShieldX } from "@react-zero-ui/icon-sprite";
+import {
+  ArrowRight,
+  FileText,
+  ShieldCheck,
+  ShieldX,
+} from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
 import { durationLabel, isCurrentStatus } from "@/utils/review-format";
 import { FactualFidelityGauge } from "./factual-fidelity-gauge";
@@ -41,9 +46,7 @@ export function GroundTruthIntegrityCard() {
   }
 
   const experienceDates = (facts?.experience ?? []).filter((e) => e.start);
-  const earliestStart = experienceDates
-    .map((e) => e.start as string)
-    .sort()[0];
+  const earliestStart = experienceDates.map((e) => e.start as string).sort()[0];
   const stillWorking = experienceDates.some((e) => isCurrentStatus(e.status));
   const latestEnd = experienceDates
     .map((e) => e.end)
@@ -63,9 +66,10 @@ export function GroundTruthIntegrityCard() {
       sum + record.facts.filter((f) => f.reviewState !== "pendente").length,
     0,
   );
-  const fidelity = totalFacts > 0 ? Math.round((resolvedFacts / totalFacts) * 100) : 100;
-  const approvedSections = records.filter(
-    (record) => record.facts.every((f) => f.reviewState !== "pendente"),
+  const fidelity =
+    totalFacts > 0 ? Math.round((resolvedFacts / totalFacts) * 100) : 100;
+  const approvedSections = records.filter((record) =>
+    record.facts.every((f) => f.reviewState !== "pendente"),
   ).length;
 
   return (
