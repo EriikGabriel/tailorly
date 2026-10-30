@@ -53,21 +53,25 @@ public class BaseVersionDeletionService {
   }
 
   public void delete(UUID baseVersionId) {
-    BaseVersion version = versions.findById(baseVersionId)
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.BaseVersion.NOT_FOUND));
-    UUID ownerId = version.getOwner().getId();
-    UUID documentId = version.getDocument().getId();
+    // Tudo numa única transação: owners.findByIdForUpdate usa PESSIMISTIC_WRITE, que o JPA exige
+    // rodar dentro de uma transação de escrita em andamento; separar a trava da exclusão também
+    // deixaria o lock sem efeito, pois ele seria liberado antes da exclusão acontecer.
+    transaction.executeWithoutResult(status -> {
+      BaseVersion version = versions.findById(baseVersionId)
+          .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.BaseVersion.NOT_FOUND));
+      UUID ownerId = version.getOwner().getId();
+      UUID documentId = version.getDocument().getId();
 
-    Owner owner = owners.findByIdForUpdate(ownerId)
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
-    access.assertCanAccess(owner);
+      Owner owner = owners.findByIdForUpdate(ownerId)
+          .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
+      access.assertCanAccess(owner);
 
-    boolean documentOrphaned = documentHasNoOtherVersion(baseVersionId, documentId);
-    List<StoredObjectRef> refs = collectStoredObjectRefs(baseVersionId, documentId, documentOrphaned);
-    refs.forEach(ref -> storage.delete(ref.storageKey()));
+      boolean documentOrphaned = documentHasNoOtherVersion(baseVersionId, documentId);
+      List<StoredObjectRef> refs = collectStoredObjectRefs(baseVersionId, documentId, documentOrphaned);
+      refs.forEach(ref -> storage.delete(ref.storageKey()));
 
-    transaction.executeWithoutResult(status ->
-        deleteRows(baseVersionId, documentId, documentOrphaned, refs));
+      deleteRows(baseVersionId, documentId, documentOrphaned, refs);
+    });
   }
 
   private record StoredObjectRef(UUID id, String storageKey) {

@@ -15,6 +15,9 @@ import com.tailorly.api.extraction.page.ExtractedPageRepository;
 import com.tailorly.api.extraction.run.ExtractionRunRepository;
 import com.tailorly.api.objects.*;
 import com.tailorly.api.owner.*;
+import com.tailorly.api.session.AnonymousSession;
+import com.tailorly.api.session.AnonymousSessionRepository;
+import com.tailorly.api.session.AnonymousSessionTokens;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -44,6 +47,7 @@ class ExtractionPersistenceTest {
   @Autowired BaseDocumentRepository documents;
   @Autowired BaseVersionRepository versions;
   @Autowired OwnerRepository owners;
+  @Autowired AnonymousSessionRepository anonymousSessions;
   @Autowired PlatformTransactionManager transactionManager;
 
   @Test
@@ -104,6 +108,12 @@ class ExtractionPersistenceTest {
     return tx.execute(status -> {
       Owner owner = owners.save(Owner.builder().kind(OwnerKindEnum.KIND_ANONYMOUS)
           .expiresAt(Instant.now().plusSeconds(3600)).build());
+      // AnonymousQuotaService.consumeExtraction exige uma sessão para o owner: sem ela, o
+      // UPDATE condicional não encontra linha nenhuma e o primeiro enfileiramento já falha
+      // como se a cota estivesse esgotada.
+      anonymousSessions.save(AnonymousSession.builder().owner(owner)
+          .tokenHash(AnonymousSessionTokens.hash(AnonymousSessionTokens.generate()))
+          .expiresAt(owner.getExpiresAt()).build());
       StoredObject original = objects.save(StoredObject.builder().owner(owner).purpose("BASE_ORIGINAL")
           .storageKey("original/" + UUID.randomUUID()).contentHash("same-hash")
           .mimeType("application/pdf").sizeBytes(100L).deletionStatus("ACTIVE").build());
