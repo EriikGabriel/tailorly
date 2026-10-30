@@ -1,7 +1,7 @@
 import { create } from "zustand";
+import type { JobInputMode } from "../types/job-draft";
 import { useQuickReviewStore } from "./quick-review-store";
 
-export type JobInputMode = "url" | "text";
 interface JobDraftState {
   mode: JobInputMode;
   jobUrl: string;

@@ -1,11 +1,11 @@
 import type { CollectionProps, ReviewField } from "@@types/review-model";
 import { Briefcase, Building2, HandHeart } from "@react-zero-ui/icon-sprite";
+import { ReviewDraftCollection } from "../-components/review-draft-collection";
+import { ReviewStepShell } from "../-components/review-step-shell";
 import {
   summarizeExperience,
   summarizeVolunteering,
-} from "../-components/record-summaries";
-import { ReviewDraftCollection } from "../-components/review-draft-collection";
-import { ReviewStepShell } from "../-components/review-step-shell";
+} from "../-utils/record-summaries";
 
 const employmentOptions = [
   "CLT",

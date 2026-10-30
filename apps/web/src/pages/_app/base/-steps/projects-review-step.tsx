@@ -5,9 +5,9 @@ import {
   Quote,
   TrendingUp,
 } from "@react-zero-ui/icon-sprite";
-import { summarizeProject } from "../-components/record-summaries";
 import { ReviewDraftCollection } from "../-components/review-draft-collection";
 import { ReviewStepShell } from "../-components/review-step-shell";
+import { summarizeProject } from "../-utils/record-summaries";
 
 const fields: ReviewField[] = [
   { key: "title", label: "Projeto ou realização", icon: FolderBookmark },

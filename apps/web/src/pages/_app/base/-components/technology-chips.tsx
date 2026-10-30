@@ -3,7 +3,9 @@ import { AutoTextarea } from "@components/fields/auto-textarea";
 import { IconInput } from "@components/fields/icon-input";
 import { Check, Tag, X } from "@react-zero-ui/icon-sprite";
 import { useId, useState } from "react";
-import { PendingNote, usePendingFields, VerifiedMark } from "./pending-fields";
+import { usePendingFields } from "../-hooks/use-pending-fields";
+import { PendingNote } from "./pending-note";
+import { VerifiedMark } from "./verified-mark";
 
 /** Tecnologias e competências como chips; clicar em um chip edita o contexto de uso. */
 export function TechnologyChips({ records, onChange }: CollectionProps) {

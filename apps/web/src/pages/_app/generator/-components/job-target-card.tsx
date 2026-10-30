@@ -1,3 +1,4 @@
+import type { JobInputMode } from "@@types/job-draft";
 import {
   Tabs,
   TabsList,
@@ -15,7 +16,7 @@ import {
   Link as LinkIcon,
   Sparkles,
 } from "@react-zero-ui/icon-sprite";
-import { type JobInputMode, useJobDraftStore } from "@stores/job-draft-store";
+import { useJobDraftStore } from "@stores/job-draft-store";
 import { checkJobUrl, MAX_JOB_URL_LENGTH } from "@/utils/job-url";
 import { JobAnalysisCard } from "./job-analysis-card";
 import { SectionHeading } from "./section-heading";

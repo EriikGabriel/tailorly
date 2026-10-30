@@ -10,7 +10,7 @@ import {
   Phone,
   UserRound,
 } from "@react-zero-ui/icon-sprite";
-import { describeLink, initials } from "@/lib/review-format";
+import { describeLink, initials } from "@/utils/review-format";
 import { ReviewDraftFields } from "../-components/review-draft-fields";
 import { ReviewStepShell } from "../-components/review-step-shell";
 

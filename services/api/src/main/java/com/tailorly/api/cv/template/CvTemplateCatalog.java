@@ -3,16 +3,14 @@ package com.tailorly.api.cv.template;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Comparator;
-import java.util.HexFormat;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.tailorly.api.shared.util.Sha256;
 
 /**
  * Templates Typst embarcados na aplicação e seu registro versionado no banco.
@@ -48,7 +46,7 @@ public class CvTemplateCatalog {
         .max(Comparator.comparingInt(Bundled::version))
         .orElseThrow(() -> new IllegalArgumentException("Unknown CV template: " + name));
     String content = read(bundled.resource());
-    String hash = sha256(content);
+    String hash = Sha256.hex(content);
 
     return templates.findByNameAndVersionAndOwnerIsNull(bundled.name(), bundled.version())
         .map(existing -> {
@@ -75,15 +73,6 @@ public class CvTemplateCatalog {
       return new String(stream.readAllBytes(), StandardCharsets.UTF_8).replace("\r\n", "\n");
     } catch (IOException exception) {
       throw new IllegalStateException("Could not read CV template resource " + resource, exception);
-    }
-  }
-
-  private static String sha256(String content) {
-    try {
-      return HexFormat.of().formatHex(
-          MessageDigest.getInstance("SHA-256").digest(content.getBytes(StandardCharsets.UTF_8)));
-    } catch (NoSuchAlgorithmException exception) {
-      throw new IllegalStateException("SHA-256 is unavailable", exception);
     }
   }
 }

@@ -1,14 +1,11 @@
+import type { FactRecord } from "@@types/base-review";
 import type { ReviewStepId } from "@@types/review-model";
-import type { FactRecord } from "@queries/base-review";
 import { ScanSearch } from "@react-zero-ui/icon-sprite";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { factFieldLabel, formatFactValue } from "@/utils/fact-display";
-import {
-  categoryLabel,
-  EVIDENCE_TONE,
-  isCategoryActive,
-} from "./evidence-style";
+import { EVIDENCE_TONE } from "../-constants/evidence";
+import { categoryLabel, isCategoryActive } from "../-utils/evidence-category";
 
 function highlightExcerpt(excerpt: string, value: string): ReactNode {
   const needle = value.trim();

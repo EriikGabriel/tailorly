@@ -1,3 +1,10 @@
+import type {
+  ApiReviewIssue,
+  BaseFact,
+  FactEvidence,
+  FactRecord,
+  GroundTruthSnapshot,
+} from "@@types/base-review";
 import { apiRequest } from "@lib/api/client";
 import { SESSION_EXPIRED_MESSAGE } from "@lib/api/error-message";
 import {
@@ -8,62 +15,6 @@ import {
 import { apiQueryKeys } from "@lib/api/query-keys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiToken } from "./api-credential";
-
-export type FactEvidence = {
-  id: string;
-  extractedPageId: string;
-  sourceExcerpt: string;
-  sourceLocator: unknown;
-};
-
-export type BaseFact = {
-  id: string;
-  recordId: string;
-  fieldKey: string;
-  extractedValue: unknown;
-  reviewedValue: unknown;
-  origin: string;
-  reviewState: "pendente" | "confirmado" | "corrigido" | "omitido";
-  evidence: FactEvidence[];
-};
-
-export type FactRecord = {
-  id: string;
-  baseVersionId: string;
-  category: string;
-  displayOrder: number;
-  facts: BaseFact[];
-};
-
-export type ReviewIssue = {
-  id: string;
-  baseVersionId: string;
-  factId: string | null;
-  category: string;
-  reason: string;
-  blocking: boolean;
-  status: string;
-  questionAndChoices: Record<string, unknown> | null;
-  fact: BaseFact | null;
-};
-
-export type GroundTruthSnapshot = {
-  id: string;
-  ownerId: string;
-  baseVersionId: string;
-  snapshotNumber: number;
-  approvedReviewRevision: number;
-  contentHash: string;
-  approvedAt: string;
-  schemaVersion: number;
-  active: boolean;
-  items: {
-    id: string;
-    category: string;
-    fieldKey: string;
-    approvedValue: unknown;
-  }[];
-};
 
 // Centraliza as mutações da revisão para invalidar os dados exibidos na tela.
 function useBaseReviewMutation<TInput, TOutput>(
@@ -172,7 +123,7 @@ export function useBaseReview(versionId?: string) {
   const issues = useQuery({
     queryKey: apiQueryKeys.baseReview.issues(versionId ?? ""),
     queryFn: () =>
-      apiRequest<ReviewIssue[]>(
+      apiRequest<ApiReviewIssue[]>(
         `/v1/review-issues/version/${encodeURIComponent(versionId ?? "")}`,
         { accessToken: accessToken ?? undefined },
       ),
@@ -182,6 +133,9 @@ export function useBaseReview(versionId?: string) {
 
   return { records, issues, pages };
 }
+
+/** Consultas da revisão (fatos, pendências e páginas extraídas) de uma versão do Currículo Base. */
+export type BaseReviewQueries = ReturnType<typeof useBaseReview>;
 
 export function useCreateFactRecord(versionId: string) {
   return useBaseReviewMutation<
@@ -213,7 +167,7 @@ export function useAnswerReviewIssue(versionId: string) {
         reviewedValue?: string;
       };
     },
-    ReviewIssue
+    ApiReviewIssue
   >(
     versionId,
     ({ id }) => `/v1/review-issues/${encodeURIComponent(id)}/answer`,

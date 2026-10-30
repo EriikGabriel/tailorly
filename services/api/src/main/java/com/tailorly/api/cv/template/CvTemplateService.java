@@ -1,10 +1,6 @@
 package com.tailorly.api.cv.template;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.HexFormat;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -17,6 +13,7 @@ import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
 import com.tailorly.api.shared.exception.TooManyRequestsException;
+import com.tailorly.api.shared.util.Sha256;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,7 +72,7 @@ public class CvTemplateService {
         .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
     access.assertCanAccess(owner);
 
-    String hash = sha256(content);
+    String hash = Sha256.hex(content);
     var latest = templates.findFirstByOwnerIdAndNameOrderByVersionDesc(ownerId, CUSTOM_NAME);
     if (latest.isPresent() && latest.get().getContentHash().equals(hash)) {
       return CvTemplateResponse.from(latest.get());
@@ -118,14 +115,5 @@ public class CvTemplateService {
 
   private Owner owner(UUID id) {
     return owners.findById(id).orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
-  }
-
-  private static String sha256(String content) {
-    try {
-      return HexFormat.of().formatHex(
-          MessageDigest.getInstance("SHA-256").digest(content.getBytes(StandardCharsets.UTF_8)));
-    } catch (NoSuchAlgorithmException exception) {
-      throw new IllegalStateException("SHA-256 is unavailable", exception);
-    }
   }
 }

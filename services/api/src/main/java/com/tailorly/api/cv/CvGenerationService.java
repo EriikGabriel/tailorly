@@ -1,19 +1,11 @@
 package com.tailorly.api.cv;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.Normalizer;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tailorly.api.base.snapshot.GtSnapshot;
-import com.tailorly.api.base.snapshot.GtSnapshotItem;
-import com.tailorly.api.base.snapshot.GtSnapshotItemRepository;
 import com.tailorly.api.base.snapshot.GtSnapshotRepository;
 import com.tailorly.api.cv.dto.CvGenerationResponse;
 import com.tailorly.api.cv.dto.GenerateCvRequest;
@@ -31,8 +23,6 @@ import com.tailorly.api.cv.render.PdfRenderer;
 import com.tailorly.api.cv.template.CvTemplate;
 import com.tailorly.api.cv.template.CvTemplateService;
 import com.tailorly.api.job.dto.JobAnalysis;
-import com.tailorly.api.job.persistence.JobPosting;
-import com.tailorly.api.job.persistence.JobPostingRepository;
 import com.tailorly.api.job.persistence.JobPostingVersion;
 import com.tailorly.api.job.persistence.JobPostingVersionRepository;
 import com.tailorly.api.objects.StoredObject;
@@ -46,14 +36,10 @@ import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Gera o currículo a partir do snapshot aprovado do Ground Truth e de uma versão da vaga.
@@ -70,18 +56,16 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  */
 @Service
 public class CvGenerationService {
-  private static final Logger log = LoggerFactory.getLogger(CvGenerationService.class);
   private static final String PDF = "application/pdf";
   private static final String MARKDOWN = "text/markdown; charset=utf-8";
-
-  private static final String PIPELINE_INPUT_VERSION = CvPipeline.VERSION + "/" + "plan-1";
 
   private final OwnerRepository owners;
   private final OwnerAccessService access;
   private final GtSnapshotRepository snapshots;
-  private final GtSnapshotItemRepository snapshotItems;
-  private final JobPostingRepository postings;
   private final JobPostingVersionRepository jobVersions;
+  private final CvInputResolver inputs;
+  private final CvInputHasher inputHasher;
+  private final GeneratedCvFileStore fileStore;
   private final CvTemplateService templates;
   private final CvGenerationRepository generations;
   private final StoredObjectRepository objects;
@@ -90,21 +74,21 @@ public class CvGenerationService {
   private final MarkdownCvRenderer markdownRenderer;
   private final CvPipeline pipeline;
   private final AnonymousQuotaService quota;
-  private final ObjectMapper objectMapper;
   private final TransactionTemplate transaction;
 
   public CvGenerationService(OwnerRepository owners, OwnerAccessService access, GtSnapshotRepository snapshots,
-      GtSnapshotItemRepository snapshotItems, JobPostingRepository postings,
-      JobPostingVersionRepository jobVersions, CvTemplateService templates, CvGenerationRepository generations,
+      JobPostingVersionRepository jobVersions, CvInputResolver inputs, CvInputHasher inputHasher,
+      GeneratedCvFileStore fileStore, CvTemplateService templates, CvGenerationRepository generations,
       StoredObjectRepository objects, ObjectStorage storage, PdfRenderer pdfRenderer,
       MarkdownCvRenderer markdownRenderer, CvPipeline pipeline, AnonymousQuotaService quota,
-      ObjectMapper objectMapper, PlatformTransactionManager transactionManager) {
+      PlatformTransactionManager transactionManager) {
     this.owners = owners;
     this.access = access;
     this.snapshots = snapshots;
-    this.snapshotItems = snapshotItems;
-    this.postings = postings;
     this.jobVersions = jobVersions;
+    this.inputs = inputs;
+    this.inputHasher = inputHasher;
+    this.fileStore = fileStore;
     this.templates = templates;
     this.generations = generations;
     this.objects = objects;
@@ -113,7 +97,6 @@ public class CvGenerationService {
     this.markdownRenderer = markdownRenderer;
     this.pipeline = pipeline;
     this.quota = quota;
-    this.objectMapper = objectMapper;
     this.transaction = new TransactionTemplate(transactionManager);
   }
 
@@ -155,14 +138,14 @@ public class CvGenerationService {
     access.assertCanAccess(owner);
 
     CvTemplate template = templates.resolveFor(owner, request.templateId());
-    GtSnapshot snapshot = resolveSnapshot(owner, request.snapshotId());
-    JobPostingVersion jobVersion = resolveJobVersion(owner, request.jobPostingId(), request.jobVersionNumber());
+    GtSnapshot snapshot = inputs.resolveSnapshot(owner, request.snapshotId());
+    JobPostingVersion jobVersion = inputs.resolveJobVersion(owner, request.jobPostingId(),
+        request.jobVersionNumber());
 
-    List<FactValue> facts = snapshotItems.findAllBySnapshotIdOrderByCategoryAscFieldKeyAsc(snapshot.getId())
-        .stream().map(CvGenerationService::toFact).toList();
+    List<FactValue> facts = inputs.factsOf(snapshot);
     JobTerms terms = JobTerms.of(jobVersion.getDetails(), jobVersion.getAnalysis());
     CvDocumentBuilder.Result built = CvDocumentBuilder.build(facts, terms);
-    String inputHash = inputHash(built.document(), preferences, template, jobVersion);
+    String inputHash = inputHasher.hash(built.document(), preferences, template, jobVersion);
 
     var existing = generations.findByOwnerIdAndInputHash(owner.getId(), inputHash);
     if (existing.isPresent()) {
@@ -195,8 +178,8 @@ public class CvGenerationService {
 
     byte[] markdown = markdownRenderer.render(outcome.document());
     String base = "owners/" + owner.getId() + "/generated/" + UUID.randomUUID();
-    StoredObject pdfObject = store(owner, "CV_PDF", base + ".pdf", outcome.pdf(), PDF);
-    StoredObject markdownObject = store(owner, "CV_MARKDOWN", base + ".md", markdown, MARKDOWN);
+    StoredObject pdfObject = fileStore.store(owner, "CV_PDF", base + ".pdf", outcome.pdf(), PDF);
+    StoredObject markdownObject = fileStore.store(owner, "CV_MARKDOWN", base + ".md", markdown, MARKDOWN);
 
     JobPostingVersion jobVersion = jobVersions.findById(prepared.jobVersionId()).orElseThrow();
     CvGeneration generation = generations.saveAndFlush(CvGeneration.builder()
@@ -254,7 +237,7 @@ public class CvGenerationService {
       throw new ResourceNotFoundException(ErrorCodes.CvGeneration.ARTIFACT_MISSING);
     }
     return new Download(storage.get(object.getStorageKey()), object.getMimeType(),
-        filename(generation, pdf ? "pdf" : "md"));
+        CvFilenames.of(generation, pdf ? "pdf" : "md"));
   }
 
   /**
@@ -283,106 +266,8 @@ public class CvGenerationService {
     return generation;
   }
 
-  private GtSnapshot resolveSnapshot(Owner owner, UUID requestedId) {
-    UUID snapshotId = requestedId != null ? requestedId : owner.getActiveSnapshotId();
-    if (snapshotId == null) {
-      throw new BadRequestException(ErrorCodes.CvGeneration.NO_ACTIVE_SNAPSHOT);
-    }
-    GtSnapshot snapshot = snapshots.findById(snapshotId)
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.GtSnapshot.NOT_FOUND));
-    // Um snapshot de outro owner é indistinguível de um inexistente.
-    if (!snapshot.getOwner().getId().equals(owner.getId())) {
-      throw new ResourceNotFoundException(ErrorCodes.GtSnapshot.NOT_FOUND);
-    }
-    return snapshot;
-  }
-
-  private JobPostingVersion resolveJobVersion(Owner owner, UUID postingId, Integer requestedVersion) {
-    JobPosting posting = postings.findById(postingId)
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.CvGeneration.JOB_NOT_FOUND));
-    if (!posting.getOwner().getId().equals(owner.getId())) {
-      throw new ResourceNotFoundException(ErrorCodes.CvGeneration.JOB_NOT_FOUND);
-    }
-    int versionNumber = requestedVersion != null ? requestedVersion : posting.getLatestVersionNumber();
-    return jobVersions.findByJobPostingIdAndVersionNumber(postingId, versionNumber)
-        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.CvGeneration.JOB_NOT_FOUND));
-  }
-
-  private static FactValue toFact(GtSnapshotItem item) {
-    Object value = item.getApprovedValue();
-    String text = value instanceof String || value instanceof Number || value instanceof Boolean
-        ? value.toString() : null;
-    return new FactValue(item.getCategory(), item.getFactRecord().getDisplayOrder(), item.getFieldKey(), text);
-  }
-
-  private StoredObject store(Owner owner, String purpose, String key, byte[] content, String mimeType) {
-    storage.put(key, content, mimeType);
-    // Se a transação for desfeita depois da gravação, o objeto não teria registro algum.
-    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-      @Override
-      public void afterCompletion(int status) {
-        if (status == STATUS_ROLLED_BACK) {
-          try {
-            storage.delete(key);
-          } catch (RuntimeException exception) {
-            log.error("Could not remove rolled-back generated file at {}", key, exception);
-          }
-        }
-      }
-    });
-    return objects.save(StoredObject.builder()
-        .owner(owner)
-        .purpose(purpose)
-        .storageKey(key)
-        .contentHash(sha256(content))
-        .mimeType(mimeType)
-        .sizeBytes((long) content.length)
-        // Dados de visitantes herdam o TTL da sessão; contas não expiram.
-        .expiresAt(AnonymousQuotaService.isAnonymous(owner) ? owner.getExpiresAt() : null)
-        .deletionStatus("ACTIVE")
-        .build());
-  }
-
-  private String inputHash(CvDocument document, CvPreferences preferences, CvTemplate template,
-      JobPostingVersion jobVersion) {
-    try {
-      // A análise da vaga entra no hash porque ela orienta a IA e a avaliação de ATS.
-      byte[] content = objectMapper.writeValueAsBytes(java.util.Arrays.asList(document, preferences,
-          jobVersion.getAnalysis(), PIPELINE_INPUT_VERSION));
-      return sha256(concat(content, template.getContentHash().getBytes(StandardCharsets.US_ASCII)));
-    } catch (JsonProcessingException exception) {
-      throw new IllegalStateException("Could not hash the CV content", exception);
-    }
-  }
-
-  private static byte[] concat(byte[] first, byte[] second) {
-    byte[] joined = new byte[first.length + second.length];
-    System.arraycopy(first, 0, joined, 0, first.length);
-    System.arraycopy(second, 0, joined, first.length, second.length);
-    return joined;
-  }
-
-  private static String filename(CvGeneration generation, String extension) {
-    var job = generation.getJobPostingVersion().getDetails();
-    String label = job.company() != null && job.company().name() != null ? job.company().name() : job.title();
-    String slug = label == null ? "" : Normalizer.normalize(label, Normalizer.Form.NFD)
-        .replaceAll("\\p{M}+", "").toLowerCase(Locale.ROOT)
-        .replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
-    if (slug.length() > 40) {
-      slug = slug.substring(0, 40).replaceAll("-+$", "");
-    }
-    return "curriculo" + (slug.isEmpty() ? "" : "-" + slug) + "." + extension;
-  }
 
   private static String truncate(String text, int max) {
     return text.length() <= max ? text : text.substring(0, max);
-  }
-
-  private static String sha256(byte[] bytes) {
-    try {
-      return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
-    } catch (NoSuchAlgorithmException exception) {
-      throw new IllegalStateException("SHA-256 is unavailable", exception);
-    }
   }
 }

@@ -6,7 +6,11 @@ import {
   Mail,
   Phone,
 } from "@react-zero-ui/icon-sprite";
-import { describeLink, formatPhone, type LinkKind } from "@/lib/review-format";
+import {
+  describeLink,
+  formatPhone,
+  type LinkKind,
+} from "@/utils/review-format";
 import { IconInput, type IconInputProps } from "./icon-input";
 
 type TypedProps = Omit<IconInputProps, "icon" | "type" | "inputMode">;

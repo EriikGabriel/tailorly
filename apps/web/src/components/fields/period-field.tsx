@@ -5,7 +5,7 @@ import {
   durationLabel,
   isCurrentStatus,
   parsePartialDate,
-} from "@/lib/review-format";
+} from "@/utils/review-format";
 import { FieldFrame } from "./field-frame";
 import { MonthYearPicker } from "./month-year-picker";
 

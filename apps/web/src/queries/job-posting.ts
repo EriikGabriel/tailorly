@@ -1,3 +1,4 @@
+import type { AnalyzeResult, JobPostingInput } from "@@types/job-posting";
 import { ApiClientError } from "@lib/api/client";
 import type {
   JobPostingDetailResponse,
@@ -14,7 +15,6 @@ import {
 import { apiQueryKeys } from "@lib/api/query-keys";
 import { useAnonymousSessionStore } from "@stores/anonymous-session-store";
 import { useAuthStore } from "@stores/auth-store";
-import type { OwnerKind } from "@stores/base-cv-store";
 import { useJobPostingStore } from "@stores/job-posting-store";
 import {
   skipToken,
@@ -23,28 +23,12 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { type ApiCredential, ensureCredential } from "./api-credential";
+import {
+  type ApiCredential,
+  ensureCredential,
+  tokenForOwnerKind,
+} from "./api-credential";
 import { useCurrentOwnerId } from "./current-account";
-
-export type JobPostingInput =
-  | { mode: "url"; url: string }
-  | { mode: "text"; text: string };
-
-export type AnalyzeResult = JobPostingVersionResponse & {
-  ownerKind: OwnerKind;
-};
-
-/**
- * Credencial do dono da vaga, sem alternativa: uma vaga de visitante só abre com o token da
- * sessão e uma vaga de conta só com o JWT. Cair no outro token acessaria o owner errado e o
- * servidor responde 403.
- */
-function tokenFor(ownerKind: OwnerKind | null): string | null {
-  if (ownerKind === "account") return useAuthStore.getState().accessToken;
-  if (ownerKind === "anonymous")
-    return useAnonymousSessionStore.getState().session?.token ?? null;
-  return null;
-}
 
 /** A vaga selecionada deixou de ser acessível (migração, login, sessão expirada ou exclusão). */
 function dropSelectionWhenInaccessible(postingId: string, error: unknown) {
@@ -157,7 +141,7 @@ export function useJobPostingVersion(
   detail: JobPostingDetailResponse | undefined,
 ) {
   const selected = useJobPostingStore((state) => state.selected);
-  const token = selected ? tokenFor(selected.ownerKind) : null;
+  const token = selected ? tokenForOwnerKind(selected.ownerKind) : null;
   const postingId = selected?.postingId;
   const wanted = selected?.versionNumber ?? null;
   const latest = detail?.latest;
@@ -186,7 +170,7 @@ export function useReanalyzeJobPosting() {
   >({
     mutationFn: ({ postingId, versionNumber }) => {
       const selected = useJobPostingStore.getState().selected;
-      const token = tokenFor(selected?.ownerKind ?? null);
+      const token = tokenForOwnerKind(selected?.ownerKind ?? null);
       if (!token) throw new Error("Sessão indisponível. Envie a vaga de novo.");
       return jobPostingReanalyze(postingId, versionNumber, {
         accessToken: token,
@@ -213,7 +197,7 @@ export function useDeleteJobPosting() {
   return useMutation<void, Error, string>({
     mutationFn: (postingId) => {
       const selected = useJobPostingStore.getState().selected;
-      const token = tokenFor(selected?.ownerKind ?? null);
+      const token = tokenForOwnerKind(selected?.ownerKind ?? null);
       if (!token) throw new Error("Sessão indisponível.");
       return jobPostingDelete(postingId, { accessToken: token });
     },

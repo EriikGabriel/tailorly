@@ -1,11 +1,8 @@
 package com.tailorly.api.base.snapshot;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HexFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +25,7 @@ import com.tailorly.api.owner.OwnerRepository;
 import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
+import com.tailorly.api.shared.util.Sha256;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -183,8 +181,8 @@ public class GtSnapshotService {
               fact.getReviewedValue()))
           .toList();
       byte[] bytes = objectMapper.writeValueAsBytes(entries);
-      return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
-    } catch (NoSuchAlgorithmException | JsonProcessingException exception) {
+      return Sha256.hex(bytes);
+    } catch (JsonProcessingException exception) {
       throw new IllegalStateException(
           "Não foi possível calcular o hash do snapshot aprovado do Ground Truth", exception);
     }

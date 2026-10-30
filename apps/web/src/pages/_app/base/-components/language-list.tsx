@@ -4,12 +4,10 @@ import { IconInput } from "@components/fields/icon-input";
 import { ProficiencyField } from "@components/fields/proficiency-field";
 import { Languages, Plus, Trash2 } from "@react-zero-ui/icon-sprite";
 import { useId } from "react";
-import {
-  PENDING_RING,
-  PendingNote,
-  usePendingFields,
-  VerifiedMark,
-} from "./pending-fields";
+import { PENDING_RING } from "../-constants/pending";
+import { usePendingFields } from "../-hooks/use-pending-fields";
+import { PendingNote } from "./pending-note";
+import { VerifiedMark } from "./verified-mark";
 
 const SUGGESTIONS = ["Português", "Inglês", "Espanhol", "Francês", "Alemão"];
 

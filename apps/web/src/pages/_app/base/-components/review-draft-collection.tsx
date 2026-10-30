@@ -18,9 +18,10 @@ import {
 } from "@react-zero-ui/icon-sprite";
 import { useReviewDraftStore } from "@stores/review-draft-store";
 import { type ComponentType, useId, useRef } from "react";
-import { usePendingFields, VerifiedMark } from "./pending-fields";
-import type { BadgeTone, RecordSummary } from "./record-summaries";
+import { usePendingFields } from "../-hooks/use-pending-fields";
+import type { BadgeTone, RecordSummary } from "../-types/record-summary";
 import { ReviewDraftFields } from "./review-draft-fields";
+import { VerifiedMark } from "./verified-mark";
 
 const badgeTone: Record<BadgeTone, string> = {
   success:

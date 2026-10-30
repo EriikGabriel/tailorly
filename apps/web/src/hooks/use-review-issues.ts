@@ -10,31 +10,10 @@ import {
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useReviewDraftStore } from "@stores/review-draft-store";
 import { useMemo } from "react";
-import type {
-  ReviewAnswer,
-  ReviewCategory,
-  ReviewChoice,
-  ReviewIssue,
-} from "@/types/review";
-import { factFieldLabel, formatFactValue } from "@/utils/fact-display";
-import {
-  matchJobToFacts,
-  relevanceForFact,
-  verifiableMatches,
-} from "@/utils/job-fact-match";
+import type { ReviewAnswer, ReviewChoice, ReviewIssue } from "@/types/review";
+import { matchJobToFacts, verifiableMatches } from "@/utils/job-fact-match";
 import { applyAnswerToDraft } from "@/utils/review-draft-sync";
-
-// Categorias dos fatos (backend) -> seções da revisão.
-const reviewCategoryByFactCategory: Record<string, ReviewCategory> = {
-  identity: "identity",
-  experience: "employment",
-  volunteering: "volunteering",
-  projects: "projects",
-  degrees: "education",
-  certifications: "education",
-  languages: "languages",
-  technologies: "skills",
-};
+import { rankRelevantIssues, toReviewIssue } from "@/utils/review-issue-mapper";
 
 /**
  * Pendências do Currículo Base da versão atual, prontas para responder, com a relevância para a
@@ -59,76 +38,7 @@ export function useReviewIssues() {
     () =>
       (review.issues.data ?? [])
         .filter((issue) => issue.status === "PENDING" && issue.fact)
-        .map((issue): ReviewIssue => {
-          const configured = issue.questionAndChoices ?? {};
-          const fieldLabel = factFieldLabel(
-            issue.fact?.fieldKey ?? "",
-            issue.category,
-          );
-          const currentValue = formatFactValue(
-            issue.fact?.reviewedValue ?? issue.fact?.extractedValue,
-          );
-          const rawChoices = Array.isArray(configured.choices)
-            ? configured.choices
-            : ["confirmado", "corrigido", "omitido"];
-          const choices: ReviewChoice[] = rawChoices.flatMap(
-            (raw): ReviewChoice[] => {
-              if (raw === "confirmado")
-                return [
-                  { value: raw, label: "Está correto", result: "confirmed" },
-                ];
-              if (raw === "corrigido")
-                return [
-                  {
-                    value: raw,
-                    label: "Corrigir",
-                    result: "corrected",
-                    correction: {
-                      label: `Valor correto para ${fieldLabel}`,
-                      type: "text",
-                      placeholder: currentValue,
-                      originalValue: currentValue,
-                    },
-                  },
-                ];
-              if (raw === "omitido")
-                return [
-                  {
-                    value: raw,
-                    label: "Não usar no currículo",
-                    result: "omitted",
-                  },
-                ];
-              return [];
-            },
-          );
-          return {
-            id: issue.id,
-            category:
-              reviewCategoryByFactCategory[issue.category] ?? "identity",
-            type: "fact",
-            question: `${fieldLabel} está correto?`,
-            fieldLabel,
-            value: currentValue,
-            evidence: issue.fact?.evidence[0]?.sourceExcerpt,
-            source: issue.fact
-              ? {
-                  category: issue.category,
-                  recordId: issue.fact.recordId,
-                  fieldKey: issue.fact.fieldKey,
-                  value: String(
-                    issue.fact.reviewedValue ?? issue.fact.extractedValue ?? "",
-                  ),
-                }
-              : undefined,
-            jobRelevance:
-              jobMatch && issue.fact
-                ? relevanceForFact(jobMatch, issue.fact)
-                : undefined,
-            motivation: issue.reason,
-            choices,
-          };
-        }),
+        .map((issue) => toReviewIssue(issue, jobMatch)),
     [review.issues.data, jobMatch],
   );
 
@@ -136,17 +46,7 @@ export function useReviewIssues() {
   // vaga sem tecnologias) todas as pendências têm o mesmo peso.
   const verifiable = jobMatch ? verifiableMatches(jobMatch) : [];
   const canPrioritize = verifiable.length > 0;
-  const relevantIssues = useMemo(
-    () =>
-      issues
-        .filter((issue) => issue.jobRelevance)
-        .sort(
-          (a, b) =>
-            Number(b.jobRelevance?.importance === "required") -
-            Number(a.jobRelevance?.importance === "required"),
-        ),
-    [issues],
-  );
+  const relevantIssues = useMemo(() => rankRelevantIssues(issues), [issues]);
 
   return {
     baseVersionId,

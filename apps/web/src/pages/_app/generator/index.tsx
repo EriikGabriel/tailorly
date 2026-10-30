@@ -1,15 +1,15 @@
-import { ValidateDialog } from "@app/_home/-components/validate-dialog";
+import { ValidateDialog } from "@components/quick-review/validate-dialog";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AiGuidelinesCard } from "./-components/ai-guidelines-card";
-import type { ViewMode } from "./-components/document-stage";
 import { DocumentStage } from "./-components/document-stage";
 import { GenerateCta } from "./-components/generate-cta";
 import { GroundTruthCard } from "./-components/ground-truth-card";
 import { JobTargetCard } from "./-components/job-target-card";
 import { SecondBrainCard } from "./-components/second-brain-card";
 import { WorkspaceHeader } from "./-components/workspace-header";
+import type { ViewMode } from "./-types/view-mode";
 
 export const Route = createFileRoute("/_app/generator/")({
   component: GeneratorPage,

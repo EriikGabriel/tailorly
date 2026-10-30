@@ -2,9 +2,6 @@ package com.tailorly.api.base.document;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.UUID;
 
 import com.tailorly.api.base.document.dto.BaseDocumentResponse;
@@ -23,6 +20,7 @@ import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
 import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
+import com.tailorly.api.shared.util.Sha256;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +90,7 @@ public class BaseDocumentUploadService {
     }
 
     byte[] bytes = readPdf(file);
-    String hash = sha256(bytes);
+    String hash = Sha256.hex(bytes);
 
     // Deduplicação é sempre escopada ao owner: o mesmo PDF enviado por outra pessoa
     // cria um BaseDocument independente.
@@ -183,14 +181,6 @@ public class BaseDocumentUploadService {
       return bytes;
     } catch (IOException ex) {
       throw new IllegalStateException("Could not read uploaded PDF", ex);
-    }
-  }
-
-  private String sha256(byte[] bytes) {
-    try {
-      return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
-    } catch (NoSuchAlgorithmException ex) {
-      throw new IllegalStateException("SHA-256 is unavailable", ex);
     }
   }
 

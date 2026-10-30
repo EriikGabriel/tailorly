@@ -61,33 +61,85 @@ src/
 ├── main.tsx                    # monta StrictMode + QueryClientProvider + RouterProvider
 ├── routeTree.gen.ts            # GERADO pelo plugin do TanStack Router — não editar
 ├── styles.css                  # tokens de design + @theme inline + estilos base
-├── pages/                      # rotas por arquivo
+├── pages/                      # rotas por arquivo (ver "Organização por rota")
 │   ├── __root.tsx              # layout raiz: TooltipProvider, HeadContent, Header, Outlet
 │   └── _app/                   # prefixo de rota omitido na URL
-│       ├── _home/index.tsx     # "/"        — hero, etapas, recentes, Second Brain
-│       ├── base/               # "/base"    — revisão de fatos da versão candidata
-│       │   └── -components/base-fact-review.tsx — fatos, evidências e decisões da API
-│       ├── cvs/index.tsx       # "/cvs"     — placeholder
-│       └── generator/index.tsx # "/generator" — placeholder
-├── components/
-│   ├── header.tsx, account-access.tsx, page-placeholder.tsx
-│   └── ui/                     # design system vendorizado
-│       ├── badge.tsx, noise-texture.tsx
-│       └── animate/            # Animate UI — ver §5
-├── stores/                     # 8 stores Zustand + resetClientState
-├── types/                      # review.ts, review-model.ts
-├── utils/review-issues.ts      # regras de seleção e completude de pendências
-├── data/review-preview.ts      # dados antigos de demonstração, não usados pela revisão
-├── hooks/                      # use-auto-height, use-controlled-state,
-│                               # use-data-state, use-is-in-view
+│       ├── _home/              # "/"          — hero, etapas, recentes, Second Brain
+│       ├── base/               # "/base"      — auditoria e revisão dos fatos do Currículo Base
+│       ├── cvs/                # "/cvs"       — histórico de currículos gerados
+│       ├── generator/          # "/generator" — vaga alvo, prévia do PDF e editor Typst
+│       └── profile/            # "/profile"   — perfil e preferências de IA
+├── components/                 # componentes compartilhados entre rotas
+│   ├── ui/                     # design system vendorizado (Animate UI, badge, textura)
+│   ├── fields/                 # campos de formulário reutilizáveis
+│   ├── quick-review/           # diálogo de validação rápida antes de gerar
+│   ├── account/                # formulário de login e cadastro
+│   └── header.tsx, account-access.tsx, ...
+├── hooks/                      # hooks compartilhados (estado + efeitos, sem JSX)
 ├── queries/                    # integrações TanStack Query por recurso da API
-├── lib/                        # query-client, utils (re-export de cn), get-strict-context
+├── stores/                     # stores Zustand + resetClientState
+├── types/                      # tipos de domínio compartilhados
+├── utils/                      # funções puras, sem React (formatação, regras, casamento)
+├── constants/                  # rótulos, ícones e opções estáticas compartilhadas
+├── data/                       # dados de DEMONSTRAÇÃO (prévias); nunca fatos reais
+├── lib/                        # infraestrutura: cliente HTTP, query-client, cn, contexto
 └── assets/tailorly-logo.svg
 
 scripts/test-stores.mjs         # runner da suíte unitária de estado
-tests/unit/client-state.test.ts # 11 testes unitários de estado do cliente
+tests/unit/                     # testes unitários de stores e utils
 tests/e2e/                      # jornadas de interface com Playwright
 ```
+
+### Princípios de organização
+
+Cada tipo de código mora num lugar só, para que dê para achar e mudar sem ler o
+resto:
+
+| Camada | Contém | Não contém |
+| --- | --- | --- |
+| Componente (`.tsx`) | JSX, estilos e a ligação entre hooks e props | regras de negócio, mapeamento de dados da API, constantes de rótulos |
+| `hooks/` ou `-hooks/` | estado, efeitos e orquestração de mutations | JSX |
+| `utils/` ou `-utils/` | funções puras (testáveis sem React) | estado, `useX`, acesso a stores |
+| `types/` ou `-types/` | tipos e interfaces de domínio | lógica |
+| `constants/` ou `-constants/` | rótulos, ícones, opções e limites estáticos | lógica de negócio |
+| `queries/` | chamadas à API e invalidação de cache | regras de apresentação |
+| `stores/` | estado de interface (nunca fonte de verdade de fatos) | chamadas à API fora de ações explícitas |
+
+Regras práticas:
+
+1. **Um componente, uma responsabilidade.** Se um `.tsx` passa de ~150 linhas ou
+   mistura formulário, mapeamento de dados e apresentação, extraia o hook ou o
+   util e quebre a marcação em subcomponentes. Componentes só de uma tela ficam
+   em subpasta da própria tela (ex.: `-components/job-analysis/`).
+2. **Compartilhado sobe, específico desce.** Algo usado por uma rota só fica na
+   pasta dela; ao ser usado por duas, vai para `components/`, `hooks/`, `utils/`
+   ou `types/`.
+3. **Comentários em português**, explicando o *porquê* (regra de domínio,
+   armadilha, decisão), não o que a linha faz.
+4. **Imports relativos em quem os testes unitários alcançam.** O runner
+   (`scripts/test-stores.mjs`) compila com `tsc` sem os aliases; stores, `types/`
+   e os `utils/` testados usam caminhos relativos entre si.
+
+### Organização por rota
+
+O TanStack Router ignora entradas que começam com `-` em `pages/`, então cada
+rota guarda o que é só dela em subpastas com esse prefixo:
+
+```text
+pages/_app/<rota>/
+├── index.tsx        # a rota: só compõe blocos e liga hooks
+├── -components/     # componentes (e subpastas de componentes) da tela
+├── -steps/          # (base) formulários de cada etapa da revisão
+├── -hooks/          # hooks da tela
+├── -utils/          # funções puras da tela
+├── -types/          # tipos da tela
+└── -constants/      # rótulos e limites da tela
+```
+
+Exemplos reais: `base/-hooks/use-save-review-draft.ts` grava o rascunho na API;
+`base/-utils/review-draft-hydration.ts` converte fatos da API em rascunho;
+`generator/-hooks/use-typst-code-editor.ts` cuida do CodeMirror;
+`generator/-components/job-analysis/` divide o cartão de análise da vaga.
 
 ### Aliases
 
@@ -294,10 +346,10 @@ As dicas (`hint`) aparecem em um tooltip ao lado do rótulo e são lidas por
 leitores de tela. Os cartões das coleções (Experiência, Projetos, Formação,
 Certificações) são um Accordion do Animate UI e mostram um resumo formatado no
 cabeçalho (cargo, empresa, período e duração, selos de vínculo e situação),
-calculado por `-components/record-summaries.ts`. Idiomas usam linhas com o
+calculado por `base/-utils/record-summaries.ts`. Idiomas usam linhas com o
 nível em degraus (`language-list.tsx`) e tecnologias, chips com contexto
 opcional (`technology-chips.tsx`). A formatação (datas, período, duração,
-telefone, links, iniciais, nível) fica em `src/lib/review-format.ts`, com
+telefone, links, iniciais, nível) fica em `src/utils/review-format.ts`, com
 testes unitários.
 
 | Etapa | Chaves |
@@ -497,8 +549,9 @@ A **URL de objeto da prévia** é recurso do visualizador: criada quando
 o `File` permanece na store. O painel compara `preview?.file === file` para nunca
 exibir o documento anterior enquanto a URL substituta é criada.
 
-As categorias de fatos e rótulos são dados estáticos. `src/data/review-preview.ts`
-permanece como fixture antiga, mas `ValidateDialog` não a usa: as pendências vêm
+As categorias de fatos e rótulos são dados estáticos (`base/-constants/evidence.ts`).
+`src/data/review-preview.ts` permanece como fixture antiga, mas `ValidateDialog`
+(`components/quick-review/`) não a usa: as pendências vêm
 da API. `/base` lê e grava fatos na API; não classifica automaticamente o texto
 OCR em identidade, experiência ou outros tipos de fato.
 

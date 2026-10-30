@@ -12,12 +12,10 @@ import {
   PhoneInput,
 } from "@components/fields/typed-inputs";
 import { useId } from "react";
-import {
-  PENDING_RING,
-  PendingNote,
-  usePendingFields,
-  VerifiedMark,
-} from "./pending-fields";
+import { PENDING_RING } from "../-constants/pending";
+import { usePendingFields } from "../-hooks/use-pending-fields";
+import { PendingNote } from "./pending-note";
+import { VerifiedMark } from "./verified-mark";
 
 function renderControl(
   field: ReviewField,

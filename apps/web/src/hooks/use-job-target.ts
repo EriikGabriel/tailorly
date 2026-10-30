@@ -11,6 +11,7 @@ import {
   extractionState,
   generationBlockReason,
 } from "@/utils/generation-gate";
+import { hasJobTarget } from "@/utils/job-draft";
 import { countQuickReviewIssues } from "@/utils/job-fact-match";
 import { checkJobUrl } from "@/utils/job-url";
 
@@ -42,8 +43,7 @@ export function useJobTarget() {
   });
 
   const urlCheck = checkJobUrl(jobUrl);
-  const hasJob =
-    mode === "url" ? jobUrl.trim().length > 0 : jobText.trim().length > 0;
+  const hasJob = hasJobTarget(mode, jobUrl, jobText);
   // O servidor recusaria um link inválido; bloquear aqui evita a ida e volta.
   const blocked = mode === "url" && urlCheck.status === "invalid";
   // Gerar exige o Currículo Base extraído com sucesso (nada em fila ou processando) e a vaga válida.

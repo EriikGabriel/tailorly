@@ -1,5 +1,5 @@
 import { Toggle, ToggleGroup } from "@animate/base/toggle-group";
-import { PROFICIENCY_LEVELS, proficiencyIndex } from "@/lib/review-format";
+import { PROFICIENCY_LEVELS, proficiencyIndex } from "@/utils/review-format";
 
 interface ProficiencyFieldProps {
   id: string;

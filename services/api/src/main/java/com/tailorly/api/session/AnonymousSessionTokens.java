@@ -1,11 +1,9 @@
 package com.tailorly.api.session;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.HexFormat;
+
+import com.tailorly.api.shared.util.Sha256;
 
 /**
  * Tokens opacos de sessão anônima: 256 bits aleatórios com prefixo fixo. O servidor guarda só o
@@ -30,11 +28,6 @@ public final class AnonymousSessionTokens {
   }
 
   public static String hash(String token) {
-    try {
-      return HexFormat.of().formatHex(
-          MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8)));
-    } catch (NoSuchAlgorithmException exception) {
-      throw new IllegalStateException("SHA-256 is unavailable", exception);
-    }
+    return Sha256.hex(token);
   }
 }

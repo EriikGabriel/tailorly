@@ -1,7 +1,7 @@
+import type { FactRecord } from "@@types/base-review";
 import type { ReviewStepId } from "@@types/review-model";
 import { Switch } from "@animate/base/switch";
 import { Button } from "@animate/buttons/button";
-import type { FactRecord } from "@queries/base-review";
 import {
   ExternalLink,
   FileText,
@@ -11,10 +11,12 @@ import {
 } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useDocumentViewerStore } from "@stores/document-viewer-store";
-import { type ComponentProps, useEffect, useMemo, useState } from "react";
+import { type ComponentProps, useMemo } from "react";
+import { usePdfPreviewUrl } from "../-hooks/use-pdf-preview-url";
+import { buildEvidenceFacts } from "../-utils/evidence-facts";
+import { isPdfFile } from "../-utils/pdf-file";
 import { DocumentZoomControls } from "./document-zoom-controls";
 import { EvidenceBoundingBoxes } from "./evidence-bounding-boxes";
-import { buildEvidenceFacts } from "./evidence-facts";
 import { ExtractedTextPanel } from "./extracted-text-panel";
 import { PdfEvidenceViewer } from "./pdf-evidence-viewer";
 
@@ -36,23 +38,8 @@ export function MasterDocumentPanel({
   const file = useBaseCvStore((state) => state.file);
   const { zoom, setZoom, boundingBoxesEnabled, setBoundingBoxesEnabled } =
     useDocumentViewerStore();
-  const isPdf = Boolean(file && /\.pdf$/i.test(file.name));
-  const [preview, setPreview] = useState<{ file: File; url: string } | null>(
-    null,
-  );
-
-  useEffect(() => {
-    if (!file || !/\.pdf$/i.test(file.name)) {
-      setPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreview({ file, url });
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-
-  // Never display the previous document while a replacement URL is created.
-  const url = preview?.file === file ? preview?.url : undefined;
+  const isPdf = isPdfFile(file);
+  const url = usePdfPreviewUrl(file);
   const evidenceFacts = useMemo(
     () => buildEvidenceFacts(records, extractedPages),
     [records, extractedPages],

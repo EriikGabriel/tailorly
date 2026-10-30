@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
 import com.tailorly.api.job.dto.CreateJobPostingRequest;
 import com.tailorly.api.job.dto.JobPostingVersionResponse;
+import com.tailorly.api.job.reader.FetchedPage;
+import com.tailorly.api.job.reader.JobPageFetcher;
 import com.tailorly.api.objects.storage.ObjectStorage;
 import com.tailorly.api.session.AnonymousDataPurgeService;
 import com.tailorly.api.session.AnonymousPrincipal;

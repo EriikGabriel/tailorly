@@ -13,14 +13,17 @@ export const reviewSteps = [
 export type ReviewStepId = (typeof reviewSteps)[number]["id"];
 export type DraftFields = Record<string, string>;
 export type DraftRecord = { id: string; fields: DraftFields };
-export type DraftCollection =
-  | "experience"
-  | "volunteering"
-  | "projects"
-  | "degrees"
-  | "certifications"
-  | "languages"
-  | "technologies";
+/** Categorias repetíveis do rascunho: cada uma guarda uma lista de entradas. */
+export const draftCollections = [
+  "experience",
+  "volunteering",
+  "projects",
+  "degrees",
+  "certifications",
+  "languages",
+  "technologies",
+] as const;
+export type DraftCollection = (typeof draftCollections)[number];
 export type ReviewDraft = {
   identity: DraftFields;
   experience: DraftRecord[];

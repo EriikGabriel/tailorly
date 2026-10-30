@@ -9,6 +9,7 @@ import com.tailorly.api.job.dto.JobPostingDetailResponse;
 import com.tailorly.api.job.dto.JobPostingResponse;
 import com.tailorly.api.job.dto.JobPostingSummaryResponse;
 import com.tailorly.api.job.dto.JobPostingVersionResponse;
+import com.tailorly.api.job.reader.JobPostingExtractionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

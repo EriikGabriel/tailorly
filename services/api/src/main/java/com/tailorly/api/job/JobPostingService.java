@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.tailorly.api.job.analysis.JobRequirementsAnalyzer;
 import com.tailorly.api.job.dto.CreateJobPostingRequest;
 import com.tailorly.api.job.dto.JobAnalysis;
 import com.tailorly.api.job.dto.JobPostingDetailResponse;
@@ -20,6 +21,7 @@ import com.tailorly.api.job.persistence.JobPosting;
 import com.tailorly.api.job.persistence.JobPostingRepository;
 import com.tailorly.api.job.persistence.JobPostingVersion;
 import com.tailorly.api.job.persistence.JobPostingVersionRepository;
+import com.tailorly.api.job.reader.JobPostingExtractionService;
 import com.tailorly.api.owner.Owner;
 import com.tailorly.api.owner.OwnerAccessService;
 import com.tailorly.api.owner.OwnerRepository;

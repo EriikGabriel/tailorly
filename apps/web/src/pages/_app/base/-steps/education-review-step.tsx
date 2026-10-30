@@ -5,12 +5,12 @@ import {
   Building2,
   GraduationCap,
 } from "@react-zero-ui/icon-sprite";
+import { ReviewDraftCollection } from "../-components/review-draft-collection";
+import { ReviewStepShell } from "../-components/review-step-shell";
 import {
   summarizeCertificate,
   summarizeDegree,
-} from "../-components/record-summaries";
-import { ReviewDraftCollection } from "../-components/review-draft-collection";
-import { ReviewStepShell } from "../-components/review-step-shell";
+} from "../-utils/record-summaries";
 
 const degreeFields: ReviewField[] = [
   {

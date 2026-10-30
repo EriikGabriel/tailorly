@@ -1,3 +1,4 @@
+import type { JobInputMode } from "@@types/job-draft";
 import {
   Tabs,
   TabsList,
@@ -9,6 +10,7 @@ import {
   JobUrlFeedback,
   useSettledUrlCheck,
 } from "@components/job-url-feedback";
+import { ValidateDialog } from "@components/quick-review/validate-dialog";
 import { RippleButton } from "@components/ui/animate/buttons/ripple";
 import { useJobTarget } from "@hooks/use-job-target";
 import {
@@ -21,10 +23,9 @@ import {
   ShieldCheck,
   Zap,
 } from "@react-zero-ui/icon-sprite";
-import { type JobInputMode, useJobDraftStore } from "@stores/job-draft-store";
+import { useJobDraftStore } from "@stores/job-draft-store";
 import { MAX_JOB_URL_LENGTH } from "@/utils/job-url";
 import { BaseCvPicker } from "./base-cv-picker";
-import { ValidateDialog } from "./validate-dialog";
 
 const inputModes = [
   { value: "url", label: "Inserir URL da Vaga", icon: Link },

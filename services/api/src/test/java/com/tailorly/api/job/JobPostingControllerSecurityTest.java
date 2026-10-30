@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import com.tailorly.api.job.dto.JobPostingResponse;
 import com.tailorly.api.job.dto.JobPostingVersionResponse;
+import com.tailorly.api.job.reader.JobPostingExtractionService;
 import com.tailorly.api.session.AnonymousDataPurgeService;
 import com.tailorly.api.session.AnonymousMigrationService;
 import com.tailorly.api.session.AnonymousPrincipal;
