@@ -89,6 +89,7 @@ export async function openReview(page: Page) {
       JSON.stringify({
         accessToken: "token-de-teste",
         expiresAt: new Date(Date.now() + 60 * 60_000).toISOString(),
+        refreshToken: "refresh-de-teste",
       }),
     );
   });

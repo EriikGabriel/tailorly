@@ -169,7 +169,11 @@ test.describe("migração após o login", () => {
         const later = new Date(Date.now() + 60 * 60_000).toISOString();
         sessionStorage.setItem(
           "tailorly:auth-session",
-          JSON.stringify({ accessToken: "jwt-de-teste", expiresAt: later }),
+          JSON.stringify({
+            accessToken: "jwt-de-teste",
+            expiresAt: later,
+            refreshToken: "refresh-de-teste",
+          }),
         );
         sessionStorage.setItem(
           "tailorly:anonymous-session",

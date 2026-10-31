@@ -18,6 +18,7 @@ test("RF09: envia PDF na home e reutiliza o fluxo em /base após reload", {
       JSON.stringify({
         accessToken: "token-de-teste",
         expiresAt: new Date(Date.now() + 60 * 60_000).toISOString(),
+        refreshToken: "refresh-de-teste",
       }),
     );
   });
