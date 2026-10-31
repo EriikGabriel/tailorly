@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import type { ReviewAnswer, ReviewIssue } from "@/types/review";
 import {
   isReviewIssueComplete,
+  MAX_DIALOG_ISSUES,
   selectQuickReviewIssues,
 } from "@/utils/review-issues";
 import { useReviewIssues, useSubmitReviewAnswers } from "./use-review-issues";
@@ -63,7 +64,8 @@ export function useQuickReview({
     prioritized || apiIssues.length > 0
       ? allIssues
       : selectQuickReviewIssues(allIssues);
-  const needsFullReview = requiresFullReview || quickIssues.length > 0;
+  const needsFullReview =
+    requiresFullReview || quickIssues.length > MAX_DIALOG_ISSUES;
   const reviewComplete = quickIssues.every((issue) =>
     isReviewIssueComplete(issue, answers[issue.id]),
   );

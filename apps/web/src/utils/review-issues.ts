@@ -1,5 +1,12 @@
 import type { ReviewAnswer, ReviewCategory, ReviewIssue } from "@/types/review";
 
+/**
+ * Até quantas pendências reais o diálogo de validação rápida resolve nele mesmo; acima disso a
+ * auditoria completa é necessária. Compartilhado entre a decisão de abrir o diálogo
+ * (`use-job-target`) e o próprio diálogo (`use-quick-review`), para as duas nunca divergirem.
+ */
+export const MAX_DIALOG_ISSUES = 6;
+
 export const reviewCategories = {
   identity: "Identificação e contato",
   employment: "Experiência profissional",

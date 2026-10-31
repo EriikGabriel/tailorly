@@ -14,9 +14,7 @@ import {
 import { hasJobTarget } from "@/utils/job-draft";
 import { countQuickReviewIssues } from "@/utils/job-fact-match";
 import { checkJobUrl } from "@/utils/job-url";
-
-/** Até quantas pendências rápidas o diálogo abre; acima disso a auditoria completa é necessária. */
-const MAX_DIALOG_ISSUES = 6;
+import { MAX_DIALOG_ISSUES } from "@/utils/review-issues";
 
 /**
  * Fluxo "gerar" compartilhado pela home e pelo gerador: valida o link, lê e analisa a vaga no
