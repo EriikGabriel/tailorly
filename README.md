@@ -218,7 +218,7 @@ Na página do Gerador, "Detalhes da Vaga Alvo" mostra, depois de gerar (ou ao ab
 
 ## CI/CD
 
-`.github/workflows/ci.yml` roda em push/PR para `main`: `lint` (Biome), `api` (testes Maven contra um Postgres de serviço, com o CLI real do Typst instalado no runner), `web` (build e testes de store) e `e2e` (Playwright contra a stack completa — web, API, Postgres e Garage via `compose.yaml`). Ainda não há deploy automatizado.
+`.github/workflows/ci.yml` roda em push/PR para `main`: `lint` (Biome), `api` (testes Maven contra um Postgres de serviço, com o CLI real do Typst instalado no runner), `web` (build e testes de store) e `e2e` (Playwright contra a stack completa — web, API, Postgres e Garage via `compose.yaml`, com Typst e Tesseract reais instalados no runner para exercer a extração de verdade). Ainda não há deploy automatizado.
 
 ## Requisitos
 

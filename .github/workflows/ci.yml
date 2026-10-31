@@ -109,6 +109,14 @@ jobs:
             | tar -xJ --strip-components=1 -C /usr/local/bin "typst-x86_64-unknown-linux-musl/typst"
           typst --version
 
+      - name: Install Tesseract OCR
+        # tailorly.extraction.ocr-languages (por+eng) exige os dois pacotes de idioma;
+        # sem o binário, o worker de extração falha com OCR_UNAVAILABLE.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr tesseract-ocr-por tesseract-ocr-eng
+          tesseract --version
+
       - name: Generate local Garage credentials
         run: |
           bash services/api/init-garage-env.sh
