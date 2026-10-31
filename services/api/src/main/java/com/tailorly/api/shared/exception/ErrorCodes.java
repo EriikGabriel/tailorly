@@ -165,6 +165,24 @@ public final class ErrorCodes {
     }
   }
 
+  public static final class Vault {
+    public static final String NOT_CONFIGURED = "error.vault.not_configured";
+    public static final String INVALID_PATH = "error.vault.invalid_path";
+    public static final String ACCOUNT_ONLY = "error.vault.account_only";
+    public static final String PATH_REQUIRED = "error.vault.path_required";
+    public static final String SUBFOLDER_INVALID = "error.vault.subfolder_invalid";
+
+    private Vault() {
+    }
+  }
+
+  public static final class CvEvidence {
+    public static final String NOT_FOUND = "error.cv_evidence.not_found";
+
+    private CvEvidence() {
+    }
+  }
+
   public static final class CvGeneration {
     public static final String NOT_FOUND = "error.cv_generation.not_found";
     public static final String NO_ACTIVE_SNAPSHOT = "error.cv_generation.no_active_snapshot";
@@ -177,6 +195,7 @@ public final class ErrorCodes {
     public static final String TEMPLATE_NOT_FOUND = "error.cv_generation.template_not_found";
     public static final String TEMPLATE_LIMIT_REACHED = "error.cv_generation.template_limit_reached";
     public static final String PREFERENCES_INVALID = "error.cv_generation.preferences_invalid";
+    public static final String DEFAULTS_ACCOUNT_ONLY = "error.cv_generation.defaults_account_only";
 
     private CvGeneration() {
     }

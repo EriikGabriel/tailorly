@@ -44,6 +44,18 @@ services:
       - "127.0.0.1:3909:8080"
     restart: unless-stopped
 
+  # Busca web local e gratuita para o enriquecimento de projetos (ver README, fase 5). Só responde em
+  # 127.0.0.1. Para o Tailorly usá-lo, defina TAILORLY_SEARXNG_URL=http://127.0.0.1:8888.
+  searxng:
+    image: searxng/searxng:latest
+    environment:
+      SEARXNG_SECRET: ${TAILORLY_SEARXNG_SECRET:-local-only-change-me}
+    ports:
+      - "127.0.0.1:8888:8080"
+    volumes:
+      - ./services/searxng:/etc/searxng
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   garage-meta:

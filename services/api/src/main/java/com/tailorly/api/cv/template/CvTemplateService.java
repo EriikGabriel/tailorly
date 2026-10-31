@@ -109,6 +109,14 @@ public class CvTemplateService {
     return template;
   }
 
+  /** Template embarcado escolhido por nome (a versão mais recente), registrado no banco na primeira vez. */
+  public CvTemplate bundled(String name) {
+    if (!CvTemplateCatalog.exists(name)) {
+      throw new BadRequestException(ErrorCodes.CvGeneration.TEMPLATE_UNKNOWN);
+    }
+    return catalog.latest(name);
+  }
+
   public CvTemplate reference(UUID id) {
     return templates.getReferenceById(id);
   }

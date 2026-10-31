@@ -11,8 +11,10 @@ export const availableGuidelines = [
 interface GenerationPreferencesState {
   guidelines: string[];
   optimizeForAts: boolean;
+  templateName: string;
   toggleGuideline: (label: string) => void;
   setOptimizeForAts: (value: boolean) => void;
+  setTemplateName: (value: string) => void;
   reset: () => void;
 }
 
@@ -21,6 +23,7 @@ export const useGenerationPreferencesStore =
   create<GenerationPreferencesState>()((set) => ({
     guidelines: availableGuidelines.slice(0, 3),
     optimizeForAts: true,
+    templateName: "classic",
     toggleGuideline: (label) =>
       set((state) => ({
         guidelines: state.guidelines.includes(label)
@@ -28,9 +31,11 @@ export const useGenerationPreferencesStore =
           : [...state.guidelines, label],
       })),
     setOptimizeForAts: (optimizeForAts) => set({ optimizeForAts }),
+    setTemplateName: (templateName) => set({ templateName }),
     reset: () =>
       set({
         guidelines: availableGuidelines.slice(0, 3),
         optimizeForAts: true,
+        templateName: "classic",
       }),
   }));

@@ -13,8 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Copia os artefatos de uma geração (PDF e Markdown) para uma pasta local, por exemplo um vault
- * Obsidian como o Second Brain, quando {@code tailorly.vault.enabled=true}.
+ * Copia os artefatos de uma geração (PDF e Markdown) para o vault Obsidian da conta dona da geração
+ * (ver {@link OwnerVaultService}), dentro da subpasta {@code tailorly.vault.subfolder}, quando
+ * {@code tailorly.vault.enabled=true}. Cada conta exporta só para o próprio vault.
  *
  * <p>Só exporta gerações de contas — nunca de sessões anônimas, cujos dados são temporários e não
  * pertencem a um vault pessoal; o chamador decide isso antes de montar o {@link Request}. A cópia
@@ -28,29 +29,27 @@ public class VaultExportService {
   private static final Logger log = LoggerFactory.getLogger(VaultExportService.class);
   private static final DateTimeFormatter TIMESTAMP = DateTimeFormatter.ISO_INSTANT;
 
-  private final VaultExportProperties properties;
 
-  public VaultExportService(VaultExportProperties properties) {
-    this.properties = properties;
-  }
-
+  /** {@code targetDir} é a pasta de destino já resolvida (vault da conta + subpasta); nula não exporta. */
   public record Request(
       UUID generationId,
       UUID ownerId,
       String jobTitle,
       String companyName,
       int atsScore,
-      Instant generatedAt
+      Instant generatedAt,
+      Path targetDir
   ) {
   }
 
   public void export(Request request, byte[] pdf, byte[] markdown) {
-    if (properties.path() == null || properties.path().isBlank()) {
-      log.warn("tailorly.vault.enabled is true but tailorly.vault.path is not set; skipping export");
+    if (request.targetDir() == null) {
+      log.info("Owner {} has no export target; skipping export of generation {}", request.ownerId(),
+          request.generationId());
       return;
     }
     try {
-      Path targetDir = Path.of(properties.path(), properties.subfolder());
+      Path targetDir = request.targetDir();
       Files.createDirectories(targetDir);
 
       String slug = slugOf(request);

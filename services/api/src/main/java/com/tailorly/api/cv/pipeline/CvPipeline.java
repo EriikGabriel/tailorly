@@ -6,6 +6,9 @@ import java.util.UUID;
 
 import com.tailorly.api.cv.ats.AtsEvaluator;
 import com.tailorly.api.cv.ats.AtsReport;
+import com.tailorly.api.cv.enrichment.ConfirmedEvidence;
+import com.tailorly.api.cv.enrichment.ProjectEnricher;
+import com.tailorly.api.cv.model.CvEnrichment;
 import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.cv.model.CvPlan;
 import com.tailorly.api.cv.model.CvPreferences;
@@ -27,13 +30,14 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CvPipeline {
-  public static final String VERSION = "cv-pipeline-1";
+  public static final String VERSION = "cv-pipeline-2";
   private static final int MAX_REFINEMENTS = 2;
   private static final Logger log = LoggerFactory.getLogger(CvPipeline.class);
 
   private final PdfRenderer renderer;
   private final AtsEvaluator evaluator;
   private final CvPlanAdvisor advisor;
+  private final ProjectEnricher enricher;
 
   /** Uma tentativa de layout: de onde veio o plano, a nota e o que mudou. */
   public record PipelineIteration(int number, String source, int score, String density, String rationale) {
@@ -44,11 +48,14 @@ public class CvPipeline {
    *                 (a IA falhou e as regras assumiram) ou {@code skipped} (otimização desligada ou meta já atingida)
    */
   public record Outcome(CvDocument document, byte[] pdf, AtsReport report, List<PipelineIteration> iterations,
-      String aiStatus) {
+      String aiStatus, CvEnrichment enrichment) {
   }
 
-  public Outcome run(UUID ownerId, CvDocument base, String templateSource, JobTerms terms, JobAnalysis analysis,
-      String jobTitle, CvPreferences prefs) {
+  public Outcome run(UUID ownerId, CvDocument approved, String templateSource, JobTerms terms, JobAnalysis analysis,
+      String jobTitle, CvPreferences prefs, List<ConfirmedEvidence> evidence) {
+    // A reescrita só troca frases de projetos com evidência confirmada; o restante segue os fatos aprovados.
+    ProjectEnricher.Result enriched = enricher.enrich(ownerId, approved, evidence, analysis, jobTitle);
+    CvDocument base = enriched.document();
     CvPlan plan = CvPlan.neutral();
     String editableTemplate = TypstTemplateMaterializer.materialize(templateSource, base);
     Candidate best = attempt(base, plan, editableTemplate, terms);
@@ -93,7 +100,8 @@ public class CvPipeline {
         best = current;
       }
     }
-    return new Outcome(best.document(), best.pdf(), best.report(), List.copyOf(iterations), aiStatus);
+    return new Outcome(best.document(), best.pdf(), best.report(), List.copyOf(iterations), aiStatus,
+        enriched.enrichment());
   }
 
   /** Sem IA: o único ajuste seguro é compactar quando o currículo passou de duas páginas ou de mil palavras. */

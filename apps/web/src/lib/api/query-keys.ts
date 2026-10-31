@@ -52,6 +52,16 @@ export const apiQueryKeys = {
   aiPreferences: {
     current: ["ai-preferences", "current"] as const,
   },
+  generationDefaults: {
+    byOwner: (ownerId: string) => ["generation-defaults", ownerId] as const,
+  },
+  ownerVault: {
+    byOwner: (ownerId: string) => ["owner-vault", ownerId] as const,
+  },
+  supplementaryEvidence: {
+    snapshot: (snapshotId: string) =>
+      ["supplementary-evidence", "snapshot", snapshotId] as const,
+  },
   groundTruth: {
     snapshot: (snapshotId: string) =>
       ["ground-truth", "snapshot", snapshotId] as const,

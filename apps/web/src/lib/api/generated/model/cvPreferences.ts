@@ -15,4 +15,9 @@ export interface CvPreferences {
    */
   guidelines: string[];
   optimizeForAts?: boolean;
+  /**
+   * @minLength 0
+   * @maxLength 64
+   */
+  templateName?: string;
 }

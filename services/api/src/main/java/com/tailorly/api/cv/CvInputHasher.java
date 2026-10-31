@@ -1,7 +1,10 @@
 package com.tailorly.api.cv;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,11 +29,16 @@ class CvInputHasher {
   private final ObjectMapper objectMapper;
 
   String hash(CvDocument document, CvPreferences preferences, CvTemplate template,
-      JobPostingVersion jobVersion) {
+      JobPostingVersion jobVersion, List<UUID> confirmedEvidenceIds) {
     try {
-      // A análise da vaga entra no hash porque ela orienta a IA e a avaliação de ATS.
-      byte[] content = objectMapper.writeValueAsBytes(Arrays.asList(document, preferences,
+      // A análise da vaga entra no hash porque ela orienta a IA e a avaliação de ATS. As evidências
+      // confirmadas entram só quando existem, para que a ausência delas não mude o hash das gerações antigas.
+      List<Object> inputs = new ArrayList<>(Arrays.asList(document, preferences,
           jobVersion.getAnalysis(), PIPELINE_INPUT_VERSION));
+      if (!confirmedEvidenceIds.isEmpty()) {
+        inputs.add(confirmedEvidenceIds.stream().map(UUID::toString).sorted().toList());
+      }
+      byte[] content = objectMapper.writeValueAsBytes(inputs);
       return Sha256.hex(concat(content, template.getContentHash().getBytes(StandardCharsets.US_ASCII)));
     } catch (JsonProcessingException exception) {
       throw new IllegalStateException("Could not hash the CV content", exception);

@@ -19,11 +19,10 @@ class VaultExportServiceTest {
 
   @Test
   void writesPdfAndFrontmatterMarkdownUnderSubfolder(@TempDir Path vaultRoot) throws IOException {
-    VaultExportService service = new VaultExportService(
-        new VaultExportProperties(true, vaultRoot.toString(), "B03 Resources/CVs"));
+    VaultExportService service = new VaultExportService();
     VaultExportService.Request request = new VaultExportService.Request(
         UUID.randomUUID(), UUID.randomUUID(), "Engenheiro de Software", "Acme",
-        87, Instant.parse("2026-01-01T00:00:00Z"));
+        87, Instant.parse("2026-01-01T00:00:00Z"), vaultRoot.resolve("B03 Resources/CVs"));
 
     service.export(request, "%PDF-fake".getBytes(StandardCharsets.UTF_8), "# Currículo".getBytes(StandardCharsets.UTF_8));
 
@@ -40,10 +39,10 @@ class VaultExportServiceTest {
   }
 
   @Test
-  void writesNothingWhenPathIsBlank(@TempDir Path vaultRoot) throws IOException {
-    VaultExportService service = new VaultExportService(new VaultExportProperties(true, "", "B03 Resources/CVs"));
+  void writesNothingWhenTheOwnerHasNoExportTarget(@TempDir Path vaultRoot) throws IOException {
+    VaultExportService service = new VaultExportService();
     VaultExportService.Request request = new VaultExportService.Request(
-        UUID.randomUUID(), UUID.randomUUID(), "Title", "Company", 50, Instant.now());
+        UUID.randomUUID(), UUID.randomUUID(), "Title", "Company", 50, Instant.now(), null);
 
     service.export(request, "pdf".getBytes(StandardCharsets.UTF_8), "md".getBytes(StandardCharsets.UTF_8));
 

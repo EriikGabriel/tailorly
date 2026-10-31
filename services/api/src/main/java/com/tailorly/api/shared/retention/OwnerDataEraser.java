@@ -41,9 +41,10 @@ public class OwnerDataEraser {
   }
 
   /**
-   * Apaga as linhas de banco ligadas aos dados pessoais do owner, em ordem compatível com as FKs
-   * (nenhuma tem {@code ON DELETE CASCADE}). Deve rodar dentro da transação do chamador, depois
-   * de {@link #deleteFiles}.
+   * Apaga as linhas de banco ligadas aos dados pessoais do owner, em ordem compatível com as FKs.
+   * As tabelas de evidência complementar caem em cascata com o snapshot, mas também são apagadas
+   * aqui pelo owner, para não depender só dessa cascata. Deve rodar dentro da transação do chamador,
+   * depois de {@link #deleteFiles}.
    */
   public void eraseOwnerData(UUID ownerId) {
     String versions = "(select id from base_versions where owner_id = ?)";
@@ -54,6 +55,8 @@ public class OwnerDataEraser {
     // Currículos gerados contêm dados pessoais e saem antes dos snapshots e da vaga que citam.
     jdbc.update("delete from cv_generations where owner_id = ?", ownerId);
     jdbc.update("delete from cv_templates where owner_id = ?", ownerId);
+    jdbc.update("delete from cv_supplementary_evidence where owner_id = ?", ownerId);
+    jdbc.update("delete from cv_evidence_link_checks where owner_id = ?", ownerId);
     jdbc.update("delete from gt_snapshot_items where snapshot_id in "
         + "(select id from gt_snapshots where owner_id = ?)", ownerId);
     jdbc.update("update owners set active_snapshot_id = null where id = ?", ownerId);
@@ -73,6 +76,8 @@ public class OwnerDataEraser {
         + "(select id from job_postings where owner_id = ?)", ownerId);
     jdbc.update("delete from job_postings where owner_id = ?", ownerId);
     jdbc.update("delete from ai_preferences where owner_id = ?", ownerId);
+    jdbc.update("delete from owner_vaults where owner_id = ?", ownerId);
+    jdbc.update("delete from owner_generation_defaults where owner_id = ?", ownerId);
   }
 
   /** Varredura por prefixo depois do commit, para o que um worker em andamento tenha gravado. */

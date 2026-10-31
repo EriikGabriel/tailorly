@@ -1,10 +1,16 @@
 import { Switch } from "@animate/base/switch";
+import { useViewer } from "@queries/cv-generation";
+import {
+  useGenerationDefaults,
+  useSaveGenerationDefaults,
+} from "@queries/generation-defaults";
 import { Check, Plus, Target } from "@react-zero-ui/icon-sprite";
 import {
   availableGuidelines,
   useGenerationPreferencesStore,
 } from "@stores/generation-preferences-store";
-import { useId } from "react";
+import { useEffect, useId } from "react";
+import { templateOptions } from "@/constants/generation-options";
 import { SectionHeading } from "./section-heading";
 
 export function AiGuidelinesCard() {
@@ -19,6 +25,27 @@ export function AiGuidelinesCard() {
   const setOptimizeForAts = useGenerationPreferencesStore(
     (state) => state.setOptimizeForAts,
   );
+  const templateName = useGenerationPreferencesStore(
+    (state) => state.templateName,
+  );
+  const setTemplateName = useGenerationPreferencesStore(
+    (state) => state.setTemplateName,
+  );
+  const viewer = useViewer();
+  const accountOwnerId = viewer.kind === "account" ? viewer.ownerId : null;
+  const defaults = useGenerationDefaults(accountOwnerId, viewer.token);
+  const saveDefaults = useSaveGenerationDefaults(accountOwnerId, viewer.token);
+
+  // Ao carregar a conta, o layout salvo vira a escolha atual. Cada troca depois é gravada na conta.
+  const savedTemplate = defaults.data?.templateName ?? null;
+  useEffect(() => {
+    if (savedTemplate) setTemplateName(savedTemplate);
+  }, [savedTemplate, setTemplateName]);
+
+  function chooseTemplate(value: string) {
+    setTemplateName(value);
+    if (accountOwnerId) saveDefaults.mutate(value);
+  }
 
   return (
     <div className="flex flex-col gap-3 border-b border-outline-variant/60 pb-4">
@@ -86,6 +113,41 @@ export function AiGuidelinesCard() {
           aria-label="Otimizar rigorosamente para ATS"
         />
       </div>
+
+      <fieldset className="flex flex-col gap-2 border-0 p-0 m-0">
+        <legend className="text-sm font-semibold tracking-[0.14px] text-on-surface">
+          Layout do currículo
+        </legend>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {templateOptions.map((option) => {
+            const isActive = templateName === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => chooseTemplate(option.value)}
+                className={`flex flex-col items-start gap-1 rounded-lg p-3 text-left shadow-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                  isActive
+                    ? "bg-primary-900 text-primary-foreground"
+                    : "bg-surface-container-low text-on-surface hover:bg-surface-container"
+                }`}
+              >
+                <span className="text-xs font-semibold">{option.label}</span>
+                <span
+                  className={`text-[12px] leading-4 ${
+                    isActive
+                      ? "text-primary-foreground/80"
+                      : "text-on-surface-variant"
+                  }`}
+                >
+                  {option.description}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
     </div>
   );
 }

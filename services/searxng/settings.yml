@@ -1,0 +1,16 @@
+# Configuração local do SearXNG usada pelo Tailorly para buscar páginas sobre projetos.
+# O formato JSON precisa estar habilitado (a API do Tailorly usa format=json). O limitador de
+# requisições é desligado porque o acesso vem só do servidor local, em 127.0.0.1.
+use_default_settings: true
+
+general:
+  instance_name: "tailorly-local"
+
+search:
+  formats:
+    - html
+    - json
+
+server:
+  limiter: false
+  public_instance: false

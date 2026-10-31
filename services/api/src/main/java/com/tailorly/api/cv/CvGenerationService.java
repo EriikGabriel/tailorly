@@ -1,7 +1,9 @@
 package com.tailorly.api.cv;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -11,7 +13,10 @@ import com.tailorly.api.cv.dto.CvGenerationResponse;
 import com.tailorly.api.cv.dto.GenerateCvRequest;
 import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.cv.model.CvDocumentBuilder;
+import com.tailorly.api.cv.enrichment.ConfirmedEvidence;
+import com.tailorly.api.cv.evidence.SupplementaryEvidenceRepository;
 import com.tailorly.api.cv.model.CvTailoring;
+import com.tailorly.api.vault.OwnerVaultService;
 import com.tailorly.api.cv.model.FactValue;
 import com.tailorly.api.cv.model.CvPreferences;
 import com.tailorly.api.cv.model.JobTerms;
@@ -80,13 +85,16 @@ public class CvGenerationService {
   private final AnonymousQuotaService quota;
   private final TransactionTemplate transaction;
   private final ObjectProvider<VaultExportService> vaultExport;
+  private final SupplementaryEvidenceRepository supplementaryEvidence;
+  private final OwnerVaultService ownerVaults;
 
   public CvGenerationService(OwnerRepository owners, OwnerAccessService access, GtSnapshotRepository snapshots,
       JobPostingVersionRepository jobVersions, CvInputResolver inputs, CvInputHasher inputHasher,
       GeneratedCvFileStore fileStore, CvTemplateService templates, CvGenerationRepository generations,
       StoredObjectRepository objects, ObjectStorage storage, PdfRenderer pdfRenderer,
       MarkdownCvRenderer markdownRenderer, CvPipeline pipeline, AnonymousQuotaService quota,
-      PlatformTransactionManager transactionManager, ObjectProvider<VaultExportService> vaultExport) {
+      PlatformTransactionManager transactionManager, ObjectProvider<VaultExportService> vaultExport,
+      SupplementaryEvidenceRepository supplementaryEvidence, OwnerVaultService ownerVaults) {
     this.owners = owners;
     this.access = access;
     this.snapshots = snapshots;
@@ -104,6 +112,8 @@ public class CvGenerationService {
     this.quota = quota;
     this.transaction = new TransactionTemplate(transactionManager);
     this.vaultExport = vaultExport;
+    this.supplementaryEvidence = supplementaryEvidence;
+    this.ownerVaults = ownerVaults;
   }
 
   /** Resultado de {@link #generate}: a geração e se foi produzida agora ou reaproveitada. */
@@ -117,7 +127,7 @@ public class CvGenerationService {
   /** Tudo o que a fase 2 precisa, em dados simples (nada de entidades preguiçosas fora da transação). */
   private record Prepared(Result reused, UUID ownerId, UUID snapshotId, UUID jobVersionId, UUID templateId,
       String templateSource, CvDocument base, JobTerms terms, JobAnalysis analysis, String jobTitle,
-      CvPreferences preferences, String inputHash) {
+      CvPreferences preferences, String inputHash, List<ConfirmedEvidence> evidence) {
   }
 
   public Result generate(GenerateCvRequest request) {
@@ -128,7 +138,7 @@ public class CvGenerationService {
     }
     try {
       CvPipeline.Outcome outcome = pipeline.run(prepared.ownerId(), prepared.base(), prepared.templateSource(),
-          prepared.terms(), prepared.analysis(), prepared.jobTitle(), preferences);
+          prepared.terms(), prepared.analysis(), prepared.jobTitle(), preferences, prepared.evidence());
       return transaction.execute(status -> persist(prepared, outcome));
     } catch (RuntimeException failure) {
       // A cota foi consumida na fase 1; quem não recebeu um currículo não a perde.
@@ -143,7 +153,10 @@ public class CvGenerationService {
         .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
     access.assertCanAccess(owner);
 
-    CvTemplate template = templates.resolveFor(owner, request.templateId());
+    // Sem template explícito, a preferência da pessoa escolhe um embarcado; sem preferência, vale o do owner.
+    CvTemplate template = request.templateId() == null && preferences.templateName() != null
+        ? templates.bundled(preferences.templateName())
+        : templates.resolveFor(owner, request.templateId());
     GtSnapshot snapshot = inputs.resolveSnapshot(owner, request.snapshotId());
     JobPostingVersion jobVersion = inputs.resolveJobVersion(owner, request.jobPostingId(),
         request.jobVersionNumber());
@@ -151,17 +164,21 @@ public class CvGenerationService {
     List<FactValue> facts = inputs.factsOf(snapshot);
     JobTerms terms = JobTerms.of(jobVersion.getDetails(), jobVersion.getAnalysis());
     CvDocumentBuilder.Result built = CvDocumentBuilder.build(facts, terms);
-    String inputHash = inputHasher.hash(built.document(), preferences, template, jobVersion);
+    List<ConfirmedEvidence> confirmed = supplementaryEvidence.findAllBySnapshotIdOrderByCollectedAtAsc(snapshot.getId())
+        .stream().filter(item -> ConfirmedEvidence.CONFIRMED.equals(item.getReviewState()))
+        .map(ConfirmedEvidence::from).toList();
+    String inputHash = inputHasher.hash(built.document(), preferences, template, jobVersion,
+        confirmed.stream().map(ConfirmedEvidence::id).toList());
 
     var existing = generations.findByOwnerIdAndInputHash(owner.getId(), inputHash);
     if (existing.isPresent()) {
-      return new Prepared(reuse(existing.get()), null, null, null, null, null, null, null, null, null, null, null);
+      return new Prepared(reuse(existing.get()), null, null, null, null, null, null, null, null, null, null, null, List.of());
     }
 
     quota.consumeGeneration(owner);
     return new Prepared(null, owner.getId(), snapshot.getId(), jobVersion.getId(), template.getId(),
         template.getContent(), built.document(), terms, jobVersion.getAnalysis(),
-        jobVersion.getDetails().title(), preferences, inputHash);
+        jobVersion.getDetails().title(), preferences, inputHash, confirmed);
   }
 
   private Result reuse(CvGeneration generation) {
@@ -200,7 +217,7 @@ public class CvGenerationService {
         .document(outcome.document())
         .ats(new CvAtsResult(outcome.report(), outcome.iterations(), outcome.aiStatus()))
         .tailoring(new CvTailoring(prepared.terms().terms(), outcome.report().matchedTerms(),
-            jobVersion.getAnalysisStatus()))
+            jobVersion.getAnalysisStatus(), outcome.enrichment()))
         .pdfObject(pdfObject)
         .markdownObject(markdownObject)
         .createdAt(Instant.now())
@@ -222,7 +239,7 @@ public class CvGenerationService {
     VaultExportService.Request request = new VaultExportService.Request(
         generation.getId(), owner.getId(), jobVersion.getJobPosting().getTitle(),
         jobVersion.getJobPosting().getCompanyName(), generation.getAts().report().score(),
-        generation.getCreatedAt());
+        generation.getCreatedAt(), ownerVaults.exportTargetOf(owner.getId()).orElse(null));
     vaultExport.ifAvailable(export -> TransactionSynchronizationManager.registerSynchronization(
         new TransactionSynchronization() {
           @Override

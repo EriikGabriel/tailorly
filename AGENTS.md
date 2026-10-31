@@ -4,11 +4,11 @@ Estas instruções valem para o monorepo. Leia o `README.md`, especialmente “D
 
 ## Invariantes do domínio
 
-- O Currículo Base revisado é a fonte dos fatos. Templates Typst formatam a saída; vagas e fontes secundárias não podem inventar ou substituir fatos pessoais confirmados.
+- O Currículo Base revisado é a fonte dos fatos. Templates Typst formatam a saída. Na geração, a IA pode reescrever e adaptar o texto à vaga, mas detalhes de fontes secundárias (vaga, links, busca web, vault) só entram no currículo como evidência complementar com fonte e trecho citado, e nunca substituem fatos pessoais confirmados. Detalhes pessoais sem confirmação ou sem trecho de suporte ficam fora do currículo.
 - Há um Ground Truth **ativo** por conta ou sessão anônima. Trocar arquivo cria uma versão candidata; a versão ativa anterior continua válida até a candidata concluir extração e pendências obrigatórias. Ative e desative versões de forma atômica.
 - Compare o hash do conteúdo no escopo da mesma conta ou sessão antes de processar. Reenvio idêntico reaproveita OCR, extração e fatos sem duplicação. Não deduplique entre pessoas. Reavalie fatos sensíveis ao tempo mesmo quando o arquivo é idêntico.
 - Extraia texto diretamente quando possível e use OCR quando necessário. Guarde evidência de origem por fato, versões do pipeline e estados de revisão (`pendente`, `confirmado`, `corrigido`, `omitido`). Vincule pendências e respostas à versão do Currículo Base. Nunca sobrescreva correções do usuário silenciosamente em um reprocessamento.
-- Gere currículos apenas a partir do snapshot de fatos aprovado e registre as versões do Ground Truth e da vaga usadas. Gerações subsequentes não devem reexecutar OCR do mesmo arquivo.
+- Gere currículos apenas a partir do snapshot de fatos aprovado e de evidências complementares confirmadas, e registre as versões do Ground Truth e da vaga usadas. Gerações subsequentes não devem reexecutar OCR do mesmo arquivo.
 - Diferencie desativação de exclusão. Exclusão deve abranger arquivo, texto extraído, fatos e pendências da versão; verifique também artefatos gerados que contenham esses dados antes de prometer exclusão completa.
 
 ## Sessões anônimas

@@ -5,6 +5,12 @@
     "title": "Tailorly API",
     "version": "0.1.0"
   },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:18080",
+      "description": "Generated server url"
+    }
+  ],
   "paths": {
     "/v1/ai-preferences": {
       "get": {
@@ -21,7 +27,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AiPreferences"]
+        "tags": [
+          "AiPreferences"
+        ]
       },
       "put": {
         "operationId": "aiPreferencesUpdate",
@@ -47,7 +55,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AiPreferences"]
+        "tags": [
+          "AiPreferences"
+        ]
       }
     },
     "/v1/anonymous-sessions": {
@@ -65,7 +75,9 @@
             "description": "Created"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/anonymous-sessions/current": {
@@ -76,7 +88,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       },
       "get": {
         "operationId": "anonymousSessionCurrent",
@@ -92,7 +106,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/anonymous-sessions/migrate": {
@@ -120,7 +136,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/anonymous-sessions/{id}": {
@@ -149,7 +167,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/anonymous-sessions/{id}/revoke": {
@@ -178,7 +198,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/auth/login": {
@@ -206,7 +228,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Authentication"]
+        "tags": [
+          "Authentication"
+        ]
       }
     },
     "/v1/auth/logout": {
@@ -227,7 +251,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["Authentication"]
+        "tags": [
+          "Authentication"
+        ]
       }
     },
     "/v1/auth/refresh": {
@@ -255,7 +281,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Authentication"]
+        "tags": [
+          "Authentication"
+        ]
       }
     },
     "/v1/auth/register": {
@@ -283,7 +311,9 @@
             "description": "Created"
           }
         },
-        "tags": ["Authentication"]
+        "tags": [
+          "Authentication"
+        ]
       }
     },
     "/v1/base-documents/hash/{contentHash}": {
@@ -311,7 +341,9 @@
             "description": "OK"
           }
         },
-        "tags": ["BaseDocument"]
+        "tags": [
+          "BaseDocument"
+        ]
       }
     },
     "/v1/base-documents/owner/{ownerId}": {
@@ -343,7 +375,9 @@
             "description": "OK"
           }
         },
-        "tags": ["BaseDocument"]
+        "tags": [
+          "BaseDocument"
+        ]
       }
     },
     "/v1/base-documents/upload": {
@@ -371,7 +405,9 @@
                     "format": "binary"
                   }
                 },
-                "required": ["file"]
+                "required": [
+                  "file"
+                ]
               }
             }
           }
@@ -388,7 +424,9 @@
             "description": "Created"
           }
         },
-        "tags": ["BaseDocument"]
+        "tags": [
+          "BaseDocument"
+        ]
       }
     },
     "/v1/base-documents/{id}": {
@@ -417,7 +455,9 @@
             "description": "OK"
           }
         },
-        "tags": ["BaseDocument"]
+        "tags": [
+          "BaseDocument"
+        ]
       }
     },
     "/v1/base-versions/{id}": {
@@ -439,7 +479,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["BaseVersion"]
+        "tags": [
+          "BaseVersion"
+        ]
       },
       "get": {
         "operationId": "baseVersionFindById",
@@ -466,7 +508,115 @@
             "description": "OK"
           }
         },
-        "tags": ["BaseVersion"]
+        "tags": [
+          "BaseVersion"
+        ]
+      }
+    },
+    "/v1/cv/evidence/snapshots/{snapshotId}": {
+      "get": {
+        "operationId": "supplementaryEvidenceFindBySnapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshotId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupplementaryEvidenceResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "SupplementaryEvidence"
+        ]
+      }
+    },
+    "/v1/cv/evidence/snapshots/{snapshotId}/collect": {
+      "post": {
+        "operationId": "supplementaryEvidenceCollect",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshotId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionResult"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "SupplementaryEvidence"
+        ]
+      }
+    },
+    "/v1/cv/evidence/{id}/review-state": {
+      "patch": {
+        "operationId": "supplementaryEvidenceUpdateReviewState",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEvidenceReviewStateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplementaryEvidenceResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "SupplementaryEvidence"
+        ]
       }
     },
     "/v1/cv/generate": {
@@ -494,7 +644,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/generations/owner/{ownerId}": {
@@ -526,7 +678,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/generations/{id}": {
@@ -548,7 +702,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       },
       "get": {
         "operationId": "cvGenerationFindById",
@@ -575,7 +731,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/generations/{id}/download": {
@@ -614,7 +772,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/generations/{id}/preview": {
@@ -654,7 +814,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/templates": {
@@ -682,7 +844,9 @@
             "description": "Created"
           }
         },
-        "tags": ["CvTemplate"]
+        "tags": [
+          "CvTemplate"
+        ]
       }
     },
     "/v1/cv/templates/bundled": {
@@ -700,7 +864,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvTemplate"]
+        "tags": [
+          "CvTemplate"
+        ]
       }
     },
     "/v1/cv/templates/owner/{ownerId}/current": {
@@ -729,7 +895,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvTemplate"]
+        "tags": [
+          "CvTemplate"
+        ]
       }
     },
     "/v1/cv/templates/{id}": {
@@ -758,7 +926,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvTemplate"]
+        "tags": [
+          "CvTemplate"
+        ]
       }
     },
     "/v1/extracted-pages/hash/{textHash}": {
@@ -786,7 +956,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractedPage"]
+        "tags": [
+          "ExtractedPage"
+        ]
       }
     },
     "/v1/extracted-pages/run/{extractionRunId}": {
@@ -818,7 +990,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractedPage"]
+        "tags": [
+          "ExtractedPage"
+        ]
       }
     },
     "/v1/extracted-pages/{id}": {
@@ -847,7 +1021,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractedPage"]
+        "tags": [
+          "ExtractedPage"
+        ]
       }
     },
     "/v1/extracted-pages/{id}/text": {
@@ -876,7 +1052,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractedPage"]
+        "tags": [
+          "ExtractedPage"
+        ]
       }
     },
     "/v1/extraction-runs": {
@@ -904,7 +1082,9 @@
             "description": "Accepted"
           }
         },
-        "tags": ["ExtractionRun"]
+        "tags": [
+          "ExtractionRun"
+        ]
       }
     },
     "/v1/extraction-runs/version/{baseVersionId}": {
@@ -936,7 +1116,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractionRun"]
+        "tags": [
+          "ExtractionRun"
+        ]
       }
     },
     "/v1/extraction-runs/{id}": {
@@ -965,7 +1147,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractionRun"]
+        "tags": [
+          "ExtractionRun"
+        ]
       }
     },
     "/v1/fact-evidence": {
@@ -993,7 +1177,9 @@
             "description": "Created"
           }
         },
-        "tags": ["FactEvidence"]
+        "tags": [
+          "FactEvidence"
+        ]
       }
     },
     "/v1/fact-evidence/fact/{factId}": {
@@ -1025,7 +1211,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactEvidence"]
+        "tags": [
+          "FactEvidence"
+        ]
       }
     },
     "/v1/fact-evidence/{id}": {
@@ -1054,7 +1242,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactEvidence"]
+        "tags": [
+          "FactEvidence"
+        ]
       }
     },
     "/v1/fact-evidence/{id}/locator": {
@@ -1093,7 +1283,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactEvidence"]
+        "tags": [
+          "FactEvidence"
+        ]
       }
     },
     "/v1/fact-records": {
@@ -1121,7 +1313,9 @@
             "description": "Created"
           }
         },
-        "tags": ["FactRecord"]
+        "tags": [
+          "FactRecord"
+        ]
       }
     },
     "/v1/fact-records/version/{baseVersionId}": {
@@ -1153,7 +1347,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactRecord"]
+        "tags": [
+          "FactRecord"
+        ]
       }
     },
     "/v1/fact-records/{id}": {
@@ -1182,7 +1378,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactRecord"]
+        "tags": [
+          "FactRecord"
+        ]
       }
     },
     "/v1/fact-records/{id}/display-order": {
@@ -1221,7 +1419,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactRecord"]
+        "tags": [
+          "FactRecord"
+        ]
       }
     },
     "/v1/facts": {
@@ -1249,7 +1449,9 @@
             "description": "Created"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
       }
     },
     "/v1/facts/record/{recordId}": {
@@ -1281,7 +1483,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
       }
     },
     "/v1/facts/{id}": {
@@ -1310,7 +1514,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
       }
     },
     "/v1/facts/{id}/confirm": {
@@ -1339,7 +1545,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
       }
     },
     "/v1/facts/{id}/review-state": {
@@ -1378,7 +1586,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
       }
     },
     "/v1/gt-snapshots/approve-version/{baseVersionId}": {
@@ -1407,7 +1617,9 @@
             "description": "Created"
           }
         },
-        "tags": ["GtSnapshot"]
+        "tags": [
+          "GtSnapshot"
+        ]
       }
     },
     "/v1/gt-snapshots/{id}": {
@@ -1436,7 +1648,9 @@
             "description": "OK"
           }
         },
-        "tags": ["GtSnapshot"]
+        "tags": [
+          "GtSnapshot"
+        ]
       }
     },
     "/v1/job-postings": {
@@ -1464,7 +1678,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/extract": {
@@ -1492,7 +1708,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/owner/{ownerId}": {
@@ -1524,7 +1742,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/{id}": {
@@ -1546,7 +1766,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       },
       "get": {
         "operationId": "jobPostingFindById",
@@ -1573,7 +1795,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/{id}/versions/{versionNumber}": {
@@ -1611,7 +1835,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/{id}/versions/{versionNumber}/analysis": {
@@ -1649,7 +1875,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/me": {
@@ -1667,7 +1895,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CurrentAccount"]
+        "tags": [
+          "CurrentAccount"
+        ]
       }
     },
     "/v1/me/sessions": {
@@ -1688,7 +1918,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Session"]
+        "tags": [
+          "Session"
+        ]
       }
     },
     "/v1/me/sessions/{id}": {
@@ -1710,7 +1942,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["Session"]
+        "tags": [
+          "Session"
+        ]
       }
     },
     "/v1/owners": {
@@ -1738,7 +1972,9 @@
             "description": "Created"
           }
         },
-        "tags": ["Owner"]
+        "tags": [
+          "Owner"
+        ]
       }
     },
     "/v1/owners/{id}": {
@@ -1767,7 +2003,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Owner"]
+        "tags": [
+          "Owner"
+        ]
       }
     },
     "/v1/owners/{id}/deactivate-snapshot": {
@@ -1796,7 +2034,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Owner"]
+        "tags": [
+          "Owner"
+        ]
       }
     },
     "/v1/owners/{id}/increment-revision": {
@@ -1825,7 +2065,101 @@
             "description": "OK"
           }
         },
-        "tags": ["Owner"]
+        "tags": [
+          "Owner"
+        ]
+      }
+    },
+    "/v1/owners/{ownerId}/vault": {
+      "delete": {
+        "operationId": "ownerVaultClear",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "OwnerVault"
+        ]
+      },
+      "get": {
+        "operationId": "ownerVaultGet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "OwnerVault"
+        ]
+      },
+      "put": {
+        "operationId": "ownerVaultSet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOwnerVaultRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "OwnerVault"
+        ]
       }
     },
     "/v1/review-issues/version/{baseVersionId}": {
@@ -1857,7 +2191,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ReviewIssue"]
+        "tags": [
+          "ReviewIssue"
+        ]
       }
     },
     "/v1/review-issues/{id}/answer": {
@@ -1896,7 +2232,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ReviewIssue"]
+        "tags": [
+          "ReviewIssue"
+        ]
       }
     },
     "/v1/stored-objects": {
@@ -1924,7 +2262,9 @@
             "description": "Created"
           }
         },
-        "tags": ["StoredObject"]
+        "tags": [
+          "StoredObject"
+        ]
       }
     },
     "/v1/stored-objects/owner/{ownerId}": {
@@ -1956,7 +2296,9 @@
             "description": "OK"
           }
         },
-        "tags": ["StoredObject"]
+        "tags": [
+          "StoredObject"
+        ]
       }
     },
     "/v1/stored-objects/{id}": {
@@ -1985,7 +2327,9 @@
             "description": "OK"
           }
         },
-        "tags": ["StoredObject"]
+        "tags": [
+          "StoredObject"
+        ]
       }
     },
     "/v1/stored-objects/{id}/deletion-status": {
@@ -2024,7 +2368,9 @@
             "description": "OK"
           }
         },
-        "tags": ["StoredObject"]
+        "tags": [
+          "StoredObject"
+        ]
       }
     },
     "/v1/users": {
@@ -2045,7 +2391,9 @@
             "description": "OK"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       },
       "post": {
         "operationId": "userCreateUser",
@@ -2071,7 +2419,9 @@
             "description": "Created"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       }
     },
     "/v1/users/by-email": {
@@ -2099,7 +2449,9 @@
             "description": "OK"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       }
     },
     "/v1/users/{id}": {
@@ -2128,7 +2480,9 @@
             "description": "OK"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       },
       "put": {
         "operationId": "userUpdateUser",
@@ -2165,7 +2519,9 @@
             "description": "OK"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       }
     },
     "/v1/users/{id}/disable": {
@@ -2187,7 +2543,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       }
     }
   },
@@ -2203,10 +2561,16 @@
             "type": "boolean"
           },
           "ollamaEndpoint": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "ollamaModel": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "provider": {
             "type": "string"
@@ -2215,13 +2579,22 @@
             "type": "boolean"
           },
           "remoteEndpoint": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "remoteModel": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "updatedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           }
         },
@@ -2283,14 +2656,23 @@
             "format": "uuid"
           },
           "revokedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "valid": {
             "type": "boolean"
           }
         },
-        "required": ["expiresAt", "id", "ownerId", "revokedAt", "valid"]
+        "required": [
+          "expiresAt",
+          "id",
+          "ownerId",
+          "revokedAt",
+          "valid"
+        ]
       },
       "AnonymousSessionStatusResponse": {
         "type": "object",
@@ -2409,7 +2791,10 @@
             "format": "uuid"
           },
           "pageCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32"
           }
         },
@@ -2439,7 +2824,12 @@
             "type": "boolean"
           }
         },
-        "required": ["document", "reused", "version", "versionReused"]
+        "required": [
+          "document",
+          "reused",
+          "version",
+          "versionReused"
+        ]
       },
       "BaseVersionResponse": {
         "type": "object",
@@ -2486,6 +2876,30 @@
           "versionNumber"
         ]
       },
+      "CollectionResult": {
+        "type": "object",
+        "properties": {
+          "aiStatus": {
+            "type": "string"
+          },
+          "evidenceCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "linksAlreadyKnown": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "linksFailed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "linksFound": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "Company": {
         "type": "object",
         "properties": {
@@ -2520,7 +2934,9 @@
             "format": "uuid"
           }
         },
-        "required": ["baseVersionId"]
+        "required": [
+          "baseVersionId"
+        ]
       },
       "CreateFactEvidenceRequest": {
         "type": "object",
@@ -2564,7 +2980,11 @@
             "minimum": 0
           }
         },
-        "required": ["baseVersionId", "category", "displayOrder"]
+        "required": [
+          "baseVersionId",
+          "category",
+          "displayOrder"
+        ]
       },
       "CreateFactRequest": {
         "type": "object",
@@ -2592,7 +3012,12 @@
           },
           "reviewedValue": {}
         },
-        "required": ["fieldKey", "origin", "recordId", "reviewState"]
+        "required": [
+          "fieldKey",
+          "origin",
+          "recordId",
+          "reviewState"
+        ]
       },
       "CreateJobPostingRequest": {
         "type": "object",
@@ -2622,7 +3047,9 @@
             "minLength": 0
           }
         },
-        "required": ["ownerId"]
+        "required": [
+          "ownerId"
+        ]
       },
       "CreateOwnerRequest": {
         "type": "object",
@@ -2636,7 +3063,9 @@
             "format": "uuid"
           }
         },
-        "required": ["kind"]
+        "required": [
+          "kind"
+        ]
       },
       "CreateStoredObjectRequest": {
         "type": "object",
@@ -2696,7 +3125,10 @@
             "minLength": 8
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "CurrentAccountResponse": {
         "type": "object",
@@ -2708,7 +3140,10 @@
             "$ref": "#/components/schemas/UserResponse"
           }
         },
-        "required": ["owner", "user"]
+        "required": [
+          "owner",
+          "user"
+        ]
       },
       "CvAtsResult": {
         "type": "object",
@@ -2795,9 +3230,16 @@
           },
           "optimizeForAts": {
             "type": "boolean"
+          },
+          "templateName": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
           }
         },
-        "required": ["guidelines"]
+        "required": [
+          "guidelines"
+        ]
       },
       "CvTemplateResponse": {
         "type": "object",
@@ -2837,7 +3279,9 @@
             "minLength": 0
           }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       },
       "ExtractedPageResponse": {
         "type": "object",
@@ -2854,7 +3298,10 @@
             "format": "uuid"
           },
           "pageNumber": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32"
           },
           "textHash": {
@@ -2885,7 +3332,10 @@
             "type": "string"
           }
         },
-        "required": ["pageId", "text"]
+        "required": [
+          "pageId",
+          "text"
+        ]
       },
       "ExtractionRunResponse": {
         "type": "object",
@@ -2895,10 +3345,16 @@
             "format": "uuid"
           },
           "errorCode": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "finishedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "id": {
@@ -2906,7 +3362,10 @@
             "format": "uuid"
           },
           "outputObjectId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "pipelineFingerprint": {
@@ -2917,7 +3376,10 @@
             "additionalProperties": {}
           },
           "startedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "status": {
@@ -2940,7 +3402,14 @@
         "type": "object",
         "properties": {
           "boundingBox": {
-            "type": ["object", "array", "string", "number", "boolean", "null"]
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
           },
           "extractedPageId": {
             "type": "string",
@@ -2993,13 +3462,22 @@
             "format": "uuid"
           }
         },
-        "required": ["baseVersionId", "category", "displayOrder", "facts", "id"]
+        "required": [
+          "baseVersionId",
+          "category",
+          "displayOrder",
+          "facts",
+          "id"
+        ]
       },
       "FactResponse": {
         "type": "object",
         "properties": {
           "confirmedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "evidence": {
@@ -3009,10 +3487,20 @@
             }
           },
           "extractedValue": {
-            "type": ["object", "array", "string", "number", "boolean", "null"]
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
           },
           "extractionRunId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "fieldKey": {
@@ -3030,14 +3518,24 @@
             "format": "uuid"
           },
           "revalidateAfter": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "reviewState": {
             "type": "string"
           },
           "reviewedValue": {
-            "type": ["object", "array", "string", "number", "boolean", "null"]
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
           }
         },
         "required": [
@@ -3082,7 +3580,10 @@
             "format": "uuid"
           }
         },
-        "required": ["jobPostingId", "ownerId"]
+        "required": [
+          "jobPostingId",
+          "ownerId"
+        ]
       },
       "GeneratedFile": {
         "type": "object",
@@ -3214,7 +3715,12 @@
             "type": "string"
           }
         },
-        "required": ["expiresAt", "ownerId", "sessionId", "token"]
+        "required": [
+          "expiresAt",
+          "ownerId",
+          "sessionId",
+          "token"
+        ]
       },
       "JobAnalysis": {
         "type": "object",
@@ -3530,7 +4036,10 @@
             "minLength": 1
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "LoginResponse": {
         "type": "object",
@@ -3571,17 +4080,25 @@
             "minLength": 1
           }
         },
-        "required": ["sessionToken"]
+        "required": [
+          "sessionToken"
+        ]
       },
       "OwnerResponse": {
         "type": "object",
         "properties": {
           "activeSnapshotId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "expiresAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "id": {
@@ -3596,7 +4113,10 @@
             "format": "int32"
           },
           "userId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           }
         },
@@ -3640,7 +4160,9 @@
             "minLength": 0
           }
         },
-        "required": ["content"]
+        "required": [
+          "content"
+        ]
       },
       "RefreshRequest": {
         "type": "object",
@@ -3650,7 +4172,9 @@
             "minLength": 1
           }
         },
-        "required": ["refreshToken"]
+        "required": [
+          "refreshToken"
+        ]
       },
       "Requirement": {
         "type": "object",
@@ -3745,7 +4269,10 @@
             "format": "uuid"
           }
         },
-        "required": ["content", "ownerId"]
+        "required": [
+          "content",
+          "ownerId"
+        ]
       },
       "SessionResponse": {
         "type": "object",
@@ -3767,6 +4294,35 @@
           }
         }
       },
+      "Settings": {
+        "type": "object",
+        "properties": {
+          "exportEnabled": {
+            "type": "boolean"
+          },
+          "exportSubfolder": {
+            "type": "string"
+          },
+          "readEnabled": {
+            "type": "boolean"
+          },
+          "relativePath": {
+            "type": "string"
+          },
+          "rootAvailable": {
+            "type": "boolean"
+          },
+          "usable": {
+            "type": "boolean"
+          },
+          "webSearchAvailable": {
+            "type": "boolean"
+          },
+          "webSearchEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
       "StoredObjectResponse": {
         "type": "object",
         "properties": {
@@ -3777,7 +4333,10 @@
             "type": "string"
           },
           "expiresAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "id": {
@@ -3813,6 +4372,34 @@
           "sizeBytes",
           "storageKey"
         ]
+      },
+      "SupplementaryEvidenceResponse": {
+        "type": "object",
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "collectedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reviewState": {
+            "type": "string"
+          },
+          "sourceExcerpt": {
+            "type": "string"
+          },
+          "sourceKind": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          }
+        }
       },
       "TemplateSource": {
         "type": "object",
@@ -3863,7 +4450,9 @@
             "type": "string"
           }
         },
-        "required": ["provider"]
+        "required": [
+          "provider"
+        ]
       },
       "UpdateDeletionStatusRequest": {
         "type": "object",
@@ -3873,7 +4462,9 @@
             "minLength": 1
           }
         },
-        "required": ["deletionStatus"]
+        "required": [
+          "deletionStatus"
+        ]
       },
       "UpdateDisplayOrderRequest": {
         "type": "object",
@@ -3884,14 +4475,30 @@
             "minimum": 0
           }
         },
-        "required": ["displayOrder"]
+        "required": [
+          "displayOrder"
+        ]
       },
       "UpdateEvidenceLocatorRequest": {
         "type": "object",
         "properties": {
           "sourceLocator": {}
         },
-        "required": ["sourceLocator"]
+        "required": [
+          "sourceLocator"
+        ]
+      },
+      "UpdateEvidenceReviewStateRequest": {
+        "type": "object",
+        "properties": {
+          "reviewState": {
+            "type": "string",
+            "pattern": "pendente|confirmado|descartado"
+          }
+        },
+        "required": [
+          "reviewState"
+        ]
       },
       "UpdateFactReviewStateRequest": {
         "type": "object",
@@ -3902,7 +4509,33 @@
           },
           "reviewedValue": {}
         },
-        "required": ["reviewState"]
+        "required": [
+          "reviewState"
+        ]
+      },
+      "UpdateOwnerVaultRequest": {
+        "type": "object",
+        "properties": {
+          "exportEnabled": {
+            "type": "boolean"
+          },
+          "exportSubfolder": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 0
+          },
+          "readEnabled": {
+            "type": "boolean"
+          },
+          "relativePath": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 0
+          },
+          "webSearchEnabled": {
+            "type": "boolean"
+          }
+        }
       },
       "UpdateUserRequest": {
         "type": "object",
@@ -3913,7 +4546,9 @@
             "minLength": 1
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "Usage": {
         "type": "object",
@@ -3931,7 +4566,11 @@
             "format": "int32"
           }
         },
-        "required": ["extractions", "generations", "uploads"]
+        "required": [
+          "extractions",
+          "generations",
+          "uploads"
+        ]
       },
       "UserResponse": {
         "type": "object",
@@ -3953,7 +4592,12 @@
             }
           }
         },
-        "required": ["email", "enabled", "id", "roles"]
+        "required": [
+          "email",
+          "enabled",
+          "id",
+          "roles"
+        ]
       },
       "VersionInfo": {
         "type": "object",

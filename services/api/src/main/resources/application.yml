@@ -101,14 +101,19 @@ tailorly:
   # instalado no host da API. Sem ele, POST /v1/cv/generate responde 503 e nada é gravado.
   generation:
     typst-command: ${TAILORLY_TYPST_COMMAND:typst}
-  # Exportação opcional dos currículos gerados para uma pasta local (por exemplo um vault Obsidian
-  # como o Second Brain, em B03 Resources/CVs). Desligada por padrão; nunca escreve automaticamente
-  # no vault pessoal de alguém sem que a própria pessoa aponte TAILORLY_VAULT_PATH para lá. Só
-  # exporta gerações de contas (nunca de sessões anônimas) e nunca sobrescreve o objeto no Garage.
+  # Exportação opcional dos currículos gerados para o vault Obsidian da própria conta (em
+  # B03 Resources/CVs). Desligada por padrão. Cada conta exporta só para o seu vault, dentro de
+  # TAILORLY_VAULT_ROOT. Nunca exporta sessões anônimas e nunca sobrescreve o objeto no Garage.
   vault:
     enabled: ${TAILORLY_VAULT_ENABLED:false}
-    path: ${TAILORLY_VAULT_PATH:}
     subfolder: ${TAILORLY_VAULT_SUBFOLDER:B03 Resources/CVs}
+    # Pasta raiz permitida para os vaults Obsidian das contas. Cada conta escolhe um caminho relativo a
+    # esta pasta (um vault por conta) e o servidor só lê e exporta dentro dela. Sem TAILORLY_VAULT_ROOT,
+    # nenhum vault é lido. Só faz sentido em instalação pessoal (self-hosted).
+    root: ${TAILORLY_VAULT_ROOT:}
+  # Busca web local (SearXNG, ver compose.yaml). Sem URL, nenhuma busca web é feita.
+  web-search:
+    searxng-url: ${TAILORLY_SEARXNG_URL:}
   storage:
     endpoint: ${TAILORLY_STORAGE_ENDPOINT:http://localhost:3900}
     region: ${TAILORLY_STORAGE_REGION:garage}

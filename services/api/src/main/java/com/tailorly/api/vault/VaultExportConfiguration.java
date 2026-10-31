@@ -16,7 +16,7 @@ public class VaultExportConfiguration {
 
   @Bean
   @ConditionalOnProperty(name = "tailorly.vault.enabled", havingValue = "true", matchIfMissing = false)
-  public VaultExportService vaultExportService(VaultExportProperties properties) {
-    return new VaultExportService(properties);
+  public VaultExportService vaultExportService() {
+    return new VaultExportService();
   }
 }

@@ -17,6 +17,7 @@ import type {
   BaseDocumentUploadParams,
   BaseDocumentUploadResponse,
   BaseVersionResponse,
+  CollectionResult,
   CreateExtractionRunRequest,
   CreateFactEvidenceRequest,
   CreateFactRecordRequest,
@@ -52,12 +53,16 @@ import type {
   ReviewIssueResponse,
   SaveCvTemplateRequest,
   SessionResponse,
+  Settings,
   StoredObjectResponse,
+  SupplementaryEvidenceResponse,
   UpdateAiPreferencesRequest,
   UpdateDeletionStatusRequest,
   UpdateDisplayOrderRequest,
   UpdateEvidenceLocatorRequest,
+  UpdateEvidenceReviewStateRequest,
   UpdateFactReviewStateRequest,
+  UpdateOwnerVaultRequest,
   UpdateUserRequest,
   UserGetUserByEmailParams,
   UserResponse,
@@ -507,6 +512,86 @@ export const baseVersionFindById = async (
     ...options,
     method: "GET",
   });
+};
+
+export const getSupplementaryEvidenceFindBySnapshotUrl = (
+  snapshotId: string,
+) => {
+  return `/v1/cv/evidence/snapshots/${encodeURIComponent(String(snapshotId))}`;
+};
+
+export const supplementaryEvidenceFindBySnapshot = async (
+  snapshotId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<SupplementaryEvidenceResponse[]> => {
+  return apiRequest<SupplementaryEvidenceResponse[]>(
+    getSupplementaryEvidenceFindBySnapshotUrl(snapshotId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getSupplementaryEvidenceCollectUrl = (snapshotId: string) => {
+  return `/v1/cv/evidence/snapshots/${encodeURIComponent(String(snapshotId))}/collect`;
+};
+
+export const supplementaryEvidenceCollect = async (
+  snapshotId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<CollectionResult> => {
+  return apiRequest<CollectionResult>(
+    getSupplementaryEvidenceCollectUrl(snapshotId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getSupplementaryEvidenceUpdateReviewStateUrl = (id: string) => {
+  return `/v1/cv/evidence/${encodeURIComponent(String(id))}/review-state`;
+};
+
+export const supplementaryEvidenceUpdateReviewState = async (
+  id: string,
+  updateEvidenceReviewStateRequest: UpdateEvidenceReviewStateRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<SupplementaryEvidenceResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<SupplementaryEvidenceResponse>(
+    getSupplementaryEvidenceUpdateReviewStateUrl(id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(options?.headers),
+      },
+      body: JSON.stringify(updateEvidenceReviewStateRequest),
+    },
+  );
 };
 
 export const getCvGenerationGenerateUrl = () => {
@@ -1549,6 +1634,75 @@ export const ownerIncrementRevision = async (
   return apiRequest<OwnerResponse>(getOwnerIncrementRevisionUrl(id), {
     ...options,
     method: "PATCH",
+  });
+};
+
+export const getOwnerVaultClearUrl = (ownerId: string) => {
+  return `/v1/owners/${encodeURIComponent(String(ownerId))}/vault`;
+};
+
+export const ownerVaultClear = async (
+  ownerId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<void> => {
+  return apiRequest<void>(getOwnerVaultClearUrl(ownerId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getOwnerVaultGetUrl = (ownerId: string) => {
+  return `/v1/owners/${encodeURIComponent(String(ownerId))}/vault`;
+};
+
+export const ownerVaultGet = async (
+  ownerId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<Settings> => {
+  return apiRequest<Settings>(getOwnerVaultGetUrl(ownerId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getOwnerVaultSetUrl = (ownerId: string) => {
+  return `/v1/owners/${encodeURIComponent(String(ownerId))}/vault`;
+};
+
+export const ownerVaultSet = async (
+  ownerId: string,
+  updateOwnerVaultRequest: UpdateOwnerVaultRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<Settings> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<Settings>(getOwnerVaultSetUrl(ownerId), {
+    ...options,
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(updateOwnerVaultRequest),
   });
 };
 

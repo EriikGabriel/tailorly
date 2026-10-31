@@ -12,7 +12,7 @@ export function SecondBrainCard() {
   return (
     <div className="flex flex-col gap-3">
       <SectionHeading
-        step={4}
+        step={5}
         title="Second Brain (Opcional & Secundário)"
         tone="muted"
         trailing={

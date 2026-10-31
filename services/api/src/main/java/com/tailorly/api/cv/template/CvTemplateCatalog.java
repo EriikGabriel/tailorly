@@ -30,12 +30,20 @@ public class CvTemplateCatalog {
   }
 
   private static final List<Bundled> BUNDLED = List.of(
-      new Bundled("classic", 1, "cv-templates/classic-v1.typ"));
+      new Bundled("classic", 1, "cv-templates/classic-v1.typ"),
+      new Bundled("modern", 1, "cv-templates/modern-v1.typ"),
+      new Bundled("editorial", 1, "cv-templates/editorial-v1.typ"),
+      new Bundled("harvard", 1, "cv-templates/harvard-v1.typ"));
 
   private final CvTemplateRepository templates;
 
   public static boolean exists(String name) {
     return BUNDLED.stream().anyMatch(template -> template.name().equals(name));
+  }
+
+  /** Nomes dos templates embarcados que a pessoa pode escolher. */
+  public static List<String> names() {
+    return BUNDLED.stream().map(Bundled::name).distinct().toList();
   }
 
   /** Devolve a versão mais recente do template, registrando-a no banco na primeira utilização. */

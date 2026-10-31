@@ -72,7 +72,7 @@ export function useGenerateCv() {
       if (credential.kind !== selected.ownerKind) {
         throw new Error("A vaga pertence a outra sessão. Leia a vaga de novo.");
       }
-      const { guidelines, optimizeForAts } =
+      const { guidelines, optimizeForAts, templateName } =
         useGenerationPreferencesStore.getState();
       return cvGenerationGenerate(
         {
@@ -81,7 +81,7 @@ export function useGenerateCv() {
           ...(selected.versionNumber
             ? { jobVersionNumber: selected.versionNumber }
             : {}),
-          preferences: { guidelines, optimizeForAts },
+          preferences: { guidelines, optimizeForAts, templateName },
         },
         { accessToken: credential.token },
       );
