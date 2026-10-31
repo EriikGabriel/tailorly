@@ -118,6 +118,10 @@ tailorly:
     path-style: ${TAILORLY_STORAGE_PATH_STYLE:true}
   security:
     admin-emails: ${TAILORLY_ADMIN_EMAILS:}
+    cors:
+      # Origens do frontend aceitas em /v1/**; separe várias por vírgula (por exemplo, para
+      # incluir o preview do Vite usado pelos testes e2e, http://127.0.0.1:4173).
+      allowed-origins: ${TAILORLY_CORS_ALLOWED_ORIGINS:http://localhost:5173}
     jwt:
       secret: ${TAILORLY_JWT_SECRET}
       issuer: ${TAILORLY_JWT_ISSUER:http://localhost:8080}
