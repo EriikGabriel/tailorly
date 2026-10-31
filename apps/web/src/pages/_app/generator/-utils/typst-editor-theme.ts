@@ -10,13 +10,14 @@ export function buildTypstEditorTheme(fontSize: number) {
     },
     ".cm-scroller": {
       overflow: "auto",
-      fontFamily:
-        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+      fontFamily: '"Cascadia Mono", monospace',
       fontSize: `${fontSize}px`,
+
       lineHeight: "1.6",
     },
     ".cm-content": {
       minHeight: "100%",
+      fontFamily: '"Cascadia Mono", monospace',
       padding: "0.75rem",
       overflowWrap: "anywhere",
     },
@@ -31,10 +32,7 @@ export function buildTypstEditorTheme(fontSize: number) {
     ".cm-activeLineGutter": {
       backgroundColor: "var(--color-surface-container)",
     },
-    "&.cm-focused": {
-      outline: "2px solid var(--color-ring)",
-      outlineOffset: "-2px",
-    },
+
     ".cm-searchMatch": {
       backgroundColor: "var(--color-secondary-container)",
     },
@@ -49,5 +47,26 @@ export function buildTypstEditorTheme(fontSize: number) {
     ".cm-panels.cm-panels-top": {
       borderBottom: "1px solid var(--color-outline-variant)",
     },
+    ".cm-color-swatch": {
+      width: "13px",
+      height: "13px",
+      padding: "0",
+      marginRight: "5px",
+      verticalAlign: "-2px",
+      border: "1px solid var(--color-outline)",
+      borderRadius: "3px",
+      background: "none",
+      cursor: "pointer",
+    },
+    ".cm-color-swatch::-webkit-color-swatch-wrapper": { padding: "0" },
+    ".cm-color-swatch::-webkit-color-swatch": {
+      border: "none",
+      borderRadius: "2px",
+    },
+    ".cm-color-swatch::-moz-color-swatch": {
+      border: "none",
+      borderRadius: "2px",
+    },
+    ".cm-gutter-lint": { width: "1.1em" },
   });
 }

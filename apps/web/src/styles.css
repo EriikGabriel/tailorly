@@ -4,6 +4,15 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/inter/wght-italic.css";
 
+@font-face {
+  font-family: "Cascadia Mono";
+  src: url("./assets/fonts/CascadiaMono-VariableFont_wght.ttf")
+    format("truetype");
+  font-weight: 200 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* ------------------------------------------------------------------ */
@@ -402,5 +411,11 @@
   ::selection {
     background: #f5d9b5;
     color: var(--primary);
+  }
+
+  /* A camada de texto do PDF é transparente e existe apenas para permitir seleção e cópia.
+     Colorir a seleção faria o texto aparecer uma segunda vez sobre o canvas. */
+  .react-pdf__Page__textContent ::selection {
+    color: transparent;
   }
 }

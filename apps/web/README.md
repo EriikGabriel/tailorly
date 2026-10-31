@@ -139,6 +139,9 @@ pages/_app/<rota>/
 Exemplos reais: `base/-hooks/use-save-review-draft.ts` grava o rascunho na API;
 `base/-utils/review-draft-hydration.ts` converte fatos da API em rascunho;
 `generator/-hooks/use-typst-code-editor.ts` cuida do CodeMirror;
+`generator/-components/resizable-split.tsx` é o divisor arrastável do modo dividido e
+`generator/-components/pdf-live-viewer.tsx` desenha a prévia do PDF no lugar (pdf.js);
+a lógica pura do editor (diagnósticos, cores, autocompletar, edições) fica em `generator/-utils/typst-*.ts`, com testes em `tests/unit/typst-editor.test.ts`;
 `generator/-components/job-analysis/` divide o cartão de análise da vaga.
 
 ### Aliases

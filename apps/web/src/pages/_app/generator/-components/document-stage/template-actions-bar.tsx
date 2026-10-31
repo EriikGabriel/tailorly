@@ -35,9 +35,10 @@ export function TemplateActionsBar({
       </Button>
       <Button
         type="button"
+        variant="outline"
         onClick={onRestore}
         disabled={!canRestore}
-        className="h-9 rounded-lg bg-surface-container px-3 text-xs font-semibold text-on-surface disabled:opacity-40"
+        className="h-9 rounded-lg px-3 text-xs font-semibold text-on-surface disabled:opacity-40"
       >
         Restaurar template padrão
       </Button>

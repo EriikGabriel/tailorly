@@ -50,10 +50,10 @@ export function MasterDocumentPanel({
       aria-labelledby="master-document-heading"
       className="flex min-w-0 flex-col gap-4 rounded-2xl bg-card border p-4 shadow-xs sm:p-6"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
+      <div className="flex flex-nowrap items-center justify-between gap-3 pb-1">
         <h2
           id="master-document-heading"
-          className="flex items-center gap-1 text-headline-sm text-primary-950"
+          className="flex min-w-0 items-center gap-1 truncate text-headline-sm text-primary-950"
         >
           <span
             aria-hidden="true"
@@ -91,11 +91,11 @@ export function MasterDocumentPanel({
       </p>
 
       <div className="flex h-130 max-h-195 min-w-0 flex-col overflow-hidden rounded-xl bg-card shadow-md sm:h-195">
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-6 pb-4 text-xs font-semibold leading-4 tracking-[0.3px] text-on-surface-variant sm:px-6">
+        <div className="flex flex-nowrap items-center justify-between gap-3 px-4 pt-6 pb-4 text-xs font-semibold leading-4 tracking-[0.3px] whitespace-nowrap text-on-surface-variant sm:px-6">
           <span className="min-w-0 truncate" title={file?.name}>
             {file?.name ?? "Nenhum documento selecionado"}
           </span>
-          <span className="shrink-0">
+          <span className="shrink-0 truncate">
             {boundingBoxesEnabled
               ? `Pontos de extração da IA • ${evidenceFacts.length} localizado${evidenceFacts.length === 1 ? "" : "s"}`
               : file
@@ -103,25 +103,18 @@ export function MasterDocumentPanel({
                 : "PDF original"}
           </span>
         </div>
-        {boundingBoxesEnabled ? (
-          url && isPdf && file ? (
-            <PdfEvidenceViewer
-              file={file}
-              facts={evidenceFacts}
-              zoom={zoom}
-              activeStep={activeStep}
-              focusedRecordKeys={focusedRecordKeys}
-            />
-          ) : (
-            <EvidenceBoundingBoxes records={records} activeStep={activeStep} />
-          )
-        ) : url ? (
-          <iframe
-            key={`${url}-${zoom}`}
-            src={`${url}#toolbar=0&navpanes=0&${zoom === "fit" ? "view=Fit" : `zoom=${zoom}`}`}
-            title={`Documento original: ${file?.name}`}
-            className="min-h-0 w-full flex-1 border-0"
+        {/* O mesmo visualizador serve aos dois modos: "Bounding Boxes de IA" só liga ou desliga a
+            sobreposição, então alternar ou mudar o zoom não recarrega o documento. */}
+        {url && isPdf && file ? (
+          <PdfEvidenceViewer
+            file={file}
+            facts={boundingBoxesEnabled ? evidenceFacts : []}
+            zoom={zoom}
+            activeStep={activeStep}
+            focusedRecordKeys={focusedRecordKeys}
           />
+        ) : boundingBoxesEnabled ? (
+          <EvidenceBoundingBoxes records={records} activeStep={activeStep} />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-12 text-center">
             <span className="flex size-14 items-center justify-center rounded-xl bg-surface-container-low text-muted-foreground">

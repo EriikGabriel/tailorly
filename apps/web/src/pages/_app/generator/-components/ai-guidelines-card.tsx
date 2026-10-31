@@ -114,11 +114,11 @@ export function AiGuidelinesCard() {
         />
       </div>
 
-      <fieldset className="flex flex-col gap-2 border-0 p-0 m-0">
+      <div className="flex flex-col gap-2 border-0 p-0 m-0">
         <legend className="text-sm font-semibold tracking-[0.14px] text-on-surface">
           Layout do currículo
         </legend>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2">
           {templateOptions.map((option) => {
             const isActive = templateName === option.value;
             return (
@@ -147,7 +147,7 @@ export function AiGuidelinesCard() {
             );
           })}
         </div>
-      </fieldset>
+      </div>
     </div>
   );
 }

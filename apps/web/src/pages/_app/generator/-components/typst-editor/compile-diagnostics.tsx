@@ -1,7 +1,7 @@
-import type { CvPreviewState } from "@hooks/use-cv-preview";
+import type { CvPreview } from "@hooks/use-cv-preview";
 
 /** Erro de compilação do Typst e seus diagnósticos; não renderiza nada quando a prévia compila. */
-export function CompileDiagnostics({ preview }: { preview: CvPreviewState }) {
+export function CompileDiagnostics({ preview }: { preview: CvPreview }) {
   if (!preview.error) return null;
   return (
     <div

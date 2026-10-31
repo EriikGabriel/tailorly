@@ -13,6 +13,7 @@ import { EmptyDocumentState } from "./document-stage/empty-document-state";
 import { GenerationFooter } from "./document-stage/generation-footer";
 import { StageHeader } from "./document-stage/stage-header";
 import { TemplateActionsBar } from "./document-stage/template-actions-bar";
+import { ResizableSplit } from "./resizable-split";
 import { TypstEditor } from "./typst-editor";
 
 /**
@@ -40,7 +41,15 @@ export function DocumentStage({
   const actions = useDocumentActions(generation.data, token, draft);
 
   const showsEditor = viewMode === "typst" || viewMode === "split";
-  const showsPreview = viewMode === "visual" || viewMode === "split";
+  const editor =
+    draft === null ? null : (
+      <TypstEditor
+        value={draft}
+        onChange={templateDraft.setDraft}
+        preview={preview}
+        onSave={actions.saveAndRegenerate}
+      />
+    );
 
   return (
     <div className="flex h-full w-full flex-1 flex-col gap-4">
@@ -54,18 +63,21 @@ export function DocumentStage({
 
       {generation.data && draft !== null ? (
         <div
-          className={`grid min-h-[min(1120px,141.4vw)] flex-1 gap-4 ${
-            viewMode === "split" ? "items-start lg:grid-cols-2" : ""
-          }`}
+          className="h-[max(560px,calc(100dvh-13rem))] min-h-0"
+          data-testid="stage-panels"
         >
-          {showsEditor && (
-            <TypstEditor
-              value={draft}
-              onChange={templateDraft.setDraft}
-              preview={preview}
+          {viewMode === "split" ? (
+            <ResizableSplit
+              storageKey="tailorly:generator:split-ratio"
+              separatorLabel="Ajustar a largura do editor e da prévia"
+              first={editor}
+              second={<CvPreview preview={preview} />}
             />
+          ) : showsEditor ? (
+            editor
+          ) : (
+            <CvPreview preview={preview} />
           )}
-          {showsPreview && <CvPreview preview={preview} />}
         </div>
       ) : (
         <EmptyDocumentState ready={ready} loading={generation.isLoading} />

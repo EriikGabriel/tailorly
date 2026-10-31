@@ -22,6 +22,14 @@ test("RF09: envia PDF na home e reutiliza o fluxo em /base após reload", {
       }),
     );
   });
+  // Rotas /v1 não simuladas nunca devem alcançar uma API real que esteja no ar. As específicas,
+  // registradas depois, têm prioridade.
+  await page.route("**/v1/**", (route) =>
+    route.fulfill({
+      status: 404,
+      json: { status: 404, message: "Rota não simulada no teste." },
+    }),
+  );
   await page.route("**/v1/me", (route) =>
     route.fulfill({
       json: {

@@ -7,7 +7,7 @@ import java.util.UUID;
 import com.tailorly.api.cv.ats.AtsEvaluator;
 import com.tailorly.api.cv.ats.AtsReport;
 import com.tailorly.api.cv.enrichment.ConfirmedEvidence;
-import com.tailorly.api.cv.enrichment.ProjectEnricher;
+import com.tailorly.api.cv.enrichment.CvContentEnricher;
 import com.tailorly.api.cv.model.CvEnrichment;
 import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.cv.model.CvPlan;
@@ -30,14 +30,14 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CvPipeline {
-  public static final String VERSION = "cv-pipeline-2";
+  public static final String VERSION = "cv-pipeline-3";
   private static final int MAX_REFINEMENTS = 2;
   private static final Logger log = LoggerFactory.getLogger(CvPipeline.class);
 
   private final PdfRenderer renderer;
   private final AtsEvaluator evaluator;
   private final CvPlanAdvisor advisor;
-  private final ProjectEnricher enricher;
+  private final CvContentEnricher enricher;
 
   /** Uma tentativa de layout: de onde veio o plano, a nota e o que mudou. */
   public record PipelineIteration(int number, String source, int score, String density, String rationale) {
@@ -53,8 +53,8 @@ public class CvPipeline {
 
   public Outcome run(UUID ownerId, CvDocument approved, String templateSource, JobTerms terms, JobAnalysis analysis,
       String jobTitle, CvPreferences prefs, List<ConfirmedEvidence> evidence) {
-    // A reescrita só troca frases de projetos com evidência confirmada; o restante segue os fatos aprovados.
-    ProjectEnricher.Result enriched = enricher.enrich(ownerId, approved, evidence, analysis, jobTitle);
+    // A reescrita troca frases de experiência, projetos e resumo, sempre presas aos fatos aprovados e às evidências confirmadas.
+    CvContentEnricher.Result enriched = enricher.enrich(ownerId, approved, evidence, analysis, jobTitle);
     CvDocument base = enriched.document();
     CvPlan plan = CvPlan.neutral();
     String editableTemplate = TypstTemplateMaterializer.materialize(templateSource, base);
