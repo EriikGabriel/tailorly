@@ -387,7 +387,7 @@ Essas credenciais existem apenas para o ambiente local. Variáveis de ambiente e
 | ------------------- | --------------------------------------------------------------------------------- |
 | `pnpm build`        | Gera o build de todos os workspaces.                                              |
 | `pnpm test`         | Executa a suíte de testes do monorepo.                                            |
-| `pnpm lint`         | Executa as verificações de lint.                                                  |
+| `pnpm lint`         | Corrige automaticamente o que o Biome conseguir e verifica o restante.            |
 | `pnpm check`        | Executa as checagens configuradas para os workspaces.                             |
 | `pnpm api:generate` | Regenera tipos e funções HTTP TypeScript a partir do snapshot OpenAPI versionado. |
 | `pnpm api:sync`     | Com a API ativa, atualiza o snapshot OpenAPI e executa o Orval.                   |
