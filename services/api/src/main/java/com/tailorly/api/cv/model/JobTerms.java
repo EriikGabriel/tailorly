@@ -68,8 +68,9 @@ public final class JobTerms {
     }
     String folded = fold(text);
     for (Map.Entry<String, String> term : byKey.entrySet()) {
-      if (Pattern.compile("(?<![\\p{L}\\p{N}])" + Pattern.quote(term.getKey()) + "(?![\\p{L}\\p{N}])")
-          .matcher(folded).find()) {
+      if (TermAliases.of(term.getKey()).stream().anyMatch(alias -> Pattern
+          .compile("(?<![\\p{L}\\p{N}])" + Pattern.quote(alias) + "(?![\\p{L}\\p{N}])")
+          .matcher(folded).find())) {
         matched.add(term.getValue());
       }
     }

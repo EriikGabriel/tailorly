@@ -1,6 +1,8 @@
 import { AiStageLabel } from "@components/ai-progress/ai-stage-label";
+import { DetailsDialog } from "@components/details-dialog";
 import { useCurrentAccount } from "@queries/current-account";
 import { useViewer } from "@queries/cv-generation";
+import { type OwnerVaultSettings, useOwnerVault } from "@queries/owner-vault";
 import {
   EVIDENCE_COLLECT_KEY,
   type EvidenceCollection,
@@ -10,7 +12,9 @@ import {
   useSupplementaryEvidence,
 } from "@queries/supplementary-evidence";
 import { useIsMutating } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { EvidenceReviewList, groupBySubject } from "./evidence-review-list";
 import { SectionHeading } from "./section-heading";
 
 const COLLECTION_MESSAGE: Record<EvidenceCollection["aiStatus"], string> = {
@@ -19,6 +23,39 @@ const COLLECTION_MESSAGE: Record<EvidenceCollection["aiStatus"], string> = {
   unavailable:
     "Configure um provedor de IA no perfil para analisar os links do seu currículo.",
 };
+
+/** De onde as evidências vêm hoje, segundo as preferências do perfil (Second Brain). */
+function SourcesLine({
+  vault,
+  loading,
+}: {
+  vault: OwnerVaultSettings | undefined;
+  loading: boolean;
+}) {
+  if (loading) return null;
+  const notes = vault?.usable
+    ? vault.readEnabled
+      ? `Notas do vault (${vault.relativePath})`
+      : "Notas do vault desligadas"
+    : "Sem vault configurado";
+  const web = !vault?.webSearchAvailable
+    ? "Busca web indisponível no servidor"
+    : vault.webSearchEnabled
+      ? "Busca web ligada"
+      : "Busca web desligada";
+  return (
+    <p className="text-xs text-on-surface-variant">
+      Fontes: links do currículo · {web} · {notes}.{" "}
+      <Link
+        to="/profile"
+        hash="section-connections"
+        className="font-medium text-primary underline"
+      >
+        Configurar no perfil
+      </Link>
+    </p>
+  );
+}
 
 /**
  * Detalhes encontrados nos links do Currículo Base, para a pessoa confirmar ou descartar. Só as
@@ -38,6 +75,8 @@ export function SupplementaryEvidenceCard() {
   // Também vale a coleta automática disparada ao aprovar o Currículo Base.
   const collecting = useIsMutating({ mutationKey: EVIDENCE_COLLECT_KEY }) > 0;
   const review = useReviewSupplementaryEvidence(snapshotId, viewer.token);
+  const vault = useOwnerVault(viewer.ownerId, viewer.token);
+  const [open, setOpen] = useState(false);
   const [lastCollection, setLastCollection] =
     useState<EvidenceCollection | null>(null);
 
@@ -46,6 +85,9 @@ export function SupplementaryEvidenceCard() {
   const items = evidence.data ?? [];
   const confirmed = items.filter((item) => item.reviewState === "confirmado");
   const groups = groupBySubject(items);
+  const pendingCount = items.filter(
+    (item) => item.reviewState === "pendente",
+  ).length;
 
   async function confirmGroup(group: SupplementaryEvidence[]) {
     for (const item of group.filter(
@@ -120,170 +162,44 @@ export function SupplementaryEvidenceCard() {
           </p>
         )}
 
-        {groups.map((group) => (
-          <section key={group.key} className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <h4 className="text-xs font-semibold text-on-surface">
-                {group.label}
-              </h4>
-              {group.pending > 0 && (
-                <button
-                  type="button"
-                  disabled={review.isPending}
-                  onClick={() => confirmGroup(group.items)}
-                  className="rounded-lg bg-surface-container-high px-2 py-0.5 text-[11px] font-medium text-on-surface disabled:opacity-60"
-                >
-                  Confirmar {group.pending} pendente(s)
-                </button>
-              )}
-            </div>
-            {group.items.map((item) => (
-              <EvidenceItem
-                key={item.id}
-                item={item}
-                onReview={(reviewState) =>
-                  review.mutate({ id: item.id, reviewState })
-                }
-                busy={review.isPending}
-              />
-            ))}
-          </section>
-        ))}
-      </div>
-    </div>
-  );
-}
+        <SourcesLine vault={vault.data} loading={vault.isLoading} />
 
-const ORDER: Record<string, number> = {
-  pendente: 0,
-  confirmado: 1,
-  descartado: 2,
-};
-const SOURCE: Record<string, string> = {
-  base_link: "Link do projeto",
-  web: "Busca web",
-  vault: "Second brain",
-};
-
-/** Agrupa por item do currículo (projeto ou empresa), com o que falta decidir primeiro. */
-function groupBySubject(items: SupplementaryEvidence[]) {
-  const groups = new Map<
-    string,
-    {
-      key: string;
-      label: string;
-      items: SupplementaryEvidence[];
-      pending: number;
-    }
-  >();
-  for (const item of items) {
-    const key = item.subjectKey ?? "outros";
-    const group = groups.get(key) ?? {
-      key,
-      label: item.subjectLabel ?? "Outros links",
-      items: [],
-      pending: 0,
-    };
-    group.items.push(item);
-    if (item.reviewState === "pendente") group.pending++;
-    groups.set(key, group);
-  }
-  return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      items: group.items.sort(
-        (left, right) => ORDER[left.reviewState] - ORDER[right.reviewState],
-      ),
-    }))
-    .sort(
-      (left, right) => Number(right.pending > 0) - Number(left.pending > 0),
-    );
-}
-
-function EvidenceItem({
-  item,
-  onReview,
-  busy,
-}: {
-  item: SupplementaryEvidence;
-  onReview: (reviewState: "pendente" | "confirmado" | "descartado") => void;
-  busy: boolean;
-}) {
-  const confirmed = item.reviewState === "confirmado";
-  const discarded = item.reviewState === "descartado";
-  const label = {
-    confirmado: "Confirmado",
-    descartado: "Descartado",
-    pendente: "Pendente",
-  }[item.reviewState];
-
-  return (
-    <article className="flex flex-col gap-2 rounded-lg bg-surface-container p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-on-surface">{item.claim}</p>
-          <span className="text-[11px] text-on-surface-variant">
-            {SOURCE[item.sourceKind] ?? item.sourceKind}
-          </span>
-        </div>
-        <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-            confirmed
-              ? "bg-secondary-container text-on-secondary-container"
-              : "bg-surface-container-high text-on-surface-variant"
-          }`}
-        >
-          {label}
-        </span>
-      </div>
-      <blockquote className="border-l-2 border-outline-variant pl-2 text-xs text-on-surface-variant">
-        “{item.sourceExcerpt}”
-      </blockquote>
-      <div className="flex items-center justify-between gap-3">
-        {item.sourceUrl ? (
-          <a
-            href={item.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="truncate text-xs text-primary underline"
-          >
-            {item.sourceUrl}
-          </a>
-        ) : (
-          <span />
-        )}
-        <div className="flex shrink-0 gap-2">
-          {confirmed || discarded ? (
+        {items.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-on-surface-variant">
+              {pendingCount > 0 ? (
+                <strong className="font-semibold text-on-surface">
+                  {pendingCount} pendente(s)
+                </strong>
+              ) : (
+                "Nenhuma pendente"
+              )}{" "}
+              · {confirmed.length} confirmada(s) · {groups.length} item(ns)
+            </p>
             <button
               type="button"
-              disabled={busy}
-              onClick={() => onReview("pendente")}
-              className="rounded-lg bg-surface-container-high px-2.5 py-1 text-xs font-medium text-on-surface disabled:opacity-60"
+              onClick={() => setOpen(true)}
+              className="rounded-lg bg-primary-950 px-2.5 py-1.5 text-xs font-medium text-white"
             >
-              {discarded ? "Restaurar" : "Desfazer"}
+              {pendingCount > 0 ? "Revisar evidências" : "Ver evidências"}
             </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onReview("descartado")}
-                className="rounded-lg bg-surface-container-high px-2.5 py-1 text-xs font-medium text-on-surface disabled:opacity-60"
-              >
-                Descartar
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onReview("confirmado")}
-                className="rounded-lg bg-primary-950 px-2.5 py-1 text-xs font-medium text-white disabled:opacity-60"
-              >
-                Confirmar
-              </button>
-            </>
-          )}
-        </div>
+          </div>
+        )}
+
+        <DetailsDialog
+          open={open}
+          onOpenChange={setOpen}
+          title="Evidências complementares"
+          description="Detalhes encontrados em links, na web e no seu second brain. Só os confirmados podem entrar no currículo."
+        >
+          <EvidenceReviewList
+            groups={groups}
+            busy={review.isPending}
+            onReview={(id, reviewState) => review.mutate({ id, reviewState })}
+            onConfirmGroup={confirmGroup}
+          />
+        </DetailsDialog>
       </div>
-    </article>
+    </div>
   );
 }

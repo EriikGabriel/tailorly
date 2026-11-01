@@ -2,6 +2,7 @@ package com.tailorly.api.cv.ats.review;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -13,56 +14,88 @@ import org.junit.jupiter.api.Test;
 class AtsReviewerTest {
   private final AtsReviewer reviewer = new AtsReviewer(new ObjectMapper(), null, null, new ResumeParser());
 
-  private static final String RESUME = "Ana Souza\nExperiência profissional\nEngenheira — Acme 2021 – Atual\n"
-      + "• Serviços em Java e Spring Boot com PostgreSQL\n";
+  private static final List<String> LINES = List.of(
+      "Ana Souza",
+      "Experiência profissional",
+      "Engenheira — Acme 2021 – Atual",
+      "• Serviços em Java e Spring Boot",
+      "Tecnologias",
+      "Frontend: React, TypeScript.",
+      "Banco de dados: Postgres, MySQL.");
+
+  private static JobAnalysis.Requirement requirement(String text, String importance, String category,
+      Integer minYears, String... technologies) {
+    return new JobAnalysis.Requirement(text, importance, category, minYears, List.of(technologies), text);
+  }
 
   private static List<JobAnalysis.Requirement> requirements() {
     return List.of(
-        new JobAnalysis.Requirement("Java", "required", "technology", null, List.of("Java"), "Java"),
-        new JobAnalysis.Requirement("Kubernetes", "required", "technology", null, List.of("Kubernetes"), "k8s"),
-        new JobAnalysis.Requirement("PostgreSQL", "preferred", "technology", null, List.of("PostgreSQL"), "pg"),
-        new JobAnalysis.Requirement("Inglês", "preferred", "language", null, List.of(), "inglês"));
+        requirement("Java", "required", "technology", null, "Java"),
+        requirement("Kubernetes", "required", "technology", null, "Kubernetes"),
+        requirement("PostgreSQL", "preferred", "technology", null, "PostgreSQL"),
+        requirement("Inglês", "preferred", "language", null));
   }
 
   @Test
-  void keepsOnlyEvidenceThatExistsInTheResumeText() {
+  void evidenceIsTheRealTextOfTheCitedLines() {
     String response = """
         {"summary":"Boa aderência.","requirements":[
-          {"id":1,"status":"met","evidence":"Serviços em Java e Spring Boot","note":"ok"},
-          {"id":2,"status":"met","evidence":"Orquestração com Kubernetes em produção","note":"inventado"},
-          {"id":3,"status":"partial","evidence":"com PostgreSQL","note":"sem anos"}],
-         "strengths":["Java"],"suggestions":["Citar anos de PostgreSQL"]}
+          {"id":1,"status":"met","lines":[4],"note":"ok"},
+          {"id":2,"status":"met","lines":[99],"note":"linha inexistente"}],
+         "strengths":["Java"],"suggestions":["Citar anos"]}
         """;
 
-    AtsReview review = reviewer.parse(response, requirements(), RESUME);
+    AtsReview review = reviewer.parse(response, requirements(), LINES);
 
     assertEquals("completed", review.status());
     assertEquals("met", review.requirements().get(0).status());
-    // A citação que não existe no texto rebaixa o requisito para ausente.
+    assertEquals("• Serviços em Java e Spring Boot", review.requirements().get(0).evidence());
+    // Um número de linha inexistente não sustenta nada: o requisito fica ausente.
     assertEquals("missing", review.requirements().get(1).status());
     assertNull(review.requirements().get(1).evidence());
-    assertEquals("partial", review.requirements().get(2).status());
-    // O que a IA não avaliou nunca vira atendido por omissão.
+  }
+
+  @Test
+  void aTechnologyThatAppearsInAnotherSpellingIsNeverMissing() {
+    // A IA disse "ausente" para PostgreSQL, mas o currículo lista "Postgres".
+    AtsReview review = reviewer.parse("""
+        {"requirements":[{"id":3,"status":"missing","lines":[],"note":"não achei"}]}
+        """, requirements(), LINES);
+
+    var postgres = review.requirements().get(2);
+    assertEquals("met", postgres.status());
+    assertEquals("Banco de dados: Postgres, MySQL.", postgres.evidence());
+  }
+
+  @Test
+  void aTechnologyRequirementWithYearsOnlyBecomesPartial() {
+    var withYears = requirement("React com 3 anos", "required", "technology", 3, "React.js");
+
+    var result = AtsReviewer.floor(withYears,
+        new AtsReview.RequirementCheck("React com 3 anos", "required", "missing", null, "x"), LINES);
+
+    assertEquals("partial", result.status());
+    assertEquals("Frontend: React, TypeScript.", result.evidence());
+  }
+
+  @Test
+  void whatTheTextDoesNotMentionStaysMissingAndUnevaluatedIsNeverMet() {
+    AtsReview review = reviewer.parse("{\"requirements\":[]}", requirements(), LINES);
+
+    assertEquals("met", review.requirements().get(0).status(), "Java aparece no texto");
+    assertEquals("missing", review.requirements().get(1).status(), "Kubernetes não aparece");
     assertEquals("missing", review.requirements().get(3).status());
+    assertTrue(review.requirements().get(3).note().contains("Sem avaliação"));
   }
 
   @Test
   void alignmentWeightsRequiredTwiceAndPartialAsHalf() {
     AtsReview review = reviewer.parse("""
-        {"requirements":[{"id":1,"status":"met","evidence":"Java"},
-          {"id":3,"status":"partial","evidence":"PostgreSQL"}]}
-        """, requirements(), RESUME);
+        {"requirements":[{"id":1,"status":"met","lines":[4]},{"id":3,"status":"partial","lines":[7]}]}
+        """, requirements(), LINES);
 
-    // required Java (2) met + preferred PostgreSQL (1) meio = 2.5 de 6 pontos.
+    // Java (obrigatório, peso 2) atendido + PostgreSQL (desejável, peso 1) parcial = 2,5 de 6 pontos.
+    // Kubernetes e Inglês ficam ausentes: não aparecem no texto.
     assertEquals(42, review.alignment());
-  }
-
-  @Test
-  void unknownStatusAndForeignIdsAreIgnored() {
-    AtsReview review = reviewer.parse("""
-        {"requirements":[{"id":99,"status":"met","evidence":"Java"},{"id":1,"status":"great","evidence":"Java"}]}
-        """, requirements(), RESUME);
-
-    assertEquals("missing", review.requirements().get(0).status());
   }
 }

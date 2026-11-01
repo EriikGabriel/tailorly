@@ -63,7 +63,8 @@ function RequirementRow({ check }: { check: AtsReviewRequirementCheck }) {
   );
 }
 
-function ReviewResult({ review }: { review: AtsReview }) {
+/** A leitura completa da IA: requisito a requisito, pontos fortes e sugestões (vive no diálogo). */
+export function AtsReviewDetails({ review }: { review: AtsReview }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
@@ -110,11 +111,25 @@ function ReviewResult({ review }: { review: AtsReview }) {
   );
 }
 
-/** Segunda opinião da IA sobre como um triador leria o currículo contra a vaga, sob demanda. */
+function counts(review: AtsReview) {
+  const total = (status: string) =>
+    review.requirements.filter((check) => check.status === status).length;
+  return {
+    met: total("met"),
+    partial: total("partial"),
+    missing: total("missing"),
+  };
+}
+
+/**
+ * Parte compacta da leitura da IA, na própria coluna: aderência, contagem por situação e o botão de
+ * analisar. O detalhe por requisito fica no diálogo "Ver análise completa".
+ */
 export function AtsReviewSection({
   generation,
 }: {
   generation: CvGenerationResponse;
+  onOpenDetails: () => void;
 }) {
   const analyze = useAtsReview(generation.id);
   const [manual, setManual] = useState(false);
@@ -129,24 +144,35 @@ export function AtsReviewSection({
       mutate(undefined);
     }
   }, [generationId, hasReview, mutate]);
+
   const review =
     analyze.data?.status === "completed" ? analyze.data : generation.atsReview;
   const failed =
     analyze.data && analyze.data.status !== "completed"
       ? analyze.data.status
       : null;
+  const summary = review ? counts(review) : null;
 
   return (
     <div className="flex flex-col gap-2 border-t border-outline-variant/50 pt-3">
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h4 className="text-sm font-semibold text-on-surface">
             Leitura da IA
           </h4>
-          <p className="text-xs text-on-surface-variant">
-            A IA lê só o texto que o parser extraiu do PDF e confere cada
-            requisito da vaga.
-          </p>
+          {summary && review ? (
+            <p className="text-xs text-on-surface-variant">
+              <strong className="font-semibold text-on-surface">
+                {review.alignment}%
+              </strong>{" "}
+              de aderência · {summary.met} atendidos · {summary.partial}{" "}
+              parciais · {summary.missing} ausentes
+            </p>
+          ) : (
+            <p className="text-xs text-on-surface-variant">
+              Confere cada requisito da vaga no texto que o parser extraiu.
+            </p>
+          )}
         </div>
         <button
           type="button"
@@ -170,6 +196,11 @@ export function AtsReviewSection({
           )}
         </button>
       </div>
+      {review?.summary && (
+        <p className="line-clamp-2 text-xs leading-5 text-on-surface-variant">
+          {review.summary}
+        </p>
+      )}
       {failed && (manual || failed !== "unavailable") && (
         <p role="alert" className="text-xs text-error">
           {FAILURE[failed] ?? FAILURE.failed}
@@ -180,7 +211,6 @@ export function AtsReviewSection({
           {analyze.error.message}
         </p>
       )}
-      {review && <ReviewResult review={review} />}
     </div>
   );
 }
