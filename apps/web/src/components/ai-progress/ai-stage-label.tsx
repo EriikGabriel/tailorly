@@ -35,13 +35,7 @@ export function AiStageLabel({
       title={title}
       className={cn("inline-flex min-w-0 items-center gap-2", className)}
     >
-      <ThinkingOrb
-        theme={theme}
-        color="#ffffff"
-        state={orb}
-        size={20}
-        aria-label={label}
-      />
+      <ThinkingOrb theme={theme} state={orb} size={20} aria-label={label} />
       <span className="truncate">{label}</span>
     </span>
   );

@@ -1,23 +1,32 @@
 import type { CvGenerationResponse } from "@lib/api/generated/model";
+import { useState } from "react";
+import { AtsDetails, type AtsTab } from "./ats-details";
 import { AtsReviewSection } from "./ats-review-section";
 
-const aiStatusLabel: Record<string, string> = {
-  completed: "IA ajustou a apresentação",
-  failed: "A IA falhou; regras simples assumiram",
-  unavailable: "Sem IA configurada; só regras simples",
-  skipped: "Otimização por IA desligada",
-};
-
-/** Nota de ATS estimada pela esteira, o que pesou nela e o que a vaga pediu e o currículo não tem. */
+/**
+ * Nota de ATS estimada em formato compacto: a nota, o que mais pesou contra e a leitura da IA. A
+ * análise completa (todas as checagens, requisito por requisito e as tentativas da esteira) abre num
+ * diálogo, para a coluna não virar uma lista longa.
+ */
 export function AtsScoreCard({
   generation,
 }: {
   generation: CvGenerationResponse;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const [tab, setTab] = useState<AtsTab>("rules");
   const report = generation.ats?.report;
   if (!report) return null;
   const score = report.score ?? 0;
-  const iterations = generation.ats?.iterations ?? [];
+  const weak = (report.checks ?? [])
+    .filter((check) => (check.points ?? 0) < (check.maxPoints ?? 0))
+    .sort(
+      (left, right) =>
+        (right.maxPoints ?? 0) -
+        (right.points ?? 0) -
+        ((left.maxPoints ?? 0) - (left.points ?? 0)),
+    )
+    .slice(0, 2);
 
   return (
     <section
@@ -25,7 +34,7 @@ export function AtsScoreCard({
       className="flex flex-col gap-3 rounded-xl bg-card p-4 shadow-xs"
     >
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h3
             id="ats-heading"
             className="text-sm font-semibold text-on-surface"
@@ -33,11 +42,17 @@ export function AtsScoreCard({
             Nota de ATS estimada
           </h3>
           <p className="text-xs text-on-surface-variant">
-            Estimativa por regras sobre o texto que um parser extrai do próprio
-            PDF, não a nota de um ATS real.
+            {weak.length === 0
+              ? "Todas as checagens por regras estão completas."
+              : `Mais pesou: ${weak
+                  .map(
+                    (check) =>
+                      `${check.label} (${check.points}/${check.maxPoints})`,
+                  )
+                  .join(" · ")}`}
           </p>
         </div>
-        <span className="text-3xl font-semibold tabular-nums text-primary-900">
+        <span className="shrink-0 text-3xl font-semibold tabular-nums text-primary-900">
           <span className="sr-only">{score} de 100</span>
           {score}
           <span className="text-sm font-medium text-on-surface-variant">
@@ -46,55 +61,32 @@ export function AtsScoreCard({
         </span>
       </div>
 
-      <ul className="flex flex-col gap-1.5">
-        {(report.checks ?? []).map((check) => (
-          <li key={check.id} className="flex flex-col gap-0.5">
-            <div className="flex justify-between text-xs">
-              <span className="font-medium text-on-surface">{check.label}</span>
-              <span className="tabular-nums text-on-surface-variant">
-                {check.points}/{check.maxPoints}
-              </span>
-            </div>
-            <progress
-              className="h-1.5 w-full overflow-hidden rounded-full accent-primary-900"
-              value={check.points}
-              max={check.maxPoints}
-              aria-label={check.label}
-            />
-            <span className="text-[11px] text-on-surface-variant">
-              {check.detail}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <AtsReviewSection
+        generation={generation}
+        onOpenDetails={() => {
+          setTab("ai");
+          setExpanded(true);
+        }}
+      />
 
-      {(report.missingTerms?.length ?? 0) > 0 && (
-        <p className="rounded-lg bg-surface-container-low p-2.5 text-xs leading-5 text-on-surface-variant">
-          <strong className="font-semibold text-on-surface">
-            A vaga pede e seu Currículo Base não afirma:
-          </strong>{" "}
-          {report.missingTerms?.join(", ")}. Não os acrescentamos; se forem
-          verdade, inclua-os no Currículo Base e revise.
-        </p>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-controls="ats-details"
+        onClick={() => setExpanded((value) => !value)}
+        className="w-fit rounded-lg bg-surface-container px-2.5 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high"
+      >
+        {expanded ? "Ocultar análise" : "Ver análise completa"}
+      </button>
+
+      {expanded && (
+        <div
+          id="ats-details"
+          className="border-t border-outline-variant/50 pt-3"
+        >
+          <AtsDetails generation={generation} tab={tab} onTabChange={setTab} />
+        </div>
       )}
-
-      <div className="text-xs text-on-surface-variant">
-        <p className="font-semibold text-on-surface">
-          {aiStatusLabel[generation.ats?.aiStatus ?? ""] ??
-            generation.ats?.aiStatus}
-        </p>
-        <ol className="mt-1 flex flex-col gap-0.5">
-          {iterations.map((iteration) => (
-            <li key={iteration.number}>
-              Tentativa {iteration.number} ({iteration.source}):{" "}
-              {iteration.score}
-              {iteration.rationale ? ` — ${iteration.rationale}` : ""}
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      <AtsReviewSection generation={generation} />
     </section>
   );
 }
