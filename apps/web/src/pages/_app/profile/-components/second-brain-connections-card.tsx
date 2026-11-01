@@ -1,8 +1,16 @@
-import { Gem, Network, Notebook } from "@react-zero-ui/icon-sprite";
-import { previewSecondBrainConnections } from "@/data/profile-preview";
+import { useSecondBrain } from "@queries/second-brain";
+import { Gem, Network } from "@react-zero-ui/icon-sprite";
 
 export function SecondBrainConnectionsCard() {
-  const { notion, obsidian } = previewSecondBrainConnections;
+  const { isAccount, isLoading, settings, status } = useSecondBrain();
+
+  const detail = !isAccount
+    ? "Entre na conta para configurar"
+    : isLoading
+      ? "Carregando..."
+      : status.connected
+        ? settings?.relativePath
+        : "Nenhuma pasta configurada";
 
   return (
     <div className="flex w-full flex-col gap-4 rounded-xl bg-card p-6 shadow-xs">
@@ -16,22 +24,36 @@ export function SecondBrainConnectionsCard() {
           </h2>
         </div>
         <span className="text-label-sm font-medium text-on-secondary-container">
-          2 Conectados
+          {status.connected ? "Conectado" : "Desconectado"}
         </span>
       </div>
 
       <div className="flex flex-col gap-2">
         <ConnectionRow
-          icon={Notebook}
-          name={notion.name}
-          detail={notion.detail}
-        />
-        <ConnectionRow
           icon={Gem}
-          name={obsidian.name}
-          detail={obsidian.detail}
+          name="Obsidian Vault"
+          detail={detail ?? ""}
+          active={status.connected}
         />
       </div>
+
+      {status.connected && (
+        <ul className="flex flex-col gap-1 text-label-sm text-on-surface-variant">
+          <li>
+            Busca de evidências:{" "}
+            {status.readsNotes
+              ? "notas do vault ligadas"
+              : "notas do vault desligadas"}
+            {status.webSearch ? ", busca web ligada" : ""}
+          </li>
+          <li>
+            Exportação:{" "}
+            {status.exportsArtifacts
+              ? "currículos gerados copiados para o vault"
+              : "desligada"}
+          </li>
+        </ul>
+      )}
 
       <p className="text-body-sm text-on-surface-variant">
         O Tailorly opera perfeitamente sem o Second Brain. Quando conectado, ele
@@ -46,10 +68,12 @@ function ConnectionRow({
   icon: Icon,
   name,
   detail,
+  active,
 }: {
-  icon: typeof Notebook;
+  icon: typeof Gem;
   name: string;
   detail: string;
+  active: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg bg-surface-container-low p-3">
@@ -69,9 +93,13 @@ function ConnectionRow({
       <span className="inline-flex shrink-0 items-center gap-1 text-label-sm font-medium text-on-secondary-container">
         <span
           aria-hidden="true"
-          className="size-2 rounded-full bg-on-secondary-container"
+          className={
+            active
+              ? "size-2 rounded-full bg-on-secondary-container"
+              : "size-2 rounded-full bg-outline-variant"
+          }
         />
-        Ativo
+        {active ? "Ativo" : "Inativo"}
       </span>
     </div>
   );

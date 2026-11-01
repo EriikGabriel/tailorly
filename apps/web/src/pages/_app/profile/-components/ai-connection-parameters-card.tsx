@@ -67,7 +67,7 @@ export function AiConnectionParametersCard() {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant pb-2.5">
         <h3 className="flex items-center gap-2 text-title-md font-semibold text-primary-950">
           <Bot aria-hidden="true" className="size-4" />
-          Provedor Remoto Principal — Interpretação do Currículo Base
+          Provedor Remoto Principal
         </h3>
         <span className="rounded-full bg-card px-2.5 py-0.5 text-label-sm font-medium text-on-secondary-container">
           tailorly.interpretation.remote
@@ -186,7 +186,7 @@ export function AiConnectionParametersCard() {
       <p className="text-body-sm text-on-surface-variant">
         {isValid
           ? "Configuração completa. Essas credenciais são salvas de forma criptografada na sua conta e usadas por padrão, sobrescrevendo a configuração global do servidor."
-          : "Preencha endpoint, modelo e chave de API para habilitar a extração via este provedor."}
+          : "Preencha endpoint, modelo e chave de API para habilitar as etapas com IA via este provedor."}
       </p>
     </div>
   );

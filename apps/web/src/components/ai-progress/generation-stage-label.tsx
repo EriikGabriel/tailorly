@@ -1,11 +1,19 @@
 import { useGenerationProgress } from "@queries/generation-progress";
 import { AiStageLabel, type OrbState } from "./ai-stage-label";
 
-/** `analyzing`: lendo a vaga; `generating`: a esteira de geração no servidor. */
-export type GenerationPhase = "analyzing" | "generating";
+/**
+ * `analyzing`: lendo a vaga; `collecting`: buscando evidências complementares; `generating`: a
+ * esteira de geração no servidor.
+ */
+export type GenerationPhase = "analyzing" | "collecting" | "generating";
 
 const ANALYZING = {
   label: "Lendo e analisando a vaga",
+  orb: "searching",
+} as const;
+
+const COLLECTING = {
+  label: "Buscando evidências complementares",
   orb: "searching",
 } as const;
 
@@ -32,9 +40,8 @@ export function GenerationStageLabel({
   const snapshot = progress.data?.status === "RUNNING" ? progress.data : null;
 
   if (!generating) {
-    return (
-      <AiStageLabel orb={ANALYZING.orb} label={ANALYZING.label} theme={theme} />
-    );
+    const idle = phase === "collecting" ? COLLECTING : ANALYZING;
+    return <AiStageLabel orb={idle.orb} label={idle.label} theme={theme} />;
   }
   const stage = STAGES[snapshot?.stage ?? "PREPARING"] ?? STAGES.PREPARING;
   const label =

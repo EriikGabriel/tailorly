@@ -3,12 +3,15 @@ import type { ReviewAnswer, ReviewAnswers, ReviewIssue } from "../types/review";
 
 interface QuickReviewState {
   open: boolean;
+  /** O diálogo também pede a revisão das evidências complementares novas. */
+  evidenceReview: boolean;
   contextKey: string | null;
   issues: readonly ReviewIssue[];
   preview: boolean;
   answers: ReviewAnswers;
   submittedPreview: { contextKey: string; answers: ReviewAnswers } | null;
   setOpen: (open: boolean) => void;
+  setEvidenceReview: (evidenceReview: boolean) => void;
   configure: (
     contextKey: string,
     issues: readonly ReviewIssue[],
@@ -21,6 +24,7 @@ interface QuickReviewState {
 
 const defaults = () => ({
   open: false,
+  evidenceReview: false,
   contextKey: null,
   issues: [],
   preview: true,
@@ -30,7 +34,9 @@ const defaults = () => ({
 
 export const useQuickReviewStore = create<QuickReviewState>()((set) => ({
   ...defaults(),
-  setOpen: (open) => set({ open }),
+  setOpen: (open) =>
+    set(open ? { open } : { open: false, evidenceReview: false }),
+  setEvidenceReview: (evidenceReview) => set({ evidenceReview }),
   configure: (contextKey, issues, preview) =>
     set((state) =>
       state.contextKey === contextKey

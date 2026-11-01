@@ -3,17 +3,36 @@
 const plural = (count: number, one: string, many: string) =>
   `${count} ${count === 1 ? one : many}`;
 
-export function quickReviewHeading(count: number, prioritized: boolean) {
+export function quickReviewHeading(
+  count: number,
+  prioritized: boolean,
+  evidenceReview = false,
+) {
+  if (count === 0 && evidenceReview)
+    return "Revise as evidências antes de gerar";
   if (count === 0) return "Tudo pronto para gerar";
   return prioritized
     ? `Confirme ${plural(count, "informação importante", "informações importantes")} para esta vaga`
     : `Confirme ${plural(count, "informação", "informações")} antes de gerar`;
 }
 
-export function quickReviewDescription(prioritized: boolean) {
-  return prioritized
+export function quickReviewCounter(count: number, evidenceReview: boolean) {
+  if (!evidenceReview) return `${count} pendências para revisar`;
+  return count > 0
+    ? `${count} pendências e evidências novas para revisar`
+    : "Evidências novas para revisar";
+}
+
+export function quickReviewDescription(
+  prioritized: boolean,
+  evidenceReview = false,
+) {
+  const base = prioritized
     ? "Escolhemos os fatos do seu currículo que sustentam o que a vaga mais pede. As respostas são registradas na versão do Currículo Base."
     : "Pendências persistidas na versão candidata do Currículo Base. As respostas são registradas na API.";
+  return evidenceReview
+    ? `${base} Detalhes de links, da web e do second brain só entram no currículo se você confirmar.`
+    : base;
 }
 
 export function quickReviewListLabel(count: number, prioritized: boolean) {

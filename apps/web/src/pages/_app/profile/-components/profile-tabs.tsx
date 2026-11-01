@@ -4,12 +4,16 @@ import {
 } from "@animate/primitives/effects/highlight";
 import { useBaseReview } from "@queries/base-review";
 import { useActiveGroundTruth } from "@queries/ground-truth";
+import { isOwnerVaultInputDirty } from "@queries/owner-vault";
+import { useProfileGenerationDefaults } from "@queries/profile-generation-defaults";
+import { useSecondBrain } from "@queries/second-brain";
 import {
   Cpu,
   Network,
   ShieldCheck,
   UserRound,
 } from "@react-zero-ui/icon-sprite";
+import { useOwnerVaultDraftStore } from "@stores/owner-vault-draft-store";
 import { useProfileSettingsStore } from "@stores/profile-settings-store";
 import { useReducedMotion } from "motion/react";
 import { type ComponentType, useEffect, useState } from "react";
@@ -39,7 +43,6 @@ const tabs: Tab[] = [
     id: "connections",
     label: "Conexões & Second Brain",
     icon: Network,
-    badge: "2 Conectados",
     sectionId: "section-connections",
   },
 
@@ -55,8 +58,14 @@ export function ProfileTabs() {
   const [active, setActive] = useState("overview");
   const reduceMotion = useReducedMotion();
   const { version } = useActiveGroundTruth();
+  const secondBrain = useSecondBrain();
   const review = useBaseReview(version?.id);
   const aiPreferencesDirty = useProfileSettingsStore((state) => state.isDirty);
+  const vaultDraft = useOwnerVaultDraftStore((state) => state.draft);
+  const secondBrainDirty = isOwnerVaultInputDirty(
+    vaultDraft,
+    secondBrain.settings,
+  );
   const pendingSections = new Set<Tab["id"]>(
     (review.issues.data ?? [])
       .filter(
@@ -67,7 +76,10 @@ export function ProfileTabs() {
         issue.category === "identity" ? "overview" : "ground-truth",
       ),
   );
-  if (aiPreferencesDirty) pendingSections.add("ai-preferences");
+  const generationDefaults = useProfileGenerationDefaults();
+  if (aiPreferencesDirty || generationDefaults.isDirty)
+    pendingSections.add("ai-preferences");
+  if (secondBrainDirty) pendingSections.add("connections");
 
   useEffect(() => {
     const sectionMap = new Map(
@@ -125,6 +137,13 @@ export function ProfileTabs() {
           {tabs.map((tab) => {
             const { id, label, icon: Icon } = tab;
             const isActive = active === id;
+            const badge =
+              id === "connections"
+                ? secondBrain.status.connected
+                  ? "Conectado"
+                  : "Desconectado"
+                : tab.badge;
+
             return (
               <HighlightItem as="div" key={id} value={id}>
                 <button
@@ -140,17 +159,17 @@ export function ProfileTabs() {
                 >
                   <Icon aria-hidden className="size-4 shrink-0" />
                   {label}
+                  {badge && (
+                    <span className="shrink-0 rounded-full bg-surface-container-high px-1.5 py-0.5 text-label-sm text-on-surface-variant">
+                      {badge}
+                    </span>
+                  )}
                   {pendingSections.has(tab.id) ? (
                     <span
                       aria-hidden="true"
                       className="size-2 shrink-0 rounded-full bg-on-secondary-container"
                     />
                   ) : null}
-                  {tab.badge && (
-                    <span className="shrink-0 rounded-full bg-surface-container-high px-1.5 py-0.5 text-label-sm text-on-surface-variant">
-                      {tab.badge}
-                    </span>
-                  )}
                 </button>
               </HighlightItem>
             );

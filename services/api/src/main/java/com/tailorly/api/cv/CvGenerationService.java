@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import com.tailorly.api.base.snapshot.GtSnapshot;
 import com.tailorly.api.base.snapshot.GtSnapshotRepository;
+import com.tailorly.api.cv.defaults.OwnerGenerationDefaultsService;
 import com.tailorly.api.cv.dto.CvGenerationResponse;
 import com.tailorly.api.cv.dto.GenerateCvRequest;
 import com.tailorly.api.cv.model.CvDocument;
@@ -92,6 +93,7 @@ public class CvGenerationService {
   private final OwnerVaultService ownerVaults;
   private final GenerationProgress progress;
   private final AtsReviewer atsReviewer;
+  private final OwnerGenerationDefaultsService generationDefaults;
 
   public CvGenerationService(OwnerRepository owners, OwnerAccessService access, GtSnapshotRepository snapshots,
       JobPostingVersionRepository jobVersions, CvInputResolver inputs, CvInputHasher inputHasher,
@@ -100,7 +102,8 @@ public class CvGenerationService {
       MarkdownCvRenderer markdownRenderer, CvPipeline pipeline, AnonymousQuotaService quota,
       PlatformTransactionManager transactionManager, ObjectProvider<VaultExportService> vaultExport,
       SupplementaryEvidenceRepository supplementaryEvidence, OwnerVaultService ownerVaults,
-      GenerationProgress progress, AtsReviewer atsReviewer) {
+      GenerationProgress progress, AtsReviewer atsReviewer,
+      OwnerGenerationDefaultsService generationDefaults) {
     this.owners = owners;
     this.access = access;
     this.snapshots = snapshots;
@@ -122,6 +125,7 @@ public class CvGenerationService {
     this.ownerVaults = ownerVaults;
     this.progress = progress;
     this.atsReviewer = atsReviewer;
+    this.generationDefaults = generationDefaults;
   }
 
   /** Resultado de {@link #generate}: a geração e se foi produzida agora ou reaproveitada. */
@@ -139,7 +143,9 @@ public class CvGenerationService {
   }
 
   public Result generate(GenerateCvRequest request) {
-    CvPreferences preferences = request.preferences() == null ? CvPreferences.defaults() : request.preferences();
+    // Sem preferências na requisição, valem os padrões da conta (ATS ligado até ela desligar).
+    CvPreferences preferences = request.preferences() == null
+        ? generationDefaults.preferencesFor(request.ownerId()) : request.preferences();
     var tracker = progress.begin(request.ownerId());
     Prepared prepared;
     try {

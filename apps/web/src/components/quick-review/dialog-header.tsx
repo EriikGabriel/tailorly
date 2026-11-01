@@ -5,6 +5,7 @@ import {
 } from "@components/ui/animate/primitives/base/dialog";
 import { ListTodo, X } from "@react-zero-ui/icon-sprite";
 import {
+  quickReviewCounter,
   quickReviewDescription,
   quickReviewHeading,
 } from "@/utils/quick-review-copy";
@@ -13,10 +14,12 @@ import {
 export function DialogHeader({
   count,
   prioritized,
+  evidenceReview,
   onClose,
 }: {
   count: number;
   prioritized: boolean;
+  evidenceReview: boolean;
   onClose: () => void;
 }) {
   return (
@@ -27,13 +30,13 @@ export function DialogHeader({
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-white">
               <ListTodo className="size-4.5" />
             </span>
-            {quickReviewHeading(count, prioritized)}
+            {quickReviewHeading(count, prioritized, evidenceReview)}
           </DialogTitle>
           <span className="w-fit rounded-full border bg-white px-3 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.3px] text-tertiary">
-            {`${count} pendências para revisar`}
+            {quickReviewCounter(count, evidenceReview)}
           </span>
           <DialogDescription className="text-sm leading-5 text-on-surface-variant">
-            {quickReviewDescription(prioritized)}
+            {quickReviewDescription(prioritized, evidenceReview)}
           </DialogDescription>
         </div>
         <Button

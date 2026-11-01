@@ -7,6 +7,7 @@ import {
 import { useQuickReview } from "@hooks/use-quick-review";
 import { IconExclamationMark } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
+import { useQuickReviewStore } from "@stores/quick-review-store";
 import type { ReviewCategory, ReviewIssue } from "@/types/review";
 import {
   fullReviewNotice,
@@ -17,6 +18,7 @@ import {
 } from "@/utils/quick-review-copy";
 import { DialogFooter } from "./dialog-footer";
 import { DialogHeader } from "./dialog-header";
+import { EvidenceSection } from "./evidence-section";
 import { JobRequirementsPanel } from "./job-requirements-panel";
 import { ReviewNotice } from "./review-notice";
 import { ReviewSection } from "./review-section";
@@ -37,6 +39,7 @@ export function ValidateDialog({
 }: ValidateDialogProps = {}) {
   const file = useBaseCvStore((state) => state.file);
   const review = useQuickReview({ issues, requiresFullReview });
+  const evidenceReview = useQuickReviewStore((state) => state.evidenceReview);
   const { quickIssues, prioritized, otherPending, needsFullReview } = review;
   const count = quickIssues.length;
   const categories = [...new Set(quickIssues.map((issue) => issue.category))];
@@ -60,25 +63,28 @@ export function ValidateDialog({
           <DialogHeader
             count={count}
             prioritized={prioritized}
+            evidenceReview={evidenceReview}
             onClose={close}
           />
 
           <div className="min-h-0 space-y-4 overflow-y-auto overscroll-contain p-5 sm:px-7">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/30 pb-1.5">
-              <p className="flex items-center text-xs font-bold uppercase tracking-wide text-secondary-700">
-                <IconExclamationMark className="size-4.5 stroke-3 text-tertiary" />
-                {quickReviewListLabel(count, prioritized)}
-              </p>
-              {file && (
-                <p
-                  className="max-w-full py-1 truncate text-xs"
-                  title={file.name}
-                >
-                  Currículo Base:{" "}
-                  <span className="font-semibold">{file.name}</span>
+            {(count > 0 || !evidenceReview) && (
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/30 pb-1.5">
+                <p className="flex items-center text-xs font-bold uppercase tracking-wide text-secondary-700">
+                  <IconExclamationMark className="size-4.5 stroke-3 text-tertiary" />
+                  {quickReviewListLabel(count, prioritized)}
                 </p>
-              )}
-            </div>
+                {file && (
+                  <p
+                    className="max-w-full py-1 truncate text-xs"
+                    title={file.name}
+                  >
+                    Currículo Base:{" "}
+                    <span className="font-semibold">{file.name}</span>
+                  </p>
+                )}
+              </div>
+            )}
 
             {prioritized && review.jobMatch && (
               <JobRequirementsPanel
@@ -123,7 +129,7 @@ export function ValidateDialog({
                 Não foi possível carregar as pendências desta versão.
               </p>
             )}
-            {count === 0 && !needsFullReview && (
+            {count === 0 && !needsFullReview && !evidenceReview && (
               <p className="text-sm text-on-surface-variant">
                 {quickReviewEmptyMessage(
                   prioritized,
@@ -131,6 +137,7 @@ export function ValidateDialog({
                 )}
               </p>
             )}
+            {evidenceReview && <EvidenceSection />}
             {review.error && (
               <p role="alert" className="text-sm text-error">
                 {review.error}

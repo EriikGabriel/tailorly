@@ -36,7 +36,7 @@ export function AiProviderSelector({
   return (
     <div
       role="radiogroup"
-      aria-label="Provedor de IA para extração do Currículo Base"
+      aria-label="Provedor de IA das etapas com IA"
       className="grid gap-2 sm:grid-cols-2"
     >
       {interpretationProviderOptions.map((provider) => {

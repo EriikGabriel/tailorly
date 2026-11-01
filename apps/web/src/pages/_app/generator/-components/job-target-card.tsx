@@ -127,11 +127,6 @@ export function JobTargetCard() {
                 id="generator-job-url-feedback"
                 check={shownUrlCheck}
               />
-              <p className="flex items-start gap-1 pt-0.5 text-[13px] leading-5 text-on-surface-variant">
-                Lemos a página pública da vaga e separamos requisitos,
-                benefícios e dados da empresa. Sites que exigem login, como o
-                LinkedIn, precisam do texto colado.
-              </p>
             </TabsPanel>
 
             <TabsPanel value="text" className="p-1">
@@ -149,28 +144,6 @@ export function JobTargetCard() {
       </Tabs>
 
       <JobAnalysisCard />
-
-      <div className="flex flex-col gap-1.5">
-        <p className="text-xs font-medium tracking-[0.3px] text-on-surface-variant">
-          Testar com exemplos reais:
-        </p>
-        <div className="flex flex-wrap gap-1">
-          {quickTests.map((title) => (
-            <button
-              key={title}
-              type="button"
-              onClick={() => {
-                setJobText(title);
-                setMode("text");
-              }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3 py-1.5 text-xs font-semibold text-on-surface-variant shadow-xs hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              <Sparkles className="size-3" aria-hidden="true" />
-              {title}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

@@ -49,6 +49,14 @@ class CvContentEnricherTest {
   }
 
   @Test
+  void emphasisBlockListsTheGuidelinesAndIsEmptyWithoutThem() {
+    assertEquals("", CvContentEnricher.emphasis(List.of()));
+    assertEquals("", CvContentEnricher.emphasis(null));
+    assertEquals("\n=== EMPHASIS ===\nDestacar Liderança Técnica\nProjetos Open Source",
+        CvContentEnricher.emphasis(List.of("Destacar Liderança Técnica", "Projetos Open Source")));
+  }
+
+  @Test
   void onlyEntriesWithSomethingToRewriteBecomeTargets() {
     CvDocument document = document(null, job("experience:0", "Dev", "Acme", "Cuidou da API."),
         job("experience:1", "Estagiária", "Beta"));

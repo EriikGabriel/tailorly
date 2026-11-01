@@ -5,6 +5,7 @@ import {
   TabsPanels,
   TabsTab,
 } from "@animate/base/tabs";
+import { AnimatedBar } from "@components/animated-bar";
 import type { CvGenerationResponse } from "@lib/api/generated/model";
 import { AtsReviewDetails } from "./ats-review-section";
 
@@ -68,11 +69,10 @@ export function AtsDetails({
                     {check.points}/{check.maxPoints}
                   </span>
                 </div>
-                <progress
-                  className="h-1.5 w-full overflow-hidden rounded-full accent-primary-900"
-                  value={check.points}
-                  max={check.maxPoints}
-                  aria-label={check.label}
+                <AnimatedBar
+                  value={check.points ?? 0}
+                  max={check.maxPoints ?? 0}
+                  label={check.label ?? ""}
                 />
                 <span className="text-[11px] text-on-surface-variant">
                   {check.detail}

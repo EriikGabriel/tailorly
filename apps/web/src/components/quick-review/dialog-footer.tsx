@@ -79,15 +79,17 @@ export function DialogFooter({
             className="rounded-xl bg-primary-900 p-6 text-sm font-semibold text-primary-foreground hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40"
             disableZoom
           >
-            <Sparkles
-              strokeWidth={1.5}
-              className="size-4 shrink-0"
-              aria-hidden="true"
-            />
             {generating ? (
               <GenerationStageLabel phase="generating" />
             ) : (
-              "Gerar currículo"
+              <>
+                <Sparkles
+                  strokeWidth={1.5}
+                  className="size-4 shrink-0"
+                  aria-hidden="true"
+                />
+                Gerar currículo
+              </>
             )}
             <ArrowRight
               strokeWidth={1.5}

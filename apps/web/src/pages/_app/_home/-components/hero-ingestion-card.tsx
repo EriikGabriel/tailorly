@@ -138,12 +138,8 @@ export function HeroIngestionCard() {
                     Colar
                   </button>
                 </div>
-                <JobUrlFeedback
-                  id="home-job-url-feedback"
-                  check={shownUrlCheck}
-                  className="mt-1.5 px-1"
-                />
-                <div className="mt-1 flex flex-wrap items-center gap-1 text-xs tracking-[0.3px]">
+
+                <div className="mt-2 flex flex-wrap items-center gap-1 text-xs tracking-[0.3px]">
                   <span className="mr-1 inline-flex items-center gap-1 font-medium text-on-surface-variant">
                     <Zap className="size-3.25" />
                     Testar com 1 clique:
@@ -162,6 +158,12 @@ export function HeroIngestionCard() {
                     </button>
                   ))}
                 </div>
+
+                <JobUrlFeedback
+                  id="home-job-url-feedback"
+                  check={shownUrlCheck}
+                  className="mt-1.5 px-1"
+                />
               </TabsPanel>
 
               <TabsPanel value="text" className="p-1">

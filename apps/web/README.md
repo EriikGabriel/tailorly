@@ -613,7 +613,7 @@ mantém a continuação desabilitada; não exibe fixtures como fatos da pessoa.
 | `HeroSection`        | Badge "Arquitetura Ground Truth", título, e a promessa "Sem inventar fatos".                                                          |
 | `StepsSection`       | Metodologia em 4 etapas: Ground Truth → due diligence da vaga → análise/ATS → síntese sob medida.                                     |
 | `RecentCVSection`    | "Últimos Currículos Gerados" com três entradas **de demonstração** codificadas em `const recentCVs` e o link "Ver todos (18)".        |
-| `SecondBrainSection` | Integração Notion/Obsidian apresentada como **recurso extra e opcional**; o botão secundário é "Continuar apenas com Currículo Base". |
+| `SecondBrainSection` | Integração com Obsidian apresentada como **recurso extra e opcional**; o botão principal leva às conexões do perfil e o secundário é "Continuar apenas com Currículo Base". |
 
 `BaseCvPicker` aceita **um único** PDF por input ou arraste, com contador de
 profundidade para o estado de arraste. Mostra separadamente a seleção local e
@@ -782,7 +782,7 @@ Os pontos abaixo continuam pendentes no frontend ou no fluxo completo:
 - atualização automática do snapshot ativo após uma nova extração;
 - download e geração de PDF/Markdown;
 - recuperação de senha;
-- integração com o vault (Second Brain), Notion, Obsidian;
+- integração com o vault do Obsidian (Second Brain);
 - persistência dos rascunhos em `localStorage`/`sessionStorage` (o JWT usa
   `sessionStorage`; as duas chaves legadas de rascunho são removidas em
   `resetClientState`);

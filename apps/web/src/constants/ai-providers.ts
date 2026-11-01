@@ -1,36 +1,36 @@
 // As opções, defaults e nomes de propriedade abaixo espelham
 // `tailorly.interpretation.*` em services/api/src/main/resources/application.yml
 // e os records RemoteInterpretationProperties/OllamaInterpretationProperties
-// (`AiCurriculumInterpreter`). Hoje só a extração do Currículo Base tem IA de
-// fato implementada no backend; geração sob ATS (RF03) e due diligence (RF08)
-// ainda são planejadas/backlog.
+// (`AiCurriculumInterpreter`). Este provedor atende todas as etapas com IA
+// (extração, análise da vaga, esteira de ATS, enriquecimento e evidências);
+// due diligence (RF08) ainda é backlog.
 export const interpretationProviderOptions = [
   {
     value: "remote-with-ollama-fallback",
     name: "Provedor remoto com fallback automático (Ollama local)",
     description:
-      "Usa o provedor remoto configurado abaixo para interpretar o currículo; se ele falhar, tenta automaticamente um modelo Ollama instalado neste dispositivo.",
+      "Usa o provedor remoto configurado abaixo em todas as etapas com IA; se ele falhar, tenta automaticamente um modelo Ollama instalado neste dispositivo.",
     recommended: true,
   },
   {
     value: "remote",
     name: "Somente provedor remoto",
     description:
-      "Usa apenas o provedor remoto configurado abaixo. Se ele falhar, a extração falha e deve ser tentada novamente — sem fallback local.",
+      "Usa apenas o provedor remoto configurado abaixo em todas as etapas com IA. Se ele falhar, a extração falha e deve ser tentada novamente; na esteira de ATS, as regras assumem — sem fallback local.",
     recommended: false,
   },
   {
     value: "ollama-only",
     name: "Somente modelo local (Ollama)",
     description:
-      "Interpreta o currículo inteiramente no Ollama deste dispositivo, sem nenhuma chamada a provedores remotos.",
+      "Todas as etapas com IA rodam no Ollama deste dispositivo, sem nenhuma chamada a provedores remotos.",
     recommended: false,
   },
   {
     value: "rules",
     name: "Somente regras (sem IA)",
     description:
-      "Extração determinística baseada em regras, sem chamadas a LLM. Sempre disponível, mesmo offline, porém com menor cobertura semântica.",
+      "Etapas de IA usam regras determinísticas, sem chamadas a LLM. Sempre disponível, mesmo offline, porém com menor cobertura semântica.",
     recommended: false,
   },
 ] as const;

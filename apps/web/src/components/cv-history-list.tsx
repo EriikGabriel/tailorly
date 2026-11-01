@@ -21,6 +21,7 @@ import { Download, FileText, SquarePen, X } from "@react-zero-ui/icon-sprite";
 import { useCvGenerationStore } from "@stores/cv-generation-store";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { atsScoreColor } from "@/utils/ats-score";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
@@ -79,7 +80,10 @@ export function CvHistoryList({ limit }: { limit?: number }) {
                     {cv.job?.companyName ? ` — ${cv.job.companyName}` : ""}
                   </h3>
                   {cv.ats?.report?.score !== undefined && (
-                    <span className="rounded-full bg-secondary-container/40 px-2 py-0.5 text-xs font-semibold text-secondary-800">
+                    <span
+                      className="rounded-full bg-secondary-container/40 px-2 py-0.5 text-xs font-semibold"
+                      style={{ color: atsScoreColor(cv.ats.report.score) }}
+                    >
                       ATS {cv.ats.report.score}/100
                     </span>
                   )}

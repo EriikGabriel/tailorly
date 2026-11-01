@@ -8,12 +8,21 @@ import {
 } from "@tanstack/react-query";
 
 /**
- * Padrões de geração da conta (layout de currículo escolhido). Só contas guardam padrões. Chamadas
- * escritas à mão porque o cliente gerado ainda não inclui estas rotas.
+ * Padrões de geração da conta, gravados no perfil: layout, otimização para ATS (ligada até a conta
+ * mudar) e diretrizes de destaque. São o ponto de partida do gerador, que ajusta diretrizes e layout
+ * por vaga sem gravar aqui. Só contas guardam padrões. Chamadas escritas à mão porque o cliente
+ * gerado ainda não inclui estas rotas.
  */
 export interface GenerationDefaults {
   templateName: string | null;
+  optimizeForAts: boolean;
+  guidelines: string[];
 }
+
+/** Atualização parcial: só os campos enviados mudam no servidor. */
+export type GenerationDefaultsInput = Partial<GenerationDefaults>;
+
+export const DEFAULT_TEMPLATE = "classic";
 
 const defaultsPath = (ownerId: string) =>
   `/v1/owners/${encodeURIComponent(ownerId)}/generation-defaults`;
@@ -40,15 +49,15 @@ export function useSaveGenerationDefaults(
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation<GenerationDefaults, Error, string>({
-    mutationFn: (templateName) => {
+  return useMutation<GenerationDefaults, Error, GenerationDefaultsInput>({
+    mutationFn: (input) => {
       if (!ownerId || !token)
         throw new Error("Entre na conta para salvar o padrão.");
       return apiRequest<GenerationDefaults>(defaultsPath(ownerId), {
         method: "PUT",
         accessToken: token,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateName }),
+        body: JSON.stringify(input),
       });
     },
     onSuccess: (defaults) =>

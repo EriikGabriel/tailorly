@@ -1,3 +1,4 @@
+import { useSecondBrain } from "@queries/second-brain";
 import {
   House,
   Link as LinkIcon,
@@ -10,6 +11,12 @@ export function WorkspaceHeader({ baseCvFile }: { baseCvFile: File | null }) {
   const statusLabel = baseCvFile
     ? "Ground Truth configurado"
     : "Aguardando Currículo Base";
+  const { status } = useSecondBrain();
+  const secondBrainLabel = !status.connected
+    ? "Desconectado - Opcional"
+    : status.readsNotes
+      ? "Conectado · Busca usa o vault"
+      : "Conectado · Leitura de notas desligada";
 
   return (
     <>
@@ -58,8 +65,8 @@ export function WorkspaceHeader({ baseCvFile }: { baseCvFile: File | null }) {
             Gerador de Currículo Sob Medida
           </h1>
           <p className="text-body-md text-on-surface-variant">
-            Alimentado por IA e integrado ao seu Second Brain (Notion/Obsidian)
-            para extrair e sintetizar suas experiências de maior impacto para{" "}
+            Alimentado por IA e integrado ao seu Second Brain (Obsidian) para
+            extrair e sintetizar suas experiências de maior impacto para{" "}
             <strong className="font-semibold text-primary-950">
               cada vaga específica
             </strong>
@@ -91,7 +98,7 @@ export function WorkspaceHeader({ baseCvFile }: { baseCvFile: File | null }) {
                 className="size-3.5 text-on-surface-variant"
               />
               <span className="text-xs font-semibold leading-4 tracking-[0.3px] text-on-surface-variant">
-                Second Brain (Desconectado - Opcional)
+                Second Brain ({secondBrainLabel})
               </span>
             </span>
           </div>

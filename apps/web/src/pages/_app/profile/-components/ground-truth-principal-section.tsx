@@ -1,12 +1,10 @@
 import { useActiveGroundTruth } from "@queries/ground-truth";
 import {
-  ArrowRight,
   Award,
   Briefcase,
   ClipboardCheck,
   GraduationCap,
 } from "@react-zero-ui/icon-sprite";
-import { Link } from "@tanstack/react-router";
 import { formatPeriod, isCurrentStatus } from "@/utils/review-format";
 import { SectionCard } from "./section-card";
 
@@ -18,15 +16,6 @@ export function GroundTruthPrincipalSection() {
       icon={ClipboardCheck}
       title="2. Ground Truth Principal (Verdade Absoluta)"
       description="Fatos aprovados no Currículo Base. A IA é restrita a usar apenas dados validados nesta curadoria."
-      trailing={
-        <Link
-          to="/base"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-label-md font-semibold text-primary-foreground hover:bg-primary/90"
-        >
-          Curar &amp; Auditar Dossiê de Fatos
-          <ArrowRight aria-hidden="true" className="size-3.5" />
-        </Link>
-      }
     >
       {isLoading ? (
         <p className="text-body-sm text-on-surface-variant">Carregando...</p>

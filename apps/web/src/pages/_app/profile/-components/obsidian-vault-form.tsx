@@ -2,12 +2,13 @@ import { Checkbox } from "@animate/base/checkbox";
 import { useViewer } from "@queries/cv-generation";
 import {
   type OwnerVaultInput,
-  type OwnerVaultSettings,
+  ownerVaultInputOf,
   useClearOwnerVault,
   useOwnerVault,
   useSaveOwnerVault,
 } from "@queries/owner-vault";
-import { useId, useState } from "react";
+import { useOwnerVaultDraftStore } from "@stores/owner-vault-draft-store";
+import { useEffect, useId } from "react";
 
 /**
  * Preferências de segundo cérebro desta conta. O caminho do vault é relativo à pasta que o
@@ -19,7 +20,11 @@ export function ObsidianVaultForm() {
   const vault = useOwnerVault(isAccount ? viewer.ownerId : null, viewer.token);
   const save = useSaveOwnerVault(viewer.ownerId, viewer.token);
   const clear = useClearOwnerVault(viewer.ownerId, viewer.token);
-  const [draft, setDraft] = useState<OwnerVaultInput | null>(null);
+  const draft = useOwnerVaultDraftStore((state) => state.draft);
+  const setDraft = useOwnerVaultDraftStore((state) => state.setDraft);
+
+  // A barra da página de perfil só mostra alterações enquanto este formulário estiver na tela.
+  useEffect(() => () => setDraft(null), [setDraft]);
 
   if (!isAccount) {
     return (
@@ -37,8 +42,7 @@ export function ObsidianVaultForm() {
   }
 
   const settings = vault.data;
-  const current: OwnerVaultInput = draft ?? toInput(settings);
-  const changed = draft !== null;
+  const current: OwnerVaultInput = draft ?? ownerVaultInputOf(settings);
 
   return (
     <form
@@ -122,13 +126,6 @@ export function ObsidianVaultForm() {
         >
           Remover vault
         </button>
-        <button
-          type="submit"
-          disabled={!changed || save.isPending}
-          className="rounded-lg bg-primary-950 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
-        >
-          {save.isPending ? "Salvando..." : "Salvar"}
-        </button>
       </div>
       {(save.isError || clear.isError) && (
         <p className="text-xs text-error" role="alert">
@@ -137,16 +134,6 @@ export function ObsidianVaultForm() {
       )}
     </form>
   );
-}
-
-function toInput(settings: OwnerVaultSettings): OwnerVaultInput {
-  return {
-    relativePath: settings.relativePath ?? "",
-    readEnabled: settings.readEnabled,
-    exportEnabled: settings.exportEnabled,
-    exportSubfolder: settings.exportSubfolder ?? "",
-    webSearchEnabled: settings.webSearchEnabled,
-  };
 }
 
 function Field({

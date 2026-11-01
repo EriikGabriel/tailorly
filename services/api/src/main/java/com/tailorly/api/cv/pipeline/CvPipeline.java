@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CvPipeline {
-  public static final String VERSION = "cv-pipeline-5";
+  public static final String VERSION = "cv-pipeline-6";
   private static final int MAX_REFINEMENTS = 2;
   private static final Logger log = LoggerFactory.getLogger(CvPipeline.class);
 
@@ -58,7 +58,8 @@ public class CvPipeline {
       String jobTitle, CvPreferences prefs, List<ConfirmedEvidence> evidence, Tracker tracker) {
     // A reescrita troca frases de experiência, projetos e resumo, sempre presas aos fatos aprovados e às evidências confirmadas.
     tracker.step(GenerationProgress.REWRITING, "A IA reescreve experiências, projetos e resumo com o vocabulário da vaga");
-    CvContentEnricher.Result enriched = enricher.enrich(ownerId, approved, evidence, analysis, jobTitle);
+    CvContentEnricher.Result enriched = enricher.enrich(ownerId, approved, evidence, analysis, jobTitle,
+        prefs.guidelines());
     // Agrupar tecnologias é só apresentação e vem depois da reescrita, que ainda enxerga cada tecnologia.
     CvDocument base = TechnologyGrouper.apply(enriched.document());
     CvPlan plan = CvPlan.neutral();

@@ -93,3 +93,25 @@ export function useClearOwnerVault(
       }),
   });
 }
+
+/** Valores do formulário a partir das preferências salvas no servidor. */
+export function ownerVaultInputOf(
+  settings: OwnerVaultSettings,
+): OwnerVaultInput {
+  return {
+    relativePath: settings.relativePath ?? "",
+    readEnabled: settings.readEnabled,
+    exportEnabled: settings.exportEnabled,
+    exportSubfolder: settings.exportSubfolder ?? "",
+    webSearchEnabled: settings.webSearchEnabled,
+  };
+}
+
+/** Compara o rascunho com o que está salvo; voltar ao valor original não conta como alteração. */
+export function isOwnerVaultInputDirty(
+  draft: OwnerVaultInput | null,
+  settings: OwnerVaultSettings | undefined,
+): boolean {
+  if (!draft || !settings) return false;
+  return JSON.stringify(draft) !== JSON.stringify(ownerVaultInputOf(settings));
+}

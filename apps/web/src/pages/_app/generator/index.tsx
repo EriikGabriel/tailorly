@@ -7,7 +7,6 @@ import { DocumentStage } from "./-components/document-stage";
 import { GenerateCta } from "./-components/generate-cta";
 import { GroundTruthCard } from "./-components/ground-truth-card";
 import { JobTargetCard } from "./-components/job-target-card";
-import { SupplementaryEvidenceCard } from "./-components/supplementary-evidence-card";
 import { WorkspaceHeader } from "./-components/workspace-header";
 import type { ViewMode } from "./-types/view-mode";
 
@@ -34,7 +33,6 @@ function GeneratorPage() {
               <GroundTruthCard />
               <JobTargetCard />
               <AiGuidelinesCard />
-              <SupplementaryEvidenceCard />
               <GenerateCta />
             </div>
           )}

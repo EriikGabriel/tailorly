@@ -17,9 +17,8 @@ export function AiDueDiligencePreviewCard() {
       <p className="text-body-sm text-on-surface-variant">
         Ainda sem especificação funcional definida. A ideia é consolidar sinais
         públicos sobre empresas antes da candidatura, com fatores e fontes
-        rastreáveis, reaproveitando o provedor de IA configurado para extração e
-        geração. Nenhuma configuração está disponível até a funcionalidade sair
-        do backlog.
+        rastreáveis, reaproveitando o provedor de IA configurado acima. Nenhuma
+        configuração está disponível até a funcionalidade sair do backlog.
       </p>
       <div
         aria-disabled="true"

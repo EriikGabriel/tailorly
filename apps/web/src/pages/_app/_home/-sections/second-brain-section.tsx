@@ -1,5 +1,5 @@
-import { Button } from "@animate/buttons/button";
 import { Network } from "@react-zero-ui/icon-sprite";
+import { Link } from "@tanstack/react-router";
 
 export function SecondBrainSection() {
   return (
@@ -23,8 +23,8 @@ export function SecondBrainSection() {
           </h2>
           <p className="text-body-md leading-6 text-outline-variant">
             O Tailorly funciona 100% com o seu Currículo Base salvo. Se desejar,
-            conecte o Notion ou Obsidian como fonte de consulta secundária para
-            enriquecer projetos detalhados e arquivar seus currículos gerados
+            conecte o Obsidian como fonte de consulta secundária para enriquecer
+            projetos detalhados e arquivar seus currículos gerados
             automaticamente.
           </p>
         </div>
@@ -32,12 +32,13 @@ export function SecondBrainSection() {
 
       <div className="flex shrink-0 flex-col gap-2 xl:ml-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Button
-            type="button"
-            className="min-h-10 rounded-lg bg-white px-4 py-2.5 text-center text-sm font-semibold leading-5 tracking-[0.14px] text-primary-900 hover:bg-surface-container-low focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          <Link
+            to="/profile"
+            hash="section-connections"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-white px-4 py-2.5 text-center text-sm font-semibold leading-5 tracking-[0.14px] text-primary-900 hover:bg-surface-container-low focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             Conectar Second Brain (Opcional)
-          </Button>
+          </Link>
           <a
             href="#hero-ingestion"
             className="inline-flex min-h-10 items-center justify-center rounded-lg border border-outline-variant/30 px-4 py-2.5 text-center text-sm font-medium leading-5 tracking-[0.14px] text-surface hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"

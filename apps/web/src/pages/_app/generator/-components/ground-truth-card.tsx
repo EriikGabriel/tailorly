@@ -1,4 +1,4 @@
-import { FileCheck2, ShieldCheck, SquarePen } from "@react-zero-ui/icon-sprite";
+import { FileCheck2, SquarePen } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { Link } from "@tanstack/react-router";
 import { SectionHeading } from "./section-heading";
@@ -11,16 +11,7 @@ export function GroundTruthCard() {
 
   return (
     <div className="flex flex-col gap-3 border-b border-outline-variant/60 pb-4">
-      <SectionHeading
-        step={1}
-        title="Ground Truth: Currículo Base"
-        trailing={
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary-container px-2 py-0.5 font-semibold tracking-[0.3px] text-on-secondary-container">
-            <ShieldCheck className="size-3" aria-hidden="true" />
-            100% Fatos Reais
-          </span>
-        }
-      />
+      <SectionHeading step={1} title="Ground Truth: Currículo Base" />
 
       <div className="flex items-center justify-between gap-3 rounded-xl border border-outline-variant/60 bg-surface-container-low p-3.75">
         <div className="flex min-w-0 items-center gap-3">

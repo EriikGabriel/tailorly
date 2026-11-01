@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Preferências da pessoa para a geração: diretrizes de destaque (só orientam a ordem do que já está
+ * Preferências da pessoa para a geração: diretrizes de destaque (dão ênfase à reescrita e à ordem do que já está
  * aprovado), se a esteira deve iterar o layout até a nota de ATS ficar boa e o template de layout
  * (nome de um template embarcado; nulo usa o padrão). O template só muda a apresentação.
  */

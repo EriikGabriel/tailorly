@@ -41,7 +41,7 @@ export function ReviewSaveBar({
           animate={{ opacity: 1, y: 0 }}
           exit={reduceMotion ? undefined : { opacity: 0, y: 12 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="sticky bottom-4 z-10 mx-auto mt-6 flex w-full max-w-384 flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-container px-4 py-4 shadow-2"
+          className="sticky bottom-4 z-10 mx-auto mt-6 flex w-full max-w-384 flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-container border-2 px-4 py-4 shadow-2"
         >
           {error ? (
             <p className="flex items-center gap-2 text-label-sm font-semibold text-destructive">

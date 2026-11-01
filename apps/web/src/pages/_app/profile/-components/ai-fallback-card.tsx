@@ -30,13 +30,13 @@ export function AiFallbackCard({ mode }: AiFallbackCardProps) {
           <div>
             <h3 className="text-title-md font-semibold text-primary-950">
               {mode === "primary"
-                ? "Ollama Local — Único Provedor de Extração"
-                : "Ollama Local — Fallback de Extração"}
+                ? "Ollama Local — Único Provedor de IA"
+                : "Ollama Local — Fallback de IA"}
             </h3>
             <p className="text-body-sm text-on-surface-variant">
               {mode === "primary"
-                ? "Toda a extração roda neste modelo local; nenhuma chamada sai do seu dispositivo. Se o Ollama não estiver em execução ou o modelo não existir, a extração falha — não há fallback automático para um provedor remoto nem para regras."
-                : "Usado automaticamente quando a chamada ao provedor remoto falhar (RNF07). Se os dois falharem, a extração não é concluída — não há fallback silencioso para regras."}
+                ? "Todas as etapas com IA rodam neste modelo local; nenhuma chamada sai do seu dispositivo. Se o Ollama não estiver em execução ou o modelo não existir, a extração falha e a esteira de ATS usa regras — não há fallback automático para um provedor remoto."
+                : "Usado automaticamente quando a chamada ao provedor remoto falhar (RNF07). Se os dois falharem, a extração não é concluída; na esteira de ATS, as regras assumem."}
             </p>
           </div>
         </div>

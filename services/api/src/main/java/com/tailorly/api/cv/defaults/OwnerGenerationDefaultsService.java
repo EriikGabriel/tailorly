@@ -2,7 +2,15 @@ package com.tailorly.api.cv.defaults;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tailorly.api.cv.defaults.dto.GenerationDefaultsResponse;
+import com.tailorly.api.cv.defaults.dto.UpdateGenerationDefaultsRequest;
+import com.tailorly.api.cv.model.CvPreferences;
 
 import com.tailorly.api.cv.template.CvTemplateCatalog;
 import com.tailorly.api.owner.Owner;
@@ -18,34 +26,84 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Padrões de geração de uma conta: o layout de currículo escolhido. Só contas guardam padrões; a
- * sessão anônima escolhe no próprio navegador e não deixa histórico no servidor.
+ * Padrões de geração de uma conta: layout de currículo, otimização para ATS e diretrizes de destaque.
+ * São o ponto de partida de cada geração; o gerador ajusta diretrizes e layout por vaga sem gravar
+ * aqui. Só contas guardam padrões; a sessão anônima escolhe no próprio navegador e não deixa
+ * histórico no servidor.
  */
 @Service
 @RequiredArgsConstructor
 public class OwnerGenerationDefaultsService {
+  /** Mesmo conjunto que a interface liga por padrão. */
+  static final List<String> DEFAULT_GUIDELINES = List.of("Destacar Liderança Técnica",
+      "Arquitetura em Nuvem & Escala", "Impacto de Negócio Quantificado");
+  private static final TypeReference<List<String>> STRINGS = new TypeReference<>() {
+  };
+
   private final OwnerRepository owners;
   private final OwnerAccessService access;
   private final JdbcTemplate jdbc;
+  private final ObjectMapper objectMapper;
 
-  /** Nome do template padrão da conta, ou nulo quando ela ainda não escolheu. */
+  /** Padrões da conta; sem linha gravada, o layout é nulo, o ATS fica ligado e valem as diretrizes padrão. */
   @Transactional(readOnly = true)
-  public String templateName(UUID ownerId) {
+  public GenerationDefaultsResponse get(UUID ownerId) {
     account(ownerId);
-    return jdbc.queryForList("select template_name from owner_generation_defaults where owner_id = ?",
-        String.class, ownerId).stream().findFirst().orElse(null);
+    return row(ownerId);
   }
 
+  /** Aplica só os campos enviados e devolve os padrões resultantes. */
   @Transactional
-  public String setTemplateName(UUID ownerId, String templateName) {
+  public GenerationDefaultsResponse update(UUID ownerId, UpdateGenerationDefaultsRequest request) {
     account(ownerId);
-    if (!CvTemplateCatalog.exists(templateName)) {
+    if (request.templateName() != null && !CvTemplateCatalog.exists(request.templateName())) {
       throw new BadRequestException(ErrorCodes.CvGeneration.TEMPLATE_UNKNOWN);
     }
-    jdbc.update("insert into owner_generation_defaults (owner_id, template_name, updated_at) values (?, ?, ?) "
+    GenerationDefaultsResponse current = row(ownerId);
+    GenerationDefaultsResponse next = new GenerationDefaultsResponse(
+        request.templateName() != null ? request.templateName() : current.templateName(),
+        request.optimizeForAts() != null ? request.optimizeForAts() : current.optimizeForAts(),
+        request.guidelines() != null ? request.guidelines().stream().distinct().toList() : current.guidelines());
+    jdbc.update("insert into owner_generation_defaults (owner_id, template_name, optimize_for_ats, "
+        + "guidelines, updated_at) values (?, ?, ?, ?, ?) "
         + "on conflict (owner_id) do update set template_name = excluded.template_name, "
-        + "updated_at = excluded.updated_at", ownerId, templateName, Timestamp.from(Instant.now()));
-    return templateName;
+        + "optimize_for_ats = excluded.optimize_for_ats, guidelines = excluded.guidelines, "
+        + "updated_at = excluded.updated_at", ownerId, next.templateName(), next.optimizeForAts(),
+        write(next.guidelines()), Timestamp.from(Instant.now()));
+    return next;
+  }
+
+  /**
+   * Preferências usadas quando a requisição de geração não traz as suas. Não verifica acesso (quem
+   * gera já verificou); sem padrões gravados, como em sessões anônimas, valem os padrões do servidor.
+   */
+  @Transactional(readOnly = true)
+  public CvPreferences preferencesFor(UUID ownerId) {
+    GenerationDefaultsResponse defaults = row(ownerId);
+    return new CvPreferences(defaults.guidelines(), defaults.optimizeForAts(), defaults.templateName());
+  }
+
+  private GenerationDefaultsResponse row(UUID ownerId) {
+    return jdbc.query("select template_name, optimize_for_ats, guidelines "
+        + "from owner_generation_defaults where owner_id = ?",
+        (rs, rowNum) -> new GenerationDefaultsResponse(rs.getString(1), rs.getBoolean(2), read(rs.getString(3))),
+        ownerId).stream().findFirst().orElse(new GenerationDefaultsResponse(null, true, DEFAULT_GUIDELINES));
+  }
+
+  private List<String> read(String json) {
+    try {
+      return objectMapper.readValue(json, STRINGS);
+    } catch (JsonProcessingException exception) {
+      throw new IllegalStateException("Invalid stored guidelines", exception);
+    }
+  }
+
+  private String write(List<String> guidelines) {
+    try {
+      return objectMapper.writeValueAsString(guidelines);
+    } catch (JsonProcessingException exception) {
+      throw new IllegalStateException("Could not store guidelines", exception);
+    }
   }
 
   private Owner account(UUID ownerId) {

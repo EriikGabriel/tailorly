@@ -1,5 +1,8 @@
+import { AnimatedBar } from "@components/animated-bar";
 import type { CvGenerationResponse } from "@lib/api/generated/model";
 import { useState } from "react";
+import { atsScoreColor, atsScoreLabel } from "@/utils/ats-score";
+import { AnimatedScore } from "./animated-score";
 import { AtsDetails, type AtsTab } from "./ats-details";
 import { AtsReviewSection } from "./ats-review-section";
 
@@ -18,6 +21,7 @@ export function AtsScoreCard({
   const report = generation.ats?.report;
   if (!report) return null;
   const score = report.score ?? 0;
+  const scoreColor = atsScoreColor(score);
   const weak = (report.checks ?? [])
     .filter((check) => (check.points ?? 0) < (check.maxPoints ?? 0))
     .sort(
@@ -52,14 +56,35 @@ export function AtsScoreCard({
                   .join(" · ")}`}
           </p>
         </div>
-        <span className="shrink-0 text-3xl font-semibold tabular-nums text-primary-900">
-          <span className="sr-only">{score} de 100</span>
-          {score}
-          <span className="text-sm font-medium text-on-surface-variant">
-            /100
+        <div className="flex shrink-0 flex-col items-end">
+          <span
+            className="text-3xl font-semibold tabular-nums"
+            style={{ color: scoreColor }}
+          >
+            <span className="sr-only">{score} de 100</span>
+            <span aria-hidden="true">
+              <AnimatedScore value={score} />
+            </span>
+            <span
+              aria-hidden="true"
+              className="text-sm font-medium text-on-surface-variant"
+            >
+              /100
+            </span>
           </span>
-        </span>
+          <span className="text-xs font-semibold" style={{ color: scoreColor }}>
+            {atsScoreLabel(score)}
+          </span>
+        </div>
       </div>
+
+      <AnimatedBar
+        value={score}
+        max={100}
+        label="Nota de ATS estimada"
+        color={scoreColor}
+        className="h-2"
+      />
 
       <AtsReviewSection
         generation={generation}

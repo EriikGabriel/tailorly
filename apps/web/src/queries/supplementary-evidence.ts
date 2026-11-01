@@ -1,6 +1,9 @@
 import { apiRequest } from "@lib/api/client";
 import { apiQueryKeys } from "@lib/api/query-keys";
+import { useCurrentAccount } from "@queries/current-account";
+import { useViewer } from "@queries/cv-generation";
 import {
+  queryOptions,
   skipToken,
   useMutation,
   useQuery,
@@ -35,11 +38,11 @@ export interface EvidenceCollection {
   aiStatus: "completed" | "limit_reached" | "unavailable";
 }
 
-export function useSupplementaryEvidence(
+export function supplementaryEvidenceQueryOptions(
   snapshotId: string | null,
   token: string | null,
 ) {
-  return useQuery({
+  return queryOptions({
     queryKey: apiQueryKeys.supplementaryEvidence.snapshot(snapshotId ?? ""),
     queryFn:
       snapshotId && token
@@ -50,6 +53,27 @@ export function useSupplementaryEvidence(
             )
         : skipToken,
   });
+}
+
+export function useSupplementaryEvidence(
+  snapshotId: string | null,
+  token: string | null,
+) {
+  return useQuery(supplementaryEvidenceQueryOptions(snapshotId, token));
+}
+
+/**
+ * Snapshot ativo da conta, que é a quem pertencem as evidências. Visitantes anônimos não têm: o
+ * snapshot ativo só é conhecido pela conta.
+ */
+export function useEvidenceSnapshot() {
+  const viewer = useViewer();
+  const account = useCurrentAccount();
+  const snapshotId =
+    viewer.kind === "account"
+      ? (account.data?.owner.activeSnapshotId ?? null)
+      : null;
+  return { snapshotId, token: viewer.token };
 }
 
 /** Chave comum às coletas manual e automática, para a tela saber que alguma está rodando. */
