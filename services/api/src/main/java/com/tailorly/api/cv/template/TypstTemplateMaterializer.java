@@ -73,10 +73,15 @@ public final class TypstTemplateMaterializer {
     for (CvDocument.Section section : document.sections()) {
       out.add("");
       out.add("== " + escapeMarkup(section.heading()));
-      if (section.compact()) {
+      if (section.grouped()) {
+        // "Rótulo: itens": uma linha por grupo, em vez de uma linha por item.
         for (CvDocument.Entry entry : section.entries()) {
-          out.add("- " + renderEntryCompact(entry));
+          out.add("- *" + escapeMarkup(entry.title()) + ":* " + escapeMarkup(String.join(", ", entry.detailLines())));
         }
+      } else if (section.compact()) {
+        // Itens curtos e sem relação de ordem (idiomas, tecnologias soltas) cabem numa linha só.
+        out.add(section.entries().stream().map(TypstTemplateMaterializer::renderEntryCompact)
+            .collect(Collectors.joining(" · ")));
       } else {
         for (CvDocument.Entry entry : section.entries()) {
           out.addAll(renderEntryBlock(entry, compact));
@@ -95,12 +100,12 @@ public final class TypstTemplateMaterializer {
   private static String renderEntryCompact(CvDocument.Entry entry) {
     String subtitle = present(entry.subtitle());
     String title = escapeMarkup(entry.title());
-    return subtitle == null ? title : title + " — " + escapeMarkup(subtitle);
+    return subtitle == null ? title : title + " (" + escapeMarkup(subtitle) + ")";
   }
 
   private static List<String> renderEntryBlock(CvDocument.Entry entry, boolean compact) {
     List<String> out = new ArrayList<>();
-    out.add("#block(breakable: false, below: " + (compact ? "0.6em" : "0.9em") + ")[");
+    out.add("#block(breakable: false, below: " + (compact ? "0.9em" : "1.4em") + ")[");
     StringBuilder head = new StringBuilder("  *").append(escapeMarkup(entry.title())).append('*');
     String subtitle = present(entry.subtitle());
     if (subtitle != null) {
@@ -110,18 +115,22 @@ public final class TypstTemplateMaterializer {
     if (period != null) {
       head.append(" #h(1fr) #text(size: 0.92em)[").append(escapeMarkup(period)).append(']');
     }
-    out.add(head.append(" \\").toString());
+    List<String> detailLines = entry.detailLines();
     String meta = present(entry.meta());
-    if (meta != null) {
-      out.add("  #text(size: 0.92em, style: \"italic\")[" + escapeMarkup(meta) + "] \\");
-    }
-    for (String detail : entry.details()) {
-      String value = present(detail);
-      if (value != null) {
-        out.add("  #lines(" + quote(value) + ") \\");
-      }
-    }
     String link = present(entry.link());
+    // Listas começam em linha própria; só o link solto, sem bullets antes, precisa de quebra explícita.
+    boolean linkAlone = link != null && detailLines.isEmpty();
+    out.add(head.append(meta != null || linkAlone ? " \\" : "").toString());
+    if (meta != null) {
+      out.add("  #text(size: 0.92em, style: \"italic\")[" + escapeMarkup(meta) + "]" + (linkAlone ? " \\" : ""));
+    }
+    if (!detailLines.isEmpty()) {
+      out.add("  #v(" + (compact ? "0.2em" : "0.35em") + ")");
+    }
+    // Cada linha de detalhe é um bullet de lista nativa; ATS e leitores veem itens, não linhas coladas.
+    for (String detail : detailLines) {
+      out.add("  - #" + quote(detail));
+    }
     if (link != null) {
       out.add("  #text(size: 0.92em, link(" + quote(link) + ")[" + escapeMarkup(link) + "])");
     }

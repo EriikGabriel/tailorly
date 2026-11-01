@@ -18,6 +18,13 @@ export interface ExtractionRunResponse {
   outputObjectId: string | null;
   pipelineFingerprint: string;
   pipelineVersions: ExtractionRunResponsePipelineVersions;
+  /**
+   * Etapa em andamento: READING_FILE, EXTRACTING_TEXT, SAVING_PAGES, INTERPRETING ou SAVING_FACTS.
+   * @nullable
+   */
+  stage: string | null;
+  /** @nullable */
+  stageDetail: string | null;
   /** @nullable */
   startedAt: string | null;
   status: string;

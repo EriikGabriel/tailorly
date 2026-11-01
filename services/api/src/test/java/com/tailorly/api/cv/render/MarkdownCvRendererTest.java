@@ -47,12 +47,27 @@ class MarkdownCvRendererTest {
 
         *05/2021 – Atual · CLT*
 
-        Fez coisas.
+        - Fez coisas.
 
         ## Idiomas
 
-        - Inglês — Avançado
+        Inglês (Avançado)
         """, markdown);
+  }
+
+  @Test
+  @DisplayName("separa métricas em bullets e agrupa tecnologias em uma linha por grupo")
+  void rendersBulletsAndGroups() {
+    String markdown = render(new CvDocument(null, null, null, List.of(), List.of(
+        new CvDocument.Section("technologies", "Tecnologias", false, true, List.of(
+            new CvDocument.Entry("Backend", null, null, null, List.of("Java, Spring Boot"), null),
+            new CvDocument.Entry("Frontend", null, null, null, List.of("React"), null))),
+        new CvDocument.Section("projects", "Projetos", false, List.of(
+            new CvDocument.Entry("App", null, null, null, List.of("Reduziu o tempo em 30%\n• Atendeu 2 mil usuários"),
+                null))))));
+
+    assertTrue(markdown.contains("- **Backend:** Java, Spring Boot\n- **Frontend:** React\n"));
+    assertTrue(markdown.contains("- Reduziu o tempo em 30%\n- Atendeu 2 mil usuários\n"));
   }
 
   @Test
@@ -67,7 +82,7 @@ class MarkdownCvRendererTest {
     assertTrue(markdown.contains("\\<script\\>x\\</script\\>"));
     assertTrue(markdown.contains("\\[link\\](http://evil)"));
     assertTrue(markdown.contains("\\# título"));
-    assertTrue(markdown.contains("\\- item"));
+    assertTrue(markdown.contains("- item\n"));
     assertTrue(markdown.contains("\\`código\\`"));
     assertTrue(markdown.contains("<https://example.com/a%20b>"));
     assertFalse(markdown.contains("<script>"));

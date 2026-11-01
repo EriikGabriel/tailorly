@@ -286,13 +286,12 @@ public class CvContentEnricher {
       return document;
     }
     List<CvDocument.Section> sections = document.sections().stream()
-        .map(section -> new CvDocument.Section(section.key(), section.heading(), section.compact(),
-            section.entries().stream()
-                .map(entry -> replacements.containsKey(entry.id())
-                    ? new CvDocument.Entry(entry.id(), entry.title(), entry.subtitle(), entry.meta(), entry.period(),
-                        replacements.get(entry.id()), entry.link())
-                    : entry)
-                .collect(Collectors.toList())))
+        .map(section -> section.withEntries(section.entries().stream()
+            .map(entry -> replacements.containsKey(entry.id())
+                ? new CvDocument.Entry(entry.id(), entry.title(), entry.subtitle(), entry.meta(), entry.period(),
+                    replacements.get(entry.id()), entry.link())
+                : entry)
+            .collect(Collectors.toList())))
         .toList();
     return new CvDocument(document.name(), document.headline(), summary != null ? summary : document.summary(),
         document.contacts(), sections, document.layout());

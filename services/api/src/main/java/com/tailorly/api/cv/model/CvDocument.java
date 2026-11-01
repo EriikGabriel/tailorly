@@ -30,8 +30,19 @@ public record CvDocument(
   public record Contact(String text, String url) {
   }
 
-  /** Uma seção; {@code compact} lista as entradas em uma linha cada (idiomas, tecnologias). */
-  public record Section(String key, String heading, boolean compact, List<Entry> entries) {
+  /**
+   * Uma seção. {@code compact} junta as entradas numa linha corrida (idiomas, tecnologias soltas);
+   * {@code grouped} indica entradas que são grupos (título = rótulo do grupo, primeiro detalhe = itens
+   * separados por vírgula), exibidas como uma linha "Rótulo: itens" por grupo.
+   */
+  public record Section(String key, String heading, boolean compact, boolean grouped, List<Entry> entries) {
+    public Section(String key, String heading, boolean compact, List<Entry> entries) {
+      this(key, heading, compact, false, entries);
+    }
+
+    public Section withEntries(List<Entry> newEntries) {
+      return new Section(key, heading, compact, grouped, newEntries);
+    }
   }
 
   /** {@code id} identifica o item dentro do documento (por exemplo {@code projects:2}) para reordenação. */
@@ -50,6 +61,26 @@ public record CvDocument(
 
     public Entry withId(String newId) {
       return new Entry(newId, title, subtitle, meta, period, details, link);
+    }
+
+    /**
+     * Os detalhes quebrados em itens de lista: um por linha, sem marcador de lista que o texto de origem
+     * já trouxesse ({@code -}, {@code •}, {@code *}), para os renderizadores desenharem os próprios bullets.
+     */
+    public List<String> detailLines() {
+      List<String> lines = new java.util.ArrayList<>();
+      for (String detail : details) {
+        if (detail == null) {
+          continue;
+        }
+        for (String line : detail.split("\\R")) {
+          String item = line.strip().replaceFirst("^[-•*–]\\s+", "").strip();
+          if (!item.isEmpty()) {
+            lines.add(item);
+          }
+        }
+      }
+      return List.copyOf(lines);
     }
   }
 }

@@ -128,8 +128,23 @@ public class ExtractionQueue {
       run.getBaseVersion().setStatus("EXTRACTED");
     }
     run.setStatus("COMPLETED");
+    run.setStage(null);
+    run.setStageDetail(null);
     run.setFinishedAt(Instant.now());
     run.setErrorCode(null);
+  }
+
+  /**
+   * Registra a etapa em andamento para a interface. É só informativo: em transação própria e curta,
+   * e uma falha aqui nunca derruba o processamento.
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void stage(UUID runId, String stage, String detail) {
+    try {
+      runs.updateStage(runId, stage, detail == null ? null : detail.substring(0, Math.min(200, detail.length())));
+    } catch (RuntimeException ignored) {
+      // Informativo apenas.
+    }
   }
 
   @Transactional

@@ -1,3 +1,4 @@
+import { AiStageLabel } from "@components/ai-progress/ai-stage-label";
 import { useCurrentAccount } from "@queries/current-account";
 import { useViewer } from "@queries/cv-generation";
 import {
@@ -22,6 +23,7 @@ const COLLECTION_MESSAGE: Record<EvidenceCollection["aiStatus"], string> = {
  * evidências confirmadas podem entrar no currículo. Exibe-se apenas para contas, porque o snapshot
  * ativo só é conhecido pela conta.
  */
+
 export function SupplementaryEvidenceCard() {
   const viewer = useViewer();
   const account = useCurrentAccount();
@@ -70,11 +72,19 @@ export function SupplementaryEvidenceCard() {
             disabled={collect.isPending}
             className="shrink-0 rounded-lg bg-surface-container px-2.5 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high disabled:opacity-60"
           >
-            {collect.isPending ? "Analisando..." : "Analisar links"}
+            {collect.isPending ? (
+              <AiStageLabel
+                orb="searching"
+                label="Lendo as páginas dos projetos"
+                theme="light"
+              />
+            ) : (
+              "Analisar links"
+            )}
           </button>
         </div>
 
-        {lastCollection && (
+        {lastCollection && !collect.isPending && (
           <p className="text-xs text-on-surface-variant" role="status">
             {COLLECTION_MESSAGE[lastCollection.aiStatus]}{" "}
             {lastCollection.aiStatus === "completed" &&

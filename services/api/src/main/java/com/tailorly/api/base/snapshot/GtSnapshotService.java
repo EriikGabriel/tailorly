@@ -65,7 +65,9 @@ public class GtSnapshotService {
     BaseVersion version = versions.findByIdForUpdate(baseVersionId)
         .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.BaseVersion.NOT_FOUND));
 
-    if (!version.getOwner().getId().equals(ownerId) || !EXTRACTED.equals(version.getStatus())) {
+    // Uma versão já ativa pode ser aprovada de novo depois de corrigida: gera outro snapshot.
+    if (!version.getOwner().getId().equals(ownerId)
+        || !(EXTRACTED.equals(version.getStatus()) || ACTIVE.equals(version.getStatus()))) {
       throw new BadRequestException(ErrorCodes.BaseVersion.INVALID_STATUS);
     }
     if (issues.existsByBaseVersionIdAndBlockingTrueAndStatus(baseVersionId, "PENDING")) {
@@ -99,6 +101,14 @@ public class GtSnapshotService {
         .map(snapshot -> Math.addExact(snapshot.getSnapshotNumber(), 1))
         .orElse(1);
     String contentHash = contentHash(approvedFacts);
+    GtSnapshot unchanged = activeSnapshotWith(owner, baseVersionId, contentHash);
+    if (unchanged != null) {
+      // Nada mudou desde a última aprovação: mantém o snapshot ativo em vez de duplicá-lo.
+      List<GtSnapshotItemResponse> current = items
+          .findAllBySnapshotIdOrderByCategoryAscFieldKeyAsc(unchanged.getId()).stream()
+          .map(GtSnapshotItemResponse::from).toList();
+      return GtSnapshotResponse.from(unchanged, current, true, ownerId, baseVersionId);
+    }
     Instant approvedAt = Instant.now();
     GtSnapshot snapshot = snapshots.saveAndFlush(GtSnapshot.builder()
         .owner(owner)
@@ -158,6 +168,17 @@ public class GtSnapshotService {
     UUID versionId = snapshot.getBaseVersion().getId();
     return GtSnapshotResponse.from(snapshot, itemResponses,
         id.equals(snapshot.getOwner().getActiveSnapshotId()), ownerId, versionId);
+  }
+
+  private GtSnapshot activeSnapshotWith(Owner owner, UUID baseVersionId, String contentHash) {
+    UUID activeId = owner.getActiveSnapshotId();
+    if (activeId == null) {
+      return null;
+    }
+    return snapshots.findById(activeId)
+        .filter(active -> active.getBaseVersion().getId().equals(baseVersionId)
+            && contentHash.equals(active.getContentHash()))
+        .orElse(null);
   }
 
   private Map<UUID, ReviewDecision> latestDecisions(UUID versionId) {

@@ -11,6 +11,7 @@ import com.tailorly.api.base.fact.dto.UpdateFactReviewStateRequest;
 import com.tailorly.api.base.review.dto.ReviewIssueResponse;
 import com.tailorly.api.base.version.BaseVersion;
 import com.tailorly.api.base.version.BaseVersionRepository;
+import com.tailorly.api.base.version.BaseVersionStatus;
 import com.tailorly.api.owner.OwnerAccessService;
 import com.tailorly.api.shared.exception.BadRequestException;
 import com.tailorly.api.shared.exception.ErrorCodes;
@@ -49,7 +50,7 @@ public class ReviewIssueService {
     BaseVersion version = versions.findByIdForUpdate(issue.getBaseVersion().getId())
         .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.BaseVersion.NOT_FOUND));
     access.assertCanAccess(version.getOwner());
-    if (!"CANDIDATE".equals(version.getStatus()) && !"EXTRACTED".equals(version.getStatus())) {
+    if (!BaseVersionStatus.isReviewable(version.getStatus())) {
       throw new BadRequestException(ErrorCodes.Fact.INVALID_REVIEW_STATE);
     }
     if (!issue.getFact().getFactRecord().getBaseVersion().getId().equals(version.getId())) {

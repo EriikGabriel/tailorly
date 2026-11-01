@@ -1,3 +1,4 @@
+import { GenerationStageLabel } from "@components/ai-progress/generation-stage-label";
 import { Button } from "@components/ui/animate/buttons/button";
 import { ArrowRight, CheckCheck, Sparkles } from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
@@ -83,7 +84,11 @@ export function DialogFooter({
               className="size-4 shrink-0"
               aria-hidden="true"
             />
-            {generating ? "Gerando currículo..." : "Gerar currículo"}
+            {generating ? (
+              <GenerationStageLabel phase="generating" />
+            ) : (
+              "Gerar currículo"
+            )}
             <ArrowRight
               strokeWidth={1.5}
               className="size-4 shrink-0"

@@ -1,4 +1,5 @@
 import { Button } from "@animate/buttons/button";
+import { GenerationStageLabel } from "@components/ai-progress/generation-stage-label";
 import { useJobTarget } from "@hooks/use-job-target";
 import { ArrowRight, Sparkles } from "@react-zero-ui/icon-sprite";
 
@@ -14,10 +15,14 @@ export function GenerateCta() {
         hoverScale={1.01}
         className="h-auto min-h-13 w-full gap-2 rounded-xl bg-primary-900 py-3.5 text-sm font-semibold tracking-[0.14px] text-primary-foreground shadow-md hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <Sparkles aria-hidden="true" className="size-5 shrink-0" />
-        {target.isAnalyzing
-          ? "Lendo e analisando a vaga..."
-          : "Gerar Currículo Sob Medida com IA"}
+        {target.phase ? (
+          <GenerationStageLabel phase={target.phase} />
+        ) : (
+          <>
+            <Sparkles aria-hidden="true" className="size-5 shrink-0" />
+            Gerar Currículo Sob Medida com IA
+          </>
+        )}
         <ArrowRight aria-hidden="true" className="size-3 shrink-0" />
       </Button>
       <p className="px-1 text-xs text-on-surface-variant">

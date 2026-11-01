@@ -91,7 +91,7 @@ class TypstPdfRendererTest {
 
   @Test
   @EnabledIf("typstInstalled")
-  @DisplayName("compila o template classic com o Typst real")
+  @DisplayName("compila os templates embutidos com o Typst real")
   void compilesBundledTemplate() throws IOException {
     CvDocument document = new CvDocument("Ana Souza", "Engenheira", "Linha 1\nLinha 2", List.of(
         new CvDocument.Contact("ana@example.com", "mailto:ana@example.com"),
@@ -100,15 +100,20 @@ class TypstPdfRendererTest {
             new CvDocument.Entry("Dev #[x] $ \\", "Acme", "CLT", "05/2021 – Atual", List.of("Fez *coisas*.\nOutra linha"),
                 "https://example.com"),
             new CvDocument.Entry("Só título", null, null, null, List.of(), null))),
+        new CvDocument.Section("technologies", "Tecnologias", false, true, List.of(
+            new CvDocument.Entry("Backend", null, null, null, List.of("Java, Spring Boot"), null))),
         new CvDocument.Section("languages", "Idiomas", true, List.of(
-            new CvDocument.Entry("Inglês", "Avançado", null, null, List.of(), null)))));
-    String template = new String(CvTemplateCatalog.class.getClassLoader()
-        .getResourceAsStream("cv-templates/classic-v1.typ").readAllBytes(), StandardCharsets.UTF_8);
-    // O conteúdo aprovado agora entra como texto literal no corpo, então materializa antes de compilar.
-    String materialized = TypstTemplateMaterializer.materialize(template, document);
+            new CvDocument.Entry("Inglês", "Avançado", null, null, List.of(), null),
+            new CvDocument.Entry("Português", "Nativo", null, null, List.of(), null)))));
+    for (String name : List.of("classic", "editorial", "harvard", "modern")) {
+      String template = new String(CvTemplateCatalog.class.getClassLoader()
+          .getResourceAsStream("cv-templates/" + name + "-v1.typ").readAllBytes(), StandardCharsets.UTF_8);
+      // O conteúdo aprovado agora entra como texto literal no corpo, então materializa antes de compilar.
+      String materialized = TypstTemplateMaterializer.materialize(template, document);
 
-    byte[] pdf = new TypstPdfRenderer("typst", MAPPER).render(materialized, document);
+      byte[] pdf = new TypstPdfRenderer("typst", MAPPER).render(materialized, document);
 
-    assertArrayEquals("%PDF-".getBytes(StandardCharsets.US_ASCII), java.util.Arrays.copyOf(pdf, 5));
+      assertArrayEquals("%PDF-".getBytes(StandardCharsets.US_ASCII), java.util.Arrays.copyOf(pdf, 5), name);
+    }
   }
 }

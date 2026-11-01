@@ -1,7 +1,10 @@
 import type { ReviewStepId } from "@@types/review-model";
 import { useReviewIssues } from "@hooks/use-review-issues";
 import { useBaseCvStore } from "@stores/base-cv-store";
-import { useReviewDraftStore } from "@stores/review-draft-store";
+import {
+  hasUnsavedReviewChanges,
+  useReviewDraftStore,
+} from "@stores/review-draft-store";
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import { firstStepWithPending, pendingByStep } from "@/utils/review-step-map";
 import { clearSteps } from "@/utils/review-verification";
@@ -15,6 +18,7 @@ import { countBlockingIssues } from "../-utils/review-draft-persistence";
 import { MasterDocumentPanel } from "./master-document-panel";
 import { PendingFieldsProvider } from "./pending-fields-provider";
 import { ReviewCompletionCard } from "./review-completion-card";
+import { ReviewSaveBar } from "./review-save-bar";
 import { ReviewStepNavigation } from "./review-step-navigation";
 import { ReviewStepPanel } from "./review-step-panel";
 import { ReviewStepper } from "./review-stepper";
@@ -33,6 +37,8 @@ export const ReviewWorkspace = forwardRef<
 >(function ReviewWorkspace({ onSelectFile }, ref) {
   const { sourceId, activeStep, setActiveStep, expandedRecords } =
     useReviewDraftStore();
+  const unsaved = useReviewDraftStore(hasUnsavedReviewChanges);
+  const discardChanges = useReviewDraftStore((state) => state.discardChanges);
   const baseVersionId = useBaseCvStore((state) => state.baseVersionId);
   const { review, issues: pendingIssues } = useReviewIssues();
   const records = review.records.data ?? [];
@@ -58,7 +64,7 @@ export const ReviewWorkspace = forwardRef<
 
   // O botão do cabeçalho da página aprova por aqui, sempre com a versão mais recente do fluxo.
   const approveRef = useRef<() => void>(() => {});
-  approveRef.current = approval.approve;
+  approveRef.current = () => approval.approve();
   useImperativeHandle(ref, () => ({ approve: () => approveRef.current() }), []);
 
   // Resolve aqui mesmo: abre a etapa com as pendências mais importantes para a vaga.
@@ -107,7 +113,7 @@ export const ReviewWorkspace = forwardRef<
           {activeStep === "skills" && (
             <ReviewCompletionCard
               onSave={draftSave.save}
-              onApprove={approval.approve}
+              onApprove={() => approval.approve()}
               onReviewIssues={reviewPendingIssues}
               saving={draftSave.saving}
               approving={approval.approving}
@@ -120,6 +126,16 @@ export const ReviewWorkspace = forwardRef<
           )}
         </div>
       </div>
+      <ReviewSaveBar
+        visible={unsaved || draftSave.saving || approval.approving}
+        saving={draftSave.saving}
+        approving={approval.approving}
+        disabled={!baseVersionId || review.records.isLoading}
+        error={draftSave.error ?? approval.error}
+        onSave={draftSave.save}
+        onApprove={() => approval.approve({ stay: true })}
+        onDiscard={discardChanges}
+      />
     </PendingFieldsProvider>
   );
 });

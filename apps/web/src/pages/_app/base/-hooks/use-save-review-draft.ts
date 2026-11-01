@@ -24,6 +24,7 @@ import {
 export function useSaveReviewDraft(review: BaseReviewQueries) {
   const baseVersionId = useBaseCvStore((state) => state.baseVersionId);
   const draft = useReviewDraftStore((state) => state.draft);
+  const markSaved = useReviewDraftStore((state) => state.markSaved);
   const versionId = baseVersionId ?? "";
   const createRecord = useCreateFactRecord(versionId);
   const createFact = useCreateFact(versionId);
@@ -113,6 +114,7 @@ export function useSaveReviewDraft(review: BaseReviewQueries) {
         await syncFactGroup(group, index, openIssues);
       }
       invalidateReview();
+      markSaved(draft);
       return true;
     } catch (cause) {
       invalidateReview();

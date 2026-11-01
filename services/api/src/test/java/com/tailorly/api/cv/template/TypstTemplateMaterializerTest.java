@@ -35,7 +35,21 @@ class TypstTemplateMaterializerTest {
     assertTrue(result.contains("Ana \"Santos\"])"));
     assertTrue(result.contains("#set document(title: \"Ana \\\"Santos\\\"\")"));
     // Itens de seção compacta viram texto puro, não um dicionário com chaves.
-    assertTrue(result.contains("- Inglês — Avançado"));
+    assertTrue(result.contains("Inglês (Avançado)"));
+  }
+
+  @Test
+  void writesDetailLinesAsBulletsAndGroupsAsLabelledLines() {
+    CvDocument document = new CvDocument(null, null, null, List.of(), List.of(
+        new CvDocument.Section("technologies", "Tecnologias", false, true, List.of(
+            new CvDocument.Entry("Backend", null, null, null, List.of("Java, Spring Boot"), null))),
+        new CvDocument.Section("projects", "Projetos", false, List.of(
+            new CvDocument.Entry("App", null, null, null, List.of("Ganho de 30%\n- Meta de 2 mil"), null)))));
+
+    String result = TypstTemplateMaterializer.materialize(SOURCE, document);
+
+    assertTrue(result.contains("- *Backend:* Java, Spring Boot"));
+    assertTrue(result.contains("  - #\"Ganho de 30%\"\n  - #\"Meta de 2 mil\""));
   }
 
   @Test

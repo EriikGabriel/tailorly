@@ -41,6 +41,7 @@ try {
       "tests/unit/review-verification.test.ts",
       "tests/unit/request-guards.test.ts",
       "tests/unit/typst-editor.test.ts",
+      "tests/unit/review-unsaved-changes.test.ts",
     ],
     { cwd: root, stdio: "inherit" },
   );
@@ -60,6 +61,7 @@ try {
         path.join(output, "tests/unit/review-verification.test.js"),
         path.join(output, "tests/unit/request-guards.test.js"),
         path.join(output, "tests/unit/typst-editor.test.js"),
+        path.join(output, "tests/unit/review-unsaved-changes.test.js"),
       ],
       { cwd: root, stdio: "inherit" },
     );

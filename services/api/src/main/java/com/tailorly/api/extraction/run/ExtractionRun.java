@@ -84,6 +84,13 @@ public class ExtractionRun {
   @Column(name = "error_code")
   private String errorCode;
 
+  /** Etapa em andamento (ver {@link ExtractionStage}); nula antes de começar e depois de terminar. */
+  @Column(name = "stage", length = 32)
+  private String stage;
+
+  @Column(name = "stage_detail", length = 200)
+  private String stageDetail;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;

@@ -16,6 +16,7 @@ import com.tailorly.api.base.review.ReviewIssue;
 import com.tailorly.api.base.review.ReviewIssueRepository;
 import com.tailorly.api.base.version.BaseVersion;
 import com.tailorly.api.base.version.BaseVersionRepository;
+import com.tailorly.api.base.version.BaseVersionStatus;
 import com.tailorly.api.extraction.run.ExtractionRun;
 import com.tailorly.api.extraction.run.ExtractionRunRepository;
 import com.tailorly.api.owner.OwnerAccessService;
@@ -250,7 +251,7 @@ public class FactService {
   }
 
   private void assertReviewable(BaseVersion version) {
-    if (!"CANDIDATE".equals(version.getStatus()) && !"EXTRACTED".equals(version.getStatus())) {
+    if (!BaseVersionStatus.isReviewable(version.getStatus())) {
       throw new BadRequestException(ErrorCodes.Fact.INVALID_REVIEW_STATE);
     }
   }

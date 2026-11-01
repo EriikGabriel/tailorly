@@ -33,6 +33,13 @@ public interface ExtractionRunRepository extends JpaRepository<ExtractionRun, UU
 
   @Modifying
   @Query(value = """
+      update extraction_runs set stage = :stage, stage_detail = :detail
+      where id = :id and status = 'PROCESSING'
+      """, nativeQuery = true)
+  int updateStage(@Param("id") UUID id, @Param("stage") String stage, @Param("detail") String detail);
+
+  @Modifying
+  @Query(value = """
       update extraction_runs set status = 'FAILED', error_code = 'WORKER_TIMEOUT', finished_at = :now
       where status = 'PROCESSING' and started_at < :cutoff
       """, nativeQuery = true)

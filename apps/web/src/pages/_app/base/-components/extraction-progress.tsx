@@ -1,8 +1,50 @@
+import {
+  AiStageLabel,
+  type OrbState,
+} from "@components/ai-progress/ai-stage-label";
+import { formatElapsed, useElapsedSeconds } from "@hooks/use-elapsed";
 import { useBaseDocumentExtraction } from "@queries/base-document";
 
+const STAGES: Record<string, { label: string; orb: OrbState }> = {
+  QUEUED: { label: "Na fila de processamento", orb: "breathing" },
+  READING_FILE: { label: "Abrindo o PDF", orb: "searching" },
+  EXTRACTING_TEXT: {
+    label: "Extraindo o texto (OCR quando preciso)",
+    orb: "working",
+  },
+  SAVING_PAGES: { label: "Guardando o texto das páginas", orb: "weaving" },
+  INTERPRETING: {
+    label: "A IA separa os fatos do currículo",
+    orb: "composing",
+  },
+  SAVING_FACTS: { label: "Registrando os fatos para revisão", orb: "solving" },
+};
+
+const FAILURES: Record<string, string> = {
+  AI_INTERPRETATION_FAILED:
+    "A IA não conseguiu interpretar o currículo. Confira a configuração de IA no perfil e envie o PDF de novo.",
+  PDF_NO_TEXT: "O PDF não tem texto legível, nem por OCR.",
+  PDF_ENCRYPTED: "O PDF está protegido por senha.",
+  OCR_UNAVAILABLE: "A leitura por OCR não está disponível no servidor.",
+  WORKER_TIMEOUT: "O processamento demorou demais e foi interrompido.",
+  STORAGE_READ_FAILED: "Não foi possível abrir o arquivo enviado.",
+  STORAGE_WRITE_FAILED: "Não foi possível guardar o texto extraído.",
+  EXTRACTION_FAILED: "Não foi possível extrair o texto do PDF.",
+  EXTRACTION_PERSIST_FAILED: "Não foi possível registrar as páginas extraídas.",
+  FACT_FINALIZATION_FAILED:
+    "Não foi possível registrar os fatos interpretados.",
+};
+
+/** Andamento da extração do Currículo Base numa linha discreta: etapa atual e tempo decorrido. */
 export function ExtractionProgress({ versionId }: { versionId?: string }) {
   const extraction = useBaseDocumentExtraction(versionId);
   const run = extraction.data?.[0];
+  const running =
+    !run || run.status === "QUEUED" || run.status === "PROCESSING";
+  const elapsed = useElapsedSeconds(
+    running,
+    run?.startedAt ? Date.parse(run.startedAt) : null,
+  );
 
   if (!versionId) return null;
 
@@ -14,38 +56,37 @@ export function ExtractionProgress({ versionId }: { versionId?: string }) {
     );
   }
 
-  if (!run) {
+  if (run?.status === "FAILED") {
     return (
-      <p role="status" className="text-xs text-on-surface-variant">
-        PDF enviado • aguardando início da extração.
+      <p role="alert" className="text-xs text-error">
+        {FAILURES[run.errorCode ?? ""] ??
+          `Falha na extração${run.errorCode ? ` (${run.errorCode})` : ""}.`}
       </p>
     );
   }
 
-  const labels: Record<string, string> = {
-    QUEUED: "Extração na fila",
-    PROCESSING: "Extraindo texto das páginas",
-    COMPLETED: "Extração concluída",
-    FAILED: run.errorCode
-      ? `Falha na extração (${run.errorCode})`
-      : "Falha na extração",
-  };
-  const active = ["QUEUED", "PROCESSING"].includes(run.status);
-
-  return (
-    <div aria-live="polite" className="space-y-1.5">
-      <p role="status" className="text-xs text-on-surface-variant">
-        {labels[run.status] ?? "Status da extração indisponível"}
+  if (run?.status === "COMPLETED") {
+    return (
+      <p role="status" className="text-xs text-on-tertiary-container">
+        Extração concluída
       </p>
-      {active && (
-        <div
-          role="progressbar"
-          aria-label={labels[run.status]}
-          className="h-1.5 overflow-hidden rounded-full bg-surface-container-highest"
-        >
-          <div className="h-full w-1/3 animate-pulse rounded-full bg-primary-700" />
-        </div>
-      )}
+    );
+  }
+
+  const stage =
+    STAGES[run?.stage ?? (run ? "READING_FILE" : "QUEUED")] ??
+    STAGES.READING_FILE;
+  return (
+    <div className="inline-flex max-w-full items-center gap-3 rounded-full bg-surface-container px-3 py-1.5 text-xs font-medium text-primary-950">
+      <AiStageLabel
+        orb={stage.orb}
+        label={stage.label}
+        theme="light"
+        title={run?.stageDetail ?? undefined}
+      />
+      <span className="shrink-0 tabular-nums text-on-surface-variant">
+        {formatElapsed(elapsed)}
+      </span>
     </div>
   );
 }

@@ -11,6 +11,8 @@ import {
 interface ReviewDraftState {
   sourceId: string | null;
   draft: ReviewDraft;
+  /** Último rascunho igual ao que está salvo na API; a diferença para `draft` é o que ainda não foi gravado. */
+  baseline: ReviewDraft;
   activeStep: ReviewStepId;
   expandedRecords: Partial<Record<DraftCollection, string | null>>;
   setActiveStep: (step: ReviewStepId) => void;
@@ -27,12 +29,16 @@ interface ReviewDraftState {
     id: string | null,
   ) => void;
   resetForSource: (sourceId: string | null) => void;
+  /** Marca o rascunho enviado à API como salvo, sem apagar o que foi digitado enquanto salvava. */
+  markSaved: (saved: ReviewDraft) => void;
+  discardChanges: () => void;
 }
 
 // Editable UI drafts only; these are never the server's approved snapshot.
 export const useReviewDraftStore = create<ReviewDraftState>()((set) => ({
   sourceId: null,
   draft: createReviewDraft(),
+  baseline: createReviewDraft(),
   activeStep: "identity",
   expandedRecords: {},
   setActiveStep: (activeStep) => set({ activeStep }),
@@ -49,7 +55,7 @@ export const useReviewDraftStore = create<ReviewDraftState>()((set) => ({
       Object.values(state.draft)
         .filter(Array.isArray)
         .every((records) => records.length === 0)
-        ? { draft }
+        ? { draft, baseline: draft }
         : state,
     ),
   setCollection: (sourceId, collection, records) =>
@@ -68,7 +74,17 @@ export const useReviewDraftStore = create<ReviewDraftState>()((set) => ({
     set({
       sourceId,
       draft: createReviewDraft(),
+      baseline: createReviewDraft(),
       activeStep: "identity",
       expandedRecords: {},
     }),
+  markSaved: (baseline) => set({ baseline }),
+  discardChanges: () => set((state) => ({ draft: state.baseline })),
 }));
+
+/** Há edições no rascunho que ainda não foram gravadas na API? */
+export function hasUnsavedReviewChanges(
+  state: Pick<ReviewDraftState, "draft" | "baseline">,
+): boolean {
+  return JSON.stringify(state.draft) !== JSON.stringify(state.baseline);
+}

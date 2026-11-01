@@ -35,19 +35,17 @@ public class MarkdownCvRenderer {
     }
     for (Section section : document.sections()) {
       out.append("## ").append(section.heading()).append("\n\n");
-      for (Entry entry : section.entries()) {
-        if (section.compact()) {
-          out.append("- ").append(inline(entry.title()));
-          if (entry.subtitle() != null) {
-            out.append(" — ").append(inline(entry.subtitle()));
-          }
-          out.append('\n');
-        } else {
-          entry(out, entry);
+      if (section.grouped()) {
+        for (Entry entry : section.entries()) {
+          out.append("- **").append(inline(entry.title())).append(":** ")
+              .append(inline(String.join(", ", entry.detailLines()))).append('\n');
         }
-      }
-      if (section.compact()) {
         out.append('\n');
+      } else if (section.compact()) {
+        out.append(section.entries().stream().map(MarkdownCvRenderer::compactItem)
+            .collect(java.util.stream.Collectors.joining(" · "))).append("\n\n");
+      } else {
+        section.entries().forEach(entry -> entry(out, entry));
       }
     }
     return (out.toString().stripTrailing() + "\n").getBytes(StandardCharsets.UTF_8);
@@ -69,12 +67,22 @@ public class MarkdownCvRenderer {
     if (!meta.isEmpty()) {
       out.append('*').append(String.join(" · ", meta)).append("*\n\n");
     }
-    for (String detail : entry.details()) {
-      out.append(block(detail)).append("\n\n");
+    List<String> details = entry.detailLines();
+    for (String detail : details) {
+      // Um item que começa com "#" ou "1." viraria título ou lista aninhada dentro do bullet.
+      out.append("- ").append(LINE_START.matcher(inline(detail)).replaceAll("$1\\\\$2")).append('\n');
+    }
+    if (!details.isEmpty()) {
+      out.append('\n');
     }
     if (entry.link() != null) {
       out.append('<').append(entry.link().replace(">", "%3E").replace(" ", "%20")).append(">\n\n");
     }
+  }
+
+  private static String compactItem(Entry entry) {
+    return entry.subtitle() == null ? inline(entry.title())
+        : inline(entry.title()) + " (" + inline(entry.subtitle()) + ")";
   }
 
   private static String contact(Contact contact) {

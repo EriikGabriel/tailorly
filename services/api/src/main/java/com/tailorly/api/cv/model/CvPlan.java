@@ -93,6 +93,6 @@ public record CvPlan(List<String> sectionOrder, Map<String, List<String>> entryO
       }
     }
     section.entries().stream().filter(entry -> byId.containsKey(entry.id())).forEach(ordered::add);
-    return new CvDocument.Section(section.key(), section.heading(), section.compact(), List.copyOf(ordered));
+    return section.withEntries(List.copyOf(ordered));
   }
 }

@@ -13,6 +13,9 @@ import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.cv.model.CvPlan;
 import com.tailorly.api.cv.model.CvPreferences;
 import com.tailorly.api.cv.model.JobTerms;
+import com.tailorly.api.cv.model.TechnologyGrouper;
+import com.tailorly.api.cv.progress.GenerationProgress;
+import com.tailorly.api.cv.progress.GenerationProgress.Tracker;
 import com.tailorly.api.cv.render.PdfRenderer;
 import com.tailorly.api.cv.template.TypstTemplateMaterializer;
 import com.tailorly.api.job.dto.JobAnalysis;
@@ -30,7 +33,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CvPipeline {
-  public static final String VERSION = "cv-pipeline-3";
+  public static final String VERSION = "cv-pipeline-4";
   private static final int MAX_REFINEMENTS = 2;
   private static final Logger log = LoggerFactory.getLogger(CvPipeline.class);
 
@@ -52,13 +55,15 @@ public class CvPipeline {
   }
 
   public Outcome run(UUID ownerId, CvDocument approved, String templateSource, JobTerms terms, JobAnalysis analysis,
-      String jobTitle, CvPreferences prefs, List<ConfirmedEvidence> evidence) {
+      String jobTitle, CvPreferences prefs, List<ConfirmedEvidence> evidence, Tracker tracker) {
     // A reescrita troca frases de experiência, projetos e resumo, sempre presas aos fatos aprovados e às evidências confirmadas.
+    tracker.step(GenerationProgress.REWRITING, "A IA reescreve experiências, projetos e resumo com o vocabulário da vaga");
     CvContentEnricher.Result enriched = enricher.enrich(ownerId, approved, evidence, analysis, jobTitle);
-    CvDocument base = enriched.document();
+    // Agrupar tecnologias é só apresentação e vem depois da reescrita, que ainda enxerga cada tecnologia.
+    CvDocument base = TechnologyGrouper.apply(enriched.document());
     CvPlan plan = CvPlan.neutral();
     String editableTemplate = TypstTemplateMaterializer.materialize(templateSource, base);
-    Candidate best = attempt(base, plan, editableTemplate, terms);
+    Candidate best = attempt(base, plan, editableTemplate, terms, tracker, enrichmentSummary(enriched.enrichment()));
     List<PipelineIteration> iterations = new ArrayList<>();
     iterations.add(new PipelineIteration(0, "base", best.report().score(), best.document().layout().density(), null));
     String aiStatus = "skipped";
@@ -75,6 +80,8 @@ public class CvPipeline {
       String rationale = null;
       if (aiAvailable && !"failed".equals(aiStatus)) {
         try {
+          tracker.step(GenerationProgress.REFINING, "Nota " + best.report().score() + "/100, abaixo da meta de "
+              + AtsEvaluator.TARGET_SCORE + ": a IA propõe um ajuste de layout", round);
           CvPlanAdvisor.Suggestion suggestion = advisor.suggest(ownerId, base, analysis, jobTitle, prefs,
               current.report());
           next = suggestion.plan();
@@ -93,7 +100,7 @@ public class CvPipeline {
       if (next == null) {
         break;
       }
-      current = attempt(base, next, editableTemplate, terms);
+      current = attempt(base, next, editableTemplate, terms, tracker, null);
       iterations.add(new PipelineIteration(round, source, current.report().score(), current.document().layout().density(),
           rationale));
       if (current.report().score() > best.report().score()) {
@@ -102,6 +109,14 @@ public class CvPipeline {
     }
     return new Outcome(best.document(), best.pdf(), best.report(), List.copyOf(iterations), aiStatus,
         enriched.enrichment());
+  }
+
+  private static String enrichmentSummary(CvEnrichment enrichment) {
+    if (enrichment == null || !"completed".equals(enrichment.status())) {
+      return null;
+    }
+    return enrichment.bulletsKept() + (enrichment.bulletsKept() == 1 ? " frase reescrita" : " frases reescritas")
+        + (enrichment.bulletsRejected() > 0 ? ", " + enrichment.bulletsRejected() + " descartadas pela verificação" : "");
   }
 
   /** Sem IA: o único ajuste seguro é compactar quando o currículo passou de duas páginas ou de mil palavras. */
@@ -114,9 +129,12 @@ public class CvPipeline {
     return current.plan().withDensity("compact");
   }
 
-  private Candidate attempt(CvDocument base, CvPlan plan, String templateSource, JobTerms terms) {
+  private Candidate attempt(CvDocument base, CvPlan plan, String templateSource, JobTerms terms, Tracker tracker,
+      String detail) {
     CvDocument document = plan.apply(base);
+    tracker.step(GenerationProgress.RENDERING, detail);
     byte[] pdf = renderer.render(templateSource, document);
+    tracker.step(GenerationProgress.SCORING, "Lendo o texto do PDF como um sistema de triagem leria");
     return new Candidate(plan, document, pdf, evaluator.evaluate(document, terms, pdf));
   }
 

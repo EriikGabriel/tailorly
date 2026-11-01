@@ -14,6 +14,7 @@ import com.tailorly.api.extraction.interpreting.FactProposal;
 import com.tailorly.api.extraction.page.ExtractedPage;
 import com.tailorly.api.extraction.processing.ExtractionFailure;
 import com.tailorly.api.extraction.processing.PdfExtractor;
+import com.tailorly.api.extraction.run.ExtractionStage;
 import com.tailorly.api.objects.storage.ObjectStorage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -80,12 +81,18 @@ public class ExtractionWorker {
         throw new ExtractionFailure("PIPELINE_CHANGED");
       }
 
+      queue.stage(work.id(), ExtractionStage.READING_FILE, null);
       byte[] pdf = storage.get(work.originalKey());
       stage = "EXTRACTION_FAILED";
+      queue.stage(work.id(), ExtractionStage.EXTRACTING_TEXT, null);
       var extracted = extractor.extract(pdf);
+      long ocrPages = extracted.stream().filter(page -> page.method() != null
+          && page.method().toLowerCase(java.util.Locale.ROOT).contains("ocr")).count();
 
       List<ExtractionQueue.StoredPage> results = new ArrayList<>();
       stage = "STORAGE_WRITE_FAILED";
+      queue.stage(work.id(), ExtractionStage.SAVING_PAGES, extracted.size() + (extracted.size() == 1 ? " página" : " páginas")
+          + (ocrPages > 0 ? ", " + ocrPages + " lida" + (ocrPages == 1 ? "" : "s") + " por OCR" : ""));
       for (var page : extracted) {
         byte[] text = page.text().getBytes(StandardCharsets.UTF_8);
         String key = "owners/%s/extractions/%s/pages/%d.txt"
@@ -102,9 +109,11 @@ public class ExtractionWorker {
       pagesPersisted = true;
 
       stage = "AI_INTERPRETATION_FAILED";
+      queue.stage(work.id(), ExtractionStage.INTERPRETING, null);
       List<FactProposal> proposals = interpret(work.ownerId(), extracted, persistedPages);
 
       stage = "FACT_FINALIZATION_FAILED";
+      queue.stage(work.id(), ExtractionStage.SAVING_FACTS, proposals.size() + " itens para revisão");
       int persistedCount = finalization.finalizeExtraction(work.id(), proposals);
       log.info("Interpretação da execução {} persistiu {} propostas para revisão", work.id(), persistedCount);
     } catch (RuntimeException ex) {

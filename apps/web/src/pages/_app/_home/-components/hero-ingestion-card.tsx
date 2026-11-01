@@ -6,6 +6,7 @@ import {
   TabsPanels,
   TabsTab,
 } from "@animate/base/tabs";
+import { GenerationStageLabel } from "@components/ai-progress/generation-stage-label";
 import {
   JobUrlFeedback,
   useSettledUrlCheck,
@@ -189,10 +190,12 @@ export function HeroIngestionCard() {
           hoverScale={1.03}
           className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary-900 px-4 py-2 text-center text-sm font-semibold text-primary-foreground shadow-[0_4px_6px_rgb(62_39_35/15%)] transition-colors hover:bg-primary-800 active:bg-primary-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-900 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <span>
-            {target.isAnalyzing
-              ? "Lendo e analisando a vaga..."
-              : "Gerar currículo sob medida"}
+          <span className="flex justify-center items-center">
+            {target.phase ? (
+              <GenerationStageLabel phase={target.phase} />
+            ) : (
+              "Gerar currículo sob medida"
+            )}
           </span>
           <ArrowRight className="size-3.5 shrink-0" />
         </RippleButton>

@@ -18,7 +18,11 @@ public record ExtractionRunResponse(
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String status,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) Instant startedAt,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) Instant finishedAt,
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) String errorCode
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) String errorCode,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"},
+        description = "Etapa em andamento: READING_FILE, EXTRACTING_TEXT, SAVING_PAGES, INTERPRETING ou SAVING_FACTS.")
+    String stage,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, types = {"string", "null"}) String stageDetail
 ) {
   public static ExtractionRunResponse from(ExtractionRun run) {
     return ExtractionRunResponse.builder()
@@ -31,6 +35,8 @@ public record ExtractionRunResponse(
         .startedAt(run.getStartedAt())
         .finishedAt(run.getFinishedAt())
         .errorCode(run.getErrorCode())
+        .stage(run.getStage())
+        .stageDetail(run.getStageDetail())
         .build();
   }
 }

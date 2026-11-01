@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.tailorly.api.cv.dto.CvGenerationResponse;
 import com.tailorly.api.cv.dto.GenerateCvRequest;
+import com.tailorly.api.cv.dto.GenerationProgressResponse;
 import com.tailorly.api.cv.dto.PreviewCvRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,15 @@ public class CvGenerationController {
   public ResponseEntity<CvGenerationResponse> generate(@Valid @RequestBody GenerateCvRequest request) {
     CvGenerationService.Result result = service.generate(request);
     return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(result.generation());
+  }
+
+  /** Etapa da geração em curso do owner; {@code 204} quando não há nenhuma. */
+  @GetMapping("/generate/progress/{ownerId}")
+  public ResponseEntity<GenerationProgressResponse> progress(@PathVariable UUID ownerId) {
+    return service.progressOf(ownerId)
+        .map(snapshot -> ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store")
+            .body(GenerationProgressResponse.from(snapshot)))
+        .orElseGet(() -> ResponseEntity.noContent().build());
   }
 
   @GetMapping("/generations/owner/{ownerId}")

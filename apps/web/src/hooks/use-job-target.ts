@@ -120,6 +120,12 @@ export function useJobTarget() {
     blockReason,
     generate,
     isAnalyzing: analyze.isPending || generateCv.isPending,
+    /** O que está rodando agora: leitura da vaga ou geração do currículo. */
+    phase: analyze.isPending
+      ? ("analyzing" as const)
+      : generateCv.isPending
+        ? ("generating" as const)
+        : null,
     error: analyze.isError
       ? analyze.error.message
       : generateCv.isError

@@ -33,7 +33,8 @@ export function useApproveGroundTruthFlow({
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
-  async function approve() {
+  /** `stay` mantém a pessoa na auditoria depois de aprovar, para seguir editando. */
+  async function approve({ stay = false }: { stay?: boolean } = {}) {
     if (!(await saveDraft())) return;
     const refreshed = await review.issues.refetch();
     if (hasBlockingIssues(refreshed.data ?? [])) {
@@ -43,6 +44,7 @@ export function useApproveGroundTruthFlow({
     setError(null);
     try {
       await approveGroundTruth.mutateAsync();
+      if (stay) return;
       navigate({
         to: hasJobTarget(mode, jobUrl, jobText) ? "/generator" : "/",
       });

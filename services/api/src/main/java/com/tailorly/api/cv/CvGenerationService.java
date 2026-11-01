@@ -22,6 +22,7 @@ import com.tailorly.api.cv.model.CvPreferences;
 import com.tailorly.api.cv.model.JobTerms;
 import com.tailorly.api.cv.pipeline.CvAtsResult;
 import com.tailorly.api.cv.pipeline.CvPipeline;
+import com.tailorly.api.cv.progress.GenerationProgress;
 import com.tailorly.api.cv.dto.PreviewCvRequest;
 import com.tailorly.api.cv.render.MarkdownCvRenderer;
 import com.tailorly.api.cv.render.PdfRenderer;
@@ -87,6 +88,7 @@ public class CvGenerationService {
   private final ObjectProvider<VaultExportService> vaultExport;
   private final SupplementaryEvidenceRepository supplementaryEvidence;
   private final OwnerVaultService ownerVaults;
+  private final GenerationProgress progress;
 
   public CvGenerationService(OwnerRepository owners, OwnerAccessService access, GtSnapshotRepository snapshots,
       JobPostingVersionRepository jobVersions, CvInputResolver inputs, CvInputHasher inputHasher,
@@ -94,7 +96,8 @@ public class CvGenerationService {
       StoredObjectRepository objects, ObjectStorage storage, PdfRenderer pdfRenderer,
       MarkdownCvRenderer markdownRenderer, CvPipeline pipeline, AnonymousQuotaService quota,
       PlatformTransactionManager transactionManager, ObjectProvider<VaultExportService> vaultExport,
-      SupplementaryEvidenceRepository supplementaryEvidence, OwnerVaultService ownerVaults) {
+      SupplementaryEvidenceRepository supplementaryEvidence, OwnerVaultService ownerVaults,
+      GenerationProgress progress) {
     this.owners = owners;
     this.access = access;
     this.snapshots = snapshots;
@@ -114,6 +117,7 @@ public class CvGenerationService {
     this.vaultExport = vaultExport;
     this.supplementaryEvidence = supplementaryEvidence;
     this.ownerVaults = ownerVaults;
+    this.progress = progress;
   }
 
   /** Resultado de {@link #generate}: a geração e se foi produzida agora ou reaproveitada. */
@@ -132,20 +136,41 @@ public class CvGenerationService {
 
   public Result generate(GenerateCvRequest request) {
     CvPreferences preferences = request.preferences() == null ? CvPreferences.defaults() : request.preferences();
-    Prepared prepared = transaction.execute(status -> prepare(request, preferences));
+    var tracker = progress.begin(request.ownerId());
+    Prepared prepared;
+    try {
+      prepared = transaction.execute(status -> prepare(request, preferences));
+    } catch (RuntimeException failure) {
+      progress.fail(request.ownerId());
+      throw failure;
+    }
     if (prepared.reused() != null) {
+      progress.finish(request.ownerId());
       return prepared.reused();
     }
     try {
       CvPipeline.Outcome outcome = pipeline.run(prepared.ownerId(), prepared.base(), prepared.templateSource(),
-          prepared.terms(), prepared.analysis(), prepared.jobTitle(), preferences, prepared.evidence());
-      return transaction.execute(status -> persist(prepared, outcome));
+          prepared.terms(), prepared.analysis(), prepared.jobTitle(), preferences, prepared.evidence(), tracker);
+      tracker.step(GenerationProgress.SAVING, "Gravando o PDF, o Markdown e o relatório de ATS");
+      Result result = transaction.execute(status -> persist(prepared, outcome));
+      progress.finish(request.ownerId());
+      return result;
     } catch (RuntimeException failure) {
+      progress.fail(request.ownerId());
       // A cota foi consumida na fase 1; quem não recebeu um currículo não a perde.
       transaction.executeWithoutResult(status -> owners.findById(prepared.ownerId())
           .ifPresent(quota::refundGeneration));
       throw failure;
     }
+  }
+
+  /** Etapa atual da geração em curso do owner, se houver (ou terminou há poucos segundos). */
+  @Transactional(readOnly = true)
+  public java.util.Optional<GenerationProgress.Snapshot> progressOf(UUID ownerId) {
+    Owner owner = owners.findById(ownerId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
+    access.assertCanAccess(owner);
+    return progress.current(ownerId);
   }
 
   private Prepared prepare(GenerateCvRequest request, CvPreferences preferences) {
