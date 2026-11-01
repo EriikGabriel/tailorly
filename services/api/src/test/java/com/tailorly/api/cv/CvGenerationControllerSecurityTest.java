@@ -85,7 +85,7 @@ class CvGenerationControllerSecurityTest {
         new CvGenerationResponse.JobPostingSource(UUID.randomUUID(), UUID.randomUUID(), 2, "jh", "Dev", "Acme"),
         new CvGenerationResponse.TemplateSource(UUID.randomUUID(), "classic", 1, false),
         com.tailorly.api.cv.model.CvPreferences.defaults(),
-        new com.tailorly.api.cv.pipeline.CvAtsResult(null, List.of(), "unavailable"),
+        new com.tailorly.api.cv.pipeline.CvAtsResult(null, List.of(), "unavailable"), null,
         "typst 0.13", List.of("java"), "completed", null, null, Instant.now(), false);
   }
 

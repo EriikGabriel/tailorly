@@ -14,7 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class AtsEvaluatorTest {
-  private final AtsEvaluator evaluator = new AtsEvaluator();
+  private final AtsEvaluator evaluator = new AtsEvaluator(new com.tailorly.api.cv.ats.parser.ResumeParser());
 
   private static CvDocument document() {
     return new CvDocument("Ana Souza", "Engenheira", null,
@@ -24,10 +24,10 @@ class AtsEvaluatorTest {
             new CvDocument.Section("technologies", "Tecnologias", true, List.of(
                 new CvDocument.Entry("technologies:0", "Java", null, null, null, List.of(), null))),
             new CvDocument.Section("experience", "Experiência profissional", false, List.of(
-                new CvDocument.Entry("experience:0", "Engenheira", "Acme", null, "05/2021 – Atual",
+                new CvDocument.Entry("experience:0", "Engenheira", "Acme", null, "05/2021 - Atual",
                     List.of("Serviços em Java e Spring"), null))),
             new CvDocument.Section("degrees", "Formação acadêmica", false, List.of(
-                new CvDocument.Entry("degrees:0", "Ciência da Computação", "USP", null, "2016 – 2020", List.of(), null)))));
+                new CvDocument.Entry("degrees:0", "Ciência da Computação", "USP", null, "2016 - 2020", List.of(), null)))));
   }
 
   private static JobTerms terms() {
@@ -48,11 +48,11 @@ class AtsEvaluatorTest {
     assertEquals(List.of("Kubernetes"), report.missingTerms());
     assertEquals(1, report.pages());
     assertEquals(report.score(), report.checks().stream().mapToInt(AtsReport.AtsCheck::points).sum());
-    // Java pesa 2 (obrigatório), Spring 1, Kubernetes 1: 3 de 4 de 40 pontos.
-    assertEquals(30, check(report, "keywords").points());
+    // Java pesa 2 (obrigatório), Spring 1, Kubernetes 1: 3 de 4 de 35 pontos.
+    assertEquals(26, check(report, "keywords").points());
     assertEquals(10, check(report, "contact").points());
     assertEquals(15, check(report, "sections").points());
-    assertEquals(20, check(report, "parsing").points());
+    assertEquals(25, check(report, "parsing").points(), check(report, "parsing").detail());
     assertEquals(5, check(report, "dates").points());
     // O texto é curto demais para a faixa de palavras esperada: só as páginas contam.
     assertEquals(5, check(report, "length").points());
@@ -77,7 +77,7 @@ class AtsEvaluatorTest {
 
     assertEquals(0, check(report, "contact").points());
     assertEquals(0, check(report, "sections").points());
-    assertEquals(40, check(report, "keywords").points(), "sem termos na vaga não há o que cobrar");
+    assertEquals(35, check(report, "keywords").points(), "sem termos na vaga não há o que cobrar");
 
     String longText = ("palavra ".repeat(20) + "\n").repeat(70);
     AtsReport tooLong = evaluator.evaluate(document(), terms(), TestPdfs.of(longText, 20));

@@ -143,4 +143,24 @@ class CvContentEnricherTest {
     assertEquals("failed", failed.enrichment().status());
     assertEquals(document, failed.document());
   }
+
+  @Test
+  void evidenceIsMatchedByItemKeyEvenWithoutALinkAndForExperiences() {
+    CvDocument.Entry job = new CvDocument.Entry("experience:0", "Engenheira", "Acme", null, "2021 – Atual",
+        List.of("Serviços em Java"), null);
+    CvDocument.Entry project = new CvDocument.Entry("projects:0", "App", null, null, null,
+        List.of("Aplicativo móvel"), null);
+    CvDocument document = new CvDocument("Ana", null, null, List.of(), List.of(
+        new CvDocument.Section("experience", "Experiência", false, List.of(job)),
+        new CvDocument.Section("projects", "Projetos", false, List.of(project))));
+    java.util.UUID jobEvidence = java.util.UUID.randomUUID();
+    java.util.UUID projectEvidence = java.util.UUID.randomUUID();
+
+    var targets = CvContentEnricher.targets(document, List.of(
+        new ConfirmedEvidence(jobEvidence, null, "Reduziu custos em 20%", "experience:0", "vault"),
+        new ConfirmedEvidence(projectEvidence, null, "300 usuários", "projects:0", "web")));
+
+    assertTrue(targets.get(0).sources().stream().anyMatch(source -> source.id().equals("evidence:" + jobEvidence)));
+    assertTrue(targets.get(1).sources().stream().anyMatch(source -> source.id().equals("evidence:" + projectEvidence)));
+  }
 }

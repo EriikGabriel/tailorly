@@ -2,14 +2,12 @@ package com.tailorly.api.cv.evidence;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,11 +38,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Coleta evidências complementares de três fontes, sempre sobre projetos do snapshot:
+ * Coleta evidências complementares de três fontes sobre os itens do snapshot ({@link EvidenceSubjects}:
+ * projetos, com ou sem link, e experiências):
  * <ul>
  *   <li><b>base_link</b>: os links já presentes nos fatos aprovados;</li>
- *   <li><b>web</b>: páginas encontradas por busca pelo título do projeto (se houver provedor configurado);</li>
- *   <li><b>vault</b>: notas do Obsidian que citam o título do projeto (se a leitura estiver habilitada).</li>
+ *   <li><b>web</b>: páginas encontradas por busca sobre o projeto (se houver provedor configurado); só
+ *       valem as que citam o projeto pelo nome;</li>
+ *   <li><b>vault</b>: as notas do Obsidian que mais citam o item (título, repositório ou empresa), se a
+ *       leitura estiver habilitada; só as passagens em torno da citação vão à IA.</li>
  * </ul>
  * Não altera o snapshot nem os fatos: cada detalhe vira uma evidência {@code pendente}.
  *
@@ -57,13 +58,16 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Component
 @RequiredArgsConstructor
 public class SupplementaryEvidenceService {
+  /** Visitantes têm o mesmo teto de antes; contas, que não têm cota de processamento, podem ir mais fundo. */
   static final int MAX_ANALYSES = 5;
+  static final int MAX_ANALYSES_ACCOUNT = 12;
   static final int MAX_SEARCH_PROJECTS = 3;
+  static final int MAX_SEARCH_PROJECTS_ACCOUNT = 6;
+  static final int MAX_NOTES_PER_SUBJECT = 3;
   static final int SEARCH_RESULTS = 3;
   static final int MAX_WEB_PAGES_PER_PROJECT = 2;
   private static final Logger log = LoggerFactory.getLogger(SupplementaryEvidenceService.class);
   private static final Pattern URL = Pattern.compile("https?://[^\\s<>\"']+");
-  private static final Pattern PROJECT_FIELD = Pattern.compile("^(\\d{1,3}):(title|link)$");
 
   private final GtSnapshotRepository snapshots;
   private final GtSnapshotItemRepository snapshotItems;
@@ -91,19 +95,21 @@ public class SupplementaryEvidenceService {
       String aiStatus) {
   }
 
-  private record Project(String title, String link) {
-  }
-
   private record Plan(UUID ownerId, int linksFound, int alreadyKnown, List<String> pendingLinks,
-      List<Project> projects, Set<String> analyzed, boolean aiAvailable, Optional<Path> vaultDir, boolean webEnabled) {
+      List<EvidenceSubject> subjects, Set<String> analyzed, boolean aiAvailable, Optional<Path> vaultDir,
+      boolean webEnabled, boolean account) {
   }
 
   /** Contador de uma chamada: análises de IA restantes e falhas acumuladas. */
   private static final class Run {
-    int budget = MAX_ANALYSES;
+    int budget;
     int created;
     int failed;
     String aiStatus = "completed";
+
+    Run(int budget) {
+      this.budget = budget;
+    }
   }
 
   public CollectionResult collect(UUID snapshotId) {
@@ -112,31 +118,36 @@ public class SupplementaryEvidenceService {
       return new CollectionResult(plan.linksFound(), plan.alreadyKnown(), 0, 0, "unavailable");
     }
 
-    Run run = new Run();
+    Run run = new Run(plan.account() ? MAX_ANALYSES_ACCOUNT : MAX_ANALYSES);
     try {
       for (String link : plan.pendingLinks()) {
         if (run.budget == 0) {
           break;
         }
-        attempt(run, () -> analyzePage(snapshotId, plan.ownerId(), "base_link", link, link, link));
+        EvidenceSubject subject = plan.subjects().stream().filter(item -> link.equals(item.link())).findFirst()
+            .orElse(null);
+        attempt(run, () -> analyzePage(snapshotId, plan.ownerId(), "base_link", link, subject, link));
       }
-      collectProjectSources(snapshotId, plan, run);
+      collectSubjectSources(snapshotId, plan, run);
     } catch (TooManyRequestsException limit) {
       run.aiStatus = "limit_reached";
     }
     return new CollectionResult(plan.linksFound(), plan.alreadyKnown(), run.failed, run.created, run.aiStatus);
   }
 
-  /** Busca e leitura de vault para cada projeto, dentro do orçamento da chamada. */
-  private void collectProjectSources(UUID snapshotId, Plan plan, Run run) {
-    boolean searchEnabled = plan.webEnabled();
+  /**
+   * Busca web (só projetos) e leitura do vault (projetos e experiências) para cada item, dentro do
+   * orçamento da chamada. Itens sem link também entram: a evidência é casada pela chave do item.
+   */
+  private void collectSubjectSources(UUID snapshotId, Plan plan, Run run) {
+    int searchLimit = plan.account() ? MAX_SEARCH_PROJECTS_ACCOUNT : MAX_SEARCH_PROJECTS;
     int searched = 0;
-    for (Project project : plan.projects()) {
-      if (searchEnabled && searched < MAX_SEARCH_PROJECTS && run.budget > 0) {
-        String searchKey = "search:" + project.link();
+    for (EvidenceSubject subject : plan.subjects()) {
+      if (plan.webEnabled() && subject.searchable() && searched < searchLimit && run.budget > 0) {
+        String searchKey = "search:" + subject.key();
         if (!plan.analyzed().contains(searchKey)) {
           searched++;
-          List<WebSearchClient.SearchResult> results = searchOrEmpty(project.title());
+          List<WebSearchClient.SearchResult> results = searchOrEmpty(subject.searchQuery());
           markChecked(snapshotId, plan.ownerId(), searchKey, results.size());
           int pages = 0;
           for (WebSearchClient.SearchResult result : results) {
@@ -147,17 +158,19 @@ public class SupplementaryEvidenceService {
               continue;
             }
             pages++;
-            attempt(run, () -> analyzeWebResult(snapshotId, plan.ownerId(), project, result.url()));
+            attempt(run, () -> analyzeWebResult(snapshotId, plan.ownerId(), subject, result.url()));
           }
         }
       }
       if (plan.vaultDir().isPresent()) {
-        for (VaultNoteReader.Note note : vault.findMentioning(plan.vaultDir().get(), project.title())) {
-          String key = "vault:" + note.key();
+        for (VaultNoteReader.Note note : vault.findMentioningAny(plan.vaultDir().get(), subject.aliases(),
+            MAX_NOTES_PER_SUBJECT)) {
+          // A mesma nota pode servir a itens diferentes (projeto e empresa): a chave inclui o item.
+          String key = "vault:" + subject.key() + ":" + note.key();
           if (plan.analyzed().contains(key) || run.budget == 0) {
             continue;
           }
-          attempt(run, () -> analyzeText(snapshotId, plan.ownerId(), "vault", null, project.link(), key, note.text()));
+          attempt(run, () -> analyzeText(snapshotId, plan.ownerId(), "vault", null, subject, key, note.text()));
         }
       }
     }
@@ -194,27 +207,28 @@ public class SupplementaryEvidenceService {
     }
   }
 
-  /** Página de link do Currículo Base: sempre analisada se baixada (o link é do próprio projeto). */
-  private int analyzePage(UUID snapshotId, UUID ownerId, String kind, String url, String subject, String key) {
+  /** Página de link do Currículo Base: sempre analisada se baixada (o link é do próprio projeto, quando há). */
+  private int analyzePage(UUID snapshotId, UUID ownerId, String kind, String url, EvidenceSubject subject,
+      String key) {
     FetchedPage page = pageFetcher.fetch(url);
     return analyzeText(snapshotId, ownerId, kind, url, subject, key, pageText(page));
   }
 
-  /** Página encontrada pela busca: só conta se citar o título do projeto; senão é marcada e descartada. */
-  private int analyzeWebResult(UUID snapshotId, UUID ownerId, Project project, String url) {
+  /** Página encontrada pela busca: só conta se citar o item pelo nome; senão é marcada e descartada. */
+  private int analyzeWebResult(UUID snapshotId, UUID ownerId, EvidenceSubject subject, String url) {
     FetchedPage page = pageFetcher.fetch(url);
     String text = pageText(page);
-    if (!Text.mentions(text, project.title())) {
+    if (subject.aliases().stream().noneMatch(alias -> Text.mentions(text, alias))) {
       markChecked(snapshotId, ownerId, url, 0);
       return 0;
     }
-    return analyzeText(snapshotId, ownerId, "web", url, project.link(), url, text);
+    return analyzeText(snapshotId, ownerId, "web", url, subject, url, text);
   }
 
-  private int analyzeText(UUID snapshotId, UUID ownerId, String kind, String sourceUrl, String subjectUrl,
+  private int analyzeText(UUID snapshotId, UUID ownerId, String kind, String sourceUrl, EvidenceSubject subject,
       String checkKey, String text) {
-    List<BaseLinkEvidenceExtractor.Claim> claims = extractor.extract(ownerId, text);
-    return save(snapshotId, kind, sourceUrl, subjectUrl, checkKey, claims);
+    List<BaseLinkEvidenceExtractor.Claim> claims = extractor.extract(ownerId, text, subject);
+    return save(snapshotId, kind, sourceUrl, subject, checkKey, claims);
   }
 
   private static String pageText(FetchedPage page) {
@@ -233,15 +247,17 @@ public class SupplementaryEvidenceService {
 
     boolean aiAvailable = !"rules".equals(preferences.resolveEffectiveSettings(ownerId).provider());
     return new Plan(ownerId, links.size(), alreadyKnown, aiAvailable ? pending : List.of(),
-        projects(snapshot.getId()), analyzed, aiAvailable, ownerVaults.readableVaultOf(ownerId),
-        webSearch.isConfigured() && ownerVaults.webSearchEnabledFor(ownerId));
+        EvidenceSubjects.of(snapshotItems.findAllBySnapshotIdOrderByCategoryAscFieldKeyAsc(snapshot.getId())),
+        analyzed, aiAvailable, ownerVaults.readableVaultOf(ownerId),
+        webSearch.isConfigured() && ownerVaults.webSearchEnabledFor(ownerId),
+        !AnonymousQuotaService.isAnonymous(snapshot.getOwner()));
   }
 
   /**
    * Grava os detalhes de uma fonte e a marca como analisada, na mesma transação. O limite de
    * processamento é consumido aqui: se estourar, nada é gravado e a análise é descartada.
    */
-  private int save(UUID snapshotId, String kind, String sourceUrl, String subjectUrl, String checkKey,
+  private int save(UUID snapshotId, String kind, String sourceUrl, EvidenceSubject subject, String checkKey,
       List<BaseLinkEvidenceExtractor.Claim> claims) {
     Integer created = transaction.execute(status -> {
       GtSnapshot snapshot = loadAuthorized(snapshotId);
@@ -254,7 +270,9 @@ public class SupplementaryEvidenceService {
             .snapshot(snapshot)
             .sourceKind(kind)
             .sourceUrl(sourceUrl)
-            .subjectUrl(subjectUrl)
+            .subjectUrl(subject == null ? null : subject.link())
+            .subjectKey(subject == null ? null : subject.key())
+            .subjectLabel(subject == null ? null : subject.label())
             .sourceExcerpt(claim.excerpt())
             .claim(claim.claim())
             .reviewState("pendente")
@@ -315,28 +333,6 @@ public class SupplementaryEvidenceService {
       }
     }
     return List.copyOf(urls);
-  }
-
-  /** Projetos do snapshot que têm título e link; sem link não há a que o enriquecimento casar. */
-  private List<Project> projects(UUID snapshotId) {
-    TreeMap<Integer, String[]> byIndex = new TreeMap<>();
-    for (GtSnapshotItem item : snapshotItems.findAllBySnapshotIdOrderByCategoryAscFieldKeyAsc(snapshotId)) {
-      if (!"projects".equals(item.getCategory()) || !(item.getApprovedValue() instanceof String value)) {
-        continue;
-      }
-      Matcher matcher = PROJECT_FIELD.matcher(item.getFieldKey());
-      if (matcher.matches()) {
-        String[] pair = byIndex.computeIfAbsent(Integer.parseInt(matcher.group(1)), index -> new String[2]);
-        pair["title".equals(matcher.group(2)) ? 0 : 1] = value.strip();
-      }
-    }
-    List<Project> projects = new ArrayList<>();
-    for (String[] pair : byIndex.values()) {
-      if (pair[0] != null && pair[1] != null && pair[1].startsWith("http")) {
-        projects.add(new Project(pair[0], stripTrailingPunctuation(pair[1])));
-      }
-    }
-    return List.copyOf(projects);
   }
 
   private static String stripTrailingPunctuation(String url) {

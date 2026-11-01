@@ -37,13 +37,14 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CvContentEnricher {
-  public static final String VERSION = "content-enrich-1";
+  public static final String VERSION = "content-enrich-2";
   static final Set<String> ENTRY_SECTIONS = Set.of("experience", "projects");
   static final String SUMMARY_ID = "summary";
   static final int MAX_BULLETS = 4;
   static final int MAX_BULLET_CHARS = 240;
   static final int MAX_SUMMARY_CHARS = 500;
   static final int MAX_ENTRIES = 12;
+  static final int MAX_EVIDENCE_PER_ENTRY = 6;
   private static final int MAX_REQUIREMENTS = 40;
   private static final int MAX_SOURCE_CHARS = 600;
   private static final Pattern NUMBER = Pattern.compile("\\d+");
@@ -209,13 +210,14 @@ public class CvContentEnricher {
     return sources;
   }
 
+  /** Até {@code MAX_EVIDENCE_PER_ENTRY} evidências da entrada: pela chave do item e, nas antigas, pelo link. */
   private static List<ConfirmedEvidence> matching(CvDocument.Entry entry, List<ConfirmedEvidence> evidence) {
-    if (entry.link() == null) {
-      return List.of();
-    }
-    String link = normalizeUrl(entry.link());
+    String link = entry.link() == null ? null : normalizeUrl(entry.link());
     return evidence.stream()
-        .filter(item -> item.subjectUrl() != null && normalizeUrl(item.subjectUrl()).equals(link))
+        .filter(item -> item.subjectKey() != null
+            ? item.subjectKey().equals(entry.id())
+            : link != null && item.subjectUrl() != null && normalizeUrl(item.subjectUrl()).equals(link))
+        .limit(MAX_EVIDENCE_PER_ENTRY)
         .toList();
   }
 

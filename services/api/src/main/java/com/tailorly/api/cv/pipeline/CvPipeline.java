@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CvPipeline {
-  public static final String VERSION = "cv-pipeline-4";
+  public static final String VERSION = "cv-pipeline-5";
   private static final int MAX_REFINEMENTS = 2;
   private static final Logger log = LoggerFactory.getLogger(CvPipeline.class);
 

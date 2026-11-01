@@ -2,12 +2,14 @@ import { AiStageLabel } from "@components/ai-progress/ai-stage-label";
 import { useCurrentAccount } from "@queries/current-account";
 import { useViewer } from "@queries/cv-generation";
 import {
+  EVIDENCE_COLLECT_KEY,
   type EvidenceCollection,
   type SupplementaryEvidence,
   useCollectSupplementaryEvidence,
   useReviewSupplementaryEvidence,
   useSupplementaryEvidence,
 } from "@queries/supplementary-evidence";
+import { useIsMutating } from "@tanstack/react-query";
 import { useState } from "react";
 import { SectionHeading } from "./section-heading";
 
@@ -33,6 +35,8 @@ export function SupplementaryEvidenceCard() {
       : null;
   const evidence = useSupplementaryEvidence(snapshotId, viewer.token);
   const collect = useCollectSupplementaryEvidence(snapshotId, viewer.token);
+  // Também vale a coleta automática disparada ao aprovar o Currículo Base.
+  const collecting = useIsMutating({ mutationKey: EVIDENCE_COLLECT_KEY }) > 0;
   const review = useReviewSupplementaryEvidence(snapshotId, viewer.token);
   const [lastCollection, setLastCollection] =
     useState<EvidenceCollection | null>(null);
@@ -40,9 +44,16 @@ export function SupplementaryEvidenceCard() {
   if (!snapshotId) return null;
 
   const items = evidence.data ?? [];
-  const pending = items.filter((item) => item.reviewState === "pendente");
   const confirmed = items.filter((item) => item.reviewState === "confirmado");
-  const discarded = items.filter((item) => item.reviewState === "descartado");
+  const groups = groupBySubject(items);
+
+  async function confirmGroup(group: SupplementaryEvidence[]) {
+    for (const item of group.filter(
+      (entry) => entry.reviewState === "pendente",
+    )) {
+      await review.mutateAsync({ id: item.id, reviewState: "confirmado" });
+    }
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -69,10 +80,10 @@ export function SupplementaryEvidenceCard() {
                 onSuccess: (result) => setLastCollection(result),
               })
             }
-            disabled={collect.isPending}
+            disabled={collecting}
             className="shrink-0 rounded-lg bg-surface-container px-2.5 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container-high disabled:opacity-60"
           >
-            {collect.isPending ? (
+            {collecting ? (
               <AiStageLabel
                 orb="searching"
                 label="Lendo as páginas dos projetos"
@@ -84,7 +95,7 @@ export function SupplementaryEvidenceCard() {
           </button>
         </div>
 
-        {lastCollection && !collect.isPending && (
+        {lastCollection && !collecting && (
           <p className="text-xs text-on-surface-variant" role="status">
             {COLLECTION_MESSAGE[lastCollection.aiStatus]}{" "}
             {lastCollection.aiStatus === "completed" &&
@@ -104,44 +115,89 @@ export function SupplementaryEvidenceCard() {
         )}
         {!evidence.isLoading && items.length === 0 && (
           <p className="text-xs text-on-surface-variant">
-            Nenhuma evidência ainda. Use “Analisar links” para buscar detalhes
-            dos seus projetos.
+            Nenhuma evidência ainda. “Analisar links” busca detalhes dos seus
+            projetos e experiências em links, na web e no seu second brain.
           </p>
         )}
 
-        {pending.map((item) => (
-          <EvidenceItem
-            key={item.id}
-            item={item}
-            onReview={(reviewState) =>
-              review.mutate({ id: item.id, reviewState })
-            }
-            busy={review.isPending}
-          />
-        ))}
-        {confirmed.map((item) => (
-          <EvidenceItem
-            key={item.id}
-            item={item}
-            onReview={(reviewState) =>
-              review.mutate({ id: item.id, reviewState })
-            }
-            busy={review.isPending}
-          />
-        ))}
-        {discarded.map((item) => (
-          <EvidenceItem
-            key={item.id}
-            item={item}
-            onReview={(reviewState) =>
-              review.mutate({ id: item.id, reviewState })
-            }
-            busy={review.isPending}
-          />
+        {groups.map((group) => (
+          <section key={group.key} className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="text-xs font-semibold text-on-surface">
+                {group.label}
+              </h4>
+              {group.pending > 0 && (
+                <button
+                  type="button"
+                  disabled={review.isPending}
+                  onClick={() => confirmGroup(group.items)}
+                  className="rounded-lg bg-surface-container-high px-2 py-0.5 text-[11px] font-medium text-on-surface disabled:opacity-60"
+                >
+                  Confirmar {group.pending} pendente(s)
+                </button>
+              )}
+            </div>
+            {group.items.map((item) => (
+              <EvidenceItem
+                key={item.id}
+                item={item}
+                onReview={(reviewState) =>
+                  review.mutate({ id: item.id, reviewState })
+                }
+                busy={review.isPending}
+              />
+            ))}
+          </section>
         ))}
       </div>
     </div>
   );
+}
+
+const ORDER: Record<string, number> = {
+  pendente: 0,
+  confirmado: 1,
+  descartado: 2,
+};
+const SOURCE: Record<string, string> = {
+  base_link: "Link do projeto",
+  web: "Busca web",
+  vault: "Second brain",
+};
+
+/** Agrupa por item do currículo (projeto ou empresa), com o que falta decidir primeiro. */
+function groupBySubject(items: SupplementaryEvidence[]) {
+  const groups = new Map<
+    string,
+    {
+      key: string;
+      label: string;
+      items: SupplementaryEvidence[];
+      pending: number;
+    }
+  >();
+  for (const item of items) {
+    const key = item.subjectKey ?? "outros";
+    const group = groups.get(key) ?? {
+      key,
+      label: item.subjectLabel ?? "Outros links",
+      items: [],
+      pending: 0,
+    };
+    group.items.push(item);
+    if (item.reviewState === "pendente") group.pending++;
+    groups.set(key, group);
+  }
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      items: group.items.sort(
+        (left, right) => ORDER[left.reviewState] - ORDER[right.reviewState],
+      ),
+    }))
+    .sort(
+      (left, right) => Number(right.pending > 0) - Number(left.pending > 0),
+    );
 }
 
 function EvidenceItem({
@@ -164,7 +220,12 @@ function EvidenceItem({
   return (
     <article className="flex flex-col gap-2 rounded-lg bg-surface-container p-3">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-on-surface">{item.claim}</p>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-on-surface">{item.claim}</p>
+          <span className="text-[11px] text-on-surface-variant">
+            {SOURCE[item.sourceKind] ?? item.sourceKind}
+          </span>
+        </div>
         <span
           className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
             confirmed

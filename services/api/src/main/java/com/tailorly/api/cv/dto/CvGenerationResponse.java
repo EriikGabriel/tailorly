@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.tailorly.api.cv.CvGeneration;
 import com.tailorly.api.cv.model.CvPreferences;
+import com.tailorly.api.cv.ats.review.AtsReview;
 import com.tailorly.api.cv.pipeline.CvAtsResult;
 import com.tailorly.api.cv.template.TypstTemplateMaterializer;
 import com.tailorly.api.job.persistence.JobPostingVersion;
@@ -23,6 +24,7 @@ public record CvGenerationResponse(
     TemplateSource template,
     CvPreferences preferences,
     CvAtsResult ats,
+    AtsReview atsReview,
     String rendererVersion,
     List<String> matchedTerms,
     String analysisStatus,
@@ -66,6 +68,7 @@ public record CvGenerationResponse(
             TypstTemplateMaterializer.materialize(generation.getTemplate().getContent(), generation.getDocument())),
         generation.getPreferences(),
         generation.getAts(),
+        generation.getAtsReview(),
         generation.getRendererVersion(),
         generation.getTailoring().matchedTerms(),
         generation.getTailoring().analysisStatus(),

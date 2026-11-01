@@ -57,4 +57,24 @@ class BaseLinkEvidenceExtractorTest {
     assertEquals(BaseLinkEvidenceExtractor.MAX_CLAIMS, kept.size());
     assertTrue(kept.stream().allMatch(claim -> claim.excerpt().equals("Reduziu o tempo")));
   }
+
+  @Test
+  void focusKeepsOnlyThePassagesAroundTheSubjectInLongNotes() {
+    String filler = "texto sem relação ".repeat(1500);
+    String note = filler + " Construí o UFSCar Planner com Kotlin para 300 alunos. " + filler;
+
+    String focused = BaseLinkEvidenceExtractor.focus(note, java.util.List.of("UFSCar Planner"));
+
+    assertTrue(focused.contains("UFSCar Planner com Kotlin para 300 alunos"));
+    assertTrue(focused.length() < BaseLinkEvidenceExtractor.MAX_PAGE_CHARS);
+    assertTrue(focused.length() < note.length() / 4);
+  }
+
+  @Test
+  void focusReturnsShortTextsWholeAndFallsBackToTheStartWithoutMentions() {
+    assertEquals("curto", BaseLinkEvidenceExtractor.focus("curto", java.util.List.of("x")));
+    String long_ = "a".repeat(BaseLinkEvidenceExtractor.MAX_PAGE_CHARS + 500);
+    assertEquals(BaseLinkEvidenceExtractor.MAX_PAGE_CHARS,
+        BaseLinkEvidenceExtractor.focus(long_, java.util.List.of("zzz")).length());
+  }
 }

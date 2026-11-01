@@ -5,6 +5,7 @@
  * API HTTP do Tailorly. Endpoints de domínio ainda estão planejados.
  * OpenAPI spec version: 0.1.0
  */
+import type { AtsReview } from "./atsReview";
 import type { CvAtsResult } from "./cvAtsResult";
 import type { CvPreferences } from "./cvPreferences";
 import type { GeneratedFile } from "./generatedFile";
@@ -15,6 +16,7 @@ import type { TemplateSource } from "./templateSource";
 export interface CvGenerationResponse {
   analysisStatus?: string;
   ats?: CvAtsResult;
+  atsReview?: AtsReview | null;
   createdAt?: string;
   groundTruth?: GroundTruthSource;
   id?: string;

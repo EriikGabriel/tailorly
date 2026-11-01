@@ -1,4 +1,5 @@
 import type { CvGenerationResponse } from "@lib/api/generated/model";
+import { AtsReviewSection } from "./ats-review-section";
 
 const aiStatusLabel: Record<string, string> = {
   completed: "IA ajustou a apresentação",
@@ -32,8 +33,8 @@ export function AtsScoreCard({
             Nota de ATS estimada
           </h3>
           <p className="text-xs text-on-surface-variant">
-            Estimativa por regras sobre o texto do próprio PDF, não de um ATS
-            real.
+            Estimativa por regras sobre o texto que um parser extrai do próprio
+            PDF, não a nota de um ATS real.
           </p>
         </div>
         <span className="text-3xl font-semibold tabular-nums text-primary-900">
@@ -92,6 +93,8 @@ export function AtsScoreCard({
           ))}
         </ol>
       </div>
+
+      <AtsReviewSection generation={generation} />
     </section>
   );
 }

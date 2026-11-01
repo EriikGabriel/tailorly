@@ -3,6 +3,7 @@ package com.tailorly.api.cv;
 import java.util.List;
 import java.util.UUID;
 
+import com.tailorly.api.cv.ats.review.AtsReview;
 import com.tailorly.api.cv.dto.CvGenerationResponse;
 import com.tailorly.api.cv.dto.GenerateCvRequest;
 import com.tailorly.api.cv.dto.GenerationProgressResponse;
@@ -45,6 +46,15 @@ public class CvGenerationController {
         .map(snapshot -> ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store")
             .body(GenerationProgressResponse.from(snapshot)))
         .orElseGet(() -> ResponseEntity.noContent().build());
+  }
+
+  /**
+   * Análise da IA sobre o currículo gerado, requisito a requisito; usa a guardada, a menos que
+   * {@code refresh=true}.
+   */
+  @PostMapping("/generations/{id}/ats-review")
+  public AtsReview atsReview(@PathVariable UUID id, @RequestParam(defaultValue = "false") boolean refresh) {
+    return service.review(id, refresh);
   }
 
   @GetMapping("/generations/owner/{ownerId}")

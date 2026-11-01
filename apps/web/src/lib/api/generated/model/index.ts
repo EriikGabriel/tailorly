@@ -12,6 +12,8 @@ export * from "./anonymousSessionResponse";
 export * from "./anonymousSessionStatusResponse";
 export * from "./atsCheck";
 export * from "./atsReport";
+export * from "./atsReview";
+export * from "./atsReviewRequirementCheck";
 export * from "./baseDocumentResponse";
 export * from "./baseDocumentUploadBody";
 export * from "./baseDocumentUploadParams";

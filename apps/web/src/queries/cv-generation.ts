@@ -1,6 +1,7 @@
-import { ApiClientError, apiBlob } from "@lib/api/client";
+import { ApiClientError, apiBlob, apiRequest } from "@lib/api/client";
 import { SESSION_EXPIRED_MESSAGE } from "@lib/api/error-message";
 import type {
+  AtsReview,
   CvGenerationResponse,
   CvTemplateResponse,
 } from "@lib/api/generated/model";
@@ -90,6 +91,14 @@ export function useGenerateCv() {
       const kind = useJobPostingStore.getState().selected?.ownerKind;
       if (generation.id && kind) {
         useCvGenerationStore.getState().select(generation.id, kind);
+        // A leitura da IA roda sozinha só para um currículo novo, com otimização por IA ligada e IA disponível.
+        if (
+          !generation.reused &&
+          generation.preferences?.optimizeForAts !== false &&
+          generation.ats?.aiStatus !== "unavailable"
+        ) {
+          useCvGenerationStore.getState().requestAutoReview(generation.id);
+        }
         queryClient.setQueryData(
           apiQueryKeys.cv.generation(generation.id),
           generation,
@@ -99,6 +108,35 @@ export function useGenerateCv() {
       queryClient.invalidateQueries({
         queryKey: apiQueryKeys.anonymousSession.current,
       });
+    },
+  });
+}
+
+/**
+ * Pede à IA uma leitura de triagem do currículo gerado, requisito a requisito. O resultado fica
+ * guardado na geração; pedir de novo devolve o mesmo, a menos que `refresh`.
+ */
+export function useAtsReview(generationId: string | undefined) {
+  const queryClient = useQueryClient();
+  const kind = useCvGenerationStore(
+    (state) => state.selected?.ownerKind ?? null,
+  );
+
+  return useMutation<AtsReview, Error, { refresh?: boolean } | undefined>({
+    mutationFn: async (options) => {
+      const token = tokenForOwnerKind(kind);
+      if (!generationId || !token) throw new Error(SESSION_EXPIRED_MESSAGE);
+      return apiRequest<AtsReview>(
+        `/v1/cv/generations/${encodeURIComponent(generationId)}/ats-review${options?.refresh ? "?refresh=true" : ""}`,
+        { method: "POST", accessToken: token },
+      );
+    },
+    onSuccess: (review) => {
+      if (!generationId || review.status !== "completed") return;
+      queryClient.setQueryData<CvGenerationResponse>(
+        apiQueryKeys.cv.generation(generationId),
+        (current) => (current ? { ...current, atsReview: review } : current),
+      );
     },
   });
 }

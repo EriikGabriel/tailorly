@@ -3,6 +3,8 @@ import {
   type BaseReviewQueries,
   useApproveGroundTruth,
 } from "@queries/base-review";
+import { useViewer } from "@queries/cv-generation";
+import { useAutoCollectSupplementaryEvidence } from "@queries/supplementary-evidence";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useJobDraftStore } from "@stores/job-draft-store";
 import { useNavigate } from "@tanstack/react-router";
@@ -31,6 +33,8 @@ export function useApproveGroundTruthFlow({
   const { mode, jobUrl, jobText } = useJobDraftStore();
   const approveGroundTruth = useApproveGroundTruth(baseVersionId ?? "");
   const navigate = useNavigate();
+  const viewer = useViewer();
+  const collectEvidence = useAutoCollectSupplementaryEvidence();
   const [error, setError] = useState<string | null>(null);
 
   /** `stay` mantém a pessoa na auditoria depois de aprovar, para seguir editando. */
@@ -43,7 +47,15 @@ export function useApproveGroundTruthFlow({
     }
     setError(null);
     try {
-      await approveGroundTruth.mutateAsync();
+      const snapshot = await approveGroundTruth.mutateAsync();
+      // As evidências dos links já são buscadas agora, em segundo plano, para a confirmação no gerador.
+      // O card de evidências só existe para contas, então visitantes não disparam a coleta.
+      if (viewer.kind === "account" && viewer.token) {
+        collectEvidence.mutate({
+          snapshotId: snapshot.id,
+          token: viewer.token,
+        });
+      }
       if (stay) return;
       navigate({
         to: hasJobTarget(mode, jobUrl, jobText) ? "/generator" : "/",

@@ -21,6 +21,8 @@ import com.tailorly.api.cv.model.FactValue;
 import com.tailorly.api.cv.model.CvPreferences;
 import com.tailorly.api.cv.model.JobTerms;
 import com.tailorly.api.cv.pipeline.CvAtsResult;
+import com.tailorly.api.cv.ats.review.AtsReview;
+import com.tailorly.api.cv.ats.review.AtsReviewer;
 import com.tailorly.api.cv.pipeline.CvPipeline;
 import com.tailorly.api.cv.progress.GenerationProgress;
 import com.tailorly.api.cv.dto.PreviewCvRequest;
@@ -89,6 +91,7 @@ public class CvGenerationService {
   private final SupplementaryEvidenceRepository supplementaryEvidence;
   private final OwnerVaultService ownerVaults;
   private final GenerationProgress progress;
+  private final AtsReviewer atsReviewer;
 
   public CvGenerationService(OwnerRepository owners, OwnerAccessService access, GtSnapshotRepository snapshots,
       JobPostingVersionRepository jobVersions, CvInputResolver inputs, CvInputHasher inputHasher,
@@ -97,7 +100,7 @@ public class CvGenerationService {
       MarkdownCvRenderer markdownRenderer, CvPipeline pipeline, AnonymousQuotaService quota,
       PlatformTransactionManager transactionManager, ObjectProvider<VaultExportService> vaultExport,
       SupplementaryEvidenceRepository supplementaryEvidence, OwnerVaultService ownerVaults,
-      GenerationProgress progress) {
+      GenerationProgress progress, AtsReviewer atsReviewer) {
     this.owners = owners;
     this.access = access;
     this.snapshots = snapshots;
@@ -118,6 +121,7 @@ public class CvGenerationService {
     this.supplementaryEvidence = supplementaryEvidence;
     this.ownerVaults = ownerVaults;
     this.progress = progress;
+    this.atsReviewer = atsReviewer;
   }
 
   /** Resultado de {@link #generate}: a geração e se foi produzida agora ou reaproveitada. */
@@ -162,6 +166,35 @@ public class CvGenerationService {
           .ifPresent(quota::refundGeneration));
       throw failure;
     }
+  }
+
+  /**
+   * Segunda opinião da IA sobre o currículo gerado, lida do PDF já guardado (sem refazer geração nem OCR).
+   * O resultado fica na geração; pedir de novo devolve o guardado, a menos que {@code refresh}. Uma
+   * resposta sem IA disponível ou com falha não é guardada, para a pessoa poder tentar depois.
+   */
+  public AtsReview review(UUID generationId, boolean refresh) {
+    record Inputs(UUID ownerId, byte[] pdf, com.tailorly.api.job.dto.JobAnalysis analysis, String title,
+        AtsReview existing) {
+    }
+    Inputs inputs = transaction.execute(status -> {
+      CvGeneration generation = load(generationId);
+      JobPostingVersion job = generation.getJobPostingVersion();
+      return new Inputs(generation.getOwner().getId(), storage.get(generation.getPdfObject().getStorageKey()),
+          job.getAnalysis(), job.getDetails().title(), generation.getAtsReview());
+    });
+    if (inputs.existing() != null && !refresh) {
+      return inputs.existing();
+    }
+    AtsReview review = atsReviewer.review(inputs.ownerId(), inputs.pdf(), inputs.analysis(), inputs.title());
+    if ("completed".equals(review.status())) {
+      transaction.executeWithoutResult(status -> {
+        CvGeneration generation = load(generationId);
+        generation.setAtsReview(review);
+        generations.save(generation);
+      });
+    }
+    return review;
   }
 
   /** Etapa atual da geração em curso do owner, se houver (ou terminou há poucos segundos). */

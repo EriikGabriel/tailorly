@@ -67,6 +67,13 @@ public class SupplementaryEvidence {
   @Column(name = "subject_url", length = 2048)
   private String subjectUrl;
 
+  /** Id da entrada do currículo (ex.: {@code projects:2}) a que a evidência se refere; nulo nas antigas. */
+  @Column(name = "subject_key", length = 64)
+  private String subjectKey;
+
+  @Column(name = "subject_label", length = 200)
+  private String subjectLabel;
+
   @Column(name = "source_excerpt", nullable = false, columnDefinition = "text")
   private String sourceExcerpt;
 

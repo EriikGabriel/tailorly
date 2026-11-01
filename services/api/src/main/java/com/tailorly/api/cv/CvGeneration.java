@@ -7,6 +7,7 @@ import com.tailorly.api.base.snapshot.GtSnapshot;
 import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.cv.model.CvPreferences;
 import com.tailorly.api.cv.model.CvTailoring;
+import com.tailorly.api.cv.ats.review.AtsReview;
 import com.tailorly.api.cv.pipeline.CvAtsResult;
 import com.tailorly.api.cv.template.CvTemplate;
 import com.tailorly.api.job.persistence.JobPostingVersion;
@@ -96,6 +97,12 @@ public class CvGeneration {
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "ats", nullable = false, columnDefinition = "jsonb")
   private CvAtsResult ats;
+
+  /** Segunda opinião da IA sobre a leitura de triagem; nula até a pessoa pedir. */
+  @ToString.Exclude
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "ats_review", columnDefinition = "jsonb")
+  private AtsReview atsReview;
 
   @ToString.Exclude
   @JdbcTypeCode(SqlTypes.JSON)
