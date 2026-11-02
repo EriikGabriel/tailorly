@@ -2,7 +2,7 @@
 
 Monorepo para gerar currículos personalizados para cada vaga. O produto recebe uma descrição ou URL de oportunidade, extrai os requisitos, adapta um currículo a partir de um template versionado e disponibiliza os artefatos para download e acompanhamento no Second Brain.
 
-> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator, autenticação JWT com refresh/revogação e os serviços locais de PostgreSQL e Garage já existem. A geração de PDF/Markdown com esteira de ATS, o template Typst editável com prévia ao vivo e o histórico estão implementados (ver [Geração de currículos](#geração-de-currículos)). A exportação para o Second Brain/vault existe e é opcional (ver [Integração com o Second Brain / vault](#integração-com-o-second-brain--vault)); o deploy automatizado (Vercel + Oracle Cloud + Neon + Cloudflare R2, via GitHub Actions) está descrito em [`docs/deploy.md`](docs/deploy.md).
+> **Estado atual:** fundação em andamento. O monorepo, a aplicação web, a API Spring Boot, o proxy local, CORS, Actuator, autenticação JWT com refresh/revogação e os serviços locais de PostgreSQL e Garage já existem. A geração de PDF/Markdown com esteira de ATS, o template Typst editável com prévia ao vivo e o histórico estão implementados (ver [Geração de currículos](#geração-de-currículos)). A exportação para o Second Brain/vault existe e é opcional (ver [Integração com o Second Brain / vault](#integração-com-o-second-brain--vault)); o deploy automatizado (Vercel + Render + Neon + Cloudflare R2) está descrito em [`docs/deploy.md`](docs/deploy.md).
 
 ## Objetivo e escopo
 
@@ -222,7 +222,7 @@ Na página do Gerador, "Detalhes da Vaga Alvo" mostra, depois de gerar (ou ao ab
 
 `.github/workflows/ci.yml` roda em push/PR para `main`: `lint` (Biome), `api` (testes Maven contra um Postgres de serviço, com o CLI real do Typst instalado no runner), `web` (build e testes de store) e `e2e` (Playwright contra a stack completa — web, API, Postgres e Garage via `compose.yaml`, com Typst e Tesseract reais instalados no runner para exercer a extração de verdade).
 
-`.github/workflows/deploy.yml` roda depois que o CI passa na `main` (ou manualmente): publica a imagem `linux/arm64` da API no GHCR, atualiza a VM Oracle Cloud por SSH (`deploy/oracle/`: API, Caddy com HTTPS e SearXNG) e espera o health check; o frontend é publicado pela integração Git da Vercel. Banco no Neon e arquivos no Cloudflare R2. Passo a passo, segredos e rollback em [`docs/deploy.md`](docs/deploy.md).
+O `render.yaml` define o serviço Docker da API no Render, que faz o build e o deploy automaticamente a cada push na branch configurada e verifica `/actuator/health`; o frontend é publicado pela integração Git da Vercel. Banco no Neon e arquivos no Cloudflare R2. Passo a passo, variáveis e rollback em [`docs/deploy.md`](docs/deploy.md).
 
 ## Requisitos
 

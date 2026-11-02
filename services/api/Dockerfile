@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Imagem da API para produção (Oracle Cloud Always Free, Ampere arm64) e também amd64.
+# Imagem da API para produção no Render e desenvolvimento local.
 # O build Maven roda na arquitetura de quem compila ($BUILDPLATFORM): o .jar é independente de
 # arquitetura, então só o estágio final é montado (ou emulado) para a plataforma alvo.
 
