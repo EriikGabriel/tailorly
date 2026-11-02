@@ -24,12 +24,14 @@ services:
         value: "20"
       - key: TAILORLY_DB_POOL_SIZE
         value: "4"
+      # Uma conexão sempre aberta evita refazer TCP/TLS com o Neon a cada requisição depois de uma
+      # pausa; o max-lifetime longo evita reconexões frequentes (o Neon suspende o banco sozinho).
       - key: TAILORLY_DB_MIN_IDLE
-        value: "0"
+        value: "2"
       - key: TAILORLY_DB_IDLE_TIMEOUT_MS
-        value: "60000"
+        value: "300000"
       - key: TAILORLY_DB_MAX_LIFETIME_MS
-        value: "240000"
+        value: "900000"
       # Menos consultas ao Neon enquanto o serviço está acordado.
       - key: TAILORLY_EXTRACTION_POLL_DELAY_MS
         value: "5000"

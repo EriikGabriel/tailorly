@@ -21,6 +21,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import com.tailorly.api.shared.security.AccountAuthenticationCache;
 import com.tailorly.api.shared.security.LocalizedSecurityErrorHandler;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.user.UserRepository;
@@ -84,6 +85,11 @@ import org.springframework.security.oauth2.jwt.Jwt;
 public class SecurityConfiguration {
   private final UserRepository userRepository;
   private final LocalizedSecurityErrorHandler securityErrorHandler;
+  private final AccountAuthenticationCache accountCache;
+
+  /** Dados de conta usados para montar a autenticação de um JWT já validado. */
+  public record CachedAccount(String email, java.util.List<SimpleGrantedAuthority> authorities) {
+  }
 
   /** Regras de autorização por rota; veja a classe para as regras de JWT e senha. */
   @Bean
@@ -218,13 +224,14 @@ public class SecurityConfiguration {
       } catch (IllegalArgumentException ex) {
         throw new BadCredentialsException("Invalid token subject", ex);
       }
-      var user = userRepository.findById(userId)
+      // Evita uma consulta ao banco a cada requisição; UserService invalida em desativação e troca de papéis.
+      var account = accountCache.get(userId, id -> userRepository.findById(id)
           .filter(com.tailorly.api.user.User::isEnabled)
+          .map(user -> new CachedAccount(user.getEmail(), user.getRoles().stream()
+              .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+              .toList())))
           .orElseThrow(() -> new BadCredentialsException("Account unavailable"));
-      var authorities = user.getRoles().stream()
-          .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-          .toList();
-      return new JwtAuthenticationToken(token, authorities, user.getEmail());
+      return new JwtAuthenticationToken(token, account.authorities(), account.email());
     };
   }
 

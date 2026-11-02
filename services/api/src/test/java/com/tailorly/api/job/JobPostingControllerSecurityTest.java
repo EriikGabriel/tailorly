@@ -40,7 +40,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(JobPostingController.class)
-@Import({SecurityConfiguration.class, LocalizedSecurityErrorHandler.class, AnonymousSessionConfiguration.class})
+@Import({SecurityConfiguration.class, com.tailorly.api.shared.security.AccountAuthenticationCache.class, LocalizedSecurityErrorHandler.class, AnonymousSessionConfiguration.class})
 @TestPropertySource(properties = {
     "tailorly.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
     "tailorly.security.jwt.issuer=http://localhost:8080",

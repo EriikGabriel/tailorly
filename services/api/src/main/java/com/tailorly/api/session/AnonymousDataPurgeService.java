@@ -25,9 +25,11 @@ public class AnonymousDataPurgeService {
   private final JdbcTemplate jdbc;
   private final OwnerDataEraser eraser;
   private final TransactionTemplate transaction;
+  private final AnonymousPrincipalCache principals;
 
   public AnonymousDataPurgeService(JdbcTemplate jdbc, OwnerDataEraser eraser,
-      PlatformTransactionManager transactionManager) {
+      PlatformTransactionManager transactionManager, AnonymousPrincipalCache principals) {
+    this.principals = principals;
     this.jdbc = jdbc;
     this.eraser = eraser;
     this.transaction = new TransactionTemplate(transactionManager);
@@ -43,6 +45,7 @@ public class AnonymousDataPurgeService {
       jdbc.update("delete from anonymous_sessions where owner_id = ?", ownerId);
       jdbc.update("delete from owners where id = ? and kind = 'KIND_ANONYMOUS'", ownerId);
     });
+    principals.clear();
 
     eraser.sweepStoragePrefix(OwnerDataEraser.prefix(ownerId));
   }
