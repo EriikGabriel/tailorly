@@ -17,6 +17,29 @@ build e o deploy automaticamente a cada push na branch conectada ao serviço e v
 > Free também pode suspender o banco. O filesystem do Render é efêmero: todos os artefatos
 > devem permanecer no Cloudflare R2, nunca no disco local do container.
 
+## Ajustes para o free tier do Render
+
+O plano Free do Render tem **512 MB de RAM, 0,1 CPU**, dorme após ~15 min sem tráfego e dá
+750 h/mês por workspace. O [`render.yaml`](../render.yaml) já aplica:
+
+- **Memória:** `JAVA_TOOL_OPTIONS` com `-Xmx256m`, `SerialGC`, `-Xss512k` e metaspace/code cache
+  limitados. O restante da RAM fica para o Tesseract (`OMP_THREAD_LIMIT=1` na imagem) e o Typst,
+  que rodam como processos filhos. Não aumente o heap sem testar OCR de um PDF de 3 páginas.
+- **Threads e banco:** Tomcat com 20 threads, pool Hikari de 4 conexões com `minimum-idle=0` e
+  `max-lifetime` de 4 min, para o Neon conseguir suspender o banco e não derrubar conexões ociosas.
+- **Polling:** o worker de extração consulta o banco a cada 5 s (`TAILORLY_EXTRACTION_POLL_DELAY_MS`).
+- **Visitantes:** no máximo 50 sessões anônimas ativas, TTL de 6 h; os demais limites (3 páginas,
+  3 gerações etc.) seguem o padrão do `application.yml`.
+- **Health check:** `/actuator/health/liveness`, que não depende do banco.
+- **Porta:** a API lê `PORT` (o Render define 10000); localmente continua 8080.
+
+**Cold start.** Depois de dormir, o primeiro request pode levar de 1 a 2 min (JVM em 0,1 CPU).
+Não use um ping de keep-alive: ele manteria o Neon acordado 24 h e estouraria as horas de
+computação gratuitas dele. O frontend deve tolerar essa primeira resposta lenta.
+
+**Jobs de limpeza.** `AnonymousCleanupJob` e `AccountRetentionJob` só rodam com o serviço
+acordado; sessões anônimas expiradas são removidas no próximo despertar.
+
 ## 1. Neon (banco)
 
 Use a connection string **direta**, sem pooler: no console do Neon, *Connect* com

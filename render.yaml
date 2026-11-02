@@ -6,9 +6,37 @@ services:
     plan: free
     dockerfilePath: ./services/api/Dockerfile
     dockerContext: ./services/api
-    healthCheckPath: /actuator/health
+    # Liveness não toca o banco: o deploy não falha se o Neon estiver acordando.
+    healthCheckPath: /actuator/health/liveness
     autoDeploy: true
     envVars:
+      # Free tier: 512 MB de RAM e 0,1 CPU. Heap limitado a ~256 MB deixa o resto para metaspace,
+      # threads e para o Tesseract/Typst (processos filhos). SerialGC e C1 apenas reduzem memória
+      # e CPU no start.
+      - key: JAVA_TOOL_OPTIONS
+        value: >-
+          -Xmx256m -Xss512k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m
+          -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:+ExitOnOutOfMemoryError
+      - key: TAILORLY_TOMCAT_MAX_THREADS
+        value: "20"
+      - key: TAILORLY_DB_POOL_SIZE
+        value: "4"
+      - key: TAILORLY_DB_MIN_IDLE
+        value: "0"
+      - key: TAILORLY_DB_IDLE_TIMEOUT_MS
+        value: "60000"
+      - key: TAILORLY_DB_MAX_LIFETIME_MS
+        value: "240000"
+      # Menos consultas ao Neon enquanto o serviço está acordado.
+      - key: TAILORLY_EXTRACTION_POLL_DELAY_MS
+        value: "5000"
+      # Limites de visitante compatíveis com um portfólio de uso pessoal.
+      - key: TAILORLY_ANONYMOUS_MAX_ACTIVE_SESSIONS
+        value: "50"
+      - key: TAILORLY_ANONYMOUS_SESSION_TTL
+        value: PT6H
+      - key: TAILORLY_ANONYMOUS_MAX_PAGES
+        value: "3"
       - key: DATABASE_URL
         sync: false
       - key: PGHOST

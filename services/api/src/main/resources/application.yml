@@ -3,6 +3,13 @@ logging:
     # A autenticação usa um AuthenticationProvider próprio (JWT), não um UserDetailsService; o
     # warning do Spring Security a cada start é esperado e não indica um problema de config.
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
+server:
+  # Render injeta PORT; localmente continua 8080.
+  port: ${PORT:8080}
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: ${TAILORLY_TOMCAT_MAX_THREADS:200}
 spring:
   application:
     name: tailorly-api
@@ -17,6 +24,13 @@ spring:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/tailorly}
     username: ${PGUSER:tailorly}
     password: ${PGPASSWORD:tailorly}
+    hikari:
+      # Pool pequeno e sem conexões ociosas mantidas: cabe no free tier do Render/Neon e deixa o Neon
+      # suspender o banco quando não há tráfego.
+      maximum-pool-size: ${TAILORLY_DB_POOL_SIZE:10}
+      minimum-idle: ${TAILORLY_DB_MIN_IDLE:10}
+      idle-timeout: ${TAILORLY_DB_IDLE_TIMEOUT_MS:600000}
+      max-lifetime: ${TAILORLY_DB_MAX_LIFETIME_MS:1800000}
   servlet:
     multipart:
       max-file-size: 7MB
@@ -58,7 +72,7 @@ tailorly:
     tesseract-command: ${TAILORLY_TESSERACT_COMMAND:tesseract}
     ocr-languages: ${TAILORLY_OCR_LANGUAGES:por+eng}
     ocr-revision: ${TAILORLY_OCR_REVISION:local-1}
-    poll-delay-ms: 2000
+    poll-delay-ms: ${TAILORLY_EXTRACTION_POLL_DELAY_MS:2000}
   interpretation:
     # rules (sem IA)
     # remote (só provedor remoto)

@@ -36,10 +36,13 @@ WORKDIR /app
 COPY --from=build /src/app.jar app.jar
 USER tailorly
 
+# Padrões para máquinas com pouca RAM. O render.yaml sobrescreve JAVA_TOOL_OPTIONS para o free tier
+# (512 MB), deixando folga para o Tesseract e o Typst, que rodam como processos filhos.
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError" \
     TAILORLY_TYPST_COMMAND=typst \
-    TAILORLY_TESSERACT_COMMAND=tesseract
+    TAILORLY_TESSERACT_COMMAND=tesseract \
+    OMP_THREAD_LIMIT=1
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:8080/actuator/health/liveness || exit 1
+  CMD curl -fsS "http://127.0.0.1:${PORT:-8080}/actuator/health/liveness" || exit 1
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
