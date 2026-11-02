@@ -69,7 +69,7 @@ export function GovernanceSummary({
           <span className="text-body-sm font-medium text-muted-foreground">
             {summary.reliability === null
               ? "Ainda não avaliado"
-              : `${summary.reviewed} de ${summary.considered} fatos revisados`}
+              : `${summary.reviewed} de ${summary.considered} fatos revisados · ${summary.withEvidence} com evidência de origem`}
           </span>
         </p>
         <AnimatedBar
