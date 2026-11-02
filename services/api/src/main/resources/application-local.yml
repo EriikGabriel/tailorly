@@ -3,9 +3,9 @@ spring:
     activate:
       on-profile: local
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/tailorly}
-    username: ${DATABASE_USERNAME:tailorly}
-    password: ${DATABASE_PASSWORD:tailorly}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/tailorly}
+    username: ${PGUSER:tailorly}
+    password: ${PGPASSWORD:tailorly}
 
 tailorly:
   security:

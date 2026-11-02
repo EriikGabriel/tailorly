@@ -14,9 +14,9 @@ spring:
     locale: en
     locale-resolver: accept-header
   datasource:
-    url: jdbc:postgresql://localhost:5432/tailorly
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/tailorly}
+    username: ${PGUSER:tailorly}
+    password: ${PGPASSWORD:tailorly}
   servlet:
     multipart:
       max-file-size: 7MB

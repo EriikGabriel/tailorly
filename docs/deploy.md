@@ -28,8 +28,8 @@ e só servem para copiar a conexão.
    `POSTGRES_URL_NON_POOLING`); no console do Neon, *Connect* com **Connection pooling** desligado (host
    sem `-pooler`). O Flyway e o Hikari dependem de estado de sessão que o PgBouncer não preserva.
 2. Converta para JDBC: `postgresql://USER:SENHA@HOST/BANCO?sslmode=require` vira
-   `SPRING_DATASOURCE_URL=jdbc:postgresql://HOST/BANCO?sslmode=require`, com `DATABASE_USERNAME=USER` e
-   `DATABASE_PASSWORD=SENHA` separados (sem usuário e senha na URL). Se a URL tiver
+   `DATABASE_URL=jdbc:postgresql://HOST/BANCO?sslmode=require`, com `PGUSER=USER` e
+   `PGPASSWORD=SENHA` separados (sem usuário e senha na URL). Se a URL tiver
    `channel_binding=require`, pode remover.
 
 ## 2. Cloudflare R2 (arquivos)

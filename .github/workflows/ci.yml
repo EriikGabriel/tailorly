@@ -14,8 +14,8 @@ env:
   # SecurityConfiguration.jwtSecretKey). Gerados uma vez com `openssl rand -base64 32`.
   TAILORLY_JWT_SECRET: "mEAlZ0UVRsynN0qLg0UCj3IFlcwDz4/Uchg/JU0bpAg="
   TAILORLY_SECRETS_KEY: "sIuLq2PxLm0K2wP8CJuP+UoRxd8nf41yoy9LyQzj6Vk="
-  DATABASE_USERNAME: tailorly
-  DATABASE_PASSWORD: tailorly
+  PGUSER: tailorly
+  PGPASSWORD: tailorly
   # Mesma versão da imagem de produção (services/api/Dockerfile, ARG TYPST_VERSION).
   TYPST_VERSION: "0.15.1"
 
