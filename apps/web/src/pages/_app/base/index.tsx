@@ -1,17 +1,17 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
 import { AnonymousNotice } from "@components/anonymous-notice";
+import { PageHeading } from "@components/page-heading";
 import { useSelectBaseDocumentFile } from "@queries/base-document";
 import {
   useDeactivateGroundTruth,
   useDeleteBaseVersion,
 } from "@queries/base-version";
+import { ShieldCheck } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { createFileRoute } from "@tanstack/react-router";
 import { useReducedMotion } from "motion/react";
 import { useRef } from "react";
-import { BaseBreadcrumb } from "./-components/base-breadcrumb";
 import { BaseDocumentActions } from "./-components/base-document-actions";
-import { BasePageIntro } from "./-components/base-page-intro";
 import { ExtractionProgress } from "./-components/extraction-progress";
 import { GovernanceSummary } from "./-components/governance-summary";
 import {
@@ -50,33 +50,41 @@ function RouteComponent() {
         aria-labelledby="base-heading"
         className="mx-auto flex w-full max-w-384 flex-col gap-4 rounded-2xl  p-4 shadow-xs sm:p-6"
       >
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
-          <BaseBreadcrumb />
-          <span className="inline-flex items-center gap-2 rounded-full bg-surface-container px-4 py-1 text-xs font-semibold leading-4 tracking-tight text-primary-950 shadow-xs">
-            <span
-              aria-hidden="true"
-              className="size-2.5 rounded-full bg-on-tertiary-container"
+        <PageHeading
+          headingId="base-heading"
+          breadcrumb="Auditoria & Curadoria do Ground Truth"
+          status={fileStatus}
+          eyebrowIcon={ShieldCheck}
+          eyebrow="Cofre de conhecimento imutável"
+          title="Auditoria & Curadoria dos Fatos do Currículo Base"
+          description={
+            <>
+              Validação estruturada dos dados extraídos do seu currículo base.
+              Revise fatos, credenciais e métricas para que ele seja a fonte das
+              próximas adaptações, com{" "}
+              <strong className="font-semibold text-primary-950">
+                informações confirmadas por você
+              </strong>
+              .
+            </>
+          }
+          actions={
+            <BaseDocumentActions
+              picker={picker}
+              hasFile={file !== null}
+              canApprove={Boolean(baseVersionId) && !uploadPending}
+              onApprove={() => reviewWorkspaceRef.current?.approve()}
+              canDeactivate={Boolean(baseVersionId) && !uploadPending}
+              onDeactivate={() => deactivate.mutate()}
+              deactivating={deactivate.isPending}
+              canDelete={Boolean(baseVersionId) && !uploadPending}
+              onDelete={() => {
+                if (baseVersionId) deleteVersion.mutate(baseVersionId);
+              }}
+              deleting={deleteVersion.isPending}
             />
-            {fileStatus}
-          </span>
-        </div>
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-          <BasePageIntro />
-          <BaseDocumentActions
-            picker={picker}
-            hasFile={file !== null}
-            canApprove={Boolean(baseVersionId) && !uploadPending}
-            onApprove={() => reviewWorkspaceRef.current?.approve()}
-            canDeactivate={Boolean(baseVersionId) && !uploadPending}
-            onDeactivate={() => deactivate.mutate()}
-            deactivating={deactivate.isPending}
-            canDelete={Boolean(baseVersionId) && !uploadPending}
-            onDelete={() => {
-              if (baseVersionId) deleteVersion.mutate(baseVersionId);
-            }}
-            deleting={deleteVersion.isPending}
-          />
-        </div>
+          }
+        />
         <AutoHeight
           deps={[file, error, fileStatus]}
           transition={reducedMotion ? { duration: 0 } : undefined}

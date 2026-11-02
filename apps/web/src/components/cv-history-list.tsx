@@ -23,11 +23,7 @@ import { useCvGenerationStore } from "@stores/cv-generation-store";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { atsScoreColor } from "@/utils/ats-score";
-
-const dateFormat = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short",
-  timeStyle: "short",
-});
+import { formatDate } from "@/utils/date-format";
 
 /** Linha de um currículo gerado: abertura no editor, download do PDF e exclusão com confirmação. */
 export function CvHistoryRow({
@@ -72,9 +68,7 @@ export function CvHistoryRow({
             )}
           </div>
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold tracking-[0.3px] text-on-surface-variant">
-            <span>
-              {cv.createdAt ? dateFormat.format(new Date(cv.createdAt)) : ""}
-            </span>
+            <span>{formatDate(cv.createdAt, true)}</span>
             <span aria-hidden="true">•</span>
             <span>Ground Truth v{cv.groundTruth?.snapshotNumber}</span>
             <span aria-hidden="true">•</span>

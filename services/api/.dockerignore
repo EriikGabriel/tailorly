@@ -1,0 +1,10 @@
+target/
+bin/
+.env*
+.idea/
+.turbo/
+*.iml
+garage.toml
+# Distribuições e repositório baixados pelo wrapper (ignorados no Git também).
+.mvn/wrapper/dists/
+.mvn/wrapper/repository/

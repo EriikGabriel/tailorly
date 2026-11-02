@@ -1,6 +1,6 @@
 import { Button } from "@animate/buttons/button";
-import { controlClass } from "@components/fields/field-styles";
 import { IconInput } from "@components/fields/icon-input";
+import { SelectField } from "@components/fields/select-field";
 import { apiErrorMessage } from "@lib/api/error-message";
 import { useCreateDueDiligence } from "@queries/due-diligence";
 import { useJobPostingList } from "@queries/job-posting";
@@ -52,26 +52,17 @@ export function DueDiligenceForm({ onCreated }: DueDiligenceFormProps) {
         >
           Vaga de origem (opcional)
         </label>
-        <div className={controlClass}>
-          <Briefcase
-            aria-hidden="true"
-            className="size-4 shrink-0 text-secondary-700"
-          />
-          <select
-            id="dd-job"
-            value={jobPostingId}
-            onChange={(event) => setJobPostingId(event.target.value)}
-            className="min-w-0 flex-1 bg-transparent py-2 text-sm font-medium text-primary-950 outline-none"
-          >
-            <option value="">Nenhuma vaga</option>
-            {(jobs.data ?? []).map((job) => (
-              <option key={job.id} value={job.id}>
-                {job.title ?? "Vaga sem título"}
-                {job.companyName ? ` — ${job.companyName}` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          id="dd-job"
+          icon={Briefcase}
+          value={jobPostingId}
+          onChange={setJobPostingId}
+          placeholder="Nenhuma vaga"
+          options={(jobs.data ?? []).map((job) => ({
+            value: job.id ?? "",
+            label: `${job.title ?? "Vaga sem título"}${job.companyName ? ` — ${job.companyName}` : ""}`,
+          }))}
+        />
       </div>
 
       <div className="flex flex-col gap-1">

@@ -16,11 +16,7 @@ import {
   useDueDiligenceHistory,
 } from "@queries/due-diligence";
 import { History, X } from "@react-zero-ui/icon-sprite";
-
-const dateFormat = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short",
-  timeStyle: "short",
-});
+import { formatDate } from "@/utils/date-format";
 
 interface DueDiligenceHistoryProps {
   selectedId: string | null;
@@ -75,7 +71,7 @@ export function DueDiligenceHistory({
                 {item.companyName}
               </span>
               <span className="block truncate text-xs text-on-surface-variant">
-                {dateFormat.format(new Date(item.createdAt))} ·{" "}
+                {formatDate(item.createdAt, true)} ·{" "}
                 {item.status === "running"
                   ? "em andamento"
                   : item.status === "failed"

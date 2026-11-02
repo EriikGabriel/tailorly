@@ -44,7 +44,7 @@ export function BaseDocumentActions({
   deleting: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-2 xl:max-w-[52%] xl:items-end">
+    <div className="flex flex-col gap-2 xl:items-end">
       <input
         ref={picker.inputRef}
         type="file"

@@ -14,7 +14,6 @@ import {
   ClipboardPaste,
   FileText,
   Link as LinkIcon,
-  Sparkles,
 } from "@react-zero-ui/icon-sprite";
 import { useJobDraftStore } from "@stores/job-draft-store";
 import { checkJobUrl, MAX_JOB_URL_LENGTH } from "@/utils/job-url";
@@ -24,11 +23,6 @@ import { SectionHeading } from "./section-heading";
 const inputModes = [
   { value: "url", label: "Inserir URL da Vaga", icon: LinkIcon },
   { value: "text", label: "Colar Texto da Vaga", icon: FileText },
-] as const;
-
-const quickTests = [
-  "Senior Tech Lead @ Nubank",
-  "Staff Software Engineer @ Inter",
 ] as const;
 
 export function JobTargetCard() {

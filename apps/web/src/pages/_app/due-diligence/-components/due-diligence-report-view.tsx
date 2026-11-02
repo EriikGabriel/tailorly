@@ -12,12 +12,8 @@ import {
 } from "@react-zero-ui/icon-sprite";
 import type { ComponentType } from "react";
 import { diligenceFactors, diligenceGroups } from "@/constants/due-diligence";
+import { formatDate } from "@/utils/date-format";
 import { FactorCard } from "./factor-card";
-
-const dateFormat = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "long",
-  timeStyle: "short",
-});
 
 function Stat({
   icon: Icon,
@@ -139,7 +135,7 @@ export function DueDiligenceReportView({ id }: { id: string | null }) {
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-on-surface-variant">
           <span className="inline-flex items-center gap-1">
             <CalendarDays aria-hidden="true" className="size-3.5" />
-            Consultado em {dateFormat.format(new Date(report.consultedAt))}
+            Consultado em {formatDate(report.consultedAt, true)}
           </span>
           <span className="inline-flex items-center gap-1">
             <Lock aria-hidden="true" className="size-3.5" />

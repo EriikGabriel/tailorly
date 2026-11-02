@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
+import software.amazon.awssdk.core.checksums.ResponseChecksumValidation;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
@@ -27,6 +29,10 @@ public class S3StorageConfiguration {
     var builder = S3Client.builder()
         .endpointOverride(URI.create(endpoint))
         .region(Region.of(region))
+        // Checksums só quando a operação exige: o Cloudflare R2 (produção) não aceita todos os
+        // algoritmos que o SDK envia por padrão; o Garage local funciona igual.
+        .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
+        .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED)
         .serviceConfiguration(S3Configuration.builder()
             .pathStyleAccessEnabled(pathStyle)
             .chunkedEncodingEnabled(false)

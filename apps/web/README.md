@@ -52,6 +52,11 @@ cinco dimensões, revisão rápida de pendências e preparação para a geraçã
 | `pnpm api:generate`     | Gera os tipos e as funções `fetch` com Orval a partir do snapshot versionado.           |
 | `pnpm api:sync`         | Atualiza o snapshot pela API local e então executa a geração.                           |
 
+**API em produção.** No desenvolvimento as chamadas usam caminhos relativos (`/v1/...`) e o proxy do Vite.
+No build de produção, `VITE_API_URL` (ex.: `https://api.tailorly.app`) vira a origem de todas as
+chamadas (`apiUrl` em `src/lib/api/client.ts`, via `define` no `vite.config.ts`). Na Vercel ela é uma
+variável de ambiente do projeto (mudar o valor exige um redeploy); `vercel.json` cuida do rewrite da SPA. Ver [`docs/deploy.md`](../../docs/deploy.md).
+
 ---
 
 ## 2. Estrutura

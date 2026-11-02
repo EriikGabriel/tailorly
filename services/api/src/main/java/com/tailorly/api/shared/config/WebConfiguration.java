@@ -14,12 +14,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfiguration implements WebMvcConfigurer {
-  /** Origens do frontend permitidas em `/v1/**`; o Vite dev server (5173) é o padrão local. */
+  /**
+   * Origens do frontend permitidas em `/v1/**`; o Vite dev server (5173) é o padrão local. Aceita padrões
+   * (ex.: {@code https://tailorly-*.vercel.app}) para os deploys de preview da Vercel.
+   */
   private final String[] allowedOrigins;
 
   public WebConfiguration(
       @Value("${tailorly.security.cors.allowed-origins}") String allowedOrigins) {
-    this.allowedOrigins = allowedOrigins.split(",");
+    this.allowedOrigins = java.util.Arrays.stream(allowedOrigins.split(","))
+        .map(String::strip).filter(origin -> !origin.isEmpty()).toArray(String[]::new);
   }
   @Bean
   public LocaleResolver localeResolver() {
@@ -42,7 +46,7 @@ public class WebConfiguration implements WebMvcConfigurer {
   @Override
   public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/v1/**")
-        .allowedOrigins(allowedOrigins)
+        .allowedOriginPatterns(allowedOrigins)
         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         .allowedHeaders("Authorization", "Content-Type", "Accept-Language")
         .allowCredentials(true);

@@ -60,6 +60,22 @@ export async function apiRequest<T>(
  * reaproveitam a mesma promessa em vez de rotacionar o token várias vezes (o backend invalida o
  * token anterior a cada rotação).
  */
+/** Injetada pelo `define` do `vite.config.ts` a partir de `VITE_API_URL`; ausente fora do bundle (testes). */
+declare const __TAILORLY_API_ORIGIN__: string | undefined;
+
+/**
+ * Origem da API. Vazia no desenvolvimento (o proxy do Vite atende `/v1`); em produção é o domínio da API
+ * (ex.: `https://api.tailorly.app`), definido em `VITE_API_URL` no build.
+ */
+const API_ORIGIN = (
+  typeof __TAILORLY_API_ORIGIN__ === "string" ? __TAILORLY_API_ORIGIN__ : ""
+).replace(/\/+$/, "");
+
+/** Caminho absoluto da API para um caminho relativo como `/v1/...`. */
+export function apiUrl(path: string): string {
+  return path.startsWith("/") ? `${API_ORIGIN}${path}` : path;
+}
+
 let refreshInFlight: Promise<string | null> | null = null;
 
 /** Troca o refresh token guardado por um novo par; `null` se não havia um para tentar ou falhou. */
@@ -68,7 +84,7 @@ function refreshAccessToken(): Promise<string | null> {
   if (!refreshToken) return Promise.resolve(null);
 
   if (!refreshInFlight) {
-    refreshInFlight = fetch("/v1/auth/refresh", {
+    refreshInFlight = fetch(apiUrl("/v1/auth/refresh"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
@@ -111,7 +127,10 @@ async function apiFetch(
   requestHeaders.set("Accept-Language", language);
   if (accessToken) requestHeaders.set("Authorization", `Bearer ${accessToken}`);
 
-  const response = await fetch(path, { ...init, headers: requestHeaders });
+  const response = await fetch(apiUrl(path), {
+    ...init,
+    headers: requestHeaders,
+  });
   if (!response.ok) {
     // Um JWT de conta expirado tenta renovar pelo refresh token, uma única vez, antes de desistir.
     if (

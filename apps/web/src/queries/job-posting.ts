@@ -33,7 +33,7 @@ import {
   ensureCredential,
   tokenForOwnerKind,
 } from "./api-credential";
-import { useCurrentOwnerId } from "./current-account";
+import { useViewer } from "./cv-generation";
 
 /** A vaga selecionada deixou de ser acessível (migração, login, sessão expirada ou exclusão). */
 function dropSelectionWhenInaccessible(postingId: string, error: unknown) {
@@ -252,14 +252,7 @@ export function useDeleteJobPosting() {
 
 /** Vagas salvas do owner atual (conta ou sessão anônima já emitida). */
 export function useJobPostingList() {
-  const accountOwnerId = useCurrentOwnerId().data;
-  const anonymousSession = useAnonymousSessionStore((state) =>
-    isAnonymousSessionActive(state.session) ? state.session : null,
-  );
-  const accountToken = useAuthStore((state) => state.accessToken);
-
-  const ownerId = accountToken ? accountOwnerId : anonymousSession?.ownerId;
-  const token = accountToken ?? anonymousSession?.token ?? null;
+  const { ownerId, token } = useViewer();
 
   return useQuery({
     queryKey: apiQueryKeys.jobPostings.byOwner(ownerId ?? ""),

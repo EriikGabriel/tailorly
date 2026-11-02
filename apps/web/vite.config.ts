@@ -45,6 +45,10 @@ export default defineConfig({
       { find: /^@\//, replacement: `${path.resolve(__dirname, "./src")}/` },
     ],
   },
+  define: {
+    // Origem da API no build de produção (Vercel); vazia usa o proxy `/v1` abaixo.
+    __TAILORLY_API_ORIGIN__: JSON.stringify(process.env.VITE_API_URL ?? ""),
+  },
   server: {
     proxy: {
       "/v1": process.env.TAILORLY_API_URL ?? "http://localhost:8080",

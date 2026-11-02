@@ -17,8 +17,7 @@ import {
   sourceTypeLabel,
   uncertaintyLabel,
 } from "@/constants/due-diligence";
-
-const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+import { formatDate } from "@/utils/date-format";
 
 const statusStyle = {
   evidence_found: {
@@ -69,7 +68,7 @@ function Finding({ finding }: { finding: DiligenceFinding }) {
         </span>
         <span className="inline-flex items-center gap-1">
           <CalendarDays aria-hidden="true" className="size-3" />
-          {dateFormat.format(new Date(finding.retrievedAt))}
+          {formatDate(finding.retrievedAt)}
         </span>
       </div>
       {finding.unverifiedReport && (

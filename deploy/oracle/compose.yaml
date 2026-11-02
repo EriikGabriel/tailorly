@@ -1,0 +1,53 @@
+# Produção na VM Oracle Cloud Always Free (Ampere A1, arm64). O GitHub Actions copia este diretório
+# para ~/tailorly na VM e roda `docker compose pull && docker compose up -d` a cada deploy.
+# Banco: Neon (Postgres gerenciado). Arquivos: Cloudflare R2. Nada de dado pessoal fica na VM.
+name: tailorly
+
+services:
+  api:
+    image: ${TAILORLY_API_IMAGE:-ghcr.io/eriikgabriel/tailorly-api:latest}
+    env_file: .env
+    environment:
+      # Atrás do Caddy: confia no X-Forwarded-For da rede interna para o IP real do visitante
+      # (limite de sessões anônimas por IP) e no esquema https.
+      SERVER_FORWARD_HEADERS_STRATEGY: native
+      TAILORLY_SEARXNG_URL: http://searxng:8080
+      TAILORLY_API_DOCS_ENABLED: "false"
+    restart: unless-stopped
+    expose:
+      - "8080"
+    depends_on:
+      - searxng
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      TAILORLY_API_DOMAIN: ${TAILORLY_API_DOMAIN:?defina TAILORLY_API_DOMAIN no .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  # Busca web da due diligence e do enriquecimento de projetos; só acessível pela rede interna.
+  searxng:
+    image: searxng/searxng:latest
+    environment:
+      SEARXNG_SECRET: ${TAILORLY_SEARXNG_SECRET:?defina TAILORLY_SEARXNG_SECRET no .env}
+    volumes:
+      # settings.yml vem de services/searxng (o workflow de deploy copia para cá).
+      - ./searxng:/etc/searxng
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:
