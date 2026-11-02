@@ -1,3 +1,4 @@
+import { MotionEffect } from "@animate/primitives/effects/motion-effect";
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 import { AnonymousMigrationDialog } from "@components/anonymous-migration-dialog";
 import { BaseCvRestorer } from "@components/base-cv-restorer";
@@ -9,6 +10,7 @@ import {
   createRootRouteWithContext,
   HeadContent,
   Outlet,
+  useLocation,
 } from "@tanstack/react-router";
 
 interface RouterContext {
@@ -33,11 +35,19 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootComponent() {
+  const pathname = useLocation({ select: (location) => location.pathname });
+
   return (
     <TooltipPrimitive.Provider delay={0}>
       <HeadContent />
       <Header />
-      <Outlet />
+      {/* Só opacidade: uma transformação no ancestral quebraria elementos fixos das páginas. */}
+      <MotionEffect
+        key={pathname}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+      >
+        <Outlet />
+      </MotionEffect>
       <AnonymousMigrationDialog />
       <BaseCvRestorer />
       <BackgroundNotifications />

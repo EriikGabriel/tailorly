@@ -1,10 +1,14 @@
+import { MotionEffect } from "@animate/primitives/effects/motion-effect";
 import { CvHistoryList } from "@components/cv-history-list";
 import { ArrowRight, History } from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
 
 export function RecentCVSection() {
   return (
-    <section
+    <MotionEffect
+      as="section"
+      inView
+      slide={{ offset: 24 }}
       aria-labelledby="recent-curricula-heading"
       className="w-full rounded-xl bg-surface-container-low px-5 pb-8 pt-8 shadow-[0_1px_1px_rgba(0,0,0,0.05)] sm:px-10 sm:pb-10 sm:pt-14"
     >
@@ -35,6 +39,6 @@ export function RecentCVSection() {
       </div>
 
       <CvHistoryList limit={3} />
-    </section>
+    </MotionEffect>
   );
 }

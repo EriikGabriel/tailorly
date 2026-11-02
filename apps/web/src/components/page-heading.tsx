@@ -1,3 +1,4 @@
+import { MotionEffect } from "@animate/primitives/effects/motion-effect";
 import { House, type IconProps } from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
 import type { ComponentType, ReactNode } from "react";
@@ -28,7 +29,11 @@ export function PageHeading({
   actions,
 }: PageHeadingProps) {
   return (
-    <>
+    <MotionEffect
+      className="flex flex-col gap-4"
+      slide={{ direction: "down", offset: 12 }}
+      blur={4}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
         <nav aria-label="Caminho de navegação">
           <ol className="flex flex-wrap items-center gap-x-1 gap-y-2 text-label-md text-on-surface-variant">
@@ -81,6 +86,6 @@ export function PageHeading({
           <div className="flex shrink-0 items-center gap-2">{actions}</div>
         )}
       </div>
-    </>
+    </MotionEffect>
   );
 }

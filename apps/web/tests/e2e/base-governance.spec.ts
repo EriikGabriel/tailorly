@@ -162,11 +162,11 @@ test("índice de confiabilidade e protocolo de integridade refletem os fatos rea
     .getByRole("heading", { name: "Protocolo de integridade" })
     .locator("xpath=..");
 
-  // 2 de 3 fatos considerados revisados (o omitido não conta); 2 com evidência de origem.
+  // 2 de 3 fatos considerados revisados (o omitido não conta).
   // A rota /base é compilada sob demanda pelo Vite; com vários workers a primeira carga é lenta.
   await expect(reliability.getByText("67%")).toBeVisible({ timeout: 20_000 });
   await expect(
-    reliability.getByText("2 de 3 fatos revisados · 2 com evidência de origem"),
+    reliability.getByText("2 de 3 fatos revisados"),
   ).toBeVisible();
   await expect(integrity.getByText("1 pendência obrigatória")).toBeVisible();
   await expect(

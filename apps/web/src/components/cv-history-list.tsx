@@ -10,6 +10,7 @@ import {
   AlertDialogTrigger,
 } from "@animate/base/alert-dialog";
 import { Button } from "@animate/buttons/button";
+import { MotionEffect } from "@animate/primitives/effects/motion-effect";
 import { apiErrorMessage } from "@api/error-message";
 import type { CvGenerationResponse } from "@api/generated/model";
 import {
@@ -47,7 +48,12 @@ export function CvHistoryRow({
   }
 
   return (
-    <li className="flex flex-col gap-3 rounded-lg bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+    <MotionEffect
+      as="li"
+      slide={{ offset: 12 }}
+      whileHover={{ y: -2 }}
+      className="flex flex-col gap-3 rounded-lg bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between"
+    >
       <div className="flex min-w-0 items-start gap-4 sm:items-center">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
           <FileText className="size-4 text-primary-950" aria-hidden="true" />
@@ -164,7 +170,7 @@ export function CvHistoryRow({
           </AlertDialogPopup>
         </AlertDialog>
       </div>
-    </li>
+    </MotionEffect>
   );
 }
 
