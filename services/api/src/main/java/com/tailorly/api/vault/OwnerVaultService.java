@@ -39,7 +39,7 @@ public class OwnerVaultService {
 
   /**
    * @param rootAvailable      se o servidor tem uma raiz de vaults configurada
-   * @param webSearchAvailable se o servidor tem um SearXNG configurado
+   * @param webSearchAvailable se o servidor tem um provedor de busca web configurado
    * @param relativePath       pasta do vault escolhida pela conta, ou nulo
    * @param usable             se a pasta ainda existe e está dentro da raiz
    * @param exportSubfolder    subpasta de exportação escolhida, ou nulo (usa o padrão do servidor)

@@ -151,9 +151,13 @@ tailorly:
     # esta pasta (um vault por conta) e o servidor só lê e exporta dentro dela. Sem TAILORLY_VAULT_ROOT,
     # nenhum vault é lido. Só faz sentido em instalação pessoal (self-hosted).
     root: ${TAILORLY_VAULT_ROOT:}
-  # Busca web local (SearXNG, ver compose.yaml). Sem URL, nenhuma busca web é feita.
+  # Busca web: `auto` usa o SearXNG se searxng-url estiver definida (perfil local) e o Tavily se só
+  # houver chave de API (produção). Também aceita `searxng` ou `tavily` para forçar um provedor. Sem
+  # nenhum dos dois, nenhuma busca web é feita (SearXNG local: ver compose.yaml).
   web-search:
+    provider: ${TAILORLY_WEB_SEARCH_PROVIDER:auto}
     searxng-url: ${TAILORLY_SEARXNG_URL:}
+    tavily-api-key: ${TAILORLY_TAVILY_API_KEY:}
   storage:
     endpoint: ${TAILORLY_STORAGE_ENDPOINT:http://localhost:3900}
     region: ${TAILORLY_STORAGE_REGION:garage}

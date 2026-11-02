@@ -82,8 +82,12 @@ services:
         sync: false
       - key: TAILORLY_REMOTE_API_KEY
         sync: false
+      # Busca web em produção pelo Tavily (plano gratuito). Sem SearXNG hospedado, o modo `auto` usa
+      # o Tavily; vault Obsidian segue desligado, pois não há disco do usuário no servidor.
       - key: TAILORLY_SEARXNG_URL
         value: ""
+      - key: TAILORLY_TAVILY_API_KEY
+        sync: false
       - key: TAILORLY_API_DOCS_ENABLED
         value: "false"
       - key: TAILORLY_VAULT_ENABLED

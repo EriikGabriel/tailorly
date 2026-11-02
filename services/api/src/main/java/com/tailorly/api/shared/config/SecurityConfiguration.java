@@ -122,6 +122,7 @@ public class SecurityConfiguration {
                 "/v1/auth/refresh", "/v1/auth/logout").permitAll()
             .requestMatchers(HttpMethod.POST, "/v1/owners").permitAll()
             .requestMatchers(HttpMethod.POST, "/v1/anonymous-sessions").permitAll()
+            .requestMatchers(HttpMethod.GET, "/v1/features").permitAll()
             .requestMatchers("/v1/anonymous-sessions/current").authenticated()
             .requestMatchers(HttpMethod.GET, "/v1/anonymous-sessions/*").hasRole("ADMIN")
             .requestMatchers(HttpMethod.PATCH, "/v1/anonymous-sessions/*/revoke").hasRole("ADMIN")

@@ -18,28 +18,42 @@ import { useIsMutating } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
-/** De onde as evidências vêm hoje, segundo as preferências do perfil (Second Brain). */
+/**
+ * De onde as evidências vêm hoje, segundo as preferências do perfil (Second Brain). Só cita as
+ * fontes que o servidor oferece (vault e busca web podem não existir em produção).
+ */
 function SourcesLine({ vault }: { vault: OwnerVaultSettings | undefined }) {
-  const notes = vault?.usable
-    ? vault.readEnabled
-      ? `Notas do vault (${vault.relativePath})`
-      : "Notas do vault desligadas"
-    : "Sem vault configurado";
-  const web = !vault?.webSearchAvailable
-    ? "Busca web indisponível no servidor"
-    : vault.webSearchEnabled
-      ? "Busca web ligada"
-      : "Busca web desligada";
+  const sources = ["links do currículo"];
+  if (vault?.webSearchAvailable) {
+    sources.push(
+      vault.webSearchEnabled ? "busca web ligada" : "busca web desligada",
+    );
+  }
+  if (vault?.rootAvailable) {
+    sources.push(
+      vault.usable
+        ? vault.readEnabled
+          ? `notas do vault (${vault.relativePath})`
+          : "notas do vault desligadas"
+        : "sem vault configurado",
+    );
+  }
+  const configurable = sources.length > 1;
   return (
     <p className="text-xs text-on-surface-variant">
-      Fontes: links do currículo · {web} · {notes}.{" "}
-      <Link
-        to="/profile"
-        hash="section-connections"
-        className="font-medium text-primary underline"
-      >
-        Configurar no perfil
-      </Link>
+      Fontes: {sources.join(" · ")}.
+      {configurable && (
+        <>
+          {" "}
+          <Link
+            to="/profile"
+            hash="section-connections"
+            className="font-medium text-primary underline"
+          >
+            Configurar no perfil
+          </Link>
+        </>
+      )}
     </p>
   );
 }

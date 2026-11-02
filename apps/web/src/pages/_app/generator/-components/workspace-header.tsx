@@ -10,7 +10,7 @@ export function WorkspaceHeader({ baseCvFile }: { baseCvFile: File | null }) {
   const statusLabel = baseCvFile
     ? "Ground Truth configurado"
     : "Aguardando Currículo Base";
-  const { status } = useSecondBrain();
+  const { status, vaultAvailable } = useSecondBrain();
   const secondBrainLabel = !status.connected
     ? "Desconectado - Opcional"
     : status.readsNotes
@@ -27,7 +27,8 @@ export function WorkspaceHeader({ baseCvFile }: { baseCvFile: File | null }) {
       title="Gerador de Currículo Sob Medida"
       description={
         <>
-          Alimentado por IA e integrado ao seu Second Brain (Obsidian) para
+          Alimentado por IA
+          {vaultAvailable && " e integrado ao seu Second Brain (Obsidian)"} para
           extrair e sintetizar suas experiências de maior impacto para{" "}
           <strong className="font-semibold text-primary-950">
             cada vaga específica
@@ -50,18 +51,22 @@ export function WorkspaceHeader({ baseCvFile }: { baseCvFile: File | null }) {
               {baseCvFile && " (Ativo)"}
             </span>
           </span>
-          <span aria-hidden="true" className="text-outline-variant">
-            •
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Network
-              aria-hidden="true"
-              className="size-3.5 text-on-surface-variant"
-            />
-            <span className="text-xs font-semibold leading-4 tracking-[0.3px] text-on-surface-variant">
-              Second Brain ({secondBrainLabel})
-            </span>
-          </span>
+          {vaultAvailable && (
+            <>
+              <span aria-hidden="true" className="text-outline-variant">
+                •
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Network
+                  aria-hidden="true"
+                  className="size-3.5 text-on-surface-variant"
+                />
+                <span className="text-xs font-semibold leading-4 tracking-[0.3px] text-on-surface-variant">
+                  Second Brain ({secondBrainLabel})
+                </span>
+              </span>
+            </>
+          )}
         </div>
       }
     />

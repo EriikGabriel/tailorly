@@ -23,7 +23,7 @@ interface Capability {
  * cada recurso faz; não é uma propaganda estática. Nada aqui muda o Currículo Base.
  */
 export function SecondBrainSection() {
-  const { isAccount, isLoading, status } = useSecondBrain();
+  const { isAccount, isLoading, status, vaultAvailable } = useSecondBrain();
 
   const capabilities: Capability[] = [
     {
@@ -48,6 +48,9 @@ export function SecondBrainSection() {
       icon: Globe,
     },
   ];
+  // Sem vault neste servidor (produção), o Second Brain não existe: nada a oferecer.
+  if (!vaultAvailable) return null;
+
   const activeCount = capabilities.filter((item) => item.active).length;
 
   const headline = !isAccount

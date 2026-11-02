@@ -29,7 +29,7 @@ export function ObsidianVaultForm() {
   if (!isAccount) {
     return (
       <p className="text-body-sm text-on-surface-variant">
-        Entre na conta para configurar o vault do Obsidian e a busca web.
+        Entre na conta para configurar suas preferências.
       </p>
     );
   }
@@ -43,6 +43,9 @@ export function ObsidianVaultForm() {
 
   const settings = vault.data;
   const current: OwnerVaultInput = draft ?? ownerVaultInputOf(settings);
+  // O servidor só lê e exporta vaults quando tem uma raiz configurada (instalação local); sem ela,
+  // os campos do vault não aparecem em vez de ficarem inúteis.
+  const showVault = settings.rootAvailable;
 
   return (
     <form
@@ -52,81 +55,81 @@ export function ObsidianVaultForm() {
         save.mutate(current, { onSuccess: () => setDraft(null) });
       }}
     >
-      <Field
-        label="Pasta do vault (dentro da pasta permitida pelo servidor)"
-        htmlFor="vault-path"
-      >
-        <input
-          id="vault-path"
-          value={current.relativePath}
-          onChange={(event) =>
-            setDraft({ ...current, relativePath: event.target.value })
-          }
-          placeholder="Ex.: Pessoal/Second Brain"
-          className="w-full rounded-lg bg-surface-container px-2.5 py-1.5 text-body-sm text-on-surface"
-        />
-      </Field>
-      {!settings.rootAvailable && (
-        <p className="text-xs text-on-surface-variant">
-          Este servidor não tem uma pasta de vaults configurada, então o vault
-          não pode ser lido nem exportado.
-        </p>
-      )}
-      {settings.relativePath && !settings.usable && (
-        <p className="text-xs text-error" role="alert">
-          A pasta configurada não existe mais dentro da pasta permitida.
-        </p>
+      {showVault && (
+        <>
+          <Field
+            label="Pasta do vault (dentro da pasta permitida pelo servidor)"
+            htmlFor="vault-path"
+          >
+            <input
+              id="vault-path"
+              value={current.relativePath}
+              onChange={(event) =>
+                setDraft({ ...current, relativePath: event.target.value })
+              }
+              placeholder="Ex.: Pessoal/Second Brain"
+              className="w-full rounded-lg bg-surface-container px-2.5 py-1.5 text-body-sm text-on-surface"
+            />
+          </Field>
+          {settings.relativePath && !settings.usable && (
+            <p className="text-xs text-error" role="alert">
+              A pasta configurada não existe mais dentro da pasta permitida.
+            </p>
+          )}
+
+          <ToggleRow
+            label="Ler notas do vault para enriquecer projetos"
+            checked={current.readEnabled}
+            onChange={(readEnabled) => setDraft({ ...current, readEnabled })}
+          />
+          <ToggleRow
+            label="Exportar os currículos gerados para o vault"
+            checked={current.exportEnabled}
+            onChange={(exportEnabled) =>
+              setDraft({ ...current, exportEnabled })
+            }
+          />
+          <Field
+            label="Subpasta de exportação (vazio usa o padrão do servidor)"
+            htmlFor="vault-subfolder"
+          >
+            <input
+              id="vault-subfolder"
+              value={current.exportSubfolder}
+              onChange={(event) =>
+                setDraft({ ...current, exportSubfolder: event.target.value })
+              }
+              placeholder="Ex.: B03 Resources/CVs"
+              className="w-full rounded-lg bg-surface-container px-2.5 py-1.5 text-body-sm text-on-surface"
+            />
+          </Field>
+        </>
       )}
 
-      <ToggleRow
-        label="Ler notas do vault para enriquecer projetos"
-        checked={current.readEnabled}
-        onChange={(readEnabled) => setDraft({ ...current, readEnabled })}
-      />
-      <ToggleRow
-        label="Exportar os currículos gerados para o vault"
-        checked={current.exportEnabled}
-        onChange={(exportEnabled) => setDraft({ ...current, exportEnabled })}
-      />
-      <Field
-        label="Subpasta de exportação (vazio usa o padrão do servidor)"
-        htmlFor="vault-subfolder"
-      >
-        <input
-          id="vault-subfolder"
-          value={current.exportSubfolder}
-          onChange={(event) =>
-            setDraft({ ...current, exportSubfolder: event.target.value })
+      {settings.webSearchAvailable && (
+        <ToggleRow
+          label="Buscar páginas sobre meus projetos na web"
+          checked={current.webSearchEnabled}
+          onChange={(webSearchEnabled) =>
+            setDraft({ ...current, webSearchEnabled })
           }
-          placeholder="Ex.: B03 Resources/CVs"
-          className="w-full rounded-lg bg-surface-container px-2.5 py-1.5 text-body-sm text-on-surface"
         />
-      </Field>
-      <ToggleRow
-        label={
-          settings.webSearchAvailable
-            ? "Buscar páginas sobre meus projetos na web"
-            : "Buscar páginas sobre meus projetos na web (indisponível: o servidor não tem SearXNG)"
-        }
-        checked={current.webSearchEnabled}
-        disabled={!settings.webSearchAvailable}
-        onChange={(webSearchEnabled) =>
-          setDraft({ ...current, webSearchEnabled })
-        }
-      />
+      )}
 
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() =>
-            clear.mutate(undefined, { onSuccess: () => setDraft(null) })
-          }
-          disabled={!settings.relativePath || clear.isPending}
-          className="text-label-sm font-semibold text-destructive hover:text-destructive/80 disabled:opacity-60"
-        >
-          Remover vault
-        </button>
-      </div>
+      {showVault && (
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              clear.mutate(undefined, { onSuccess: () => setDraft(null) })
+            }
+            disabled={!settings.relativePath || clear.isPending}
+            className="text-label-sm font-semibold text-destructive hover:text-destructive/80 disabled:opacity-60"
+          >
+            Remover vault
+          </button>
+        </div>
+      )}
       {(save.isError || clear.isError) && (
         <p className="text-xs text-error" role="alert">
           {(save.error ?? clear.error)?.message}

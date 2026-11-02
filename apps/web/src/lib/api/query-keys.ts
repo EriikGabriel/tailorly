@@ -60,6 +60,9 @@ export const apiQueryKeys = {
   generationDefaults: {
     byOwner: (ownerId: string) => ["generation-defaults", ownerId] as const,
   },
+  serverFeatures: {
+    all: ["server-features"] as const,
+  },
   ownerVault: {
     byOwner: (ownerId: string) => ["owner-vault", ownerId] as const,
   },

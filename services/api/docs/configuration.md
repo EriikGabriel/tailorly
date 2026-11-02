@@ -94,7 +94,9 @@ padrão; o e2e do Playwright serve o build em `http://127.0.0.1:4173`, e a CI ac
 | Variável                   | Uso                                                                                                      | Padrão                                   |
 | -------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | `TAILORLY_TYPST_COMMAND`   | CLI do Typst que compila o PDF; localmente `./bin/typst-docker`; sem ele `POST /v1/cv/generate` dá `503` | `typst`                                  |
-| `TAILORLY_SEARXNG_URL`     | SearXNG para busca web e due diligence; vazio desliga                                                    | Vazio (`local`: `http://127.0.0.1:8888`) |
+| `TAILORLY_WEB_SEARCH_PROVIDER` | `auto` (SearXNG se houver URL, senão Tavily), `searxng` ou `tavily`                                  | `auto`                                   |
+| `TAILORLY_SEARXNG_URL`     | SearXNG para busca web e due diligence (desenvolvimento local)                                           | Vazio (`local`: `http://127.0.0.1:8888`) |
+| `TAILORLY_TAVILY_API_KEY`  | Chave da API do Tavily (plano gratuito) para busca web em produção; sem chave nem SearXNG, a busca web fica desligada | Vazio                          |
 | `TAILORLY_VAULT_ENABLED`   | Exporta os currículos gerados para o vault da conta                                                      | `false`                                  |
 | `TAILORLY_VAULT_ROOT`      | Pasta raiz permitida para os vaults (um por conta); vazio desliga leitura e exportação                   | Vazio                                    |
 | `TAILORLY_VAULT_SUBFOLDER` | Subpasta do vault onde os artefatos são copiados                                                         | `B03 Resources/CVs`                      |

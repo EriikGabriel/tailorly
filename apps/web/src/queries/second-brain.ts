@@ -1,5 +1,6 @@
 import { useViewer } from "@queries/cv-generation";
 import { type OwnerVaultSettings, useOwnerVault } from "@queries/owner-vault";
+import { useServerFeatures } from "@queries/server-features";
 
 /**
  * Estado do Second Brain derivado das preferências reais da conta no servidor. Só contas têm vault;
@@ -33,9 +34,16 @@ export function useSecondBrain() {
   const viewer = useViewer();
   const isAccount = viewer.kind === "account" && viewer.ownerId !== null;
   const vault = useOwnerVault(isAccount ? viewer.ownerId : null, viewer.token);
+  const features = useServerFeatures();
 
   return {
     isAccount,
+    /** O servidor lê e exporta para vaults Obsidian (só em instalação local). */
+    vaultAvailable: features.vault,
+    /** O servidor tem busca web configurada. */
+    webSearchAvailable: features.webSearch,
+    /** Há algo do Second Brain para configurar neste servidor. */
+    available: features.vault || features.webSearch,
     isLoading: vault.isLoading,
     settings: vault.data,
     status: secondBrainStatusOf(vault.data),
