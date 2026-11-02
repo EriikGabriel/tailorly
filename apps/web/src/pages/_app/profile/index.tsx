@@ -41,7 +41,10 @@ export const Route = createFileRoute("/_app/profile/")({
 function ProfilePage() {
   return (
     <main className="min-h-[calc(100dvh-4rem)] px-4 py-6 sm:px-8 lg:px-16">
-      <div className="mx-auto flex w-full max-w-384 flex-col gap-6">
+      <section
+        aria-labelledby="profile-heading"
+        className="mx-auto flex w-full max-w-384 flex-col gap-6 rounded-2xl p-4 shadow-xs sm:p-6"
+      >
         <ProfilePageHeader />
         <ProfileTabs />
 
@@ -65,7 +68,7 @@ function ProfilePage() {
         </div>
 
         <ProfileSaveBar />
-      </div>
+      </section>
     </main>
   );
 }

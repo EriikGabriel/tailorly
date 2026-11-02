@@ -1,5 +1,6 @@
 package com.tailorly.api.base.version;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.tailorly.api.base.version.dto.BaseVersionResponse;
@@ -27,6 +28,11 @@ public class BaseVersionController {
   @GetMapping("/{id}")
   public BaseVersionResponse findById(@PathVariable UUID id) {
     return baseVersionService.findById(id);
+  }
+
+  @GetMapping("/owner/{ownerId}")
+  public List<BaseVersionResponse> findByOwnerId(@PathVariable UUID ownerId) {
+    return baseVersionService.findAllByOwnerId(ownerId);
   }
 
   @DeleteMapping("/{id}")

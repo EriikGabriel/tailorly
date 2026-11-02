@@ -27,6 +27,7 @@ import {
 } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { jobPostingInputError } from "@/utils/job-posting-input";
+import { notices } from "@/utils/notice-messages";
 import {
   type ApiCredential,
   ensureCredential,
@@ -51,6 +52,17 @@ export function useAnalyzeJobPosting() {
 
   return useMutation<AnalyzeResult, Error, JobPostingInput>({
     mutationKey: [...apiQueryKeys.jobPostings.all, "create"],
+    meta: {
+      notify: {
+        success: (result: AnalyzeResult) => notices.jobRead(result),
+        error: (error) =>
+          notices.failure(
+            "Não foi possível ler a vaga",
+            error,
+            "Leitura falhou.",
+          ),
+      },
+    },
     mutationFn: async (input) => {
       // Antes de qualquer chamada (inclusive a que emite a sessão anônima): o que o servidor
       // recusaria não deve gastar requisição, cota nem uma sessão nova.
@@ -101,6 +113,10 @@ export function useAnalyzeJobPosting() {
       });
       queryClient.invalidateQueries({
         queryKey: apiQueryKeys.anonymousSession.current,
+      });
+      // A esteira pode ter iniciado a due diligence da empresa em segundo plano.
+      queryClient.invalidateQueries({
+        queryKey: apiQueryKeys.dueDiligence.all,
       });
     },
   });
@@ -177,6 +193,18 @@ export function useReanalyzeJobPosting() {
     Error,
     { postingId: string; versionNumber: number }
   >({
+    meta: {
+      notify: {
+        success: (version: JobPostingVersionResponse) =>
+          notices.jobRead(version),
+        error: (error) =>
+          notices.failure(
+            "Não foi possível refazer a análise",
+            error,
+            "A análise falhou.",
+          ),
+      },
+    },
     mutationFn: ({ postingId, versionNumber }) => {
       const selected = useJobPostingStore.getState().selected;
       const token = tokenForOwnerKind(selected?.ownerKind ?? null);

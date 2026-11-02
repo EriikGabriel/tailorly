@@ -21,6 +21,10 @@ interface GenerationPreferencesState extends GenerationChoices {
   toggleGuideline: (label: string) => void;
   setOptimizeForAts: (value: boolean) => void;
   setTemplateName: (value: string) => void;
+  /** Escolhas de uma geração já feita foram colocadas no formulário; os padrões do perfil não as sobrescrevem. */
+  restoredChoices: boolean;
+  /** Reabre as escolhas registradas numa geração (ao abrir um currículo gerado). */
+  restoreChoices: (choices: GenerationChoices) => void;
   /** Parte dos padrões do perfil; só reaplica quando eles mudam, não quando o gerador reabre. */
   applyDefaults: (defaults: GenerationChoices) => void;
   reset: () => void;
@@ -40,6 +44,13 @@ export const useGenerationPreferencesStore =
   create<GenerationPreferencesState>()((set) => ({
     ...initialChoices(),
     appliedDefaultsKey: null,
+    restoredChoices: false,
+    restoreChoices: (choices) =>
+      set((state) => ({
+        ...choices,
+        // Só protege quando os padrões ainda vão chegar; se já foram aplicados, nada os reaplicaria.
+        restoredChoices: state.appliedDefaultsKey === null,
+      })),
     toggleGuideline: (label) =>
       set((state) => ({
         guidelines: state.guidelines.includes(label)
@@ -55,9 +66,16 @@ export const useGenerationPreferencesStore =
           defaults.optimizeForAts,
           [...defaults.guidelines].sort(),
         ]);
-        return state.appliedDefaultsKey === key
-          ? state
+        if (state.appliedDefaultsKey === key) return state;
+        // Escolhas restauradas de uma geração valem; só se registra a chave dos padrões.
+        return state.restoredChoices
+          ? { appliedDefaultsKey: key, restoredChoices: false }
           : { ...defaults, appliedDefaultsKey: key };
       }),
-    reset: () => set({ ...initialChoices(), appliedDefaultsKey: null }),
+    reset: () =>
+      set({
+        ...initialChoices(),
+        appliedDefaultsKey: null,
+        restoredChoices: false,
+      }),
   }));

@@ -6,7 +6,10 @@ import java.util.UUID;
 import com.tailorly.api.base.document.dto.BaseDocumentResponse;
 import com.tailorly.api.base.document.dto.BaseDocumentUploadResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,6 +44,17 @@ public class BaseDocumentController {
   @GetMapping("/{id}")
   public BaseDocumentResponse findById(@PathVariable UUID id) {
     return baseDocumentService.findById(id);
+  }
+
+  @GetMapping("/{id}/file")
+  public ResponseEntity<byte[]> original(@PathVariable UUID id) {
+    BaseDocumentService.Original file = baseDocumentService.original(id);
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_PDF)
+        .header(HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.inline().filename(file.filename()).build().toString())
+        .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+        .body(file.content());
   }
 
   @GetMapping("/owner/{ownerId}")

@@ -6,7 +6,10 @@ import type {
   GroundTruthSnapshot,
 } from "@@types/base-review";
 import { apiRequest } from "@lib/api/client";
-import { SESSION_EXPIRED_MESSAGE } from "@lib/api/error-message";
+import {
+  apiErrorMessage,
+  SESSION_EXPIRED_MESSAGE,
+} from "@lib/api/error-message";
 import {
   extractedPageFindAllByRunId,
   extractedPageReadText,
@@ -206,6 +209,22 @@ export function useApproveGroundTruth(versionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<GroundTruthSnapshot, Error, void>({
+    meta: {
+      notify: {
+        success: () => ({
+          kind: "success",
+          title: "Currículo Base aprovado",
+          description:
+            "O Ground Truth está ativo. Agora é só ler uma vaga e gerar.",
+          href: "/generator",
+        }),
+        error: (error) => ({
+          kind: "error",
+          title: "Não foi possível aprovar o Currículo Base",
+          description: apiErrorMessage(error, "A aprovação falhou."),
+        }),
+      },
+    },
     mutationFn: () => {
       // Sem credencial ou versão a chamada só voltaria 401/404; avisa antes, com a orientação certa.
       if (!accessToken) throw new Error(SESSION_EXPIRED_MESSAGE);

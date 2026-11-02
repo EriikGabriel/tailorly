@@ -3,7 +3,7 @@
 // e os records RemoteInterpretationProperties/OllamaInterpretationProperties
 // (`AiCurriculumInterpreter`). Este provedor atende todas as etapas com IA
 // (extração, análise da vaga, esteira de ATS, enriquecimento e evidências);
-// due diligence (RF08) ainda é backlog.
+// due diligence de empresas (RF08) também usa este provedor.
 export const interpretationProviderOptions = [
   {
     value: "remote-with-ollama-fallback",

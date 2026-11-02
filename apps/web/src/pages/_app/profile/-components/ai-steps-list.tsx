@@ -11,7 +11,7 @@ type Step = {
 
 /**
  * Etapas do fluxo que usam o provedor de IA escolhido acima. Vem recolhida para não ocupar espaço;
- * o status reflete o que já está implementado no backend, e a due diligence ainda é backlog.
+ * o status reflete o que já está implementado no backend, incluindo a due diligence (fontes privadas ainda não integradas).
  */
 export function AiStepsToggle({
   open,
@@ -72,9 +72,10 @@ export function AiStepsList({ open, id }: { open: boolean; id: string }) {
     },
     {
       name: "Due diligence de empresas",
-      detail: "Sinais públicos sobre empresas antes da candidatura.",
-      active: false,
-      statusLabel: "Backlog",
+      detail:
+        "Sinais públicos sobre empresas em onze fatores, com fonte e incerteza.",
+      active: true,
+      statusLabel: "Ativo",
     },
   ];
 

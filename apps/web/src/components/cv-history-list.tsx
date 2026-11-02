@@ -11,6 +11,7 @@ import {
 } from "@animate/base/alert-dialog";
 import { Button } from "@animate/buttons/button";
 import { apiErrorMessage } from "@lib/api/error-message";
+import type { CvGenerationResponse } from "@lib/api/generated/model";
 import {
   downloadCvFile,
   useCvHistory,
@@ -28,11 +29,154 @@ const dateFormat = new Intl.DateTimeFormat("pt-BR", {
   timeStyle: "short",
 });
 
+/** Linha de um currículo gerado: abertura no editor, download do PDF e exclusão com confirmação. */
+export function CvHistoryRow({
+  cv,
+  onError,
+}: {
+  cv: CvGenerationResponse;
+  onError: (message: string | null) => void;
+}) {
+  const viewer = useViewer();
+  const remove = useDeleteCvGeneration();
+
+  async function download(id: string) {
+    if (!viewer.token) return;
+    onError(null);
+    try {
+      await downloadCvFile(id, "pdf", viewer.token);
+    } catch (cause) {
+      onError(apiErrorMessage(cause, "Não foi possível baixar o arquivo."));
+    }
+  }
+
+  return (
+    <li className="flex flex-col gap-3 rounded-lg bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-start gap-4 sm:items-center">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
+          <FileText className="size-4 text-primary-950" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 space-y-0.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="min-w-0 text-base font-semibold leading-6 text-primary-950">
+              {cv.job?.title ?? "Vaga sem título"}
+              {cv.job?.companyName ? ` — ${cv.job.companyName}` : ""}
+            </h3>
+            {cv.ats?.report?.score !== undefined && (
+              <span
+                className="rounded-full bg-secondary-container/40 px-2 py-0.5 text-xs font-semibold"
+                style={{ color: atsScoreColor(cv.ats.report.score) }}
+              >
+                ATS {cv.ats.report.score}/100
+              </span>
+            )}
+          </div>
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold tracking-[0.3px] text-on-surface-variant">
+            <span>
+              {cv.createdAt ? dateFormat.format(new Date(cv.createdAt)) : ""}
+            </span>
+            <span aria-hidden="true">•</span>
+            <span>Ground Truth v{cv.groundTruth?.snapshotNumber}</span>
+            <span aria-hidden="true">•</span>
+            <span>Vaga v{cv.job?.versionNumber}</span>
+            <span aria-hidden="true">•</span>
+            <span>
+              Template {cv.template?.name} v{cv.template?.version}
+            </span>
+          </p>
+          {cv.ats?.report && (
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-on-surface-variant">
+              {cv.ats.report.pages !== undefined && (
+                <span>
+                  {cv.ats.report.pages}{" "}
+                  {cv.ats.report.pages === 1 ? "página" : "páginas"}
+                </span>
+              )}
+              {cv.ats.report.words !== undefined && (
+                <span>{cv.ats.report.words} palavras</span>
+              )}
+              {cv.ats.report.matchedTerms !== undefined && (
+                <span>
+                  {cv.ats.report.matchedTerms.length} termos da vaga cobertos
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
+        <Link
+          to="/generator"
+          onClick={() =>
+            cv.id &&
+            viewer.kind &&
+            useCvGenerationStore.getState().select(cv.id, viewer.kind)
+          }
+          className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg bg-surface-container px-4 py-1.5 text-xs font-semibold tracking-[0.3px] text-primary-950 hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-900"
+        >
+          <SquarePen strokeWidth={2.5} className="size-3" aria-hidden="true" />
+          Abrir Editor
+        </Link>
+        <Button
+          type="button"
+          variant="ghost"
+          aria-label="Baixar PDF"
+          onClick={() => cv.id && download(cv.id)}
+          className="flex size-8 items-center justify-center rounded-lg text-primary-950"
+        >
+          <Download strokeWidth={1.5} className="size-4.5" />
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                aria-label="Excluir currículo e arquivos"
+                disabled={remove.isPending}
+                className="flex size-8 items-center justify-center rounded-lg text-primary-950"
+              >
+                <X strokeWidth={1.5} className="size-4" />
+              </Button>
+            }
+          />
+          <AlertDialogPopup>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Excluir este currículo gerado?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                O PDF e o Markdown são apagados e não podem ser recuperados. O
+                Currículo Base que deu origem a eles não é afetado.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() =>
+                  cv.id &&
+                  remove.mutate(cv.id, {
+                    onError: (cause) =>
+                      onError(
+                        apiErrorMessage(cause, "Não foi possível excluir."),
+                      ),
+                  })
+                }
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogPopup>
+        </AlertDialog>
+      </div>
+    </li>
+  );
+}
+
 /** Histórico real de currículos gerados do owner atual, com abertura, download e exclusão. */
 export function CvHistoryList({ limit }: { limit?: number }) {
   const history = useCvHistory();
-  const viewer = useViewer();
-  const remove = useDeleteCvGeneration();
   const [error, setError] = useState<string | null>(null);
 
   if (history.isLoading) {
@@ -48,138 +192,11 @@ export function CvHistoryList({ limit }: { limit?: number }) {
     );
   }
 
-  async function download(id: string) {
-    if (!viewer.token) return;
-    setError(null);
-    try {
-      await downloadCvFile(id, "pdf", viewer.token);
-    } catch (cause) {
-      setError(apiErrorMessage(cause, "Não foi possível baixar o arquivo."));
-    }
-  }
-
   return (
     <>
       <ul className="space-y-1">
         {items.map((cv) => (
-          <li
-            key={cv.id}
-            className="flex flex-col gap-3 rounded-lg bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div className="flex min-w-0 items-start gap-4 sm:items-center">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
-                <FileText
-                  className="size-4 text-primary-950"
-                  aria-hidden="true"
-                />
-              </span>
-              <div className="min-w-0 space-y-0.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="min-w-0 text-base font-semibold leading-6 text-primary-950">
-                    {cv.job?.title ?? "Vaga sem título"}
-                    {cv.job?.companyName ? ` — ${cv.job.companyName}` : ""}
-                  </h3>
-                  {cv.ats?.report?.score !== undefined && (
-                    <span
-                      className="rounded-full bg-secondary-container/40 px-2 py-0.5 text-xs font-semibold"
-                      style={{ color: atsScoreColor(cv.ats.report.score) }}
-                    >
-                      ATS {cv.ats.report.score}/100
-                    </span>
-                  )}
-                </div>
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold tracking-[0.3px] text-on-surface-variant">
-                  <span>
-                    {cv.createdAt
-                      ? dateFormat.format(new Date(cv.createdAt))
-                      : ""}
-                  </span>
-                  <span aria-hidden="true">•</span>
-                  <span>Ground Truth v{cv.groundTruth?.snapshotNumber}</span>
-                  <span aria-hidden="true">•</span>
-                  <span>Vaga v{cv.job?.versionNumber}</span>
-                  <span aria-hidden="true">•</span>
-                  <span>
-                    Template {cv.template?.name} v{cv.template?.version}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
-              <Link
-                to="/generator"
-                onClick={() =>
-                  cv.id &&
-                  viewer.kind &&
-                  useCvGenerationStore.getState().select(cv.id, viewer.kind)
-                }
-                className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg bg-surface-container px-4 py-1.5 text-xs font-semibold tracking-[0.3px] text-primary-950 hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-900"
-              >
-                <SquarePen
-                  strokeWidth={2.5}
-                  className="size-3"
-                  aria-hidden="true"
-                />
-                Abrir Editor
-              </Link>
-              <Button
-                type="button"
-                variant="ghost"
-                aria-label="Baixar PDF"
-                onClick={() => cv.id && download(cv.id)}
-                className="flex size-8 items-center justify-center rounded-lg text-primary-950"
-              >
-                <Download strokeWidth={1.5} className="size-4.5" />
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      aria-label="Excluir currículo e arquivos"
-                      disabled={remove.isPending}
-                      className="flex size-8 items-center justify-center rounded-lg text-primary-950"
-                    >
-                      <X strokeWidth={1.5} className="size-4" />
-                    </Button>
-                  }
-                />
-                <AlertDialogPopup>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Excluir este currículo gerado?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      O PDF e o Markdown são apagados e não podem ser
-                      recuperados. O Currículo Base que deu origem a eles não é
-                      afetado.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() =>
-                        cv.id &&
-                        remove.mutate(cv.id, {
-                          onError: (cause) =>
-                            setError(
-                              apiErrorMessage(
-                                cause,
-                                "Não foi possível excluir.",
-                              ),
-                            ),
-                        })
-                      }
-                    >
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogPopup>
-              </AlertDialog>
-            </div>
-          </li>
+          <CvHistoryRow key={cv.id} cv={cv} onError={setError} />
         ))}
       </ul>
       {error && (

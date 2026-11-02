@@ -15,7 +15,7 @@ export function BasePageIntro() {
         id="base-heading"
         className="text-headline-lg-mobile font-bold tracking-tight sm:text-headline-lg sm:font-bold sm:tracking-[-0.8px]"
       >
-        Auditoria &amp; Curadoria dos Fatos do Currículo Base
+        Auditoria &amp; Curadoria do Ground Truth
       </h1>
       <p className="text-body-md text-on-surface-variant">
         Validação estruturada dos dados extraídos do seu currículo base. Revise

@@ -5,7 +5,7 @@ import {
 } from "@animate/primitives/effects/highlight";
 import tailorlyLogo from "@assets/tailorly-logo.svg";
 import { AccountAccess } from "@components/account-access";
-import { Bell } from "@react-zero-ui/icon-sprite";
+import { NotificationBell } from "@components/notifications/notification-bell";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useReducedMotion } from "motion/react";
 
@@ -14,14 +14,14 @@ const navigation = [
   { label: "Currículo Base", to: "/base" },
   { label: "Gerador", to: "/generator" },
   { label: "Meus Currículos", to: "/cvs" },
+  { label: "Due Diligence", to: "/due-diligence" },
 ] as const;
 
 type HeaderProps = {
-  onNotificationsClick?: () => void;
   onProfileClick?: () => void;
 };
 
-export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
+export function Header({ onProfileClick }: HeaderProps) {
   const activePath = useLocation({ select: (location) => location.pathname });
   const reduceMotion = useReducedMotion();
   // null when on a non-nav route (e.g. /profile) so the Highlight pill clears instead of staying frozen.
@@ -87,14 +87,7 @@ export function Header({ onNotificationsClick, onProfileClick }: HeaderProps) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-4">
-          <Button
-            type="button"
-            variant="ghost"
-            aria-label="Notificações"
-            onClick={onNotificationsClick}
-          >
-            <Bell className="size-5" />
-          </Button>
+          <NotificationBell />
           <AccountAccess onProfileClick={onProfileClick} />
         </div>
       </div>

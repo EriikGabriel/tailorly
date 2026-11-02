@@ -4,6 +4,7 @@ import {
 } from "@components/ai-progress/ai-stage-label";
 import { formatElapsed, useElapsedSeconds } from "@hooks/use-elapsed";
 import { useBaseDocumentExtraction } from "@queries/base-document";
+import { extractionFailureMessage } from "@/utils/extraction-failures";
 
 const STAGES: Record<string, { label: string; orb: OrbState }> = {
   QUEUED: { label: "Na fila de processamento", orb: "breathing" },
@@ -18,21 +19,6 @@ const STAGES: Record<string, { label: string; orb: OrbState }> = {
     orb: "composing",
   },
   SAVING_FACTS: { label: "Registrando os fatos para revisão", orb: "solving" },
-};
-
-const FAILURES: Record<string, string> = {
-  AI_INTERPRETATION_FAILED:
-    "A IA não conseguiu interpretar o currículo. Confira a configuração de IA no perfil e envie o PDF de novo.",
-  PDF_NO_TEXT: "O PDF não tem texto legível, nem por OCR.",
-  PDF_ENCRYPTED: "O PDF está protegido por senha.",
-  OCR_UNAVAILABLE: "A leitura por OCR não está disponível no servidor.",
-  WORKER_TIMEOUT: "O processamento demorou demais e foi interrompido.",
-  STORAGE_READ_FAILED: "Não foi possível abrir o arquivo enviado.",
-  STORAGE_WRITE_FAILED: "Não foi possível guardar o texto extraído.",
-  EXTRACTION_FAILED: "Não foi possível extrair o texto do PDF.",
-  EXTRACTION_PERSIST_FAILED: "Não foi possível registrar as páginas extraídas.",
-  FACT_FINALIZATION_FAILED:
-    "Não foi possível registrar os fatos interpretados.",
 };
 
 /** Andamento da extração do Currículo Base numa linha discreta: etapa atual e tempo decorrido. */
@@ -59,8 +45,7 @@ export function ExtractionProgress({ versionId }: { versionId?: string }) {
   if (run?.status === "FAILED") {
     return (
       <p role="alert" className="text-xs text-error">
-        {FAILURES[run.errorCode ?? ""] ??
-          `Falha na extração${run.errorCode ? ` (${run.errorCode})` : ""}.`}
+        {extractionFailureMessage(run.errorCode)}
       </p>
     );
   }

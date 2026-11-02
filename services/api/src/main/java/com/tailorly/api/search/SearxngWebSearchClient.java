@@ -49,7 +49,7 @@ public class SearxngWebSearchClient implements WebSearchClient {
       for (JsonNode item : body.path("results")) {
         String url = item.path("url").asText("");
         if (!url.isBlank() && results.size() < count) {
-          results.add(new SearchResult(url, item.path("title").asText("")));
+          results.add(new SearchResult(url, item.path("title").asText(""), item.path("content").asText("")));
         }
       }
     }

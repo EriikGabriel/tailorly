@@ -49,6 +49,11 @@ export const apiQueryKeys = {
     template: (ownerId: string) => ["cv", "template", ownerId] as const,
     bundledTemplate: ["cv", "template", "bundled"] as const,
   },
+  dueDiligence: {
+    all: ["due-diligence"] as const,
+    byOwner: (ownerId: string) => ["due-diligence", "owner", ownerId] as const,
+    detail: (id: string) => ["due-diligence", "detail", id] as const,
+  },
   aiPreferences: {
     current: ["ai-preferences", "current"] as const,
   },

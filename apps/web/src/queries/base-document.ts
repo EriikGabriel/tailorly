@@ -23,6 +23,17 @@ export function useUploadBaseDocument() {
 
   return useMutation<UploadResult, Error, File>({
     mutationKey: [...apiQueryKeys.baseDocuments.all, "upload"],
+    meta: {
+      notify: {
+        // O término da extração é avisado por `BackgroundNotifications`; aqui só a falha do envio.
+        error: (error) => ({
+          kind: "error",
+          title: "Não foi possível enviar o PDF",
+          description: error.message,
+          href: "/base",
+        }),
+      },
+    },
     mutationFn: async (file) => {
       const send = async (
         credential: ApiCredential,

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Exclusão em cascata dos dados pessoais de um owner: currículo base (arquivo, texto extraído,
- * fatos, evidências, pendências, decisões), snapshots do Ground Truth, vagas lidas e currículos
+ * fatos, evidências, pendências, decisões), snapshots do Ground Truth, vagas lidas, due diligences e currículos
  * gerados. Usada tanto pela purga completa de owners anônimos quanto pela retenção de contas.
  *
  * <p>Não apaga {@code owners}, {@code anonymous_sessions} nem {@code users}: quem chama decide
@@ -75,6 +75,7 @@ public class OwnerDataEraser {
     jdbc.update("delete from job_posting_versions where job_posting_id in "
         + "(select id from job_postings where owner_id = ?)", ownerId);
     jdbc.update("delete from job_postings where owner_id = ?", ownerId);
+    jdbc.update("delete from company_due_diligence where owner_id = ?", ownerId);
     jdbc.update("delete from ai_preferences where owner_id = ?", ownerId);
     jdbc.update("delete from owner_vaults where owner_id = ?", ownerId);
     jdbc.update("delete from owner_generation_defaults where owner_id = ?", ownerId);

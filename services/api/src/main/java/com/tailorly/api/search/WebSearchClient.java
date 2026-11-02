@@ -13,6 +13,10 @@ public interface WebSearchClient {
   /** Resultados em ordem de relevância; cada URL ainda precisa passar pela política de acesso a páginas. */
   List<SearchResult> search(String query, int count);
 
-  record SearchResult(String url, String title) {
+  /** {@code snippet} é o resumo do buscador (pode vir vazio); serve de trecho citável, sem baixar a página. */
+  record SearchResult(String url, String title, String snippet) {
+    public SearchResult(String url, String title) {
+      this(url, title, "");
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { shouldRetryRequest } from "./api/retry-policy";
+import { connectMutationNotifications } from "./mutation-notifications";
 
 /**
  * Padrões que evitam chamadas desnecessárias: dados ficam "frescos" por 30 s (voltar a uma tela não
@@ -16,3 +17,5 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+connectMutationNotifications(queryClient);

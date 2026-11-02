@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { OwnerKind } from "./base-cv-store";
+import { persistPointer, readPointer } from "./session-pointer";
 
 /** Só aponta para a vaga aberta; o conteúdo e as versões vivem no servidor. */
 export interface SelectedJobPosting {
@@ -20,8 +21,19 @@ interface JobPostingState {
   clear: () => void;
 }
 
+const POINTER_KEY = "tailorly:job-posting-selection";
+
+function isSelected(value: unknown): value is SelectedJobPosting {
+  const item = value as Partial<SelectedJobPosting> | null;
+  return (
+    typeof item?.postingId === "string" &&
+    (item.ownerKind === "account" || item.ownerKind === "anonymous") &&
+    (item.versionNumber === null || typeof item.versionNumber === "number")
+  );
+}
+
 export const useJobPostingStore = create<JobPostingState>()((set) => ({
-  selected: null,
+  selected: readPointer(POINTER_KEY, isSelected),
   select: (postingId, ownerKind, versionNumber = null) =>
     set({ selected: { postingId, ownerKind, versionNumber } }),
   setVersion: (versionNumber) =>
@@ -32,3 +44,5 @@ export const useJobPostingStore = create<JobPostingState>()((set) => ({
     ),
   clear: () => set({ selected: null }),
 }));
+
+persistPointer(useJobPostingStore, POINTER_KEY, (state) => state.selected);

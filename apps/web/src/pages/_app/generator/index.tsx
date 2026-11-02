@@ -8,6 +8,7 @@ import { GenerateCta } from "./-components/generate-cta";
 import { GroundTruthCard } from "./-components/ground-truth-card";
 import { JobTargetCard } from "./-components/job-target-card";
 import { WorkspaceHeader } from "./-components/workspace-header";
+import { useRestoreGeneratorForms } from "./-hooks/use-restore-generator-forms";
 import type { ViewMode } from "./-types/view-mode";
 
 export const Route = createFileRoute("/_app/generator/")({
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_app/generator/")({
 });
 
 function GeneratorPage() {
+  useRestoreGeneratorForms();
   const baseCvFile = useBaseCvStore((state) => state.file);
   const [viewMode, setViewMode] = useState<ViewMode>("visual");
   const splitMode = viewMode === "split";

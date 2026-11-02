@@ -7,6 +7,7 @@ import com.tailorly.api.base.document.dto.BaseDocumentResponse;
 import com.tailorly.api.base.document.dto.CreateBaseDocumentRequest;
 import com.tailorly.api.objects.StoredObject;
 import com.tailorly.api.objects.StoredObjectRepository;
+import com.tailorly.api.objects.storage.ObjectStorage;
 import com.tailorly.api.owner.Owner;
 import com.tailorly.api.owner.OwnerAccessService;
 import com.tailorly.api.owner.OwnerRepository;
@@ -32,6 +33,7 @@ public class BaseDocumentService {
   private final OwnerRepository ownerRepository;
   private final StoredObjectRepository storedObjectRepository;
   private final OwnerAccessService ownerAccessService;
+  private final ObjectStorage storage;
 
   @Transactional
   public BaseDocumentResponse create(CreateBaseDocumentRequest request) {
@@ -67,6 +69,22 @@ public class BaseDocumentService {
 
     ownerAccessService.assertCanAccess(document.getOwner());
     return BaseDocumentResponse.from(document);
+  }
+
+  /** Bytes do PDF original e o nome enviado. */
+  public record Original(byte[] content, String filename) {
+  }
+
+  /** O PDF original, para o visualizador do Currículo Base reabrir o documento sem novo envio nem OCR. */
+  @Transactional(readOnly = true)
+  public Original original(UUID id) {
+    BaseDocument document = getBaseDocument(id);
+    ownerAccessService.assertCanAccess(document.getOwner());
+    String key = document.getOriginalObject().getStorageKey();
+    if (!storage.exists(key)) {
+      throw new ResourceNotFoundException(ErrorCodes.StoredObject.NOT_FOUND);
+    }
+    return new Original(storage.get(key), document.getOriginalFilename());
   }
 
   private BaseDocument getBaseDocument(UUID id) {

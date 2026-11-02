@@ -1,6 +1,7 @@
 import { Button } from "@animate/buttons/button";
 import { ApiClientError } from "@lib/api/client";
-import type { SubmitEvent } from "react";
+import { Eye, EyeOff } from "@react-zero-ui/icon-sprite";
+import { type SubmitEvent, useId, useState } from "react";
 import type { AuthMode } from "@/types/auth";
 
 function getErrorMessage(error: unknown) {
@@ -73,15 +74,37 @@ interface AuthFieldProps {
   type: "email" | "password";
 }
 
-function AuthField({ label, ...inputProps }: AuthFieldProps) {
+/** Campo do formulário; senhas ganham o botão para mostrar ou ocultar o texto digitado. */
+function AuthField({ label, type, ...inputProps }: AuthFieldProps) {
+  const id = useId();
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === "password";
+  const Icon = visible ? EyeOff : Eye;
+
   return (
-    <label className="grid gap-1.5 text-sm font-medium">
-      {label}
-      <input
-        {...inputProps}
-        required
-        className="h-11 rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
-      />
-    </label>
+    <div className="grid gap-1.5 text-sm font-medium">
+      <label htmlFor={id}>{label}</label>
+      <div className="relative">
+        <input
+          {...inputProps}
+          id={id}
+          type={isPassword && visible ? "text" : type}
+          required
+          className={`h-11 w-full rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20 ${isPassword ? "pr-11" : ""}`}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
+            aria-pressed={visible}
+            aria-controls={id}
+            onClick={() => setVisible((current) => !current)}
+            className="absolute top-1/2 right-1 flex size-9 -translate-y-1/2 items-center justify-center rounded-md text-on-surface-variant outline-none hover:bg-surface-container hover:text-primary-950 focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <Icon aria-hidden="true" className="size-4" />
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { OwnerKind } from "./base-cv-store";
+import { persistPointer, readPointer } from "./session-pointer";
 
 /** Só aponta para a geração aberta; o conteúdo e os arquivos vivem no servidor. */
 export interface SelectedGeneration {
@@ -17,8 +18,18 @@ interface CvGenerationState {
   clear: () => void;
 }
 
+const POINTER_KEY = "tailorly:cv-generation-selection";
+
+function isSelected(value: unknown): value is SelectedGeneration {
+  const item = value as Partial<SelectedGeneration> | null;
+  return (
+    typeof item?.id === "string" &&
+    (item.ownerKind === "account" || item.ownerKind === "anonymous")
+  );
+}
+
 export const useCvGenerationStore = create<CvGenerationState>()((set, get) => ({
-  selected: null,
+  selected: readPointer(POINTER_KEY, isSelected),
   autoReviewId: null,
   requestAutoReview: (id) => set({ autoReviewId: id }),
   consumeAutoReview: (id) => {
@@ -29,3 +40,5 @@ export const useCvGenerationStore = create<CvGenerationState>()((set, get) => ({
   select: (id, ownerKind) => set({ selected: { id, ownerKind } }),
   clear: () => set({ selected: null, autoReviewId: null }),
 }));
+
+persistPointer(useCvGenerationStore, POINTER_KEY, (state) => state.selected);

@@ -5,6 +5,7 @@ import { useCvGenerationStore } from "./cv-generation-store";
 import { useGenerationPreferencesStore } from "./generation-preferences-store";
 import { useJobDraftStore } from "./job-draft-store";
 import { useJobPostingStore } from "./job-posting-store";
+import { useNotificationStore } from "./notification-store";
 import { useWorkspaceStore } from "./workspace-store";
 
 /** Clear UI data when leaving an account/session. Server deletion is separate. */
@@ -18,6 +19,7 @@ export function resetClientState() {
   useJobPostingStore.getState().clear();
   useGenerationPreferencesStore.getState().reset();
   useWorkspaceStore.getState().reset();
+  useNotificationStore.getState().clear();
   // Remove keys written by the former component-owned draft implementation.
   try {
     globalThis.sessionStorage?.removeItem("tailorly:job-draft");

@@ -165,6 +165,17 @@ public final class ErrorCodes {
     }
   }
 
+  public static final class Diligence {
+    public static final String NOT_FOUND = "error.diligence.not_found";
+    public static final String SEARCH_UNAVAILABLE = "error.diligence.search_unavailable";
+    public static final String AI_UNAVAILABLE = "error.diligence.ai_unavailable";
+    public static final String COMPANY_REQUIRED = "error.diligence.company_required";
+    public static final String ANALYSIS_FAILED = "error.diligence.analysis_failed";
+
+    private Diligence() {
+    }
+  }
+
   public static final class Vault {
     public static final String NOT_CONFIGURED = "error.vault.not_configured";
     public static final String INVALID_PATH = "error.vault.invalid_path";

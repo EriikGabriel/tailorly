@@ -121,7 +121,8 @@ public class SecurityConfiguration {
    */
   private static final String[] ANONYMOUS_ALLOWED = {
       "/v1/base-documents/upload", "/v1/base-documents/{id}", "/v1/base-documents/owner/{ownerId}",
-      "/v1/base-versions/{id}",
+      "/v1/base-documents/{id}/file",
+      "/v1/base-versions/{id}", "/v1/base-versions/owner/{ownerId}",
       "/v1/extraction-runs", "/v1/extraction-runs/{id}", "/v1/extraction-runs/version/{versionId}",
       "/v1/extracted-pages/{id}", "/v1/extracted-pages/{id}/text", "/v1/extracted-pages/run/{runId}",
       "/v1/fact-records", "/v1/fact-records/{id}", "/v1/fact-records/version/{versionId}",
@@ -135,6 +136,7 @@ public class SecurityConfiguration {
       "/v1/job-postings", "/v1/job-postings/extract", "/v1/job-postings/owner/{ownerId}",
       "/v1/job-postings/{id}", "/v1/job-postings/{id}/versions/{versionNumber}",
       "/v1/job-postings/{id}/versions/{versionNumber}/analysis",
+      "/v1/due-diligence", "/v1/due-diligence/owner/{ownerId}", "/v1/due-diligence/{id}",
       "/v1/cv/generate", "/v1/cv/generations/owner/{ownerId}", "/v1/cv/generations/{id}",
       "/v1/cv/generations/{id}/download", "/v1/cv/generations/{id}/preview",
       "/v1/cv/templates", "/v1/cv/templates/bundled", "/v1/cv/templates/owner/{ownerId}/current",

@@ -1,10 +1,13 @@
 package com.tailorly.api.base.version;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.tailorly.api.base.document.BaseDocument;
 import com.tailorly.api.base.version.dto.BaseVersionResponse;
+import com.tailorly.api.owner.Owner;
 import com.tailorly.api.owner.OwnerAccessService;
+import com.tailorly.api.owner.OwnerRepository;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ public class BaseVersionService {
 
   private final BaseVersionRepository baseVersionRepository;
   private final OwnerAccessService ownerAccessService;
+  private final OwnerRepository ownerRepository;
 
   /**
    * Seleciona a versão do upload atual.
@@ -67,6 +71,16 @@ public class BaseVersionService {
     ownerAccessService.assertCanAccess(version.getOwner());
 
     return BaseVersionResponse.from(version);
+  }
+
+  /** Versões do owner, da mais nova para a mais antiga; permite retomar a revisão depois de recarregar a página. */
+  @Transactional(readOnly = true)
+  public List<BaseVersionResponse> findAllByOwnerId(UUID ownerId) {
+    Owner owner = ownerRepository.findById(ownerId)
+        .orElseThrow(() -> new ResourceNotFoundException(ErrorCodes.Owner.NOT_FOUND));
+    ownerAccessService.assertCanAccess(owner);
+    return baseVersionRepository.findAllByOwnerIdOrderByVersionNumberDesc(ownerId).stream()
+        .map(BaseVersionResponse::from).toList();
   }
 
   private BaseVersion getVersion(UUID id) {

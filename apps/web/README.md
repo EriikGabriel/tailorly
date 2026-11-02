@@ -543,6 +543,23 @@ gerador (`useGenerationPreferencesStore`) e as configurações de conta ficam no
 Profile quando houver suporte persistente; os defaults do gerador permitem
 seguir sem configuração manual.
 
+### Retomar depois de recarregar
+
+O estado em memória some ao recarregar a aba, mas o que importa vive no servidor e é recuperado:
+
+- **Currículo Base:** `BaseCvRestorer` (montado no `__root`) reabre, para uma conta ou sessão de visitante válida, a versão mais recente em revisão (`CANDIDATE`, `EXTRACTED` ou `ACTIVE`) de `GET /v1/base-versions/owner/{ownerId}` e baixa o PDF original em `GET /v1/base-documents/{id}/file`. Fatos, pendências e correções salvas vêm das consultas normais; nada é reenviado nem passa por OCR de novo. Edições ainda não salvas continuam sendo perdidas.
+- **Gerador:** a seleção da vaga e da geração é guardada em `sessionStorage` só como ponteiro (ids; `stores/session-pointer.ts`). `useRestoreGeneratorForms` preenche o link (ou texto) da vaga a partir da versão lida e, ao abrir um currículo gerado, também reabre a vaga/versão usada e as escolhas de layout, diretrizes e ATS registradas na geração.
+
+### Notificações (toasts e sino)
+
+Todo processo principal avisa quando termina, com êxito ou não: leitura/análise da vaga, geração do currículo, leitura de ATS, aprovação do Ground Truth, due diligence (manual e a que a esteira inicia sozinha), coleta de evidências e a extração do Currículo Base.
+
+- `stores/notification-store.ts` guarda o histórico (máx. 50) e os toasts visíveis (máx. 3). É **só estado de interface, em memória**: não guarda fatos nem cotas, some ao recarregar e é limpo por `resetClientState()`.
+- Mutações declaram o aviso no `meta.notify` (`success`/`error`), e `lib/mutation-notifications.ts` o dispara a partir do cache de mutações; os textos ficam em `utils/notice-messages.ts`. Retorne `null` para não avisar.
+- Processos sem mutação esperando (extração e due diligence automática) são vigiados por `BackgroundNotifications`, que só avisa o que viu em andamento (ou nasceu depois que o app abriu).
+- `ToastViewport` (animado, pausa com mouse/foco, respeita movimento reduzido) e `NotificationBell` (sino do cabeçalho, com contador de não lidas e histórico) ficam em `components/notifications/` e são montados no `__root`.
+- Planejado: persistir o histórico por conta e preferências para silenciar tipos de aviso.
+
 ### `resetClientState()`
 
 Em `src/stores/reset-client-state.ts`. Limpa primeiro `useAuthStore`, inclusive

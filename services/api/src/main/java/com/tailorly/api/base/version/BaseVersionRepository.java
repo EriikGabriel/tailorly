@@ -21,6 +21,8 @@ public interface BaseVersionRepository extends JpaRepository<BaseVersion, UUID> 
 
   Optional<BaseVersion> findFirstByOwnerIdOrderByVersionNumberDesc(UUID ownerId);
 
+  java.util.List<BaseVersion> findAllByOwnerIdOrderByVersionNumberDesc(UUID ownerId);
+
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("update BaseVersion v set v.status = :newStatus "
       + "where v.owner.id = :ownerId and v.status = :oldStatus")

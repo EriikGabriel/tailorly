@@ -17,6 +17,8 @@ interface SelectFieldProps {
   placeholder?: string;
   describedBy?: string;
   disabled?: boolean;
+  /** Quando falso, não há opção vazia extra: o valor escolhido é sempre uma das opções. */
+  emptyOption?: boolean;
 }
 
 const NONE = "__none__";
@@ -31,17 +33,18 @@ export function SelectField({
   placeholder = "Não informado",
   describedBy,
   disabled,
+  emptyOption = true,
 }: SelectFieldProps) {
   const known = options.some((option) => option.value === value);
   const items: SelectOption[] = [
-    { value: NONE, label: placeholder },
+    ...(emptyOption ? [{ value: NONE, label: placeholder }] : []),
     ...options,
     ...(value && !known ? [{ value, label: value }] : []),
   ];
 
   return (
     <Select.Root
-      value={value === "" ? NONE : value}
+      value={emptyOption && value === "" ? NONE : value}
       onValueChange={(next) =>
         onChange(next === NONE || next == null ? "" : next)
       }
@@ -56,7 +59,7 @@ export function SelectField({
           {Icon && <Icon aria-hidden="true" className={iconClass} />}
           <Select.Value className="truncate">
             {(selected: string) =>
-              selected === NONE || !selected ? (
+              (emptyOption && selected === NONE) || !selected ? (
                 <span className="font-normal text-outline">{placeholder}</span>
               ) : (
                 (items.find((item) => item.value === selected)?.label ??

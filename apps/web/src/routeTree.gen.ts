@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './pages/__root'
 import { Route as AppHomeIndexRouteImport } from './pages/_app/_home/index'
 import { Route as AppBaseIndexRouteImport } from './pages/_app/base/index'
 import { Route as AppCvsIndexRouteImport } from './pages/_app/cvs/index'
+import { Route as AppDueDiligenceIndexRouteImport } from './pages/_app/due-diligence/index'
 import { Route as AppGeneratorIndexRouteImport } from './pages/_app/generator/index'
 import { Route as AppProfileIndexRouteImport } from './pages/_app/profile/index'
 
@@ -30,6 +31,11 @@ const AppCvsIndexRoute = AppCvsIndexRouteImport.update({
   path: '/cvs/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppDueDiligenceIndexRoute = AppDueDiligenceIndexRouteImport.update({
+  id: '/_app/due-diligence/',
+  path: '/due-diligence/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppGeneratorIndexRoute = AppGeneratorIndexRouteImport.update({
   id: '/_app/generator/',
   path: '/generator/',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppHomeIndexRoute
   '/base/': typeof AppBaseIndexRoute
   '/cvs/': typeof AppCvsIndexRoute
+  '/due-diligence/': typeof AppDueDiligenceIndexRoute
   '/generator/': typeof AppGeneratorIndexRoute
   '/profile/': typeof AppProfileIndexRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof AppHomeIndexRoute
   '/base': typeof AppBaseIndexRoute
   '/cvs': typeof AppCvsIndexRoute
+  '/due-diligence': typeof AppDueDiligenceIndexRoute
   '/generator': typeof AppGeneratorIndexRoute
   '/profile': typeof AppProfileIndexRoute
 }
@@ -60,19 +68,22 @@ export interface FileRoutesById {
   '/_app/_home/': typeof AppHomeIndexRoute
   '/_app/base/': typeof AppBaseIndexRoute
   '/_app/cvs/': typeof AppCvsIndexRoute
+  '/_app/due-diligence/': typeof AppDueDiligenceIndexRoute
   '/_app/generator/': typeof AppGeneratorIndexRoute
   '/_app/profile/': typeof AppProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/base/' | '/cvs/' | '/generator/' | '/profile/'
+  fullPaths:
+    '/' | '/base/' | '/cvs/' | '/due-diligence/' | '/generator/' | '/profile/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/base' | '/cvs' | '/generator' | '/profile'
+  to: '/' | '/base' | '/cvs' | '/due-diligence' | '/generator' | '/profile'
   id:
     | '__root__'
     | '/_app/_home/'
     | '/_app/base/'
     | '/_app/cvs/'
+    | '/_app/due-diligence/'
     | '/_app/generator/'
     | '/_app/profile/'
   fileRoutesById: FileRoutesById
@@ -81,6 +92,7 @@ export interface RootRouteChildren {
   AppHomeIndexRoute: typeof AppHomeIndexRoute
   AppBaseIndexRoute: typeof AppBaseIndexRoute
   AppCvsIndexRoute: typeof AppCvsIndexRoute
+  AppDueDiligenceIndexRoute: typeof AppDueDiligenceIndexRoute
   AppGeneratorIndexRoute: typeof AppGeneratorIndexRoute
   AppProfileIndexRoute: typeof AppProfileIndexRoute
 }
@@ -108,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCvsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/due-diligence/': {
+      id: '/_app/due-diligence/'
+      path: '/due-diligence'
+      fullPath: '/due-diligence/'
+      preLoaderRoute: typeof AppDueDiligenceIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/generator/': {
       id: '/_app/generator/'
       path: '/generator'
@@ -129,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppHomeIndexRoute: AppHomeIndexRoute,
   AppBaseIndexRoute: AppBaseIndexRoute,
   AppCvsIndexRoute: AppCvsIndexRoute,
+  AppDueDiligenceIndexRoute: AppDueDiligenceIndexRoute,
   AppGeneratorIndexRoute: AppGeneratorIndexRoute,
   AppProfileIndexRoute: AppProfileIndexRoute,
 }

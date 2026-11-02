@@ -1,6 +1,9 @@
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 import { AnonymousMigrationDialog } from "@components/anonymous-migration-dialog";
+import { BaseCvRestorer } from "@components/base-cv-restorer";
 import { Header } from "@components/header";
+import { BackgroundNotifications } from "@components/notifications/background-notifications";
+import { ToastViewport } from "@components/notifications/toast-viewport";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
@@ -36,6 +39,9 @@ function RootComponent() {
       <Header />
       <Outlet />
       <AnonymousMigrationDialog />
+      <BaseCvRestorer />
+      <BackgroundNotifications />
+      <ToastViewport />
     </TooltipPrimitive.Provider>
   );
 }

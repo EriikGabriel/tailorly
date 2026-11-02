@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.tailorly.api.diligence.DueDiligenceService;
 import com.tailorly.api.job.analysis.JobRequirementsAnalyzer;
 import com.tailorly.api.job.dto.CreateJobPostingRequest;
 import com.tailorly.api.job.dto.JobAnalysis;
@@ -63,12 +64,13 @@ public class JobPostingService {
   private final JobRequirementsAnalyzer analyzer;
   private final AnonymousQuotaService quota;
   private final AnonymousProperties anonymousProperties;
+  private final DueDiligenceService dueDiligence;
   private final TransactionTemplate transaction;
 
   public JobPostingService(OwnerRepository owners, OwnerAccessService access, JobPostingRepository postings,
       JobPostingVersionRepository versions, JobPostingExtractionService extraction,
       JobRequirementsAnalyzer analyzer, AnonymousQuotaService quota, AnonymousProperties anonymousProperties,
-      PlatformTransactionManager transactionManager) {
+      DueDiligenceService dueDiligence, PlatformTransactionManager transactionManager) {
     this.owners = owners;
     this.access = access;
     this.postings = postings;
@@ -77,6 +79,7 @@ public class JobPostingService {
     this.analyzer = analyzer;
     this.quota = quota;
     this.anonymousProperties = anonymousProperties;
+    this.dueDiligence = dueDiligence;
     this.transaction = new TransactionTemplate(transactionManager);
   }
 
@@ -107,6 +110,9 @@ public class JobPostingService {
         && JobRequirementsAnalyzer.VERSION.equals(version.getAnalyzerVersion());
     if (!upToDate)
       runAnalysis(owner, versionId);
+
+    // Etapa seguinte da esteira, depois do Ground Truth: consulta a empresa em segundo plano.
+    dueDiligence.startForJob(owner, version.getJobPosting().getId());
 
     return new CreateResult(toVersionResponse(versions.findById(versionId).orElseThrow(), !saved.created()),
         saved.created());

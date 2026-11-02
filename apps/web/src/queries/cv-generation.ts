@@ -32,6 +32,8 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { notices } from "@/utils/notice-messages";
 import { ensureCredential, tokenForOwnerKind } from "./api-credential";
 import { useCurrentOwnerId } from "./current-account";
 
@@ -65,6 +67,18 @@ export function useGenerateCv() {
   const queryClient = useQueryClient();
 
   return useMutation<CvGenerationResponse, Error, void>({
+    meta: {
+      notify: {
+        success: (generation: CvGenerationResponse) =>
+          notices.cvGenerated(generation),
+        error: (error) =>
+          notices.failure(
+            "Não foi possível gerar o currículo",
+            error,
+            "A geração falhou.",
+          ),
+      },
+    },
     mutationFn: async () => {
       const selected = useJobPostingStore.getState().selected;
       if (!selected)
@@ -123,6 +137,30 @@ export function useAtsReview(generationId: string | undefined) {
   );
 
   return useMutation<AtsReview, Error, { refresh?: boolean } | undefined>({
+    meta: {
+      notify: {
+        success: (review: AtsReview) =>
+          review.status === "completed"
+            ? {
+                kind: "success",
+                title: "Leitura de ATS concluída",
+                description: `Alinhamento com a vaga: ${review.alignment}%`,
+                href: "/generator",
+              }
+            : {
+                kind: "warning",
+                title: "Leitura de ATS indisponível",
+                description:
+                  "A IA não pôde revisar o currículo agora. Tente de novo mais tarde.",
+              },
+        error: (error) =>
+          notices.failure(
+            "Leitura de ATS não concluída",
+            error,
+            "A revisão falhou.",
+          ),
+      },
+    },
     mutationFn: async (options) => {
       const token = tokenForOwnerKind(kind);
       if (!generationId || !token) throw new Error(SESSION_EXPIRED_MESSAGE);
@@ -146,6 +184,11 @@ export function useSelectedGeneration() {
   const selected = useCvGenerationStore((state) => state.selected);
   const token = tokenForOwnerKind(selected?.ownerKind ?? null);
   const id = selected?.id;
+
+  // Sem a credencial do dono (logout, sessão expirada) a seleção guardada na aba não abre mais.
+  useEffect(() => {
+    if (selected && !token) useCvGenerationStore.getState().clear();
+  }, [selected, token]);
 
   return useQuery<CvGenerationResponse>({
     queryKey: apiQueryKeys.cv.generation(id ?? ""),

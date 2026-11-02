@@ -1,7 +1,7 @@
 import { House } from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
 
-/** Caminho de navegação da página (Início / Currículo Base / Auditoria). */
+/** Caminho de navegação da página (Início / Auditoria). */
 export function BaseBreadcrumb() {
   return (
     <nav aria-label="Caminho de navegação">
@@ -15,10 +15,6 @@ export function BaseBreadcrumb() {
             Início
           </Link>
         </li>
-        <li aria-hidden="true" className="text-outline-variant">
-          /
-        </li>
-        <li>Currículo Base</li>
         <li aria-hidden="true" className="text-outline-variant">
           /
         </li>

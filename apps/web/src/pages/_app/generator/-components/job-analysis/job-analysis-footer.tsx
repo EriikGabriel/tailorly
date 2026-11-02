@@ -3,6 +3,7 @@ import type {
   JobPostingVersionResponse,
 } from "@lib/api/generated/model";
 import { formatDate } from "@/utils/date-format";
+import { DueDiligenceStatus } from "./due-diligence-status";
 import { VersionPicker } from "./version-picker";
 
 /** Rodapé do cartão: versão exibida, datas de leitura/conferência, link da página e volta à lista. */
@@ -32,6 +33,9 @@ export function JobAnalysisFooter({
             : ""}
         </span>
       </div>
+      {detail.posting?.id && (
+        <DueDiligenceStatus postingId={detail.posting.id} />
+      )}
       {finalUrl && (
         <a
           href={finalUrl}

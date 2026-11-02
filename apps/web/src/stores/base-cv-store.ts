@@ -19,6 +19,8 @@ interface BaseCvState {
     baseVersionId?: string,
     ownerKind?: OwnerKind,
   ) => void;
+  /** Reabre o Currículo Base já enviado (por exemplo depois de recarregar a página), sem nova seleção. */
+  restore: (file: File, baseVersionId: string, ownerKind: OwnerKind) => boolean;
   setOwnerKind: (ownerKind: OwnerKind | null) => void;
   setError: (error: string | null) => void;
   reset: () => void;
@@ -71,6 +73,23 @@ export const useBaseCvStore = create<BaseCvState>()((set, get) => ({
       baseVersionId: baseVersionId ?? null,
       ownerKind: ownerKind ?? null,
     });
+  },
+  restore: (file, baseVersionId, ownerKind) => {
+    // Só preenche um app vazio: nunca sobrescreve um arquivo que a pessoa escolheu enquanto isso.
+    if (get().file || get().baseVersionId) return false;
+    const selectionId = crypto.randomUUID();
+    useReviewDraftStore.getState().resetForSource(selectionId);
+    useQuickReviewStore.getState().reset();
+    useDocumentViewerStore.getState().reset();
+    set({
+      file,
+      selectionId,
+      uploadedSelectionId: selectionId,
+      baseVersionId,
+      ownerKind,
+      error: null,
+    });
+    return true;
   },
   setOwnerKind: (ownerKind) => set({ ownerKind }),
   setError: (error) => set({ error }),

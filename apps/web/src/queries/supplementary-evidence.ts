@@ -96,6 +96,20 @@ export function useAutoCollectSupplementaryEvidence() {
     { snapshotId: string; token: string }
   >({
     mutationKey: EVIDENCE_COLLECT_KEY,
+    meta: {
+      notify: {
+        // Falhas ficam silenciosas de propósito: a coleta manual segue no gerador.
+        success: (collection: EvidenceCollection) =>
+          collection.evidenceCreated > 0
+            ? {
+                kind: "success",
+                title: "Evidências complementares coletadas",
+                description: `${collection.evidenceCreated} para você confirmar no gerador.`,
+                href: "/generator",
+              }
+            : null,
+      },
+    },
     mutationFn: ({ snapshotId, token }) =>
       apiRequest<EvidenceCollection>(
         `/v1/cv/evidence/snapshots/${encodeURIComponent(snapshotId)}/collect`,
@@ -116,6 +130,24 @@ export function useCollectSupplementaryEvidence(
 
   return useMutation<EvidenceCollection, Error, void>({
     mutationKey: EVIDENCE_COLLECT_KEY,
+    meta: {
+      notify: {
+        success: (collection: EvidenceCollection) => ({
+          kind: collection.evidenceCreated > 0 ? "success" : "info",
+          title: "Coleta de evidências concluída",
+          description:
+            collection.evidenceCreated > 0
+              ? `${collection.evidenceCreated} para você confirmar.`
+              : "Nenhuma evidência nova encontrada nos links.",
+          href: "/generator",
+        }),
+        error: (error) => ({
+          kind: "error",
+          title: "Coleta de evidências não concluída",
+          description: error.message,
+        }),
+      },
+    },
     mutationFn: () => {
       if (!snapshotId || !token) throw new Error("Nenhum Ground Truth ativo.");
       return apiRequest<EvidenceCollection>(

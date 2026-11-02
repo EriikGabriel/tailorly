@@ -419,3 +419,13 @@
     color: transparent;
   }
 }
+
+/* Barra de contagem regressiva dos toasts de notificação; pausa com o mouse ou o foco sobre o toast. */
+@keyframes toast-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
