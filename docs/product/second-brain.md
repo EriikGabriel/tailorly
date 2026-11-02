@@ -1,0 +1,13 @@
+# Integração com o Second Brain / vault
+
+**Implementada, desligada por padrão.** Quando `TAILORLY_VAULT_ENABLED=true` e `TAILORLY_VAULT_ROOT` aponta para uma pasta local, cada geração de currículo de uma conta (nunca de sessão anônima) grava uma cópia do PDF e do Markdown em `{vault da conta}/{TAILORLY_VAULT_SUBFOLDER}` (padrão `B03 Resources/CVs`). O vault da conta é um caminho relativo a `TAILORLY_VAULT_ROOT` que a própria conta define (`PUT /v1/owners/{ownerId}/vault`); uma conta tem no máximo um vault, e conta sem vault não exporta. O servidor só aceita pastas existentes dentro da raiz, sem `..` e sem links simbólicos que saiam dela. A cópia Markdown recebe um frontmatter YAML (título da vaga, empresa, data, nota de ATS e id da geração); o objeto original no Garage nunca é alterado. Cada exportação é registrada em log; falhas de E/S são absorvidas e nunca derrubam `POST /v1/cv/generate`.
+
+## Detalhes de implementação
+
+Desligada por padrão (`tailorly.vault.enabled`/`TAILORLY_VAULT_ENABLED`). Quando ligada e `TAILORLY_VAULT_ROOT` está configurada, `VaultExportConfiguration` registra `VaultExportService` (`com.tailorly.api.vault`), e toda geração bem-sucedida de uma **conta** (nunca de owner anônimo, ver `AnonymousQuotaService.isAnonymous`) agenda, só depois do commit da transação (`TransactionSynchronizationManager`, mesmo mecanismo de limpeza de `GeneratedCvFileStore` em rollback), uma cópia do PDF e do Markdown em `{vault da conta}/{TAILORLY_VAULT_SUBFOLDER}`; o vault da conta é o caminho que ela definiu em `PUT /v1/owners/{ownerId}/vault`, validado dentro de `TAILORLY_VAULT_ROOT` (`VaultLocations`). Conta sem vault não exporta. A cópia Markdown recebe um frontmatter YAML (`title`, `company`, `generated_at`, `ats_score`, `generation_id`); o objeto em `stored_objects`/Garage não é tocado. Falhas de E/S são logadas (`VaultExportService`) e absorvidas — nunca derrubam `POST /v1/cv/generate`. O serviço só lê valores simples (não a entidade `CvGeneration`), porque a exportação roda depois que a sessão do Hibernate já fechou.
+
+## Evidências do vault
+
+Além da exportação, a conta pode deixar a API **ler** notas do próprio vault como fonte de evidência complementar (cada nota só vale como evidência depois de confirmada). Veja [Enriquecimento da geração](enrichment.md). As preferências (pasta, leitura das notas, exportação e subpasta) ficam na seção _Second Brain_ do perfil e na rota `GET/PUT/DELETE /v1/owners/{ownerId}/vault`.
+
+Variáveis: `TAILORLY_VAULT_ENABLED`, `TAILORLY_VAULT_ROOT` e `TAILORLY_VAULT_SUBFOLDER` (ver [configuração da API](../../services/api/docs/configuration.md)). Só faz sentido em instalação pessoal (self-hosted): no Render ou em qualquer deploy sem disco local do usuário, deixe desligado.

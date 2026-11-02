@@ -2,7 +2,7 @@ import { CountingNumber } from "@animate/primitives/texts/counting-number";
 import { useCvHistory } from "@queries/cv-generation";
 import { useActiveGroundTruth } from "@queries/ground-truth";
 import { Github, Linkedin, MapPin, Pencil } from "@react-zero-ui/icon-sprite";
-import { describeLink, initials } from "@/utils/review-format";
+import { describeLink, initials } from "@utils/review/review-format";
 
 export function ExecutiveProfileCard() {
   const { hasActiveSnapshot, facts } = useActiveGroundTruth();

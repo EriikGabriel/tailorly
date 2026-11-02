@@ -1,12 +1,15 @@
 # Deploy em produção
 
-| Peça       | Serviço                          | O que roda                                      |
-| ---------- | -------------------------------- | ---------------------------------------------- |
-| Frontend   | Vercel Hobby                     | Build estático do `apps/web` (SPA)              |
-| API        | Render                           | Container Docker da API Spring Boot             |
-| Banco      | Neon Free                        | PostgreSQL; o Flyway aplica migrations no start |
-| Arquivos   | Cloudflare R2                    | PDFs, textos extraídos e currículos gerados     |
-| CI         | GitHub Actions                   | Lint, testes Maven, build web e testes E2E       |
+Para rodar localmente, veja [Desenvolvimento local](development.md). As diferenças entre local e
+produção estão na [arquitetura](architecture.md#em-produção-e-em-desenvolvimento).
+
+| Peça     | Serviço        | O que roda                                      |
+| -------- | -------------- | ----------------------------------------------- |
+| Frontend | Vercel         | Build estático do `apps/web` (SPA)              |
+| API      | Render         | Container Docker da API Spring Boot             |
+| Banco    | Neon Free      | PostgreSQL; o Flyway aplica migrations no start |
+| Arquivos | Cloudflare R2  | PDFs, textos extraídos e currículos gerados     |
+| CI       | GitHub Actions | Lint, testes Maven, build web e testes E2E      |
 
 O arquivo [`render.yaml`](../render.yaml) define o serviço Docker da API. O Render faz o
 build e o deploy automaticamente a cada push na branch conectada ao serviço e verifica
@@ -31,6 +34,7 @@ O plano Free do Render tem **512 MB de RAM, 0,1 CPU**, dorme após ~15 min sem t
 - **Visitantes:** no máximo 50 sessões anônimas ativas, TTL de 6 h; os demais limites (3 páginas,
   3 gerações etc.) seguem o padrão do `application.yml`.
 - **Health check:** `/actuator/health/liveness`, que não depende do banco.
+- **Limites por IP:** `TAILORLY_FORWARD_HEADERS_STRATEGY=native` faz a API enxergar o IP real do cliente atrás do proxy do Render; sem isso o rate limit trataria todos como uma pessoa só ([Segurança](security.md#atrás-de-um-proxy-render)).
 - **Porta:** a API lê `PORT` (o Render define 10000); localmente continua 8080.
 
 **Cold start.** Depois de dormir, o primeiro request pode levar de 1 a 2 min (JVM em 0,1 CPU).
@@ -42,19 +46,19 @@ acordado; sessões anônimas expiradas são removidas no próximo despertar.
 
 ## 1. Neon (banco)
 
-Use a connection string **direta**, sem pooler: no console do Neon, *Connect* com
+Use a connection string **direta**, sem pooler: no console do Neon, _Connect_ com
 **Connection pooling** desligado (host sem `-pooler`). Flyway e Hikari dependem de estado de
 sessão que o PgBouncer em modo transaction não preserva.
 
 No Render, configure:
 
-| Variável        | Valor                                                               |
-| --------------- | ------------------------------------------------------------------- |
-| `DATABASE_URL`  | `jdbc:postgresql://HOST/BANCO?sslmode=require`                     |
-| `PGHOST`        | Host direto do Neon                                                 |
-| `PGDATABASE`    | Nome do banco                                                       |
-| `PGUSER`        | Usuário do Neon                                                     |
-| `PGPASSWORD`    | Senha do Neon                                                       |
+| Variável       | Valor                                          |
+| -------------- | ---------------------------------------------- |
+| `DATABASE_URL` | `jdbc:postgresql://HOST/BANCO?sslmode=require` |
+| `PGHOST`       | Host direto do Neon                            |
+| `PGDATABASE`   | Nome do banco                                  |
+| `PGUSER`       | Usuário do Neon                                |
+| `PGPASSWORD`   | Senha do Neon                                  |
 
 Não use `POSTGRES_URL_NO_SSL` em produção. As variáveis `POSTGRES_*` geradas por integrações
 da Vercel não precisam ser duplicadas: copie os dados para as variáveis acima.
@@ -97,7 +101,7 @@ extração OCR e geração de PDF não dependem de ferramentas instaladas fora d
 
 1. Configure o projeto com **Root Directory = `apps/web`**. Cada push publica o frontend; o
    `vercel.json` mantém o rewrite da SPA.
-2. Em *Settings → Environment Variables*, defina `VITE_API_URL=https://<domínio-da-api>` para
+2. Em _Settings → Environment Variables_, defina `VITE_API_URL=https://<domínio-da-api>` para
    Production (e Preview, se usar) e faça um redeploy. A variável entra no build.
 3. No Render, `TAILORLY_CORS_ALLOWED_ORIGINS` deve incluir o domínio da Vercel e, se necessário,
    os previews (`https://tailorly-*.vercel.app`).

@@ -1,8 +1,8 @@
+import type { AuthMode } from "@@types/auth";
 import { Button } from "@animate/buttons/button";
-import { ApiClientError } from "@lib/api/client";
+import { ApiClientError } from "@api/client";
 import { Eye, EyeOff } from "@react-zero-ui/icon-sprite";
 import { type SubmitEvent, useId, useState } from "react";
-import type { AuthMode } from "@/types/auth";
 
 function getErrorMessage(error: unknown) {
   if (error instanceof ApiClientError || error instanceof Error) {

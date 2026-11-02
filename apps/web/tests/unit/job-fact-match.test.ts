@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { JobAnalysis } from "../../src/lib/api/generated/model";
+import type { JobAnalysis } from "@api/generated/model";
 import {
   type MatchableFact,
   type MatchableRecord,
@@ -8,7 +8,7 @@ import {
   normalizeForMatch,
   relevanceForFact,
   verifiableMatches,
-} from "../../src/utils/job-fact-match";
+} from "@utils/job/job-fact-match";
 
 function fact(
   id: string,

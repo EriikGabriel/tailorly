@@ -40,6 +40,19 @@ public class FixedWindowRateLimiter {
     return window.count <= limit;
   }
 
+  /** Se a chave já atingiu o limite na janela atual, sem consumir uma nova tentativa. */
+  public boolean isExceeded(String key) {
+    Window window = windows.get(key);
+    return window != null
+        && clock.getAsLong() - window.start < windowMillis
+        && window.count >= limit;
+  }
+
+  /** Zera a contagem da chave (por exemplo, depois de um login bem-sucedido). */
+  public void reset(String key) {
+    windows.remove(key);
+  }
+
   /** Segundos até a janela atual da chave terminar (mínimo 1). */
   public long retryAfterSeconds(String key) {
     Window window = windows.get(key);

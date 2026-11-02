@@ -1,4 +1,4 @@
-import type { CvGenerationResponse } from "@lib/api/generated/model";
+import type { CvGenerationResponse } from "@api/generated/model";
 import { useBundledCvTemplate } from "@queries/cv-generation";
 import { useEffect, useMemo, useState } from "react";
 import { formatTypstTemplate } from "../-utils/format-typst";

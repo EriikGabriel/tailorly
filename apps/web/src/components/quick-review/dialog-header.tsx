@@ -1,14 +1,14 @@
-import { Button } from "@components/ui/animate/buttons/button";
+import { Button } from "@animate/buttons/button";
 import {
   DialogDescription,
   DialogTitle,
-} from "@components/ui/animate/primitives/base/dialog";
+} from "@animate/primitives/base/dialog";
 import { ListTodo, X } from "@react-zero-ui/icon-sprite";
 import {
   quickReviewCounter,
   quickReviewDescription,
   quickReviewHeading,
-} from "@/utils/quick-review-copy";
+} from "@utils/review/quick-review-copy";
 
 /** Cabeçalho do diálogo: título (muda com a priorização), contador de pendências e botão de fechar. */
 export function DialogHeader({

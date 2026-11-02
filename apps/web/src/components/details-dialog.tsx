@@ -1,4 +1,4 @@
-import { Button } from "@components/ui/animate/buttons/button";
+import { Button } from "@animate/buttons/button";
 import {
   Dialog,
   DialogBackdrop,
@@ -6,7 +6,7 @@ import {
   DialogPopup,
   DialogPortal,
   DialogTitle,
-} from "@components/ui/animate/primitives/base/dialog";
+} from "@animate/primitives/base/dialog";
 import { X } from "@react-zero-ui/icon-sprite";
 import type { ReactNode } from "react";
 

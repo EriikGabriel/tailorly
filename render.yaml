@@ -17,6 +17,9 @@ services:
         value: >-
           -Xmx256m -Xss512k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m
           -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:+ExitOnOutOfMemoryError
+      # O Render termina o TLS e repassa X-Forwarded-For: sem isso os limites por IP veem o IP do proxy.
+      - key: TAILORLY_FORWARD_HEADERS_STRATEGY
+        value: native
       - key: TAILORLY_TOMCAT_MAX_THREADS
         value: "20"
       - key: TAILORLY_DB_POOL_SIZE

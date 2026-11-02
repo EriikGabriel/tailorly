@@ -1,4 +1,5 @@
-import { apiErrorMessage } from "@lib/api/error-message";
+import { apiErrorMessage } from "@api/error-message";
+import { diligenceFactors, diligenceGroups } from "@constants/due-diligence";
 import { useDueDiligence } from "@queries/due-diligence";
 import {
   Building2,
@@ -10,9 +11,8 @@ import {
   ScanSearch,
   TriangleAlert,
 } from "@react-zero-ui/icon-sprite";
+import { formatDate } from "@utils/date-format";
 import type { ComponentType } from "react";
-import { diligenceFactors, diligenceGroups } from "@/constants/due-diligence";
-import { formatDate } from "@/utils/date-format";
 import { FactorCard } from "./factor-card";
 
 function Stat({

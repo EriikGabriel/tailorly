@@ -1,6 +1,6 @@
 import type { FactRecord } from "@@types/base-review";
-import type { ExtractedPageResponse } from "@lib/api/generated/model/extractedPageResponse";
-import { formatFactValue } from "@/utils/fact-display";
+import type { ExtractedPageResponse } from "@api/generated/model/extractedPageResponse";
+import { formatFactValue } from "@utils/review/fact-display";
 import type { EvidenceFact } from "../-types/evidence";
 import { parseFactFieldKey } from "./fact-field-key";
 

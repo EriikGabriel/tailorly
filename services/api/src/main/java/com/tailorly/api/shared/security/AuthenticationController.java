@@ -3,6 +3,8 @@ package com.tailorly.api.shared.security;
 import com.tailorly.api.user.UserService;
 import com.tailorly.api.user.dto.CreateUserRequest;
 import com.tailorly.api.user.dto.UserResponse;
+import com.tailorly.api.shared.ratelimit.LoginAttemptLimiter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +37,7 @@ public class AuthenticationController {
   private final AuthenticationManager authenticationManager;
   private final JwtTokenService jwtTokenService;
   private final RefreshTokenService refreshTokenService;
+  private final LoginAttemptLimiter loginAttempts;
 
   @PostMapping("/register")
   @ResponseStatus(HttpStatus.CREATED)
@@ -42,9 +46,17 @@ public class AuthenticationController {
   }
 
   @PostMapping("/login")
-  public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-    authenticationManager.authenticate(
-        UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
+  public LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
+    String ip = http.getRemoteAddr();
+    loginAttempts.checkAllowed(ip, request.email());
+    try {
+      authenticationManager.authenticate(
+          UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
+    } catch (AuthenticationException ex) {
+      loginAttempts.recordFailure(ip, request.email());
+      throw ex;
+    }
+    loginAttempts.recordSuccess(ip, request.email());
     UserResponse user = userService.findByEmailForAuthentication(request.email());
     String refreshToken = refreshTokenService.issue(user.id()).rawToken();
     return jwtTokenService.issue(user, refreshToken);

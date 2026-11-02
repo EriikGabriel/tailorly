@@ -21,7 +21,7 @@
  * </ul>
  *
  * <p>Para o fluxo de produto completo (Currículo Base como Ground Truth, versionamento,
- * pendências de revisão e sessões anônimas), veja o {@code README.md} na raiz do serviço e do
- * monorepo — esta Javadoc documenta apenas o que já está implementado.</p>
+ * pendências de revisão e sessões anônimas), veja {@code docs/product/ground-truth.md} (raiz do monorepo) e a pasta
+ * {@code services/api/docs} — esta Javadoc documenta apenas o que já está implementado.</p>
  */
 package com.tailorly.api;

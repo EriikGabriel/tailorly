@@ -5,7 +5,7 @@ import {
   ClipboardCheck,
   GraduationCap,
 } from "@react-zero-ui/icon-sprite";
-import { formatPeriod, isCurrentStatus } from "@/utils/review-format";
+import { formatPeriod, isCurrentStatus } from "@utils/review/review-format";
 import { SectionCard } from "./section-card";
 
 export function GroundTruthPrincipalSection() {

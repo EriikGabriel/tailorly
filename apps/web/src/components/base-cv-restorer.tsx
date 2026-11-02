@@ -1,8 +1,5 @@
-import {
-  baseDocumentFile,
-  baseVersionFindByOwner,
-} from "@lib/api/base-restore";
-import { baseDocumentFindById } from "@lib/api/generated/tailorly";
+import { baseDocumentFile, baseVersionFindByOwner } from "@api/base-restore";
+import { baseDocumentFindById } from "@api/generated/tailorly";
 import { useViewer } from "@queries/cv-generation";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useEffect, useRef } from "react";

@@ -1,4 +1,4 @@
-import { apiRequest } from "@lib/api/client";
+import { apiRequest } from "@api/client";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { useViewer } from "./cv-generation";
 

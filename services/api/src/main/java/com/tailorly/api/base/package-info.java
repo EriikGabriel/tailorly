@@ -1,7 +1,7 @@
 /**
  * Currículo Base: o arquivo enviado pelo usuário e suas versões, fonte dos fatos pessoais e
  * profissionais que alimentam a geração de currículos (o template Typst controla apenas a
- * apresentação — veja "Decisão de produto" no {@code README.md} do monorepo).
+ * apresentação — veja {@code docs/product/ground-truth.md}).
  *
  * <p>O domínio é dividido em dois subpacotes para refletir dois agregados distintos:</p>
  * <ul>

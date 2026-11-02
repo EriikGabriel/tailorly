@@ -1,6 +1,6 @@
-import type { JobPostingDetailResponse } from "@lib/api/generated/model";
+import type { JobPostingDetailResponse } from "@api/generated/model";
 import { useJobPostingStore } from "@stores/job-posting-store";
-import { formatDate } from "@/utils/date-format";
+import { formatDate } from "@utils/date-format";
 
 /** Seletor de versão da vaga; só aparece quando há mais de uma versão salva. */
 export function VersionPicker({

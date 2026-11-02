@@ -1,4 +1,8 @@
 import {
+  type InterpretationProvider,
+  interpretationProviderOptions,
+} from "@constants/ai-providers";
+import {
   Bot,
   CircleCheck,
   HardDrive,
@@ -7,10 +11,6 @@ import {
 } from "@react-zero-ui/icon-sprite";
 import { motion, useReducedMotion } from "motion/react";
 import type { ComponentType } from "react";
-import {
-  type InterpretationProvider,
-  interpretationProviderOptions,
-} from "@/constants/ai-providers";
 
 const providerIcons: Record<
   InterpretationProvider,

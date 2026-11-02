@@ -1,4 +1,3 @@
-import { create } from "zustand";
 import {
   createReviewDraft,
   type DraftCollection,
@@ -6,7 +5,8 @@ import {
   type DraftRecord,
   type ReviewDraft,
   type ReviewStepId,
-} from "../types/review-model";
+} from "@@types/review-model";
+import { create } from "zustand";
 
 interface ReviewDraftState {
   sourceId: string | null;

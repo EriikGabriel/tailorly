@@ -1,8 +1,8 @@
 import type {
   JobPostingDetailResponse,
   JobPostingVersionResponse,
-} from "@lib/api/generated/model";
-import { formatDate } from "@/utils/date-format";
+} from "@api/generated/model";
+import { formatDate } from "@utils/date-format";
 import { DueDiligenceStatus } from "./due-diligence-status";
 import { VersionPicker } from "./version-picker";
 

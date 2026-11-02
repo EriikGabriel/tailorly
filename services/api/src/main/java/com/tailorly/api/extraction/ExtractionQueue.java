@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Orquestra o ciclo de vida de uma {@link ExtractionRun}: enfileirar, reivindicar para
  * processamento ({@link ExtractionWorker}), concluir com as páginas extraídas ou falhar.
  *
- * <p>Os métodos transacionais implementam as regras de fila descritas no README da API:</p>
+ * <p>Os métodos transacionais implementam as regras de fila descritas em {@code services/api/docs/extraction.md}:</p>
  * <ul>
  *   <li>{@link #enqueue} reaproveita uma execução {@code QUEUED}/{@code PROCESSING}/
  *       {@code COMPLETED} com o mesmo fingerprint do pipeline, evitando duplicar trabalho em

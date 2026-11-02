@@ -1,0 +1,21 @@
+# Documentos, versões e storage
+
+Os metadados de storage podem ser registrados e consultados em `/api/stored-objects` (também disponível sob `/v1/stored-objects`). O cadastro exige `ownerId`, `purpose`, `storageKey`, `contentHash`, `mimeType` e `sizeBytes`; `expiresAt` é opcional e `deletionStatus` assume `ACTIVE` quando omitido. Essas operações exigem autenticação e só permitem acesso ao owner da própria conta ou a administradores.
+
+O cadastro de documento apenas por metadados permanece disponível como operação interna do serviço, sem rota HTTP pública. O fluxo HTTP de criação usa o upload abaixo para garantir que o arquivo seja gravado no storage.
+
+`POST /v1/base-documents/upload` (também `/api/base-documents/upload`) recebe `multipart/form-data` com `ownerId` e `file`. Exige Bearer e owner de conta pertencente ao usuário. A API valida um PDF não vazio de até 7 MiB, calcula SHA-256 dos bytes e procura um documento com o mesmo hash **no mesmo owner**. Um arquivo novo é gravado no bucket privado em `owners/{ownerId}/originals/{uuid}.pdf` e registrado em `stored_objects` e `base_documents`. Ainda na transação do upload, a API cria a versão `CANDIDATE` com próximo número do owner ou recupera a versão existente do mesmo documento. A resposta `201` inclui `document`, `reused`, `version` e `versionReused`. O nome original serve apenas como metadado; não define a chave do objeto. O upload não executa OCR nem aprova um snapshot. A requisição multipart completa tem limite de 8 MiB para incluir campos e cabeçalhos.
+
+O owner é bloqueado durante a operação para serializar uploads da mesma conta. Reenvio idêntico reutiliza documento, versão e execução compatível; marca `temporalReviewRequired: true` para revisão dos fatos temporais. O snapshot ativo não é alterado pelo upload. Versões legadas duplicadas podem existir; o upload recupera a de maior número sem criar outra. A extração estruturada é feita pelo worker (veja "Formato dos fatos extraídos").
+
+Se o banco registrar um documento idêntico mas o original não existir no storage, a rota retorna `409` em vez de reutilizar metadados sem arquivo. Uma falha na transação de registro dispara uma tentativa de remover o arquivo recém-enviado; a API registra no log caso essa compensação falhe.
+
+O serviço depende da interface `ObjectStorage`; o adaptador atual usa S3. Para apontar ao Cloudflare R2, configure endpoint, região e credenciais correspondentes. Mantenha o bucket privado. `POST /v1/stored-objects` continua sendo uma rota de metadados: ela não grava bytes nem verifica a presença do objeto no storage. `PATCH /v1/stored-objects/{id}/deletion-status` só altera metadados e **não apaga o arquivo**.
+
+Também é possível consultar documentos por owner em `GET /api/base-documents/owner/{ownerId}` ou por hash em `GET /api/base-documents/hash/{contentHash}`. A consulta global por hash exige administrador e retorna conflito quando o hash aparece em mais de um owner.
+
+Uma versão pode ser consultada em `GET /api/base-versions/{id}` (ou `/v1/base-versions/{id}`); `GET /v1/base-versions/owner/{ownerId}` lista as versões do owner (da mais nova à mais antiga) e `GET /v1/base-documents/{id}/file` devolve o PDF original, para a interface retomar a revisão depois de recarregar a página. As rotas públicas de criação e alteração livre de status foram removidas: número e status da candidata pertencem ao servidor. A revisão e a aprovação agora usam operações de domínio; somente a aprovação troca o snapshot ativo.
+
+O upload enfileira automaticamente uma extração na mesma transação do documento/versão. `POST /v1/extraction-runs` aceita somente `{ "baseVersionId": "..." }` e retorna `202` com uma execução nova ou reutilizada. Use essa operação para tentar novamente após uma falha. Fingerprint, versões do pipeline, status e resultados são definidos pelo servidor. As rotas de alteração livre de status e de registro manual de páginas foram removidas.
+
+Consulte `GET /v1/extraction-runs/version/{baseVersionId}` para as execuções, da mais recente à mais antiga; `GET /v1/extraction-runs/{id}` para o status; `GET /v1/extracted-pages/run/{extractionRunId}` para páginas e métodos; e `GET /v1/extracted-pages/{id}/text` para texto UTF-8. Todas exigem acesso ao owner. Os aliases `/api` continuam disponíveis.

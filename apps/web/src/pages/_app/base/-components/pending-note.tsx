@@ -1,5 +1,5 @@
+import type { ReviewIssue } from "@@types/review";
 import { BadgeAlert } from "@react-zero-ui/icon-sprite";
-import type { ReviewIssue } from "@/types/review";
 import { usePendingFields } from "../-hooks/use-pending-fields";
 
 /**

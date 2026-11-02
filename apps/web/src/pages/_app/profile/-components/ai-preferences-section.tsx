@@ -1,9 +1,9 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
+import { useAiPreferences } from "@queries/ai-preferences";
 import { Cpu, RefreshCw, Sparkles } from "@react-zero-ui/icon-sprite";
 import { useProfileSettingsStore } from "@stores/profile-settings-store";
 import { useReducedMotion } from "motion/react";
 import { useEffect, useId, useState } from "react";
-import { useAiPreferences } from "@/queries/ai-preferences";
 import { AiConnectionParametersCard } from "./ai-connection-parameters-card";
 import { AiDueDiligencePreviewCard } from "./ai-due-diligence-preview-card";
 import { AiFallbackCard } from "./ai-fallback-card";

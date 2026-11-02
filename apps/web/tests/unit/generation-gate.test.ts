@@ -3,8 +3,8 @@ import test from "node:test";
 import {
   extractionState,
   generationBlockReason,
-} from "../../src/utils/generation-gate";
-import { checkJobUrl } from "../../src/utils/job-url";
+} from "@utils/generation/generation-gate";
+import { checkJobUrl } from "@utils/job/job-url";
 
 const base = { hasFile: true, versionId: "v1", queryFailed: false };
 

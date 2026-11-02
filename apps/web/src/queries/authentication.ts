@@ -3,14 +3,14 @@ import type {
   CurrentAccountResponse,
   LoginRequest,
   LoginResponse,
-} from "@lib/api/generated/model";
+} from "@api/generated/model";
 import {
   authenticationLogin,
   authenticationLogout,
   authenticationRegister,
   currentAccountCurrent,
-} from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+} from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import { useAuthStore } from "@stores/auth-store";
 import { resetClientState } from "@stores/reset-client-state";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

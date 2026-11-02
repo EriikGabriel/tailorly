@@ -1,21 +1,21 @@
+import type { ReviewCategory, ReviewIssue } from "@@types/review";
 import {
   Dialog,
   DialogBackdrop,
   DialogPopup,
   DialogPortal,
-} from "@components/ui/animate/primitives/base/dialog";
+} from "@animate/primitives/base/dialog";
 import { useQuickReview } from "@hooks/use-quick-review";
 import { IconExclamationMark } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useQuickReviewStore } from "@stores/quick-review-store";
-import type { ReviewCategory, ReviewIssue } from "@/types/review";
 import {
   fullReviewNotice,
   otherPendingNotice,
   quickReviewEmptyMessage,
   quickReviewListLabel,
   unprioritizedNotice,
-} from "@/utils/quick-review-copy";
+} from "@utils/review/quick-review-copy";
 import { DialogFooter } from "./dialog-footer";
 import { DialogHeader } from "./dialog-header";
 import { EvidenceSection } from "./evidence-section";

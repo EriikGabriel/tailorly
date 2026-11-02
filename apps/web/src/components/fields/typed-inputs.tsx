@@ -10,7 +10,7 @@ import {
   describeLink,
   formatPhone,
   type LinkKind,
-} from "@/utils/review-format";
+} from "@utils/review/review-format";
 import { IconInput, type IconInputProps } from "./icon-input";
 
 type TypedProps = Omit<IconInputProps, "icon" | "type" | "inputMode">;

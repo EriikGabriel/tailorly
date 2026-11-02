@@ -1,5 +1,5 @@
+import type { ReviewAnswer, ReviewAnswers, ReviewIssue } from "@@types/review";
 import { create } from "zustand";
-import type { ReviewAnswer, ReviewAnswers, ReviewIssue } from "../types/review";
 
 interface QuickReviewState {
   open: boolean;

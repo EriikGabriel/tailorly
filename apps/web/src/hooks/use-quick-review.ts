@@ -1,17 +1,17 @@
-import { ApiClientError } from "@lib/api/client";
-import { apiErrorMessage } from "@lib/api/error-message";
+import type { ReviewAnswer, ReviewIssue } from "@@types/review";
+import { ApiClientError } from "@api/client";
+import { apiErrorMessage } from "@api/error-message";
 import { useGenerateCv } from "@queries/cv-generation";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useJobDraftStore } from "@stores/job-draft-store";
 import { useQuickReviewStore } from "@stores/quick-review-store";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import type { ReviewAnswer, ReviewIssue } from "@/types/review";
 import {
   isReviewIssueComplete,
   MAX_DIALOG_ISSUES,
   selectQuickReviewIssues,
-} from "@/utils/review-issues";
+} from "@utils/review/review-issues";
+import { useEffect, useState } from "react";
 import { useReviewIssues, useSubmitReviewAnswers } from "./use-review-issues";
 
 type UseQuickReviewInput = {

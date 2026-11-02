@@ -1,5 +1,5 @@
-import { apiRequest } from "@lib/api/client";
-import { apiQueryKeys } from "@lib/api/query-keys";
+import { apiRequest } from "@api/client";
+import { apiQueryKeys } from "@api/query-keys";
 import { useCurrentAccount } from "@queries/current-account";
 import { useViewer } from "@queries/cv-generation";
 import {
@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-query";
 
 /**
- * Evidências complementares (ver README, "Enriquecimento da geração"). São detalhes encontrados
+ * Evidências complementares (ver docs/product/enrichment.md). São detalhes encontrados
  * nos links do Currículo Base; só as confirmadas pela pessoa podem entrar no currículo.
  * Chamadas escritas à mão porque o cliente gerado ainda não inclui estas rotas.
  */

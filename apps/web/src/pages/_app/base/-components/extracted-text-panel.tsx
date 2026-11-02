@@ -1,5 +1,5 @@
 import { Button } from "@animate/buttons/button";
-import type { ExtractedPageResponse } from "@lib/api/generated/model/extractedPageResponse";
+import type { ExtractedPageResponse } from "@api/generated/model/extractedPageResponse";
 import { useExtractedPageText } from "@queries/base-review";
 import { FileText, ScanLine } from "@react-zero-ui/icon-sprite";
 import { useEffect, useState } from "react";

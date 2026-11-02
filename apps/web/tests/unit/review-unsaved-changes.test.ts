@@ -1,10 +1,10 @@
+import { createReviewDraft } from "@@types/review-model";
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
 import {
   hasUnsavedReviewChanges,
   useReviewDraftStore as store,
-} from "../../src/stores/review-draft-store";
-import { createReviewDraft } from "../../src/types/review-model";
+} from "@stores/review-draft-store";
 
 function unsaved() {
   return hasUnsavedReviewChanges(store.getState());

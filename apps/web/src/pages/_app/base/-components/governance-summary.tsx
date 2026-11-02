@@ -3,7 +3,10 @@ import { useBaseReview } from "@queries/base-review";
 import { useActiveGroundTruth } from "@queries/ground-truth";
 import { FileText, ListChecks, Shield } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
-import { integrityState, summarizeGovernance } from "@/utils/base-governance";
+import {
+  integrityState,
+  summarizeGovernance,
+} from "@utils/review/base-governance";
 import { formatFileSizeKb } from "../-utils/file-status";
 import { GovernanceCard } from "./governance-card";
 

@@ -1,5 +1,5 @@
-import { apiErrorMessage } from "@lib/api/error-message";
-import type { CvGenerationResponse } from "@lib/api/generated/model";
+import { apiErrorMessage } from "@api/error-message";
+import type { CvGenerationResponse } from "@api/generated/model";
 import {
   downloadCvFile,
   useGenerateCv,

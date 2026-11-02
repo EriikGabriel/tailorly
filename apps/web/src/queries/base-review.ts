@@ -5,24 +5,21 @@ import type {
   FactRecord,
   GroundTruthSnapshot,
 } from "@@types/base-review";
-import { apiRequest } from "@lib/api/client";
-import {
-  apiErrorMessage,
-  SESSION_EXPIRED_MESSAGE,
-} from "@lib/api/error-message";
+import { apiRequest } from "@api/client";
+import { apiErrorMessage, SESSION_EXPIRED_MESSAGE } from "@api/error-message";
 import {
   extractedPageFindAllByRunId,
   extractedPageReadText,
   extractionRunFindByVersion,
-} from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+} from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
 import {
   extractionJustCompleted,
   extractionRunInterval,
   interpretationRefetchInterval,
-} from "@/utils/extraction-polling";
+} from "@utils/extraction/extraction-polling";
+import { useEffect, useRef } from "react";
 import { useApiToken } from "./api-credential";
 
 // Centraliza as mutações da revisão para invalidar os dados exibidos na tela.

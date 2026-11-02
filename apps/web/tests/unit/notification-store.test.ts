@@ -3,8 +3,8 @@ import { beforeEach, test } from "node:test";
 import {
   notify,
   useNotificationStore as store,
-} from "../../src/stores/notification-store";
-import { resetClientState } from "../../src/stores/reset-client-state";
+} from "@stores/notification-store";
+import { resetClientState } from "@stores/reset-client-state";
 
 beforeEach(() => store.getState().clear());
 

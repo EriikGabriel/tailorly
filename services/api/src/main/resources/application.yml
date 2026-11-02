@@ -7,6 +7,10 @@ server:
   # Render injeta PORT; localmente continua 8080.
   port: ${PORT:8080}
   shutdown: graceful
+  # Atrás de um proxy reverso (Render), `native` faz o Tomcat usar X-Forwarded-For/Proto de proxies
+  # internos para que getRemoteAddr() seja o cliente real; sem isso todos os limites por IP
+  # enxergam o IP do proxy. Localmente (sem proxy) deixe `none`, senão o cabeçalho seria forjável.
+  forward-headers-strategy: ${TAILORLY_FORWARD_HEADERS_STRATEGY:none}
   tomcat:
     threads:
       max: ${TAILORLY_TOMCAT_MAX_THREADS:200}
@@ -67,6 +71,19 @@ springdoc:
     enabled: ${TAILORLY_API_DOCS_ENABLED:true}
     display-operation-id: true
 tailorly:
+  # Limites de taxa por IP (login, cadastro, teto geral) e por dono (rotas que gastam IA/CPU); os do
+  # acesso anônimo ficam em tailorly.anonymous. Contadores em memória, locais a cada instância.
+  rate-limit:
+    enabled: ${TAILORLY_RATE_LIMIT_ENABLED:true}
+    ip-requests-per-minute: ${TAILORLY_RATE_LIMIT_IP_PER_MINUTE:600}
+    auth-per-minute: ${TAILORLY_RATE_LIMIT_AUTH_PER_MINUTE:30}
+    register-per-hour: ${TAILORLY_RATE_LIMIT_REGISTER_PER_HOUR:10}
+    login-failures-per-ip-and-email: ${TAILORLY_RATE_LIMIT_LOGIN_FAILURES_PER_IP_EMAIL:5}
+    login-failures-per-email: ${TAILORLY_RATE_LIMIT_LOGIN_FAILURES_PER_EMAIL:20}
+    login-failure-window: ${TAILORLY_RATE_LIMIT_LOGIN_FAILURE_WINDOW:PT15M}
+    account-requests-per-minute: ${TAILORLY_RATE_LIMIT_ACCOUNT_PER_MINUTE:600}
+    heavy-per-minute: ${TAILORLY_RATE_LIMIT_HEAVY_PER_MINUTE:15}
+    preview-per-minute: ${TAILORLY_RATE_LIMIT_PREVIEW_PER_MINUTE:60}
   extraction:
     enabled: ${TAILORLY_EXTRACTION_ENABLED:true}
     tesseract-command: ${TAILORLY_TESSERACT_COMMAND:tesseract}

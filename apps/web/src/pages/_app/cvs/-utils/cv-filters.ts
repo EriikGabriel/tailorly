@@ -1,5 +1,8 @@
-import type { CvGenerationResponse } from "@lib/api/generated/model";
-import { ATS_ACCEPTABLE_SCORE, ATS_TARGET_SCORE } from "@/utils/ats-score";
+import type { CvGenerationResponse } from "@api/generated/model";
+import {
+  ATS_ACCEPTABLE_SCORE,
+  ATS_TARGET_SCORE,
+} from "@utils/generation/ats-score";
 
 export type AtsBand = "all" | "great" | "acceptable" | "low" | "none";
 export type PeriodFilter = "all" | "7" | "30" | "90";

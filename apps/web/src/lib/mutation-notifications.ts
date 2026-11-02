@@ -1,5 +1,5 @@
+import { type Notice, notify } from "@stores/notification-store";
 import type { QueryClient } from "@tanstack/react-query";
-import { type Notice, notify } from "@/stores/notification-store";
 
 /**
  * Como uma mutação avisa que terminou. `success`/`error` devolvem o aviso, ou `null` para não avisar.

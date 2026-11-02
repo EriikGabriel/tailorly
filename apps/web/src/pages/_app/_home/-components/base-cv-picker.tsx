@@ -1,11 +1,11 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
+import { ExtractionProgress } from "@app/base/-components/extraction-progress";
 import { AnonymousNotice } from "@components/anonymous-notice";
 import { useSelectBaseDocumentFile } from "@queries/base-document";
 import { FileText, FileUp, RefreshCw } from "@react-zero-ui/icon-sprite";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
-import { ExtractionProgress } from "../../base/-components/extraction-progress";
 
 export function BaseCvPicker() {
   const reducedMotion = useReducedMotion();

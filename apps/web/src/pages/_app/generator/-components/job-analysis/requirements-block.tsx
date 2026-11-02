@@ -1,4 +1,4 @@
-import type { JobAnalysis, JobPostingResponse } from "@lib/api/generated/model";
+import type { JobAnalysis, JobPostingResponse } from "@api/generated/model";
 import { groupRequirements } from "../../-utils/job-requirements";
 import { RequirementList } from "./requirement-list";
 

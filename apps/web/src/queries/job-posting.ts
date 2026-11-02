@@ -1,9 +1,9 @@
 import type { AnalyzeResult, JobPostingInput } from "@@types/job-posting";
-import { ApiClientError } from "@lib/api/client";
+import { ApiClientError } from "@api/client";
 import type {
   JobPostingDetailResponse,
   JobPostingVersionResponse,
-} from "@lib/api/generated/model";
+} from "@api/generated/model";
 import {
   jobPostingCreate,
   jobPostingDelete,
@@ -11,8 +11,8 @@ import {
   jobPostingFindByOwner,
   jobPostingFindVersion,
   jobPostingReanalyze,
-} from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+} from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import {
   isAnonymousSessionActive,
   useAnonymousSessionStore,
@@ -25,9 +25,9 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { jobPostingInputError } from "@utils/job/job-posting-input";
+import { notices } from "@utils/notice-messages";
 import { useEffect } from "react";
-import { jobPostingInputError } from "@/utils/job-posting-input";
-import { notices } from "@/utils/notice-messages";
 import {
   type ApiCredential,
   ensureCredential,

@@ -1,7 +1,7 @@
 import { useActiveGroundTruth } from "@queries/ground-truth";
 import { ArrowRight, IdCard } from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
-import { describeLink, formatPhone } from "@/utils/review-format";
+import { describeLink, formatPhone } from "@utils/review/review-format";
 import { SectionCard } from "./section-card";
 
 export function IdentitySection() {

@@ -10,13 +10,13 @@ import {
   AlertDialogTrigger,
 } from "@animate/base/alert-dialog";
 import { Button } from "@animate/buttons/button";
-import { apiErrorMessage } from "@lib/api/error-message";
+import { apiErrorMessage } from "@api/error-message";
 import {
   useDeleteDueDiligence,
   useDueDiligenceHistory,
 } from "@queries/due-diligence";
 import { History, X } from "@react-zero-ui/icon-sprite";
-import { formatDate } from "@/utils/date-format";
+import { formatDate } from "@utils/date-format";
 
 interface DueDiligenceHistoryProps {
   selectedId: string | null;

@@ -1,7 +1,7 @@
-import { apiErrorMessage } from "@lib/api/error-message";
+import type { ReviewIssue } from "@@types/review";
+import { apiErrorMessage } from "@api/error-message";
+import { useSubmitReviewAnswers } from "@hooks/use-review-issues";
 import { useState } from "react";
-import { useSubmitReviewAnswers } from "@/hooks/use-review-issues";
-import type { ReviewIssue } from "@/types/review";
 
 /** Confirma o valor extraído de uma pendência ("Está correto") direto do campo da revisão. */
 export function useConfirmReviewIssue(baseVersionId: string) {

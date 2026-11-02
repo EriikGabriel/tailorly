@@ -1,3 +1,4 @@
+import type { AuthMode } from "@@types/auth";
 import {
   Dialog,
   DialogDescription,
@@ -19,7 +20,6 @@ import { UserRound } from "@react-zero-ui/icon-sprite";
 import { useAuthStore } from "@stores/auth-store";
 import { Link } from "@tanstack/react-router";
 import { type SubmitEvent, useState } from "react";
-import type { AuthMode } from "@/types/auth";
 import { AuthForm } from "./account/auth-form";
 
 interface AccountAccessProps {

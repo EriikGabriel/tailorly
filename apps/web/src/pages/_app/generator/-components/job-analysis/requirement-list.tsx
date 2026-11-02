@@ -1,4 +1,4 @@
-import type { Requirement } from "@lib/api/generated/model";
+import type { Requirement } from "@api/generated/model";
 import { REQUIREMENT_CATEGORY_LABELS } from "../../-constants/job-labels";
 import { Chip } from "./chip";
 

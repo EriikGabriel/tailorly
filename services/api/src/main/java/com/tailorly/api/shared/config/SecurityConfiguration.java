@@ -54,6 +54,16 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import com.tailorly.api.shared.ratelimit.AuthenticatedRateLimitFilter;
+import com.tailorly.api.shared.ratelimit.PublicEndpointRateLimitFilter;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -79,12 +89,20 @@ public class SecurityConfiguration {
   @Bean
   public SecurityFilterChain securityFilterChain(
       HttpSecurity http,
-      ObjectProvider<AnonymousSessionAuthenticationFilter> anonymousSessionFilter
+      ObjectProvider<AnonymousSessionAuthenticationFilter> anonymousSessionFilter,
+      ObjectProvider<PublicEndpointRateLimitFilter> publicRateLimitFilter,
+      ObjectProvider<AuthenticatedRateLimitFilter> authenticatedRateLimitFilter
   ) throws Exception {
+    // Ordem: limite por IP -> sessão anônima -> Bearer (JWT) -> limite por dono.
+    publicRateLimitFilter.ifAvailable(filter ->
+        http.addFilterBefore(filter, BearerTokenAuthenticationFilter.class));
     anonymousSessionFilter.ifAvailable(filter ->
         http.addFilterBefore(filter, BearerTokenAuthenticationFilter.class));
+    authenticatedRateLimitFilter.ifAvailable(filter ->
+        http.addFilterAfter(filter, BearerTokenAuthenticationFilter.class));
     return http
         .csrf(AbstractHttpConfigurer::disable)
+        .headers(SecurityConfiguration::securityHeaders)
         .cors(Customizer.withDefaults())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(exception -> exception
@@ -110,6 +128,29 @@ public class SecurityConfiguration {
             .authenticationEntryPoint(securityErrorHandler)
             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
         .build();
+  }
+
+  /**
+   * Cabeçalhos de segurança de uma API JSON. Os padrões do Spring Security (nosniff, sem cache,
+   * X-Frame-Options) ficam; acrescentamos HSTS por um ano (só enviado em HTTPS), política de
+   * referrer, permissões do navegador e uma CSP que proíbe qualquer carregamento de recursos, já que
+   * nenhuma resposta da API é uma página. A CSP não vale para o Swagger UI, que precisa de scripts.
+   */
+  private static void securityHeaders(HeadersConfigurer<HttpSecurity> headers) {
+    RequestMatcher docs = new OrRequestMatcher(
+        PathPatternRequestMatcher.withDefaults().matcher("/swagger-ui/**"),
+        PathPatternRequestMatcher.withDefaults().matcher("/swagger-ui.html"),
+        PathPatternRequestMatcher.withDefaults().matcher("/v3/api-docs/**"));
+    headers
+        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31_536_000))
+        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER))
+        .addHeaderWriter(new StaticHeadersWriter(
+            "Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()"))
+        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+            new NegatedRequestMatcher(docs),
+            new StaticHeadersWriter("Content-Security-Policy",
+                "default-src 'none'; frame-ancestors 'none'")));
   }
 
   /**

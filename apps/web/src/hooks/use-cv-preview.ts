@@ -1,4 +1,4 @@
-import { ApiClientError } from "@lib/api/client";
+import { ApiClientError } from "@api/client";
 import { previewCvPdf } from "@queries/cv-generation";
 import { useCallback, useEffect, useRef, useState } from "react";
 

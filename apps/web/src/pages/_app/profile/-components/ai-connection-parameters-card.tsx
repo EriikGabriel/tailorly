@@ -1,4 +1,8 @@
 import {
+  type RemoteProviderVendor,
+  remoteProviderVendors,
+} from "@constants/ai-providers";
+import {
   AlertTriangle,
   Bot,
   Brain,
@@ -11,13 +15,9 @@ import {
   Waypoints,
 } from "@react-zero-ui/icon-sprite";
 import { useProfileSettingsStore } from "@stores/profile-settings-store";
+import { isValidHttpUrl } from "@utils/ai-preferences";
 import type { ComponentType } from "react";
 import { useMemo, useState } from "react";
-import {
-  type RemoteProviderVendor,
-  remoteProviderVendors,
-} from "@/constants/ai-providers";
-import { isValidHttpUrl } from "@/utils/ai-preferences";
 import { FieldLabel } from "./section-card";
 
 const vendorIcons: Record<

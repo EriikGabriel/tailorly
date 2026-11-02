@@ -63,7 +63,7 @@ jobs:
       - name: Run API tests against Postgres
         working-directory: services/api
         env:
-          # Banco dedicado e descartável, igual ao uso local documentado no README da API: não
+          # Banco dedicado e descartável, igual ao uso local documentado em docs/development.md: não
           # pode ser o mesmo `tailorly` usado pelo datasource padrão, porque contextos Spring que
           # carregam `ddl-auto: create` recriam o schema e colidem com os dados dos testes de
           # integração (chaves duplicadas, colunas sem o default do Flyway, cotas já consumidas).

@@ -1,5 +1,5 @@
 import type { FactRecord } from "@@types/base-review";
-import { apiErrorMessage } from "@lib/api/error-message";
+import { apiErrorMessage } from "@api/error-message";
 import {
   type BaseReviewQueries,
   useAnswerReviewIssue,

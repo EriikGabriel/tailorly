@@ -1,10 +1,10 @@
-import type { AnonymousMigrationResponse } from "@lib/api/generated/model";
+import type { AnonymousMigrationResponse } from "@api/generated/model";
 import {
   anonymousSessionCurrent,
   anonymousSessionEnd,
   anonymousSessionMigrate,
-} from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+} from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import {
   isAnonymousSessionActive,
   useAnonymousSessionStore,

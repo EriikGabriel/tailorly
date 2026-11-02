@@ -1,4 +1,4 @@
-import { apiErrorMessage } from "@lib/api/error-message";
+import { apiErrorMessage } from "@api/error-message";
 import {
   type BaseReviewQueries,
   useApproveGroundTruth,
@@ -8,8 +8,8 @@ import { useAutoCollectSupplementaryEvidence } from "@queries/supplementary-evid
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useJobDraftStore } from "@stores/job-draft-store";
 import { useNavigate } from "@tanstack/react-router";
+import { hasJobTarget } from "@utils/job/job-draft";
 import { useState } from "react";
-import { hasJobTarget } from "@/utils/job-draft";
 import { hasBlockingIssues } from "../-utils/review-draft-persistence";
 
 type UseApproveGroundTruthInput = {

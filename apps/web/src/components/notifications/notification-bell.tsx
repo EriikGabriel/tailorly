@@ -12,13 +12,13 @@ import {
   Trash2,
   X,
 } from "@react-zero-ui/icon-sprite";
-import { Link } from "@tanstack/react-router";
-import { motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
 import {
   type AppNotification,
   useNotificationStore,
-} from "@/stores/notification-store";
+} from "@stores/notification-store";
+import { Link } from "@tanstack/react-router";
+import { motion, useReducedMotion } from "motion/react";
+import { useState } from "react";
 import { notificationStyle } from "./notification-style";
 
 const relative = new Intl.RelativeTimeFormat("pt-BR", { numeric: "auto" });

@@ -16,7 +16,7 @@ import {
   Link as LinkIcon,
 } from "@react-zero-ui/icon-sprite";
 import { useJobDraftStore } from "@stores/job-draft-store";
-import { checkJobUrl, MAX_JOB_URL_LENGTH } from "@/utils/job-url";
+import { checkJobUrl, MAX_JOB_URL_LENGTH } from "@utils/job/job-url";
 import { JobAnalysisCard } from "./job-analysis-card";
 import { SectionHeading } from "./section-heading";
 

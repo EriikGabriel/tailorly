@@ -1,10 +1,10 @@
 import { X } from "@react-zero-ui/icon-sprite";
-import { Link } from "@tanstack/react-router";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   type AppNotification,
   useNotificationStore,
-} from "@/stores/notification-store";
+} from "@stores/notification-store";
+import { Link } from "@tanstack/react-router";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { notificationStyle } from "./notification-style";
 
 const DURATION_MS = {

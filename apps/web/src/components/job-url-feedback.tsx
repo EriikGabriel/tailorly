@@ -1,5 +1,5 @@
+import type { JobUrlCheck } from "@utils/job/job-url";
 import { useEffect, useState } from "react";
-import type { JobUrlCheck } from "@/utils/job-url";
 
 const URL_ERROR_DELAY_MS = 350;
 

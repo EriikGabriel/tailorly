@@ -1,10 +1,10 @@
-import { ApiClientError, apiBlob, apiRequest } from "@lib/api/client";
-import { SESSION_EXPIRED_MESSAGE } from "@lib/api/error-message";
+import { ApiClientError, apiBlob, apiRequest } from "@api/client";
+import { SESSION_EXPIRED_MESSAGE } from "@api/error-message";
 import type {
   AtsReview,
   CvGenerationResponse,
   CvTemplateResponse,
-} from "@lib/api/generated/model";
+} from "@api/generated/model";
 import {
   cvGenerationDelete,
   cvGenerationFindById,
@@ -15,8 +15,8 @@ import {
   cvTemplateSave,
   getCvGenerationDownloadUrl,
   getCvGenerationPreviewUrl,
-} from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+} from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import {
   isAnonymousSessionActive,
   useAnonymousSessionStore,
@@ -32,8 +32,8 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { notices } from "@utils/notice-messages";
 import { useEffect } from "react";
-import { notices } from "@/utils/notice-messages";
 import { ensureCredential, tokenForOwnerKind } from "./api-credential";
 import { useCurrentOwnerId } from "./current-account";
 

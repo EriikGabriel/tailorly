@@ -5,8 +5,8 @@ import {
   TabsPanels,
   TabsTab,
 } from "@animate/base/tabs";
+import type { CvGenerationResponse } from "@api/generated/model";
 import { AnimatedBar } from "@components/animated-bar";
-import type { CvGenerationResponse } from "@lib/api/generated/model";
 import { AtsReviewDetails } from "./ats-review-section";
 
 const aiStatusLabel: Record<string, string> = {

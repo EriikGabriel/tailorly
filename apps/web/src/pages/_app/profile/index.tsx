@@ -1,4 +1,4 @@
-import { ApiClientError } from "@lib/api/client";
+import { ApiClientError } from "@api/client";
 import { currentAccountQueryOptions } from "@queries/current-account";
 import { useAuthStore } from "@stores/auth-store";
 import { resetClientState } from "@stores/reset-client-state";

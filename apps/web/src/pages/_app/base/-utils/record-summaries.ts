@@ -4,7 +4,7 @@ import {
   formatPartialDate,
   formatPeriod,
   isCurrentStatus,
-} from "@/utils/review-format";
+} from "@utils/review/review-format";
 import type { RecordSummary } from "../-types/record-summary";
 
 const clean = (value: string | undefined) => (value ?? "").trim();

@@ -7,7 +7,7 @@ import {
   ShieldX,
 } from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
-import { durationLabel, isCurrentStatus } from "@/utils/review-format";
+import { durationLabel, isCurrentStatus } from "@utils/review/review-format";
 import { FactualFidelityGauge } from "./factual-fidelity-gauge";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" });

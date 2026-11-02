@@ -7,7 +7,7 @@ import {
 import type {
   RequirementMatch,
   RequirementStatus,
-} from "@/utils/job-fact-match";
+} from "@utils/job/job-fact-match";
 
 const statusLabels: Record<RequirementStatus, string> = {
   supported: "No seu currículo",

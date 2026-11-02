@@ -1,6 +1,6 @@
-import { ApiClientError } from "@lib/api/client";
-import { currentAccountCurrent } from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+import { ApiClientError } from "@api/client";
+import { currentAccountCurrent } from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import { useAuthStore } from "@stores/auth-store";
 import { queryOptions, skipToken, useQuery } from "@tanstack/react-query";
 

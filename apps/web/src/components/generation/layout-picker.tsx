@@ -1,4 +1,4 @@
-import { templateOptions } from "@/constants/generation-options";
+import { templateOptions } from "@constants/generation-options";
 
 /** Escolha do layout do currículo; usado no perfil (padrão) e no gerador (por vaga). */
 export function LayoutPicker({

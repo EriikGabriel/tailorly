@@ -1,3 +1,4 @@
+import type { CorrectionField } from "@@types/review";
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
 import { Select } from "@base-ui-components/react/select";
 import {
@@ -11,7 +12,6 @@ import {
 } from "@react-zero-ui/icon-sprite";
 import { motion, useReducedMotion } from "motion/react";
 import { type ReactNode, useState } from "react";
-import type { CorrectionField } from "@/types/review";
 import { ReviewMonthPicker } from "./review-month-picker";
 
 const controlClass =

@@ -2,14 +2,14 @@ import {
   baseDocumentFindById,
   baseVersionFindById,
   gtSnapshotFindById,
-} from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+} from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import { useAuthStore } from "@stores/auth-store";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import {
   type GroundTruthFacts,
   groupSnapshotItems,
-} from "@/utils/ground-truth-facts";
+} from "@utils/review/ground-truth-facts";
 import { useCurrentAccount } from "./current-account";
 
 /**

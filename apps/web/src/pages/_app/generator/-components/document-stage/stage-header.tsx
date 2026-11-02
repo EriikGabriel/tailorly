@@ -1,5 +1,5 @@
 import { Button } from "@animate/buttons/button";
-import type { CvGenerationResponse } from "@lib/api/generated/model";
+import type { CvGenerationResponse } from "@api/generated/model";
 import { Download, FileText } from "@react-zero-ui/icon-sprite";
 import type { ViewMode } from "../../-types/view-mode";
 import { ViewModeTabs } from "./view-mode-tabs";

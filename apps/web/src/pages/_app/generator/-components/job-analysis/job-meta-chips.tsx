@@ -1,6 +1,6 @@
-import type { JobAnalysis, JobPostingResponse } from "@lib/api/generated/model";
+import type { JobAnalysis, JobPostingResponse } from "@api/generated/model";
 import { Briefcase, Clock } from "@react-zero-ui/icon-sprite";
-import { formatDate } from "@/utils/date-format";
+import { formatDate } from "@utils/date-format";
 import {
   JOB_PLATFORM_LABELS,
   SENIORITY_LABELS,

@@ -1,21 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ApiClientError } from "../../src/lib/api/client";
-import { shouldRetryRequest } from "../../src/lib/api/retry-policy";
+import { ApiClientError } from "@api/client";
+import { shouldRetryRequest } from "@api/retry-policy";
 import {
   type AnonymousSession,
   isAnonymousSessionActive,
-} from "../../src/stores/anonymous-session-store";
+} from "@stores/anonymous-session-store";
 import {
   EXTRACTION_POLL_MS,
   extractionJustCompleted,
   extractionRunInterval,
   interpretationRefetchInterval,
-} from "../../src/utils/extraction-polling";
+} from "@utils/extraction/extraction-polling";
 import {
   jobPostingInputError,
   MAX_JOB_TEXT_LENGTH,
-} from "../../src/utils/job-posting-input";
+} from "@utils/job/job-posting-input";
 
 test("não repete resposta 4xx, só falha de rede e 5xx, uma única vez", () => {
   for (const status of [400, 401, 403, 404, 409, 422, 429]) {

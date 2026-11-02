@@ -1,9 +1,9 @@
-import { apiErrorMessage } from "@lib/api/error-message";
+import { apiErrorMessage } from "@api/error-message";
 import type {
   CvGenerationResponse,
   JobPostingVersionResponse,
-} from "@lib/api/generated/model";
-import type { Notice } from "@/stores/notification-store";
+} from "@api/generated/model";
+import type { Notice } from "@stores/notification-store";
 
 /** Avisos de término de processo, no mesmo tom da interface. Os textos de erro vêm da API quando existem. */
 export const notices = {

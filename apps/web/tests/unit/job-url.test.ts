@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { checkJobUrl, MAX_JOB_URL_LENGTH } from "../../src/utils/job-url";
+import { checkJobUrl, MAX_JOB_URL_LENGTH } from "@utils/job/job-url";
 
 test("campo vazio não é erro", () => {
   assert.equal(checkJobUrl("").status, "empty");

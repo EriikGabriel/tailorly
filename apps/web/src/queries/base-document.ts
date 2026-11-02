@@ -1,13 +1,13 @@
-import { ApiClientError } from "@lib/api/client";
-import type { BaseDocumentUploadResponse } from "@lib/api/generated/model";
+import { ApiClientError } from "@api/client";
+import type { BaseDocumentUploadResponse } from "@api/generated/model";
 import {
   baseDocumentUpload,
   extractionRunFindByVersion,
-} from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+} from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import { type OwnerKind, useBaseCvStore } from "@stores/base-cv-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { extractionRunInterval } from "@/utils/extraction-polling";
+import { extractionRunInterval } from "@utils/extraction/extraction-polling";
 import {
   type ApiCredential,
   ensureCredential,

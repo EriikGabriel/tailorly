@@ -4,7 +4,7 @@ import { useSelectedGeneration } from "@queries/cv-generation";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useCvGenerationStore } from "@stores/cv-generation-store";
 import { useJobDraftStore } from "@stores/job-draft-store";
-import { hasJobTarget } from "@/utils/job-draft";
+import { hasJobTarget } from "@utils/job/job-draft";
 import { useDocumentActions } from "../-hooks/use-document-actions";
 import { useTypstTemplateDraft } from "../-hooks/use-typst-template-draft";
 import type { ViewMode } from "../-types/view-mode";

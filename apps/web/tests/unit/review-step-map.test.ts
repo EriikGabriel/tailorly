@@ -4,7 +4,7 @@ import {
   firstStepWithPending,
   pendingByStep,
   stepForReviewCategory,
-} from "../../src/utils/review-step-map";
+} from "@utils/review/review-step-map";
 
 test("cada categoria da pendência cai na etapa onde ela é editada", () => {
   assert.equal(stepForReviewCategory("identity"), "identity");

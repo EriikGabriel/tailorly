@@ -1,4 +1,4 @@
-import type { CvGenerationResponse } from "@lib/api/generated/model";
+import type { CvGenerationResponse } from "@api/generated/model";
 import { Sparkles } from "@react-zero-ui/icon-sprite";
 import { AtsScoreCard } from "../ats-score-card";
 import { EvidenceSummary } from "../evidence-summary";

@@ -1,15 +1,18 @@
+import type { ReviewAnswer, ReviewCategory, ReviewIssue } from "@@types/review";
+import { Button } from "@animate/buttons/button";
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
-import { Button } from "@components/ui/animate/buttons/button";
-import { IconQuote } from "@react-zero-ui/icon-sprite";
-import { cn } from "cn";
-import { useReducedMotion } from "motion/react";
 import {
   categoryIconMap,
   getChoiceIcon,
   issueTypeMap,
-} from "@/constants/review-icons";
-import type { ReviewAnswer, ReviewCategory, ReviewIssue } from "@/types/review";
-import { isReviewIssueComplete, reviewCategories } from "@/utils/review-issues";
+} from "@constants/review-icons";
+import { IconQuote } from "@react-zero-ui/icon-sprite";
+import {
+  isReviewIssueComplete,
+  reviewCategories,
+} from "@utils/review/review-issues";
+import { cn } from "cn";
+import { useReducedMotion } from "motion/react";
 import { ReviewCorrectionInput } from "./review-correction-input";
 
 type ReviewSectionProps = {

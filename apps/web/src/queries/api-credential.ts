@@ -1,4 +1,4 @@
-import { anonymousSessionCreate } from "@lib/api/generated/tailorly";
+import { anonymousSessionCreate } from "@api/generated/tailorly";
 import { pickToken } from "@stores/active-token";
 import {
   activeAnonymousToken,

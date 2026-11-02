@@ -1,5 +1,5 @@
+import type { ReviewIssue } from "@@types/review";
 import type { ReviewStepId } from "@@types/review-model";
-import type { ReviewIssue } from "@/types/review";
 
 /** Identifica uma linha do rascunho: "identity" ou o id `${recordId}-${índice}` da coleção. */
 export type Scope = string;

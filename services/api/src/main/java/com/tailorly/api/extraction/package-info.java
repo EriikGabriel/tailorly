@@ -13,7 +13,7 @@
  *       Tesseract e a heurística que decide quando usar cada um.</li>
  * </ul>
  *
- * <p>Veja a seção "Extração seletiva de PDF" no {@code README.md} do serviço para o
+ * <p>Veja {@code services/api/docs/extraction.md} para o
  * comportamento completo (limites, timeouts, variáveis de ambiente do OCR e estados da fila).</p>
  */
 package com.tailorly.api.extraction;

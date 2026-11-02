@@ -31,15 +31,21 @@ export default defineConfig({
       { find: "@assets", replacement: path.resolve(__dirname, "./src/assets") },
       { find: "@stores", replacement: path.resolve(__dirname, "./src/stores") },
       { find: "@pages", replacement: path.resolve(__dirname, "./src/pages") },
+      {
+        find: "@app",
+        replacement: path.resolve(__dirname, "./src/pages/_app"),
+      },
+      { find: "@api", replacement: path.resolve(__dirname, "./src/lib/api") },
       { find: "@lib", replacement: path.resolve(__dirname, "./src/lib") },
       { find: "@hooks", replacement: path.resolve(__dirname, "./src/hooks") },
       {
         find: "@queries",
         replacement: path.resolve(__dirname, "./src/queries"),
       },
+      { find: "@utils", replacement: path.resolve(__dirname, "./src/utils") },
       {
-        find: "@app",
-        replacement: path.resolve(__dirname, "./src/pages/_app"),
+        find: "@constants",
+        replacement: path.resolve(__dirname, "./src/constants"),
       },
       { find: "@@types", replacement: path.resolve(__dirname, "./src/types") },
       { find: /^@\//, replacement: `${path.resolve(__dirname, "./src")}/` },

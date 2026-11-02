@@ -1,9 +1,9 @@
 import { useBaseDocumentExtraction } from "@queries/base-document";
 import { useDueDiligenceHistory } from "@queries/due-diligence";
 import { useBaseCvStore } from "@stores/base-cv-store";
+import { notify } from "@stores/notification-store";
+import { extractionFailureMessage } from "@utils/extraction/extraction-failures";
 import { useEffect, useRef } from "react";
-import { notify } from "@/stores/notification-store";
-import { extractionFailureMessage } from "@/utils/extraction-failures";
 
 const TERMINAL_RUN = new Set(["COMPLETED", "FAILED"]);
 

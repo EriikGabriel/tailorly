@@ -1,22 +1,19 @@
+import type { ReviewIssue } from "@@types/review";
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
-import { pickToken } from "../../src/stores/active-token";
+import { pickToken } from "@stores/active-token";
 import {
   ANONYMOUS_TOKEN_PREFIX,
   useAnonymousSessionStore as anonymous,
-} from "../../src/stores/anonymous-session-store";
-import {
-  useAuthStore as auth,
-  readStoredSession,
-} from "../../src/stores/auth-store";
-import { useBaseCvStore as base } from "../../src/stores/base-cv-store";
-import { useDocumentViewerStore as viewer } from "../../src/stores/document-viewer-store";
-import { useJobDraftStore as job } from "../../src/stores/job-draft-store";
-import { useQuickReviewStore as quick } from "../../src/stores/quick-review-store";
-import { resetClientState } from "../../src/stores/reset-client-state";
-import { useReviewDraftStore as review } from "../../src/stores/review-draft-store";
-import { useWorkspaceStore as workspace } from "../../src/stores/workspace-store";
-import type { ReviewIssue } from "../../src/types/review";
+} from "@stores/anonymous-session-store";
+import { useAuthStore as auth, readStoredSession } from "@stores/auth-store";
+import { useBaseCvStore as base } from "@stores/base-cv-store";
+import { useDocumentViewerStore as viewer } from "@stores/document-viewer-store";
+import { useJobDraftStore as job } from "@stores/job-draft-store";
+import { useQuickReviewStore as quick } from "@stores/quick-review-store";
+import { resetClientState } from "@stores/reset-client-state";
+import { useReviewDraftStore as review } from "@stores/review-draft-store";
+import { useWorkspaceStore as workspace } from "@stores/workspace-store";
 
 const pdf = (name = "cv.pdf") =>
   new File(["%PDF-test"], name, { type: "application/pdf" });

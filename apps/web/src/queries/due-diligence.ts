@@ -6,12 +6,9 @@ import {
   dueDiligenceDelete,
   dueDiligenceFindById,
   dueDiligenceFindByOwner,
-} from "@lib/api/due-diligence";
-import {
-  apiErrorMessage,
-  SESSION_EXPIRED_MESSAGE,
-} from "@lib/api/error-message";
-import { apiQueryKeys } from "@lib/api/query-keys";
+} from "@api/due-diligence";
+import { apiErrorMessage, SESSION_EXPIRED_MESSAGE } from "@api/error-message";
+import { apiQueryKeys } from "@api/query-keys";
 import {
   skipToken,
   useMutation,

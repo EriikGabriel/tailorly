@@ -1,5 +1,5 @@
-import { aiPreferencesCurrent } from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+import { aiPreferencesCurrent } from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import { useAuthStore } from "@stores/auth-store";
 import { queryOptions, skipToken, useQuery } from "@tanstack/react-query";
 

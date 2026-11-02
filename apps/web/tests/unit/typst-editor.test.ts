@@ -8,23 +8,23 @@ import {
   parseStoredRatio,
   ratioForKey,
   ratioFromPointer,
-} from "../../src/pages/_app/generator/-utils/split-ratio";
+} from "@app/generator/-utils/split-ratio";
 import {
   applyPickedColor,
   findColorLiterals,
   toSixDigitHex,
-} from "../../src/pages/_app/generator/-utils/typst-colors";
-import { templateCompletions } from "../../src/pages/_app/generator/-utils/typst-completions";
+} from "@app/generator/-utils/typst-colors";
+import { templateCompletions } from "@app/generator/-utils/typst-completions";
 import {
   findContentMarkerLine,
   parseCompilerOutput,
   toEditorDiagnostics,
-} from "../../src/pages/_app/generator/-utils/typst-diagnostics";
+} from "@app/generator/-utils/typst-diagnostics";
 import {
   insertLink,
   toggleLinePrefix,
   wrapSelection,
-} from "../../src/pages/_app/generator/-utils/typst-edits";
+} from "@app/generator/-utils/typst-edits";
 
 function apply(
   doc: string,

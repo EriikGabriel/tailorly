@@ -1,8 +1,8 @@
 import {
   ANONYMOUS_TOKEN_PREFIX,
   useAnonymousSessionStore,
-} from "../../stores/anonymous-session-store";
-import { useAuthStore } from "../../stores/auth-store";
+} from "@stores/anonymous-session-store";
+import { useAuthStore } from "@stores/auth-store";
 
 export interface ApiErrorResponse {
   timestamp: string;

@@ -1,15 +1,15 @@
+import type { ReviewIssue } from "@@types/review";
 import type {
   DraftFields,
   ReviewDraft,
   ReviewStepId,
 } from "@@types/review-model";
-import type { ReviewIssue } from "@/types/review";
-import { stepForReviewCategory } from "@/utils/review-step-map";
+import { stepForReviewCategory } from "@utils/review/review-step-map";
 import {
   buildVerificationIndex,
   factLocation,
   type VerifiableRecord,
-} from "@/utils/review-verification";
+} from "@utils/review/review-verification";
 import type { PendingFieldsApi, Scope } from "../-types/pending-fields";
 
 /** Valor padrão fora do provider: nenhum campo pendente nem verificado. */

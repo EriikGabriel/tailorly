@@ -5,7 +5,7 @@ import {
   clearSteps,
   factLocation,
   type VerifiableRecord,
-} from "../../src/utils/review-verification";
+} from "@utils/review/review-verification";
 
 const fact = (
   recordId: string,

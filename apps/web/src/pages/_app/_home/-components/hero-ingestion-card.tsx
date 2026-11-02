@@ -6,13 +6,13 @@ import {
   TabsPanels,
   TabsTab,
 } from "@animate/base/tabs";
+import { RippleButton } from "@animate/buttons/ripple";
 import { GenerationStageLabel } from "@components/ai-progress/generation-stage-label";
 import {
   JobUrlFeedback,
   useSettledUrlCheck,
 } from "@components/job-url-feedback";
 import { ValidateDialog } from "@components/quick-review/validate-dialog";
-import { RippleButton } from "@components/ui/animate/buttons/ripple";
 import { useJobTarget } from "@hooks/use-job-target";
 import {
   ArrowRight,
@@ -25,7 +25,7 @@ import {
   Zap,
 } from "@react-zero-ui/icon-sprite";
 import { useJobDraftStore } from "@stores/job-draft-store";
-import { MAX_JOB_URL_LENGTH } from "@/utils/job-url";
+import { MAX_JOB_URL_LENGTH } from "@utils/job/job-url";
 import { BaseCvPicker } from "./base-cv-picker";
 
 const inputModes = [

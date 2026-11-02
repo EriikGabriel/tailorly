@@ -1,7 +1,7 @@
+import type { CvGenerationResponse } from "@api/generated/model";
 import { AnimatedBar } from "@components/animated-bar";
-import type { CvGenerationResponse } from "@lib/api/generated/model";
+import { atsScoreColor, atsScoreLabel } from "@utils/generation/ats-score";
 import { useState } from "react";
-import { atsScoreColor, atsScoreLabel } from "@/utils/ats-score";
 import { AnimatedScore } from "./animated-score";
 import { AtsDetails, type AtsTab } from "./ats-details";
 import { AtsReviewSection } from "./ats-review-section";

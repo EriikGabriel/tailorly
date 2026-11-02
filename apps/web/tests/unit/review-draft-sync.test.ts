@@ -1,7 +1,7 @@
+import { createReviewDraft } from "@@types/review-model";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createReviewDraft } from "../../src/types/review-model";
-import { applyAnswerToDraft } from "../../src/utils/review-draft-sync";
+import { applyAnswerToDraft } from "@utils/review/review-draft-sync";
 
 function draftWithExperience() {
   const draft = createReviewDraft();

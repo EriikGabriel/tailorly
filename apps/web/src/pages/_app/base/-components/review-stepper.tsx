@@ -4,9 +4,9 @@ import {
   HighlightItem,
 } from "@animate/primitives/effects/highlight";
 import { BadgeCheck } from "@react-zero-ui/icon-sprite";
+import type { StepPending } from "@utils/review/review-step-map";
 import { cn } from "cn";
 import { useReducedMotion } from "motion/react";
-import type { StepPending } from "@/utils/review-step-map";
 
 export function ReviewStepper({
   activeStep,

@@ -1,4 +1,4 @@
-import type { Company } from "@lib/api/generated/model";
+import type { Company } from "@api/generated/model";
 
 const LINK_CLASS =
   "rounded-full bg-surface-container px-2.5 py-1 text-xs font-semibold text-secondary-700 hover:bg-surface-container-high";

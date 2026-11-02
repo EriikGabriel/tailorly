@@ -7,7 +7,7 @@ import {
 } from "@animate/base/dialog";
 import { Button } from "@animate/buttons/button";
 import { DialogBackdrop, DialogPortal } from "@animate/primitives/base/dialog";
-import { ApiClientError } from "@lib/api/client";
+import { ApiClientError } from "@api/client";
 import {
   useAnonymousSessionStatus,
   useDiscardAnonymousSession,

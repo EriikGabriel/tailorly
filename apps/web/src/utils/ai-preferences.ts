@@ -1,12 +1,12 @@
+import type { AiPreferencesDraft } from "@@types/profile-settings";
 import type {
   AiPreferencesResponse,
   UpdateAiPreferencesRequest,
-} from "@lib/api/generated/model";
+} from "@api/generated/model";
 import {
   defaultInterpretationSettings,
   type InterpretationProvider,
-} from "../constants/ai-providers";
-import type { AiPreferencesDraft } from "../types/profile-settings";
+} from "@constants/ai-providers";
 
 /** Rascunho inicial de IA, com os valores padrão do formulário. */
 export function defaultAiPreferencesDraft(): AiPreferencesDraft {

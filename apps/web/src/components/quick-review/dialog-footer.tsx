@@ -1,5 +1,5 @@
+import { Button } from "@animate/buttons/button";
 import { GenerationStageLabel } from "@components/ai-progress/generation-stage-label";
-import { Button } from "@components/ui/animate/buttons/button";
 import { ArrowRight, CheckCheck, Sparkles } from "@react-zero-ui/icon-sprite";
 import { Link } from "@tanstack/react-router";
 

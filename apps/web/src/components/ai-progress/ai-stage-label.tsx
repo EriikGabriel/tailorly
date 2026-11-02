@@ -1,5 +1,5 @@
+import { cn } from "@lib/utils";
 import { ThinkingOrb } from "thinking-orbs";
-import { cn } from "@/lib/utils";
 
 /** Animações do `thinking-orbs` que usamos, cada uma com o sentido da etapa. */
 export type OrbState =

@@ -4,7 +4,7 @@ import {
   Info,
   TriangleAlert,
 } from "@react-zero-ui/icon-sprite";
-import type { NotificationKind } from "@/stores/notification-store";
+import type { NotificationKind } from "@stores/notification-store";
 
 /** Ícone e cores de cada tipo de aviso, usando os tokens do tema (êxito em verde, igual à nota de ATS). */
 export const notificationStyle: Record<

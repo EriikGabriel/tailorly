@@ -9,10 +9,13 @@
       "@assets/*": ["./src/assets/*"],
       "@stores/*": ["./src/stores/*"],
       "@pages/*": ["./src/pages/*"],
+      "@app/*": ["./src/pages/_app/*"],
+      "@api/*": ["./src/lib/api/*"],
       "@lib/*": ["./src/lib/*"],
       "@hooks/*": ["./src/hooks/*"],
       "@queries/*": ["./src/queries/*"],
-      "@app/*": ["./src/pages/_app/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@constants/*": ["./src/constants/*"],
       "@@types/*": ["./src/types/*"],
       "@/*": ["./src/*"]
     }

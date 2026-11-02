@@ -4,7 +4,7 @@ import {
 } from "@components/ai-progress/ai-stage-label";
 import { formatElapsed, useElapsedSeconds } from "@hooks/use-elapsed";
 import { useBaseDocumentExtraction } from "@queries/base-document";
-import { extractionFailureMessage } from "@/utils/extraction-failures";
+import { extractionFailureMessage } from "@utils/extraction/extraction-failures";
 
 const STAGES: Record<string, { label: string; orb: OrbState }> = {
   QUEUED: { label: "Na fila de processamento", orb: "breathing" },

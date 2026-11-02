@@ -1,5 +1,5 @@
+import type { LoginResponse } from "@api/generated/model";
 import { create } from "zustand";
-import type { LoginResponse } from "../lib/api/generated/model";
 
 interface AuthState {
   accessToken: string | null;

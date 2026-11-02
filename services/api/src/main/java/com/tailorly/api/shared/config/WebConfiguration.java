@@ -49,6 +49,9 @@ public class WebConfiguration implements WebMvcConfigurer {
         .allowedOriginPatterns(allowedOrigins)
         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         .allowedHeaders("Authorization", "Content-Type", "Accept-Language")
-        .allowCredentials(true);
+        .exposedHeaders("Retry-After", "Content-Disposition")
+        // A autenticação é só por cabeçalho Bearer: não há cookies, então não há por que aceitar credenciais.
+        .allowCredentials(false)
+        .maxAge(3600);
   }
 }

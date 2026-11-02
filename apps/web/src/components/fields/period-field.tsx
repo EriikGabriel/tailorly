@@ -1,11 +1,11 @@
 import type { PeriodConfig } from "@@types/review-model";
 import { Switch } from "@animate/base/switch";
-import { useId } from "react";
 import {
   durationLabel,
   isCurrentStatus,
   parsePartialDate,
-} from "@/utils/review-format";
+} from "@utils/review/review-format";
+import { useId } from "react";
 import { FieldFrame } from "./field-frame";
 import { MonthYearPicker } from "./month-year-picker";
 

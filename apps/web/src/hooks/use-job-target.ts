@@ -1,4 +1,4 @@
-import { ApiClientError } from "@lib/api/client";
+import { ApiClientError } from "@api/client";
 import { useBaseDocumentExtraction } from "@queries/base-document";
 import { useBaseReview } from "@queries/base-review";
 import { useGenerateCv } from "@queries/cv-generation";
@@ -16,11 +16,11 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   extractionState,
   generationBlockReason,
-} from "@/utils/generation-gate";
-import { hasJobTarget } from "@/utils/job-draft";
-import { countQuickReviewIssues } from "@/utils/job-fact-match";
-import { checkJobUrl } from "@/utils/job-url";
-import { MAX_DIALOG_ISSUES } from "@/utils/review-issues";
+} from "@utils/generation/generation-gate";
+import { hasJobTarget } from "@utils/job/job-draft";
+import { countQuickReviewIssues } from "@utils/job/job-fact-match";
+import { checkJobUrl } from "@utils/job/job-url";
+import { MAX_DIALOG_ISSUES } from "@utils/review/review-issues";
 
 /**
  * Fluxo "gerar" compartilhado pela home e pelo gerador: valida o link, lê e analisa a vaga no

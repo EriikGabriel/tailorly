@@ -1,18 +1,18 @@
-import type { AiPreferencesResponse } from "@lib/api/generated/model";
-import { aiPreferencesUpdate } from "@lib/api/generated/tailorly";
-import { create } from "zustand";
-import type { InterpretationProvider } from "@/constants/ai-providers";
 import type {
   AiPreferencesDraft,
   OllamaDraft,
   RemoteDraft,
-} from "@/types/profile-settings";
+} from "@@types/profile-settings";
+import type { AiPreferencesResponse } from "@api/generated/model";
+import { aiPreferencesUpdate } from "@api/generated/tailorly";
+import type { InterpretationProvider } from "@constants/ai-providers";
 import {
   aiDraftFromResponse,
   aiPreferencesRequestFromDraft,
   defaultAiPreferencesDraft,
   isAiDraftValid,
-} from "@/utils/ai-preferences";
+} from "@utils/ai-preferences";
+import { create } from "zustand";
 import { useAuthStore } from "./auth-store";
 
 function isEqual<T>(a: T, b: T): boolean {

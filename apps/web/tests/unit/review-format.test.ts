@@ -11,7 +11,7 @@ import {
   parsePartialDate,
   proficiencyIndex,
   toPartialValue,
-} from "../../src/utils/review-format";
+} from "@utils/review/review-format";
 
 test("datas parciais aceitam mês e ano ou só o ano", () => {
   assert.deepEqual(parsePartialDate("2022-01"), { year: 2022, month: 1 });

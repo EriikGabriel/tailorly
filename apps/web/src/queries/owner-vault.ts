@@ -1,5 +1,5 @@
-import { apiRequest } from "@lib/api/client";
-import { apiQueryKeys } from "@lib/api/query-keys";
+import { apiRequest } from "@api/client";
+import { apiQueryKeys } from "@api/query-keys";
 import {
   skipToken,
   useMutation,

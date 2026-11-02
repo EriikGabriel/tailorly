@@ -1,4 +1,4 @@
-import { atsScoreColor } from "@/utils/ats-score";
+import { atsScoreColor } from "@utils/generation/ats-score";
 import type { CvStats } from "../-utils/cv-filters";
 
 /** Resumo do histórico completo (não muda com os filtros). */

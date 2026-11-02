@@ -1,6 +1,6 @@
 # Tailorly — instruções para agentes
 
-Estas instruções valem para o monorepo. Leia o `README.md`, especialmente “Decisão de produto: Currículo Base como Ground Truth”, antes de alterar ingestão, extração, revisão, geração, persistência ou autenticação. Diferencie sempre o fluxo alvo da implementação atual; não apresente dados de exemplo como currículos reais de um visitante.
+Estas instruções valem para o monorepo. Leia o `README.md` e [`docs/product/ground-truth.md`](docs/product/ground-truth.md) (decisão de produto: Currículo Base como Ground Truth) antes de alterar ingestão, extração, revisão, geração, persistência ou autenticação. Diferencie sempre o fluxo alvo da implementação atual; não apresente dados de exemplo como currículos reais de um visitante.
 
 ## Invariantes do domínio
 

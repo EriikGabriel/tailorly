@@ -49,7 +49,8 @@ public class AnonymousSessionController {
 
   /**
    * Emite uma sessão anônima. O IP vem de {@code getRemoteAddr()}; atrás de um proxy reverso,
-   * configure {@code server.forward-headers-strategy} para que ele reflita o cliente real.
+   * configure {@code server.forward-headers-strategy} (
+   * {@code TAILORLY_FORWARD_HEADERS_STRATEGY=native}) para que ele reflita o cliente real.
    */
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)

@@ -1,5 +1,5 @@
 import type { ReviewStepId } from "@@types/review-model";
-import { findEvidenceSpans } from "@/utils/pdf-text-match";
+import { findEvidenceSpans } from "@utils/review/pdf-text-match";
 import { GROUP_PADDING } from "../-constants/evidence";
 import type {
   EvidenceFact,

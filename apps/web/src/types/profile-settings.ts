@@ -1,4 +1,4 @@
-import type { InterpretationProvider } from "../constants/ai-providers";
+import type { InterpretationProvider } from "@constants/ai-providers";
 
 export interface RemoteDraft {
   endpoint: string;

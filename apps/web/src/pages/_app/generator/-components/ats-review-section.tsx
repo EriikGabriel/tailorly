@@ -1,13 +1,13 @@
-import { AiStageLabel } from "@components/ai-progress/ai-stage-label";
 import type {
   AtsReview,
   AtsReviewRequirementCheck,
   CvGenerationResponse,
-} from "@lib/api/generated/model";
+} from "@api/generated/model";
+import { AiStageLabel } from "@components/ai-progress/ai-stage-label";
+import { cn } from "@lib/utils";
 import { useAtsReview } from "@queries/cv-generation";
 import { useCvGenerationStore } from "@stores/cv-generation-store";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 
 const STATUS: Record<string, { label: string; tone: string }> = {
   met: { label: "Atendido", tone: "bg-tertiary-50 text-on-tertiary-container" },

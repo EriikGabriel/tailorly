@@ -1,4 +1,4 @@
-import type { JobPostingVersionResponse } from "@lib/api/generated/model";
+import type { JobPostingVersionResponse } from "@api/generated/model";
 import { RefreshCw } from "@react-zero-ui/icon-sprite";
 import { ANALYSIS_STATUS_MESSAGES } from "../../-constants/job-labels";
 

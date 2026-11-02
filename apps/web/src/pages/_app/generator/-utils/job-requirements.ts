@@ -2,7 +2,7 @@ import type {
   JobAnalysis,
   JobPostingResponse,
   Requirement,
-} from "@lib/api/generated/model";
+} from "@api/generated/model";
 
 export type GroupedRequirements = {
   required: Requirement[];

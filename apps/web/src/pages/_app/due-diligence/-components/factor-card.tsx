@@ -1,7 +1,14 @@
 import type {
   DiligenceFactorResult,
   DiligenceFinding,
-} from "@lib/api/due-diligence";
+} from "@api/due-diligence";
+import {
+  type DiligenceFactorMeta,
+  factorStatusLabel,
+  polarityLabel,
+  sourceTypeLabel,
+  uncertaintyLabel,
+} from "@constants/due-diligence";
 import {
   CalendarDays,
   CircleCheck,
@@ -10,14 +17,7 @@ import {
   Quote,
   TriangleAlert,
 } from "@react-zero-ui/icon-sprite";
-import {
-  type DiligenceFactorMeta,
-  factorStatusLabel,
-  polarityLabel,
-  sourceTypeLabel,
-  uncertaintyLabel,
-} from "@/constants/due-diligence";
-import { formatDate } from "@/utils/date-format";
+import { formatDate } from "@utils/date-format";
 
 const statusStyle = {
   evidence_found: {

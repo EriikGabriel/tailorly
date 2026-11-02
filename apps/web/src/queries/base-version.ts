@@ -1,10 +1,10 @@
-import { SESSION_EXPIRED_MESSAGE } from "@lib/api/error-message";
-import type { OwnerResponse } from "@lib/api/generated/model";
+import { SESSION_EXPIRED_MESSAGE } from "@api/error-message";
+import type { OwnerResponse } from "@api/generated/model";
 import {
   baseVersionDelete,
   ownerDeactivateSnapshot,
-} from "@lib/api/generated/tailorly";
-import { apiQueryKeys } from "@lib/api/query-keys";
+} from "@api/generated/tailorly";
+import { apiQueryKeys } from "@api/query-keys";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useViewer } from "./cv-generation";

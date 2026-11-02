@@ -5,16 +5,17 @@
 
 FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk AS build
 WORKDIR /src
-COPY .mvn .mvn
+# O mvnw baixa o Maven e as dependências para .mvn/wrapper (fora do Git); o cache mount mantém isso
+# entre builds.
 COPY mvnw pom.xml ./
-RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q dependency:go-offline
+RUN --mount=type=cache,target=/src/.mvn/wrapper ./mvnw -B -q dependency:go-offline
 COPY src src
-RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q -DskipTests package \
+RUN --mount=type=cache,target=/src/.mvn/wrapper ./mvnw -B -q -DskipTests package \
     && cp target/api-*.jar /src/app.jar
 
 FROM eclipse-temurin:21-jre AS runtime
 ARG TARGETARCH
-# Versão fixa do Typst: atualizar aqui (e no CI) depois de conferir os templates.
+# Versão fixa do Typst
 ARG TYPST_VERSION=0.15.1
 
 # Tesseract (OCR de páginas sem texto, por+eng) e Typst (compilação do PDF do currículo).

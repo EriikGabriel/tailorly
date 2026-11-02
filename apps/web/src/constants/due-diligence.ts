@@ -4,7 +4,7 @@ import type {
   Polarity,
   SourceType,
   UncertaintyLevel,
-} from "@lib/api/due-diligence";
+} from "@api/due-diligence";
 import {
   Briefcase,
   Building2,

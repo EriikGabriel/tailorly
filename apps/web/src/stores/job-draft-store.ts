@@ -1,5 +1,5 @@
+import type { JobInputMode } from "@@types/job-draft";
 import { create } from "zustand";
-import type { JobInputMode } from "../types/job-draft";
 import { useQuickReviewStore } from "./quick-review-store";
 
 interface JobDraftState {

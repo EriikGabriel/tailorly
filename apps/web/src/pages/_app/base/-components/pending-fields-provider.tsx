@@ -1,8 +1,8 @@
+import type { ReviewIssue } from "@@types/review";
 import type { ReviewStepId } from "@@types/review-model";
 import { useReviewDraftStore } from "@stores/review-draft-store";
+import type { VerifiableRecord } from "@utils/review/review-verification";
 import { type ReactNode, useMemo } from "react";
-import type { ReviewIssue } from "@/types/review";
-import type { VerifiableRecord } from "@/utils/review-verification";
 import { PendingFieldsContext } from "../-hooks/use-pending-fields";
 import { createPendingFieldsApi } from "../-utils/pending-fields";
 

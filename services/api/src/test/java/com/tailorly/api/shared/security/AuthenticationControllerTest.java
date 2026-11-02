@@ -2,6 +2,7 @@ package com.tailorly.api.shared.security;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,9 +11,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import java.util.UUID;
+import java.time.Duration;
 import java.time.Instant;
 
 import com.tailorly.api.shared.handler.GlobalExceptionHandler;
+import com.tailorly.api.shared.ratelimit.LoginAttemptLimiter;
+import com.tailorly.api.shared.ratelimit.RateLimitProperties;
 import com.tailorly.api.user.UserService;
 import com.tailorly.api.user.dto.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +52,9 @@ class AuthenticationControllerTest {
   void setUp() {
     StaticMessageSource messages = new StaticMessageSource();
     mvc = MockMvcBuilders.standaloneSetup(new AuthenticationController(
-            userService, authenticationManager, jwtTokenService, refreshTokenService))
+            userService, authenticationManager, jwtTokenService, refreshTokenService,
+            new LoginAttemptLimiter(new RateLimitProperties(
+                true, 600, 30, 10, 3, 20, Duration.ofMinutes(15), 600, 15, 60))))
         .setControllerAdvice(new GlobalExceptionHandler(messages))
         .build();
   }
@@ -103,6 +109,51 @@ class AuthenticationControllerTest {
 
     verify(userService, never()).findByEmailForAuthentication(any());
     verify(jwtTokenService, never()).issue(any(), any());
+  }
+
+  @Test
+  void loginIsBlockedAfterRepeatedFailuresFromTheSameClient() throws Exception {
+    when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("invalid"));
+    String body = "{\"email\":\"Person@Example.com\",\"password\":\"wrong\"}";
+
+    for (int attempt = 0; attempt < 3; attempt++) {
+      mvc.perform(post("/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
+          .andExpect(status().isUnauthorized());
+    }
+    // A quarta tentativa nem chega ao AuthenticationManager, mesmo com a capitalização do e-mail trocada.
+    mvc.perform(post("/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+            .content(body.replace("Person@Example.com", "person@example.com")))
+        .andExpect(status().isTooManyRequests());
+
+    verify(authenticationManager, times(3)).authenticate(any());
+  }
+
+  @Test
+  void successfulLoginClearsTheFailureCount() throws Exception {
+    UUID userId = UUID.randomUUID();
+    when(authenticationManager.authenticate(any()))
+        .thenThrow(new BadCredentialsException("invalid"))
+        .thenThrow(new BadCredentialsException("invalid"))
+        .thenReturn(UsernamePasswordAuthenticationToken.authenticated("person@example.com", null, List.of()))
+        .thenThrow(new BadCredentialsException("invalid"));
+    when(userService.findByEmailForAuthentication("person@example.com")).thenReturn(
+        new UserResponse(userId, "person@example.com", true, List.of("ROLE_USER")));
+    when(refreshTokenService.issue(userId)).thenReturn(
+        new RefreshTokenService.Issued("tlr_rt_abc", Instant.parse("2030-02-01T00:00:00Z")));
+    when(jwtTokenService.issue(any(), any())).thenAnswer(invocation -> new LoginResponse(
+        "signed-token", "Bearer", Instant.parse("2030-01-01T00:00:00Z"),
+        invocation.getArgument(0), invocation.getArgument(1)));
+    String body = "{\"email\":\"person@example.com\",\"password\":\"secret123\"}";
+
+    mvc.perform(post("/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isUnauthorized());
+    mvc.perform(post("/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isUnauthorized());
+    mvc.perform(post("/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isOk());
+    // Depois do sucesso o contador recomeça: mais duas falhas ainda não bloqueiam.
+    mvc.perform(post("/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

@@ -1,3 +1,4 @@
+import type { ReviewAnswer, ReviewChoice, ReviewIssue } from "@@types/review";
 import {
   useAnswerReviewIssue,
   useBaseReview,
@@ -9,11 +10,13 @@ import {
 } from "@queries/job-posting";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useReviewDraftStore } from "@stores/review-draft-store";
+import { matchJobToFacts, verifiableMatches } from "@utils/job/job-fact-match";
+import { applyAnswerToDraft } from "@utils/review/review-draft-sync";
+import {
+  rankRelevantIssues,
+  toReviewIssue,
+} from "@utils/review/review-issue-mapper";
 import { useMemo } from "react";
-import type { ReviewAnswer, ReviewChoice, ReviewIssue } from "@/types/review";
-import { matchJobToFacts, verifiableMatches } from "@/utils/job-fact-match";
-import { applyAnswerToDraft } from "@/utils/review-draft-sync";
-import { rankRelevantIssues, toReviewIssue } from "@/utils/review-issue-mapper";
 
 /**
  * Pendências do Currículo Base da versão atual, prontas para responder, com a relevância para a

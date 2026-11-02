@@ -10,8 +10,8 @@ import {
   AlertDialogTrigger,
 } from "@animate/base/alert-dialog";
 import { Button } from "@animate/buttons/button";
-import { apiErrorMessage } from "@lib/api/error-message";
-import type { CvGenerationResponse } from "@lib/api/generated/model";
+import { apiErrorMessage } from "@api/error-message";
+import type { CvGenerationResponse } from "@api/generated/model";
 import {
   downloadCvFile,
   useCvHistory,
@@ -21,9 +21,9 @@ import {
 import { Download, FileText, SquarePen, X } from "@react-zero-ui/icon-sprite";
 import { useCvGenerationStore } from "@stores/cv-generation-store";
 import { Link } from "@tanstack/react-router";
+import { formatDate } from "@utils/date-format";
+import { atsScoreColor } from "@utils/generation/ats-score";
 import { useState } from "react";
-import { atsScoreColor } from "@/utils/ats-score";
-import { formatDate } from "@/utils/date-format";
 
 /** Linha de um currículo gerado: abertura no editor, download do PDF e exclusão com confirmação. */
 export function CvHistoryRow({

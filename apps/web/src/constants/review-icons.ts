@@ -1,3 +1,9 @@
+import type {
+  CorrectionField,
+  ReviewCategory,
+  ReviewChoice,
+  ReviewIssue,
+} from "@@types/review";
 import {
   BookOpenText,
   Briefcase,
@@ -19,12 +25,6 @@ import {
   Text,
 } from "@react-zero-ui/icon-sprite";
 import type { ComponentType } from "react";
-import type {
-  CorrectionField,
-  ReviewCategory,
-  ReviewChoice,
-  ReviewIssue,
-} from "../types/review";
 
 /** Ícones e rótulos usados para apresentar as pendências da revisão rápida. */
 

@@ -1,9 +1,9 @@
 import type { FactRecord } from "@@types/base-review";
 import type { ReviewStepId } from "@@types/review-model";
 import { ScanSearch } from "@react-zero-ui/icon-sprite";
+import { factFieldLabel, formatFactValue } from "@utils/review/fact-display";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
-import { factFieldLabel, formatFactValue } from "@/utils/fact-display";
 import { EVIDENCE_TONE } from "../-constants/evidence";
 import { categoryLabel, isCategoryActive } from "../-utils/evidence-category";
 

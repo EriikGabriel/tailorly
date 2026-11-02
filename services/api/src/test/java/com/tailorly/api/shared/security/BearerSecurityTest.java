@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,6 +24,8 @@ import com.tailorly.api.user.UserService;
 import com.tailorly.api.user.dto.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.tailorly.api.shared.ratelimit.LoginAttemptLimiter;
+import com.tailorly.api.shared.ratelimit.RateLimitConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
@@ -32,7 +35,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @WebMvcTest({UserController.class, AuthenticationController.class, CurrentAccountController.class})
-@Import({SecurityConfiguration.class, LocalizedSecurityErrorHandler.class, JwtTokenService.class})
+@Import({SecurityConfiguration.class, LocalizedSecurityErrorHandler.class, JwtTokenService.class,
+    RateLimitConfiguration.class, LoginAttemptLimiter.class})
 @TestPropertySource(properties = {
     "tailorly.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
     "tailorly.security.jwt.issuer=http://localhost:8080",
@@ -59,6 +63,24 @@ class BearerSecurityTest {
 
   @MockitoBean
   private RefreshTokenService refreshTokenService;
+
+  @Test
+  void apiResponsesCarryHardenedSecurityHeaders() throws Exception {
+    mvc.perform(get("/v1/me"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(header().string("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'"))
+        .andExpect(header().string("Referrer-Policy", "no-referrer"))
+        .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+        .andExpect(header().string("X-Frame-Options", "DENY"))
+        .andExpect(header().exists("Permissions-Policy"))
+        .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+  }
+
+  @Test
+  void swaggerUiKeepsItsOwnContentSecurityPolicy() throws Exception {
+    mvc.perform(get("/swagger-ui/index.html"))
+        .andExpect(header().doesNotExist("Content-Security-Policy"));
+  }
 
   @Test
   void loginChecksPasswordAndReturnsSignedToken() throws Exception {

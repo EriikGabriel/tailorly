@@ -5,9 +5,12 @@ import {
   hasUnsavedReviewChanges,
   useReviewDraftStore,
 } from "@stores/review-draft-store";
+import {
+  firstStepWithPending,
+  pendingByStep,
+} from "@utils/review/review-step-map";
+import { clearSteps } from "@utils/review/review-verification";
 import { forwardRef, useImperativeHandle, useRef } from "react";
-import { firstStepWithPending, pendingByStep } from "@/utils/review-step-map";
-import { clearSteps } from "@/utils/review-verification";
 import { STEP_CATEGORIES } from "../-constants/evidence";
 import { useApproveGroundTruthFlow } from "../-hooks/use-approve-ground-truth";
 import { useConfirmReviewIssue } from "../-hooks/use-confirm-review-issue";
