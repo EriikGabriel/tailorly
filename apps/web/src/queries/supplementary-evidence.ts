@@ -125,6 +125,7 @@ export function useAutoCollectSupplementaryEvidence() {
 /** `jobPostingId` orienta a escolha de repositórios do GitHub que mostram o que a vaga pede. */
 export interface CollectOptions {
   jobPostingId?: string;
+  snapshotId?: string;
 }
 
 export function useCollectSupplementaryEvidence(
@@ -154,18 +155,22 @@ export function useCollectSupplementaryEvidence(
       },
     },
     mutationFn: (options) => {
-      if (!snapshotId || !token) throw new Error("Nenhum Ground Truth ativo.");
+      const targetSnapshotId = options?.snapshotId ?? snapshotId;
+      if (!targetSnapshotId || !token)
+        throw new Error("Nenhum Ground Truth ativo.");
       const query = options?.jobPostingId
         ? `?jobPostingId=${encodeURIComponent(options.jobPostingId)}`
         : "";
       return apiRequest<EvidenceCollection>(
-        `/v1/cv/evidence/snapshots/${encodeURIComponent(snapshotId)}/collect${query}`,
+        `/v1/cv/evidence/snapshots/${encodeURIComponent(targetSnapshotId)}/collect${query}`,
         { method: "POST", accessToken: token },
       );
     },
-    onSettled: () =>
+    onSettled: (_data, _error, options) =>
       queryClient.invalidateQueries({
-        queryKey: apiQueryKeys.supplementaryEvidence.snapshot(snapshotId ?? ""),
+        queryKey: apiQueryKeys.supplementaryEvidence.snapshot(
+          options?.snapshotId ?? snapshotId ?? "",
+        ),
       }),
   });
 }

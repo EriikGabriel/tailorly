@@ -183,7 +183,8 @@ async function mockAccount(page: Page, evidence: Evidence[]) {
   await page.route("**/v1/cv/evidence/snapshots/*", (route) =>
     route.fulfill({ json: evidence }),
   );
-  await page.route("**/v1/cv/evidence/snapshots/*/collect", (route) => {
+  // The collection request may carry `jobPostingId` in the query string.
+  await page.route("**/v1/cv/evidence/snapshots/*/collect**", (route) => {
     calls.collect++;
     return route.fulfill({
       json: {

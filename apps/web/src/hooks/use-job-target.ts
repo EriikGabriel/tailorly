@@ -1,6 +1,7 @@
 import { ApiClientError } from "@api/client";
 import { useBaseDocumentExtraction } from "@queries/base-document";
 import { useBaseReview } from "@queries/base-review";
+import { currentAccountQueryOptions } from "@queries/current-account";
 import { useGenerateCv } from "@queries/cv-generation";
 import { useAnalyzeJobPosting } from "@queries/job-posting";
 import {
@@ -70,10 +71,19 @@ export function useJobTarget() {
 
   /** Busca fontes novas e devolve quantas evidências estão pendentes; falhas não interrompem a geração. */
   async function collectPendingEvidence(): Promise<number> {
-    if (!snapshotId || !token) return 0;
+    if (!token) return 0;
+    let activeSnapshotId = snapshotId;
     try {
+      // O clique pode ocorrer antes da consulta inicial de /me terminar.
+      if (!activeSnapshotId) {
+        activeSnapshotId = (
+          await queryClient.fetchQuery(currentAccountQueryOptions(token))
+        ).owner.activeSnapshotId;
+      }
+      if (!activeSnapshotId) return 0;
       // Com a vaga já lida e selecionada, a busca prioriza repositórios do GitHub que mostram o que ela pede.
       await collectEvidence.mutateAsync({
+        snapshotId: activeSnapshotId,
         jobPostingId: useJobPostingStore.getState().selected?.postingId,
       });
     } catch {
@@ -81,7 +91,7 @@ export function useJobTarget() {
     }
     try {
       const items = await queryClient.fetchQuery({
-        ...supplementaryEvidenceQueryOptions(snapshotId, token),
+        ...supplementaryEvidenceQueryOptions(activeSnapshotId, token),
         staleTime: 0,
       });
       return items.filter((item) => item.reviewState === "pendente").length;
