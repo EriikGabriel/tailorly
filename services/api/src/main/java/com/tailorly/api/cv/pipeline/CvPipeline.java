@@ -8,8 +8,10 @@ import com.tailorly.api.cv.ats.AtsEvaluator;
 import com.tailorly.api.cv.ats.AtsReport;
 import com.tailorly.api.cv.enrichment.ConfirmedEvidence;
 import com.tailorly.api.cv.enrichment.CvContentEnricher;
+import com.tailorly.api.cv.enrichment.ProjectSelector;
 import com.tailorly.api.cv.model.CvEnrichment;
 import com.tailorly.api.cv.model.CvDocument;
+import com.tailorly.api.cv.model.CvLanguage;
 import com.tailorly.api.cv.model.CvPlan;
 import com.tailorly.api.cv.model.CvPreferences;
 import com.tailorly.api.cv.model.JobTerms;
@@ -33,7 +35,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CvPipeline {
-  public static final String VERSION = "cv-pipeline-6";
+  public static final String VERSION = "cv-pipeline-7";
   private static final int MAX_REFINEMENTS = 2;
   private static final Logger log = LoggerFactory.getLogger(CvPipeline.class);
 
@@ -51,17 +53,21 @@ public class CvPipeline {
    *                 (a IA falhou e as regras assumiram) ou {@code skipped} (otimização desligada ou meta já atingida)
    */
   public record Outcome(CvDocument document, byte[] pdf, AtsReport report, List<PipelineIteration> iterations,
-      String aiStatus, CvEnrichment enrichment) {
+      String aiStatus, CvEnrichment enrichment, List<String> projectsAdded, List<String> projectsOmitted) {
   }
 
   public Outcome run(UUID ownerId, CvDocument approved, String templateSource, JobTerms terms, JobAnalysis analysis,
-      String jobTitle, CvPreferences prefs, List<ConfirmedEvidence> evidence, Tracker tracker) {
-    // A reescrita troca frases de experiência, projetos e resumo, sempre presas aos fatos aprovados e às evidências confirmadas.
-    tracker.step(GenerationProgress.REWRITING, "A IA reescreve experiências, projetos e resumo com o vocabulário da vaga");
-    CvContentEnricher.Result enriched = enricher.enrich(ownerId, approved, evidence, analysis, jobTitle,
-        prefs.guidelines());
+      String jobTitle, CvPreferences prefs, List<ConfirmedEvidence> evidence, CvLanguage language, Tracker tracker) {
+    // Projetos candidatos (repositórios que a pessoa confirmou como evidência) completam o mínimo de projetos.
+    ProjectSelector.Selection projects = ProjectSelector.apply(approved, evidence, terms, language);
+    // A reescrita troca frases de experiência, projetos e resumo e adequa o título à vaga, sempre presa aos fatos
+    // aprovados e às evidências confirmadas.
+    tracker.step(GenerationProgress.REWRITING,
+        "A IA reescreve título, experiências, projetos e resumo com o vocabulário da vaga");
+    CvContentEnricher.Result enriched = enricher.enrich(ownerId, projects.document(), evidence, analysis, jobTitle,
+        prefs.guidelines(), language);
     // Agrupar tecnologias é só apresentação e vem depois da reescrita, que ainda enxerga cada tecnologia.
-    CvDocument base = TechnologyGrouper.apply(enriched.document());
+    CvDocument base = TechnologyGrouper.apply(enriched.document(), language);
     CvPlan plan = CvPlan.neutral();
     String editableTemplate = TypstTemplateMaterializer.materialize(templateSource, base);
     Candidate best = attempt(base, plan, editableTemplate, terms, tracker, enrichmentSummary(enriched.enrichment()));
@@ -109,7 +115,7 @@ public class CvPipeline {
       }
     }
     return new Outcome(best.document(), best.pdf(), best.report(), List.copyOf(iterations), aiStatus,
-        enriched.enrichment());
+        enriched.enrichment(), projects.added(), projects.omitted());
   }
 
   private static String enrichmentSummary(CvEnrichment enrichment) {

@@ -5,15 +5,15 @@
  * API HTTP do Tailorly. Endpoints de domínio ainda estão planejados.
  * OpenAPI spec version: 0.1.0
  */
-import type { AtsReviewRequirementCheck } from "./atsReviewRequirementCheck";
+import type { RequirementCheck } from "./requirementCheck";
 
 export interface AtsReview {
   alignment: number;
-  requirements: AtsReviewRequirementCheck[];
+  requirements: RequirementCheck[];
   reviewedAt: string;
   status: string;
   strengths: string[];
   suggestions: string[];
   /** @nullable */
-  summary: string | null;
+  summary?: string | null;
 }

@@ -1,5 +1,6 @@
 import { apiRequest } from "@api/client";
 import { apiQueryKeys } from "@api/query-keys";
+import type { CvLanguagePreference } from "@constants/generation-options";
 import {
   skipToken,
   useMutation,
@@ -9,7 +10,7 @@ import {
 
 /**
  * Padrões de geração da conta, gravados no perfil: layout, otimização para ATS (ligada até a conta
- * mudar) e diretrizes de destaque. São o ponto de partida do gerador, que ajusta diretrizes e layout
+ * mudar), diretrizes de destaque e idioma do currículo. São o ponto de partida do gerador, que ajusta diretrizes e layout
  * por vaga sem gravar aqui. Só contas guardam padrões. Chamadas escritas à mão porque o cliente
  * gerado ainda não inclui estas rotas.
  */
@@ -17,6 +18,8 @@ export interface GenerationDefaults {
   templateName: string | null;
   optimizeForAts: boolean;
   guidelines: string[];
+  /** Idioma do currículo final; `auto` detecta pela vaga. */
+  language: CvLanguagePreference;
 }
 
 /** Atualização parcial: só os campos enviados mudam no servidor. */

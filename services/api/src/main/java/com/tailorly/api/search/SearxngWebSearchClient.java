@@ -6,24 +6,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Busca pelo SearXNG, um buscador de código aberto que roda localmente (ver compose.yaml). Não tem
  * custo nem chave de API. A URL vem de {@code tailorly.web-search.searxng-url}; sem ela, nenhuma busca é feita.
+ * Instanciado por {@link WebSearchConfiguration}, que escolhe o provedor.
  * O formato JSON precisa estar habilitado no SearXNG (ver services/searxng/settings.yml).
  */
-@Component
 public class SearxngWebSearchClient implements WebSearchClient {
   private final String baseUrl;
   private final RestClient http;
 
-  public SearxngWebSearchClient(@Value("${tailorly.web-search.searxng-url:}") String baseUrl) {
+  public SearxngWebSearchClient(String baseUrl) {
     this.baseUrl = baseUrl == null ? "" : baseUrl.strip().replaceAll("/+$", "");
     SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
     factory.setConnectTimeout(Duration.ofSeconds(5));

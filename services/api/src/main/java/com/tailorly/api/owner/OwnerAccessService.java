@@ -1,5 +1,7 @@
 package com.tailorly.api.owner;
 
+import java.util.UUID;
+
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.session.AnonymousSessionAuthenticationToken;
 import com.tailorly.api.user.User;
@@ -9,6 +11,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 /**
@@ -50,11 +53,24 @@ public class OwnerAccessService {
       return;
     }
 
-    User user = userRepository.findByEmail(authentication.getName())
-        .orElseThrow(() -> new AccessDeniedException(ErrorCodes.Security.ACCESS_DENIED));
+    // O sujeito do JWT já é o id da conta: dispensa uma consulta por e-mail a cada verificação.
+    UUID userId = authentication instanceof JwtAuthenticationToken jwt
+        ? subjectId(jwt)
+        : userRepository.findByEmail(authentication.getName()).map(User::getId).orElse(null);
+    if (userId == null) {
+      throw new AccessDeniedException(ErrorCodes.Security.ACCESS_DENIED);
+    }
 
-    if (owner.getUser() == null || !user.getId().equals(owner.getUser().getId())) {
+    if (owner.getUser() == null || !userId.equals(owner.getUser().getId())) {
       throw new AccessDeniedException(ErrorCodes.Owner.ACCESS_DENIED);
+    }
+  }
+
+  private static UUID subjectId(JwtAuthenticationToken jwt) {
+    try {
+      return UUID.fromString(jwt.getToken().getSubject());
+    } catch (IllegalArgumentException ex) {
+      return null;
     }
   }
 

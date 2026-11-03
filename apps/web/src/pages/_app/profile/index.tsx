@@ -58,9 +58,7 @@ function ProfilePage() {
             <div id="section-ground-truth" className="scroll-mt-16">
               <GroundTruthPrincipalSection />
             </div>
-            <div id="section-connections" className="scroll-mt-16">
-              <SecondBrainIntegrationsSection />
-            </div>
+            <SecondBrainIntegrationsSection />
             <div id="section-ai-preferences" className="scroll-mt-16">
               <AiPreferencesSection />
             </div>

@@ -2,7 +2,11 @@ import { useSecondBrain } from "@queries/second-brain";
 import { Gem, Network } from "@react-zero-ui/icon-sprite";
 
 export function SecondBrainConnectionsCard() {
-  const { isAccount, isLoading, settings, status } = useSecondBrain();
+  const { isAccount, isLoading, settings, status, vaultAvailable } =
+    useSecondBrain();
+
+  // O cartão é do vault Obsidian; sem vault neste servidor, não há o que mostrar.
+  if (!vaultAvailable) return null;
 
   const detail = !isAccount
     ? "Entre na conta para configurar"

@@ -1,3 +1,4 @@
+import { MotionEffect } from "@animate/primitives/effects/motion-effect";
 import { useSecondBrain } from "@queries/second-brain";
 import {
   Archive,
@@ -23,7 +24,7 @@ interface Capability {
  * cada recurso faz; não é uma propaganda estática. Nada aqui muda o Currículo Base.
  */
 export function SecondBrainSection() {
-  const { isAccount, isLoading, status } = useSecondBrain();
+  const { isAccount, isLoading, status, vaultAvailable } = useSecondBrain();
 
   const capabilities: Capability[] = [
     {
@@ -48,6 +49,9 @@ export function SecondBrainSection() {
       icon: Globe,
     },
   ];
+  // Sem vault neste servidor (produção), o Second Brain não existe: nada a oferecer.
+  if (!vaultAvailable) return null;
+
   const activeCount = capabilities.filter((item) => item.active).length;
 
   const headline = !isAccount
@@ -65,7 +69,10 @@ export function SecondBrainSection() {
       : "Opcional: o Tailorly funciona com o seu Currículo Base. Ao conectar o Obsidian, suas notas viram evidência complementar (sempre com sua confirmação) e seus currículos podem ser arquivados no vault.";
 
   return (
-    <section
+    <MotionEffect
+      as="section"
+      inView
+      slide={{ offset: 24 }}
       aria-labelledby="second-brain-heading"
       className="flex w-full flex-col gap-6 overflow-hidden rounded-xl bg-primary-900 p-6 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)] sm:p-10"
     >
@@ -150,6 +157,6 @@ export function SecondBrainSection() {
           ))}
         </ul>
       )}
-    </section>
+    </MotionEffect>
   );
 }

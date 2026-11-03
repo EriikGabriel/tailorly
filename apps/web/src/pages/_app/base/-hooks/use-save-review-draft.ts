@@ -59,7 +59,7 @@ export function useSaveReviewDraft(review: BaseReviewQueries) {
           fieldKey,
           reviewedValue: value,
           origin: "manual_entry",
-          reviewState: "pendente",
+          reviewState: "confirmado",
         });
         continue;
       }

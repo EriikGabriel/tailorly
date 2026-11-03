@@ -89,8 +89,12 @@ owner; não habilite acesso público no R2.
    `TAILORLY_CORS_ALLOWED_ORIGINS`, `TAILORLY_REMOTE_MODEL` e `TAILORLY_REMOTE_API_KEY`.
 3. Use `TAILORLY_INTERPRETATION_PROVIDER=remote` e um endpoint/modelo/chave de provedor
    compatível com Chat Completions. Ollama não faz parte do serviço Render.
-4. Deixe `TAILORLY_SEARXNG_URL` vazio se não houver uma instância SearXNG separada. Recursos de
-   busca que dependem dele ficam desabilitados sem URL.
+4. Para busca web (enriquecimento de projetos e due diligence), crie uma chave gratuita em
+   [tavily.com](https://tavily.com) (1.000 créditos por mês) e defina `TAILORLY_TAVILY_API_KEY`.
+   Deixe `TAILORLY_SEARXNG_URL` vazio: sem ele, o modo `auto` usa o Tavily (localmente o SearXNG
+   continua sendo o padrão). Sem chave, a busca web fica desabilitada e a interface a esconde.
+   O vault Obsidian também fica desligado em produção (não há disco do usuário no servidor), e a
+   interface esconde esse recurso. A API informa o que existe em `GET /v1/features`.
 5. Configure o domínio público em **Settings → Custom Domains**. Use esse domínio como
    `TAILORLY_JWT_ISSUER` e inclua o domínio da Vercel em `TAILORLY_CORS_ALLOWED_ORIGINS`.
 

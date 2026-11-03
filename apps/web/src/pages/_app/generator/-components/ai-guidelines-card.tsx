@@ -1,6 +1,7 @@
 import { Switch } from "@animate/base/switch";
 import { GuidelineChips } from "@components/generation/guideline-chips";
 import { LayoutPicker } from "@components/generation/layout-picker";
+import { toLanguagePreference } from "@constants/generation-options";
 import { useViewer } from "@queries/cv-generation";
 import {
   DEFAULT_TEMPLATE,
@@ -51,6 +52,7 @@ export function AiGuidelinesCard() {
         templateName: saved.templateName ?? DEFAULT_TEMPLATE,
         optimizeForAts: saved.optimizeForAts,
         guidelines: saved.guidelines,
+        language: toLanguagePreference(saved.language),
       });
   }, [saved, applyDefaults]);
 

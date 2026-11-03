@@ -6,13 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface AtsReviewRequirementCheck {
+export interface RequirementCheck {
   /** @nullable */
-  evidence: string | null;
+  evidence?: string | null;
   importance: string;
   /** @nullable */
-  note: string | null;
+  note?: string | null;
   requirement: string;
-  /** met, partial ou missing. */
   status: string;
 }

@@ -5,6 +5,7 @@ import {
 import { useBaseReview } from "@queries/base-review";
 import { useActiveGroundTruth } from "@queries/ground-truth";
 import { isOwnerVaultInputDirty } from "@queries/owner-vault";
+import { useProfileDueDiligencePreferences } from "@queries/profile-due-diligence-preferences";
 import { useProfileGenerationDefaults } from "@queries/profile-generation-defaults";
 import { useSecondBrain } from "@queries/second-brain";
 import {
@@ -16,7 +17,7 @@ import {
 import { useOwnerVaultDraftStore } from "@stores/owner-vault-draft-store";
 import { useProfileSettingsStore } from "@stores/profile-settings-store";
 import { useReducedMotion } from "motion/react";
-import { type ComponentType, useEffect, useState } from "react";
+import { type ComponentType, useEffect, useMemo, useState } from "react";
 
 type Tab = {
   id: string;
@@ -26,7 +27,7 @@ type Tab = {
   sectionId?: string;
 };
 
-const tabs: Tab[] = [
+const allTabs: Tab[] = [
   {
     id: "overview",
     label: "Visão Geral & Perfil",
@@ -55,10 +56,22 @@ const tabs: Tab[] = [
 ];
 
 export function ProfileTabs() {
+  const secondBrain = useSecondBrain();
+  // Sem vault nem busca web neste servidor (produção), a aba não teria nada para configurar.
+  const tabs = useMemo(
+    () =>
+      allTabs
+        .filter((tab) => tab.id !== "connections" || secondBrain.available)
+        .map((tab) =>
+          tab.id === "connections" && !secondBrain.vaultAvailable
+            ? { ...tab, label: "Busca web" }
+            : tab,
+        ),
+    [secondBrain.available, secondBrain.vaultAvailable],
+  );
   const [active, setActive] = useState("overview");
   const reduceMotion = useReducedMotion();
   const { version } = useActiveGroundTruth();
-  const secondBrain = useSecondBrain();
   const review = useBaseReview(version?.id);
   const aiPreferencesDirty = useProfileSettingsStore((state) => state.isDirty);
   const vaultDraft = useOwnerVaultDraftStore((state) => state.draft);
@@ -77,7 +90,12 @@ export function ProfileTabs() {
       ),
   );
   const generationDefaults = useProfileGenerationDefaults();
-  if (aiPreferencesDirty || generationDefaults.isDirty)
+  const dueDiligencePreferences = useProfileDueDiligencePreferences();
+  if (
+    aiPreferencesDirty ||
+    generationDefaults.isDirty ||
+    dueDiligencePreferences.isDirty
+  )
     pendingSections.add("ai-preferences");
   if (secondBrainDirty) pendingSections.add("connections");
 
@@ -106,7 +124,7 @@ export function ProfileTabs() {
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [tabs]);
 
   function handleTabClick(tab: Tab) {
     setActive(tab.id);
@@ -138,7 +156,7 @@ export function ProfileTabs() {
             const { id, label, icon: Icon } = tab;
             const isActive = active === id;
             const badge =
-              id === "connections"
+              id === "connections" && secondBrain.vaultAvailable
                 ? secondBrain.status.connected
                   ? "Conectado"
                   : "Desconectado"

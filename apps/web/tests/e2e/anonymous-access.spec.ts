@@ -156,9 +156,12 @@ test("RF07: o servidor recusa o envio do visitante e a mensagem localizada é ex
     .getByLabel("Selecionar currículo base")
     .setInputFiles("tests/fixtures/curriculo-exemplo.pdf");
 
-  await expect(page.getByRole("alert")).toContainText(
-    "Uploads anônimos têm limite de páginas",
-  );
+  // A mensagem aparece no erro inline da seção e também no aviso global; o inline é o alvo.
+  await expect(
+    page
+      .getByRole("region", { name: "Currículo base (Ground Truth)" })
+      .getByRole("alert"),
+  ).toContainText("Uploads anônimos têm limite de páginas");
 });
 
 test.describe("migração após o login", () => {

@@ -79,6 +79,7 @@ public class OwnerDataEraser {
     jdbc.update("delete from ai_preferences where owner_id = ?", ownerId);
     jdbc.update("delete from owner_vaults where owner_id = ?", ownerId);
     jdbc.update("delete from owner_generation_defaults where owner_id = ?", ownerId);
+    jdbc.update("delete from owner_due_diligence_preferences where owner_id = ?", ownerId);
   }
 
   /** Varredura por prefixo depois do commit, para o que um worker em andamento tenha gravado. */

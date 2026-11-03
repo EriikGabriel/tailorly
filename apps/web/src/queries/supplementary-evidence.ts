@@ -122,13 +122,18 @@ export function useAutoCollectSupplementaryEvidence() {
   });
 }
 
+/** `jobPostingId` orienta a escolha de repositórios do GitHub que mostram o que a vaga pede. */
+export interface CollectOptions {
+  jobPostingId?: string;
+}
+
 export function useCollectSupplementaryEvidence(
   snapshotId: string | null,
   token: string | null,
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation<EvidenceCollection, Error, void>({
+  return useMutation<EvidenceCollection, Error, CollectOptions | undefined>({
     mutationKey: EVIDENCE_COLLECT_KEY,
     meta: {
       notify: {
@@ -138,7 +143,7 @@ export function useCollectSupplementaryEvidence(
           description:
             collection.evidenceCreated > 0
               ? `${collection.evidenceCreated} para você confirmar.`
-              : "Nenhuma evidência nova encontrada nos links.",
+              : "Nenhuma evidência nova encontrada nas fontes.",
           href: "/generator",
         }),
         error: (error) => ({
@@ -148,10 +153,13 @@ export function useCollectSupplementaryEvidence(
         }),
       },
     },
-    mutationFn: () => {
+    mutationFn: (options) => {
       if (!snapshotId || !token) throw new Error("Nenhum Ground Truth ativo.");
+      const query = options?.jobPostingId
+        ? `?jobPostingId=${encodeURIComponent(options.jobPostingId)}`
+        : "";
       return apiRequest<EvidenceCollection>(
-        `/v1/cv/evidence/snapshots/${encodeURIComponent(snapshotId)}/collect`,
+        `/v1/cv/evidence/snapshots/${encodeURIComponent(snapshotId)}/collect${query}`,
         { method: "POST", accessToken: token },
       );
     },

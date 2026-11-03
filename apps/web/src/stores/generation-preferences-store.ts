@@ -1,3 +1,7 @@
+import {
+  type CvLanguagePreference,
+  DEFAULT_LANGUAGE,
+} from "@constants/generation-options";
 import { create } from "zustand";
 
 /** Diretrizes que a pessoa pode ativar; dão ênfase ao que já está aprovado no Currículo Base, sem acrescentar fatos. */
@@ -13,6 +17,8 @@ export interface GenerationChoices {
   guidelines: string[];
   optimizeForAts: boolean;
   templateName: string;
+  /** Idioma do currículo final; sem conta e sem escolha vale `auto`. */
+  language: CvLanguagePreference;
 }
 
 interface GenerationPreferencesState extends GenerationChoices {
@@ -34,6 +40,7 @@ const initialChoices = (): GenerationChoices => ({
   guidelines: availableGuidelines.slice(0, 3),
   optimizeForAts: true,
   templateName: "classic",
+  language: DEFAULT_LANGUAGE,
 });
 
 /**
@@ -64,6 +71,7 @@ export const useGenerationPreferencesStore =
         const key = JSON.stringify([
           defaults.templateName,
           defaults.optimizeForAts,
+          defaults.language,
           [...defaults.guidelines].sort(),
         ]);
         if (state.appliedDefaultsKey === key) return state;

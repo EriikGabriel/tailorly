@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
@@ -33,7 +35,7 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 class JwtSecurityTest {
   @Test
   void signedTokenIsValidAndTamperingIsRejected() {
-    SecurityConfiguration configuration = new SecurityConfiguration(null, null);
+    SecurityConfiguration configuration = new SecurityConfiguration(null, null, new AccountAuthenticationCache());
     String encodedSecret = Base64.getEncoder().encodeToString(new byte[32]);
     var key = configuration.jwtSecretKey(encodedSecret);
     JwtDecoder decoder = configuration.jwtDecoder(key, "http://localhost:8080");
@@ -71,7 +73,8 @@ class JwtSecurityTest {
         .roles(Set.of(Role.builder().name(RoleEnum.ROLE_ADMIN).build()))
         .build();
     when(repository.findById(userId)).thenReturn(Optional.of(user));
-    SecurityConfiguration configuration = new SecurityConfiguration(repository, null);
+    AccountAuthenticationCache cache = new AccountAuthenticationCache();
+    SecurityConfiguration configuration = new SecurityConfiguration(repository, null, cache);
     Jwt token = Jwt.withTokenValue("token")
         .header("alg", "HS256")
         .subject(userId.toString())
@@ -82,14 +85,20 @@ class JwtSecurityTest {
     assertTrue(authentication.getAuthorities().stream()
         .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN")));
 
+    // Segunda conversão dentro da validade do cache: não consulta o banco de novo.
+    configuration.jwtAuthenticationConverter().convert(token);
+    verify(repository, times(1)).findById(userId);
+
+    // UserService.disable invalida a entrada, então a desativação vale já na requisição seguinte.
     user.setEnabled(false);
+    cache.invalidate(userId);
     assertThrows(BadCredentialsException.class,
         () -> configuration.jwtAuthenticationConverter().convert(token));
   }
 
   @Test
   void signingKeyMustBeStrong() {
-    SecurityConfiguration configuration = new SecurityConfiguration(null, null);
+    SecurityConfiguration configuration = new SecurityConfiguration(null, null, new AccountAuthenticationCache());
     assertThrows(IllegalStateException.class,
         () -> configuration.jwtSecretKey(Base64.getEncoder().encodeToString(new byte[16])));
   }

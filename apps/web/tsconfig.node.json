@@ -10,7 +10,25 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
-    "strict": true
+    "strict": true,
+    "paths": {
+      "*": ["./*"],
+      "@components/*": ["./src/components/*"],
+      "@ui/*": ["./src/components/ui/*"],
+      "@animate/*": ["./src/components/ui/animate/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@stores/*": ["./src/stores/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@app/*": ["./src/pages/_app/*"],
+      "@api/*": ["./src/lib/api/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@queries/*": ["./src/queries/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@constants/*": ["./src/constants/*"],
+      "@@types/*": ["./src/types/*"],
+      "@/*": ["./src/*"]
+    }
   },
   "include": [
     "vite.config.ts",

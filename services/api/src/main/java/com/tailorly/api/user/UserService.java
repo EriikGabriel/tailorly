@@ -14,6 +14,7 @@ import com.tailorly.api.owner.OwnerRepository;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
+import com.tailorly.api.shared.security.AccountAuthenticationCache;
 import com.tailorly.api.shared.security.AdminEmailPolicy;
 import com.tailorly.api.user.dto.CreateUserRequest;
 import com.tailorly.api.user.dto.UpdateUserRequest;
@@ -36,6 +37,7 @@ public class UserService {
   private final OwnerRepository ownerRepository;
   private final AdminEmailPolicy adminEmailPolicy;
   private final PasswordEncoder passwordEncoder;
+  private final AccountAuthenticationCache accountCache;
 
   @Transactional
   public UserResponse create(@NonNull CreateUserRequest requestUser) {
@@ -117,6 +119,7 @@ public class UserService {
       user.getRoles().add(getRole(RoleEnum.ROLE_ADMIN));
     }
 
+    accountCache.invalidate(id);
     return UserResponse.from(userRepository.save(user));
   }
 
@@ -130,6 +133,7 @@ public class UserService {
     requireSelf(user.getEmail());
     user.setEnabled(false);
     user.setDisabledAt(Instant.now());
+    accountCache.invalidate(id);
   }
 
   private void requireSelf(String email) {

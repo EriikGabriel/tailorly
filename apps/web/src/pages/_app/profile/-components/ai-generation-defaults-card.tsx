@@ -1,6 +1,12 @@
 import { Switch } from "@animate/base/switch";
+import { SelectField } from "@components/fields/select-field";
 import { GuidelineChips } from "@components/generation/guideline-chips";
 import { LayoutPicker } from "@components/generation/layout-picker";
+import {
+  type CvLanguagePreference,
+  languageOptions,
+  toLanguagePreference,
+} from "@constants/generation-options";
 import { useProfileGenerationDefaults } from "@queries/profile-generation-defaults";
 
 /**
@@ -53,6 +59,35 @@ export function AiGenerationDefaultsCard() {
         <GuidelineChips
           active={current.guidelines}
           onToggle={toggleGuideline}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label
+          htmlFor="cv-language"
+          className="text-label-md font-semibold text-primary-950"
+        >
+          Idioma do currículo
+        </label>
+        <p className="text-body-sm text-on-surface-variant">
+          Idioma do currículo final: títulos das seções, título profissional e o
+          texto que a IA reescreve. Por padrão ele segue o idioma da vaga; fatos
+          que a IA não reescreve ficam como você os aprovou.
+        </p>
+        <SelectField
+          id="cv-language"
+          value={current.language}
+          options={languageOptions}
+          emptyOption={false}
+          disabled={disabled}
+          onChange={(value) =>
+            setDraft({
+              ...current,
+              language: toLanguagePreference(
+                value,
+              ) satisfies CvLanguagePreference,
+            })
+          }
         />
       </div>
 

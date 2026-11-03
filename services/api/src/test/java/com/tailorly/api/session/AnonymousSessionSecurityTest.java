@@ -37,7 +37,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest({AnonymousSessionController.class, CurrentAccountController.class,
     BaseDocumentController.class})
-@Import({SecurityConfiguration.class, LocalizedSecurityErrorHandler.class,
+@Import({SecurityConfiguration.class, com.tailorly.api.shared.security.AccountAuthenticationCache.class, LocalizedSecurityErrorHandler.class,
     AnonymousSessionConfiguration.class})
 @TestPropertySource(properties = {
     "tailorly.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",

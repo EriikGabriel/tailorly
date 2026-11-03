@@ -1,5 +1,6 @@
 package com.tailorly.api.cv.ats.review;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
 
@@ -11,20 +12,20 @@ import java.util.List;
  * "parcial" como meio.
  */
 public record AtsReview(
-    String status,
-    String summary,
-    int alignment,
-    List<RequirementCheck> requirements,
-    List<String> strengths,
-    List<String> suggestions,
-    Instant reviewedAt
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String status,
+    @Schema(types = {"string", "null"}) String summary,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int alignment,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<RequirementCheck> requirements,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<String> strengths,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<String> suggestions,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant reviewedAt
 ) {
   /**
    * {@code status}: {@code met}, {@code partial} ou {@code missing}. {@code evidence} é um trecho do
    * currículo conferido por código; sem ele, o requisito nunca conta como atendido.
    */
-  public record RequirementCheck(String requirement, String importance, String status, String evidence,
-      String note) {
+  public record RequirementCheck(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String requirement, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String importance, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String status,
+      @Schema(types = {"string", "null"}) String evidence, @Schema(types = {"string", "null"}) String note) {
   }
 
   public static AtsReview unavailable(String status) {

@@ -29,10 +29,13 @@ spring:
     username: ${PGUSER:tailorly}
     password: ${PGPASSWORD:tailorly}
     hikari:
-      # Pool pequeno e sem conexões ociosas mantidas: cabe no free tier do Render/Neon e deixa o Neon
-      # suspender o banco quando não há tráfego.
+      # Pool pequeno que cabe no free tier do Render/Neon. Conexão ociosa não impede o Neon de
+      # suspender o banco; manter ao menos uma aberta evita pagar o handshake TCP/TLS (e o possível
+      # despertar) na primeira requisição depois de uma pausa. Não há keepalive de propósito: ele
+      # manteria o banco acordado.
       maximum-pool-size: ${TAILORLY_DB_POOL_SIZE:10}
       minimum-idle: ${TAILORLY_DB_MIN_IDLE:10}
+      connection-timeout: ${TAILORLY_DB_CONNECTION_TIMEOUT_MS:20000}
       idle-timeout: ${TAILORLY_DB_IDLE_TIMEOUT_MS:600000}
       max-lifetime: ${TAILORLY_DB_MAX_LIFETIME_MS:1800000}
   servlet:
@@ -47,6 +50,12 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        # Agrupa INSERT/UPDATE em lote: a extração grava dezenas de fatos e evidências, e cada
+        # ida e volta ao banco remoto custa dezenas de milissegundos.
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
         type:
           json_format_mapper: com.tailorly.api.shared.config.JacksonJsonValueFormatMapper
   flyway:
@@ -142,9 +151,13 @@ tailorly:
     # esta pasta (um vault por conta) e o servidor só lê e exporta dentro dela. Sem TAILORLY_VAULT_ROOT,
     # nenhum vault é lido. Só faz sentido em instalação pessoal (self-hosted).
     root: ${TAILORLY_VAULT_ROOT:}
-  # Busca web local (SearXNG, ver compose.yaml). Sem URL, nenhuma busca web é feita.
+  # Busca web: `auto` usa o SearXNG se searxng-url estiver definida (perfil local) e o Tavily se só
+  # houver chave de API (produção). Também aceita `searxng` ou `tavily` para forçar um provedor. Sem
+  # nenhum dos dois, nenhuma busca web é feita (SearXNG local: ver compose.yaml).
   web-search:
+    provider: ${TAILORLY_WEB_SEARCH_PROVIDER:auto}
     searxng-url: ${TAILORLY_SEARXNG_URL:}
+    tavily-api-key: ${TAILORLY_TAVILY_API_KEY:}
   storage:
     endpoint: ${TAILORLY_STORAGE_ENDPOINT:http://localhost:3900}
     region: ${TAILORLY_STORAGE_REGION:garage}

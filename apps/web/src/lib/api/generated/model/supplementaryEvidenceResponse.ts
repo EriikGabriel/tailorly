@@ -14,4 +14,6 @@ export interface SupplementaryEvidenceResponse {
   sourceExcerpt?: string;
   sourceKind?: string;
   sourceUrl?: string;
+  subjectKey?: string;
+  subjectLabel?: string;
 }

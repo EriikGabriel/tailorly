@@ -5,12 +5,6 @@
     "title": "Tailorly API",
     "version": "0.1.0"
   },
-  "servers": [
-    {
-      "url": "http://127.0.0.1:18080",
-      "description": "Generated server url"
-    }
-  ],
   "paths": {
     "/v1/ai-preferences": {
       "get": {
@@ -27,7 +21,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AiPreferences"]
+        "tags": [
+          "AiPreferences"
+        ]
       },
       "put": {
         "operationId": "aiPreferencesUpdate",
@@ -53,7 +49,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AiPreferences"]
+        "tags": [
+          "AiPreferences"
+        ]
       }
     },
     "/v1/anonymous-sessions": {
@@ -71,7 +69,9 @@
             "description": "Created"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/anonymous-sessions/current": {
@@ -82,7 +82,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       },
       "get": {
         "operationId": "anonymousSessionCurrent",
@@ -98,7 +100,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/anonymous-sessions/migrate": {
@@ -126,7 +130,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/anonymous-sessions/{id}": {
@@ -155,7 +161,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/anonymous-sessions/{id}/revoke": {
@@ -184,7 +192,9 @@
             "description": "OK"
           }
         },
-        "tags": ["AnonymousSession"]
+        "tags": [
+          "AnonymousSession"
+        ]
       }
     },
     "/v1/auth/login": {
@@ -212,7 +222,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Authentication"]
+        "tags": [
+          "Authentication"
+        ]
       }
     },
     "/v1/auth/logout": {
@@ -233,7 +245,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["Authentication"]
+        "tags": [
+          "Authentication"
+        ]
       }
     },
     "/v1/auth/refresh": {
@@ -261,7 +275,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Authentication"]
+        "tags": [
+          "Authentication"
+        ]
       }
     },
     "/v1/auth/register": {
@@ -289,7 +305,9 @@
             "description": "Created"
           }
         },
-        "tags": ["Authentication"]
+        "tags": [
+          "Authentication"
+        ]
       }
     },
     "/v1/base-documents/hash/{contentHash}": {
@@ -317,7 +335,9 @@
             "description": "OK"
           }
         },
-        "tags": ["BaseDocument"]
+        "tags": [
+          "BaseDocument"
+        ]
       }
     },
     "/v1/base-documents/owner/{ownerId}": {
@@ -349,7 +369,9 @@
             "description": "OK"
           }
         },
-        "tags": ["BaseDocument"]
+        "tags": [
+          "BaseDocument"
+        ]
       }
     },
     "/v1/base-documents/upload": {
@@ -377,7 +399,9 @@
                     "format": "binary"
                   }
                 },
-                "required": ["file"]
+                "required": [
+                  "file"
+                ]
               }
             }
           }
@@ -394,7 +418,9 @@
             "description": "Created"
           }
         },
-        "tags": ["BaseDocument"]
+        "tags": [
+          "BaseDocument"
+        ]
       }
     },
     "/v1/base-documents/{id}": {
@@ -423,7 +449,75 @@
             "description": "OK"
           }
         },
-        "tags": ["BaseDocument"]
+        "tags": [
+          "BaseDocument"
+        ]
+      }
+    },
+    "/v1/base-documents/{id}/file": {
+      "get": {
+        "operationId": "baseDocumentOriginal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "BaseDocument"
+        ]
+      }
+    },
+    "/v1/base-versions/owner/{ownerId}": {
+      "get": {
+        "operationId": "baseVersionFindByOwnerId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BaseVersionResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "BaseVersion"
+        ]
       }
     },
     "/v1/base-versions/{id}": {
@@ -445,7 +539,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["BaseVersion"]
+        "tags": [
+          "BaseVersion"
+        ]
       },
       "get": {
         "operationId": "baseVersionFindById",
@@ -472,7 +568,9 @@
             "description": "OK"
           }
         },
-        "tags": ["BaseVersion"]
+        "tags": [
+          "BaseVersion"
+        ]
       }
     },
     "/v1/cv/evidence/snapshots/{snapshotId}": {
@@ -504,7 +602,9 @@
             "description": "OK"
           }
         },
-        "tags": ["SupplementaryEvidence"]
+        "tags": [
+          "SupplementaryEvidence"
+        ]
       }
     },
     "/v1/cv/evidence/snapshots/{snapshotId}/collect": {
@@ -515,6 +615,15 @@
             "in": "path",
             "name": "snapshotId",
             "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "jobPostingId",
+            "required": false,
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -533,7 +642,9 @@
             "description": "OK"
           }
         },
-        "tags": ["SupplementaryEvidence"]
+        "tags": [
+          "SupplementaryEvidence"
+        ]
       }
     },
     "/v1/cv/evidence/{id}/review-state": {
@@ -572,7 +683,9 @@
             "description": "OK"
           }
         },
-        "tags": ["SupplementaryEvidence"]
+        "tags": [
+          "SupplementaryEvidence"
+        ]
       }
     },
     "/v1/cv/generate": {
@@ -600,7 +713,40 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
+      }
+    },
+    "/v1/cv/generate/progress/{ownerId}": {
+      "get": {
+        "operationId": "cvGenerationProgress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationProgressResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/generations/owner/{ownerId}": {
@@ -632,7 +778,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/generations/{id}": {
@@ -654,7 +802,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       },
       "get": {
         "operationId": "cvGenerationFindById",
@@ -681,7 +831,49 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
+      }
+    },
+    "/v1/cv/generations/{id}/ats-review": {
+      "post": {
+        "operationId": "cvGenerationAtsReview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtsReview"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/generations/{id}/download": {
@@ -720,7 +912,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/generations/{id}/preview": {
@@ -760,7 +954,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvGeneration"]
+        "tags": [
+          "CvGeneration"
+        ]
       }
     },
     "/v1/cv/templates": {
@@ -788,7 +984,9 @@
             "description": "Created"
           }
         },
-        "tags": ["CvTemplate"]
+        "tags": [
+          "CvTemplate"
+        ]
       }
     },
     "/v1/cv/templates/bundled": {
@@ -806,7 +1004,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvTemplate"]
+        "tags": [
+          "CvTemplate"
+        ]
       }
     },
     "/v1/cv/templates/owner/{ownerId}/current": {
@@ -835,7 +1035,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CvTemplate"]
+        "tags": [
+          "CvTemplate"
+        ]
       }
     },
     "/v1/cv/templates/{id}": {
@@ -864,7 +1066,126 @@
             "description": "OK"
           }
         },
-        "tags": ["CvTemplate"]
+        "tags": [
+          "CvTemplate"
+        ]
+      }
+    },
+    "/v1/due-diligence": {
+      "post": {
+        "operationId": "dueDiligenceCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDueDiligenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DueDiligenceResponse"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "DueDiligence"
+        ]
+      }
+    },
+    "/v1/due-diligence/owner/{ownerId}": {
+      "get": {
+        "operationId": "dueDiligenceFindByOwner",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DueDiligenceSummaryResponse"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DueDiligence"
+        ]
+      }
+    },
+    "/v1/due-diligence/{id}": {
+      "delete": {
+        "operationId": "dueDiligenceDelete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "DueDiligence"
+        ]
+      },
+      "get": {
+        "operationId": "dueDiligenceFindById",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DueDiligenceResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DueDiligence"
+        ]
       }
     },
     "/v1/extracted-pages/hash/{textHash}": {
@@ -892,7 +1213,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractedPage"]
+        "tags": [
+          "ExtractedPage"
+        ]
       }
     },
     "/v1/extracted-pages/run/{extractionRunId}": {
@@ -924,7 +1247,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractedPage"]
+        "tags": [
+          "ExtractedPage"
+        ]
       }
     },
     "/v1/extracted-pages/{id}": {
@@ -953,7 +1278,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractedPage"]
+        "tags": [
+          "ExtractedPage"
+        ]
       }
     },
     "/v1/extracted-pages/{id}/text": {
@@ -982,7 +1309,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractedPage"]
+        "tags": [
+          "ExtractedPage"
+        ]
       }
     },
     "/v1/extraction-runs": {
@@ -1010,7 +1339,9 @@
             "description": "Accepted"
           }
         },
-        "tags": ["ExtractionRun"]
+        "tags": [
+          "ExtractionRun"
+        ]
       }
     },
     "/v1/extraction-runs/version/{baseVersionId}": {
@@ -1042,7 +1373,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractionRun"]
+        "tags": [
+          "ExtractionRun"
+        ]
       }
     },
     "/v1/extraction-runs/{id}": {
@@ -1071,7 +1404,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ExtractionRun"]
+        "tags": [
+          "ExtractionRun"
+        ]
       }
     },
     "/v1/fact-evidence": {
@@ -1099,7 +1434,9 @@
             "description": "Created"
           }
         },
-        "tags": ["FactEvidence"]
+        "tags": [
+          "FactEvidence"
+        ]
       }
     },
     "/v1/fact-evidence/fact/{factId}": {
@@ -1131,7 +1468,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactEvidence"]
+        "tags": [
+          "FactEvidence"
+        ]
       }
     },
     "/v1/fact-evidence/{id}": {
@@ -1160,7 +1499,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactEvidence"]
+        "tags": [
+          "FactEvidence"
+        ]
       }
     },
     "/v1/fact-evidence/{id}/locator": {
@@ -1199,7 +1540,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactEvidence"]
+        "tags": [
+          "FactEvidence"
+        ]
       }
     },
     "/v1/fact-records": {
@@ -1227,7 +1570,9 @@
             "description": "Created"
           }
         },
-        "tags": ["FactRecord"]
+        "tags": [
+          "FactRecord"
+        ]
       }
     },
     "/v1/fact-records/version/{baseVersionId}": {
@@ -1259,7 +1604,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactRecord"]
+        "tags": [
+          "FactRecord"
+        ]
       }
     },
     "/v1/fact-records/{id}": {
@@ -1288,7 +1635,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactRecord"]
+        "tags": [
+          "FactRecord"
+        ]
       }
     },
     "/v1/fact-records/{id}/display-order": {
@@ -1327,7 +1676,9 @@
             "description": "OK"
           }
         },
-        "tags": ["FactRecord"]
+        "tags": [
+          "FactRecord"
+        ]
       }
     },
     "/v1/facts": {
@@ -1355,7 +1706,9 @@
             "description": "Created"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
       }
     },
     "/v1/facts/record/{recordId}": {
@@ -1387,7 +1740,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
       }
     },
     "/v1/facts/{id}": {
@@ -1416,7 +1771,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
       }
     },
     "/v1/facts/{id}/confirm": {
@@ -1445,7 +1802,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
       }
     },
     "/v1/facts/{id}/review-state": {
@@ -1484,7 +1843,29 @@
             "description": "OK"
           }
         },
-        "tags": ["Fact"]
+        "tags": [
+          "Fact"
+        ]
+      }
+    },
+    "/v1/features": {
+      "get": {
+        "operationId": "featuresGet",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Features"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Features"
+        ]
       }
     },
     "/v1/gt-snapshots/approve-version/{baseVersionId}": {
@@ -1513,7 +1894,9 @@
             "description": "Created"
           }
         },
-        "tags": ["GtSnapshot"]
+        "tags": [
+          "GtSnapshot"
+        ]
       }
     },
     "/v1/gt-snapshots/{id}": {
@@ -1542,7 +1925,9 @@
             "description": "OK"
           }
         },
-        "tags": ["GtSnapshot"]
+        "tags": [
+          "GtSnapshot"
+        ]
       }
     },
     "/v1/job-postings": {
@@ -1570,7 +1955,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/extract": {
@@ -1598,7 +1985,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/owner/{ownerId}": {
@@ -1630,7 +2019,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/{id}": {
@@ -1652,7 +2043,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       },
       "get": {
         "operationId": "jobPostingFindById",
@@ -1679,7 +2072,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/{id}/versions/{versionNumber}": {
@@ -1717,7 +2112,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/job-postings/{id}/versions/{versionNumber}/analysis": {
@@ -1755,7 +2152,9 @@
             "description": "OK"
           }
         },
-        "tags": ["JobPosting"]
+        "tags": [
+          "JobPosting"
+        ]
       }
     },
     "/v1/me": {
@@ -1773,7 +2172,9 @@
             "description": "OK"
           }
         },
-        "tags": ["CurrentAccount"]
+        "tags": [
+          "CurrentAccount"
+        ]
       }
     },
     "/v1/me/sessions": {
@@ -1794,7 +2195,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Session"]
+        "tags": [
+          "Session"
+        ]
       }
     },
     "/v1/me/sessions/{id}": {
@@ -1816,7 +2219,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["Session"]
+        "tags": [
+          "Session"
+        ]
       }
     },
     "/v1/owners": {
@@ -1844,7 +2249,9 @@
             "description": "Created"
           }
         },
-        "tags": ["Owner"]
+        "tags": [
+          "Owner"
+        ]
       }
     },
     "/v1/owners/{id}": {
@@ -1873,7 +2280,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Owner"]
+        "tags": [
+          "Owner"
+        ]
       }
     },
     "/v1/owners/{id}/deactivate-snapshot": {
@@ -1902,7 +2311,9 @@
             "description": "OK"
           }
         },
-        "tags": ["Owner"]
+        "tags": [
+          "Owner"
+        ]
       }
     },
     "/v1/owners/{id}/increment-revision": {
@@ -1931,7 +2342,149 @@
             "description": "OK"
           }
         },
-        "tags": ["Owner"]
+        "tags": [
+          "Owner"
+        ]
+      }
+    },
+    "/v1/owners/{ownerId}/due-diligence-preferences": {
+      "get": {
+        "operationId": "dueDiligencePreferencesGet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DueDiligencePreferencesResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DueDiligencePreferences"
+        ]
+      },
+      "put": {
+        "operationId": "dueDiligencePreferencesSet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDueDiligencePreferencesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DueDiligencePreferencesResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "DueDiligencePreferences"
+        ]
+      }
+    },
+    "/v1/owners/{ownerId}/generation-defaults": {
+      "get": {
+        "operationId": "ownerGenerationDefaultsGet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationDefaultsResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "OwnerGenerationDefaults"
+        ]
+      },
+      "put": {
+        "operationId": "ownerGenerationDefaultsSet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGenerationDefaultsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationDefaultsResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "OwnerGenerationDefaults"
+        ]
       }
     },
     "/v1/owners/{ownerId}/vault": {
@@ -1953,7 +2506,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["OwnerVault"]
+        "tags": [
+          "OwnerVault"
+        ]
       },
       "get": {
         "operationId": "ownerVaultGet",
@@ -1980,7 +2535,9 @@
             "description": "OK"
           }
         },
-        "tags": ["OwnerVault"]
+        "tags": [
+          "OwnerVault"
+        ]
       },
       "put": {
         "operationId": "ownerVaultSet",
@@ -2017,7 +2574,9 @@
             "description": "OK"
           }
         },
-        "tags": ["OwnerVault"]
+        "tags": [
+          "OwnerVault"
+        ]
       }
     },
     "/v1/review-issues/version/{baseVersionId}": {
@@ -2049,7 +2608,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ReviewIssue"]
+        "tags": [
+          "ReviewIssue"
+        ]
       }
     },
     "/v1/review-issues/{id}/answer": {
@@ -2088,7 +2649,9 @@
             "description": "OK"
           }
         },
-        "tags": ["ReviewIssue"]
+        "tags": [
+          "ReviewIssue"
+        ]
       }
     },
     "/v1/stored-objects": {
@@ -2116,7 +2679,9 @@
             "description": "Created"
           }
         },
-        "tags": ["StoredObject"]
+        "tags": [
+          "StoredObject"
+        ]
       }
     },
     "/v1/stored-objects/owner/{ownerId}": {
@@ -2148,7 +2713,9 @@
             "description": "OK"
           }
         },
-        "tags": ["StoredObject"]
+        "tags": [
+          "StoredObject"
+        ]
       }
     },
     "/v1/stored-objects/{id}": {
@@ -2177,7 +2744,9 @@
             "description": "OK"
           }
         },
-        "tags": ["StoredObject"]
+        "tags": [
+          "StoredObject"
+        ]
       }
     },
     "/v1/stored-objects/{id}/deletion-status": {
@@ -2216,7 +2785,9 @@
             "description": "OK"
           }
         },
-        "tags": ["StoredObject"]
+        "tags": [
+          "StoredObject"
+        ]
       }
     },
     "/v1/users": {
@@ -2237,7 +2808,9 @@
             "description": "OK"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       },
       "post": {
         "operationId": "userCreateUser",
@@ -2263,7 +2836,9 @@
             "description": "Created"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       }
     },
     "/v1/users/by-email": {
@@ -2291,7 +2866,9 @@
             "description": "OK"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       }
     },
     "/v1/users/{id}": {
@@ -2320,7 +2897,9 @@
             "description": "OK"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       },
       "put": {
         "operationId": "userUpdateUser",
@@ -2357,7 +2936,9 @@
             "description": "OK"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       }
     },
     "/v1/users/{id}/disable": {
@@ -2379,7 +2960,9 @@
             "description": "No Content"
           }
         },
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       }
     }
   },
@@ -2395,10 +2978,16 @@
             "type": "boolean"
           },
           "ollamaEndpoint": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "ollamaModel": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "provider": {
             "type": "string"
@@ -2407,13 +2996,22 @@
             "type": "boolean"
           },
           "remoteEndpoint": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "remoteModel": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "updatedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           }
         },
@@ -2475,14 +3073,23 @@
             "format": "uuid"
           },
           "revokedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "valid": {
             "type": "boolean"
           }
         },
-        "required": ["expiresAt", "id", "ownerId", "revokedAt", "valid"]
+        "required": [
+          "expiresAt",
+          "id",
+          "ownerId",
+          "revokedAt",
+          "valid"
+        ]
       },
       "AnonymousSessionStatusResponse": {
         "type": "object",
@@ -2575,6 +3182,54 @@
           }
         }
       },
+      "AtsReview": {
+        "type": "object",
+        "properties": {
+          "alignment": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequirementCheck"
+            }
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "alignment",
+          "requirements",
+          "reviewedAt",
+          "status",
+          "strengths",
+          "suggestions"
+        ]
+      },
       "BaseDocumentResponse": {
         "type": "object",
         "properties": {
@@ -2601,7 +3256,10 @@
             "format": "uuid"
           },
           "pageCount": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32"
           }
         },
@@ -2631,7 +3289,12 @@
             "type": "boolean"
           }
         },
-        "required": ["document", "reused", "version", "versionReused"]
+        "required": [
+          "document",
+          "reused",
+          "version",
+          "versionReused"
+        ]
       },
       "BaseVersionResponse": {
         "type": "object",
@@ -2728,6 +3391,27 @@
           }
         }
       },
+      "CreateDueDiligenceRequest": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2
+          },
+          "jobPostingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "ownerId"
+        ]
+      },
       "CreateExtractionRunRequest": {
         "type": "object",
         "properties": {
@@ -2736,7 +3420,9 @@
             "format": "uuid"
           }
         },
-        "required": ["baseVersionId"]
+        "required": [
+          "baseVersionId"
+        ]
       },
       "CreateFactEvidenceRequest": {
         "type": "object",
@@ -2780,7 +3466,11 @@
             "minimum": 0
           }
         },
-        "required": ["baseVersionId", "category", "displayOrder"]
+        "required": [
+          "baseVersionId",
+          "category",
+          "displayOrder"
+        ]
       },
       "CreateFactRequest": {
         "type": "object",
@@ -2808,7 +3498,12 @@
           },
           "reviewedValue": {}
         },
-        "required": ["fieldKey", "origin", "recordId", "reviewState"]
+        "required": [
+          "fieldKey",
+          "origin",
+          "recordId",
+          "reviewState"
+        ]
       },
       "CreateJobPostingRequest": {
         "type": "object",
@@ -2838,7 +3533,9 @@
             "minLength": 0
           }
         },
-        "required": ["ownerId"]
+        "required": [
+          "ownerId"
+        ]
       },
       "CreateOwnerRequest": {
         "type": "object",
@@ -2852,7 +3549,9 @@
             "format": "uuid"
           }
         },
-        "required": ["kind"]
+        "required": [
+          "kind"
+        ]
       },
       "CreateStoredObjectRequest": {
         "type": "object",
@@ -2912,7 +3611,10 @@
             "minLength": 8
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "CurrentAccountResponse": {
         "type": "object",
@@ -2924,7 +3626,10 @@
             "$ref": "#/components/schemas/UserResponse"
           }
         },
-        "required": ["owner", "user"]
+        "required": [
+          "owner",
+          "user"
+        ]
       },
       "CvAtsResult": {
         "type": "object",
@@ -2951,6 +3656,9 @@
           },
           "ats": {
             "$ref": "#/components/schemas/CvAtsResult"
+          },
+          "atsReview": {
+            "$ref": "#/components/schemas/AtsReview"
           },
           "createdAt": {
             "type": "string",
@@ -3009,6 +3717,10 @@
             "maxItems": 10,
             "minItems": 0
           },
+          "language": {
+            "type": "string",
+            "pattern": "auto|pt-BR|en"
+          },
           "optimizeForAts": {
             "type": "boolean"
           },
@@ -3018,7 +3730,9 @@
             "minLength": 0
           }
         },
-        "required": ["guidelines"]
+        "required": [
+          "guidelines"
+        ]
       },
       "CvTemplateResponse": {
         "type": "object",
@@ -3049,6 +3763,143 @@
           }
         }
       },
+      "DueDiligencePreferencesResponse": {
+        "type": "object",
+        "properties": {
+          "pipelineEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DueDiligenceReport": {
+        "type": "object",
+        "properties": {
+          "analyzerVersion": {
+            "type": "string"
+          },
+          "consultedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "consultedSources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "entity": {
+            "$ref": "#/components/schemas/Entity"
+          },
+          "factors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FactorResult"
+            }
+          },
+          "privateSourcesConsulted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DueDiligenceResponse": {
+        "type": "object",
+        "properties": {
+          "analyzerVersion": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobPostingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobVersionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "report": {
+            "$ref": "#/components/schemas/DueDiligenceReport"
+          },
+          "status": {
+            "type": "string"
+          },
+          "triggerKind": {
+            "type": "string"
+          }
+        }
+      },
+      "DueDiligenceSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "factorsTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "factorsWithEvidence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobPostingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobTitle": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "triggerKind": {
+            "type": "string"
+          }
+        }
+      },
+      "Entity": {
+        "type": "object",
+        "properties": {
+          "jobPostingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobTitle": {
+            "type": "string"
+          },
+          "jobVersionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          }
+        }
+      },
       "ExtractJobPostingRequest": {
         "type": "object",
         "properties": {
@@ -3058,7 +3909,9 @@
             "minLength": 0
           }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       },
       "ExtractedPageResponse": {
         "type": "object",
@@ -3075,7 +3928,10 @@
             "format": "uuid"
           },
           "pageNumber": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32"
           },
           "textHash": {
@@ -3106,7 +3962,10 @@
             "type": "string"
           }
         },
-        "required": ["pageId", "text"]
+        "required": [
+          "pageId",
+          "text"
+        ]
       },
       "ExtractionRunResponse": {
         "type": "object",
@@ -3116,10 +3975,16 @@
             "format": "uuid"
           },
           "errorCode": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "finishedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "id": {
@@ -3127,7 +3992,10 @@
             "format": "uuid"
           },
           "outputObjectId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "pipelineFingerprint": {
@@ -3137,8 +4005,24 @@
             "type": "object",
             "additionalProperties": {}
           },
+          "stage": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Etapa em andamento: READING_FILE, EXTRACTING_TEXT, SAVING_PAGES, INTERPRETING ou SAVING_FACTS."
+          },
+          "stageDetail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "startedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "status": {
@@ -3153,6 +4037,8 @@
           "outputObjectId",
           "pipelineFingerprint",
           "pipelineVersions",
+          "stage",
+          "stageDetail",
           "startedAt",
           "status"
         ]
@@ -3161,7 +4047,14 @@
         "type": "object",
         "properties": {
           "boundingBox": {
-            "type": ["object", "array", "string", "number", "boolean", "null"]
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
           },
           "extractedPageId": {
             "type": "string",
@@ -3214,13 +4107,22 @@
             "format": "uuid"
           }
         },
-        "required": ["baseVersionId", "category", "displayOrder", "facts", "id"]
+        "required": [
+          "baseVersionId",
+          "category",
+          "displayOrder",
+          "facts",
+          "id"
+        ]
       },
       "FactResponse": {
         "type": "object",
         "properties": {
           "confirmedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "evidence": {
@@ -3230,10 +4132,20 @@
             }
           },
           "extractedValue": {
-            "type": ["object", "array", "string", "number", "boolean", "null"]
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
           },
           "extractionRunId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "fieldKey": {
@@ -3251,14 +4163,24 @@
             "format": "uuid"
           },
           "revalidateAfter": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "reviewState": {
             "type": "string"
           },
           "reviewedValue": {
-            "type": ["object", "array", "string", "number", "boolean", "null"]
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
           }
         },
         "required": [
@@ -3274,6 +4196,73 @@
           "reviewState",
           "reviewedValue"
         ]
+      },
+      "FactorResult": {
+        "type": "object",
+        "properties": {
+          "factor": {
+            "type": "string"
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "uncertainty": {
+            "$ref": "#/components/schemas/Uncertainty"
+          }
+        }
+      },
+      "Features": {
+        "type": "object",
+        "properties": {
+          "vault": {
+            "type": "boolean"
+          },
+          "webSearch": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Finding": {
+        "type": "object",
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "entityConfirmed": {
+            "type": "boolean"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "polarity": {
+            "type": "string"
+          },
+          "retrievedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceTitle": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "unverifiedReport": {
+            "type": "boolean"
+          }
+        }
       },
       "GenerateCvRequest": {
         "type": "object",
@@ -3303,7 +4292,10 @@
             "format": "uuid"
           }
         },
-        "required": ["jobPostingId", "ownerId"]
+        "required": [
+          "jobPostingId",
+          "ownerId"
+        ]
       },
       "GeneratedFile": {
         "type": "object",
@@ -3322,6 +4314,58 @@
             "format": "int64"
           }
         }
+      },
+      "GenerationDefaultsResponse": {
+        "type": "object",
+        "properties": {
+          "guidelines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": "string"
+          },
+          "optimizeForAts": {
+            "type": "boolean"
+          },
+          "templateName": {
+            "type": "string"
+          }
+        }
+      },
+      "GenerationProgressResponse": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "round": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail",
+          "round",
+          "stage",
+          "startedAt",
+          "status"
+        ]
       },
       "GroundTruthSource": {
         "type": "object",
@@ -3435,7 +4479,12 @@
             "type": "string"
           }
         },
-        "required": ["expiresAt", "ownerId", "sessionId", "token"]
+        "required": [
+          "expiresAt",
+          "ownerId",
+          "sessionId",
+          "token"
+        ]
       },
       "JobAnalysis": {
         "type": "object",
@@ -3751,7 +4800,10 @@
             "minLength": 1
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "LoginResponse": {
         "type": "object",
@@ -3792,17 +4844,25 @@
             "minLength": 1
           }
         },
-        "required": ["sessionToken"]
+        "required": [
+          "sessionToken"
+        ]
       },
       "OwnerResponse": {
         "type": "object",
         "properties": {
           "activeSnapshotId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "expiresAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "id": {
@@ -3817,7 +4877,10 @@
             "format": "int32"
           },
           "userId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           }
         },
@@ -3861,7 +4924,9 @@
             "minLength": 0
           }
         },
-        "required": ["content"]
+        "required": [
+          "content"
+        ]
       },
       "RefreshRequest": {
         "type": "object",
@@ -3871,7 +4936,9 @@
             "minLength": 1
           }
         },
-        "required": ["refreshToken"]
+        "required": [
+          "refreshToken"
+        ]
       },
       "Requirement": {
         "type": "object",
@@ -3899,6 +4966,37 @@
             "type": "string"
           }
         }
+      },
+      "RequirementCheck": {
+        "type": "object",
+        "properties": {
+          "evidence": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "importance": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requirement": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "importance",
+          "requirement",
+          "status"
+        ]
       },
       "ReviewIssueResponse": {
         "type": "object",
@@ -3966,7 +5064,10 @@
             "format": "uuid"
           }
         },
-        "required": ["content", "ownerId"]
+        "required": [
+          "content",
+          "ownerId"
+        ]
       },
       "SessionResponse": {
         "type": "object",
@@ -4027,7 +5128,10 @@
             "type": "string"
           },
           "expiresAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "id": {
@@ -4089,6 +5193,12 @@
           },
           "sourceUrl": {
             "type": "string"
+          },
+          "subjectKey": {
+            "type": "string"
+          },
+          "subjectLabel": {
+            "type": "string"
           }
         }
       },
@@ -4111,6 +5221,17 @@
           "version": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "Uncertainty": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
           }
         }
       },
@@ -4141,7 +5262,9 @@
             "type": "string"
           }
         },
-        "required": ["provider"]
+        "required": [
+          "provider"
+        ]
       },
       "UpdateDeletionStatusRequest": {
         "type": "object",
@@ -4151,7 +5274,9 @@
             "minLength": 1
           }
         },
-        "required": ["deletionStatus"]
+        "required": [
+          "deletionStatus"
+        ]
       },
       "UpdateDisplayOrderRequest": {
         "type": "object",
@@ -4162,14 +5287,26 @@
             "minimum": 0
           }
         },
-        "required": ["displayOrder"]
+        "required": [
+          "displayOrder"
+        ]
+      },
+      "UpdateDueDiligencePreferencesRequest": {
+        "type": "object",
+        "properties": {
+          "pipelineEnabled": {
+            "type": "boolean"
+          }
+        }
       },
       "UpdateEvidenceLocatorRequest": {
         "type": "object",
         "properties": {
           "sourceLocator": {}
         },
-        "required": ["sourceLocator"]
+        "required": [
+          "sourceLocator"
+        ]
       },
       "UpdateEvidenceReviewStateRequest": {
         "type": "object",
@@ -4179,7 +5316,9 @@
             "pattern": "pendente|confirmado|descartado"
           }
         },
-        "required": ["reviewState"]
+        "required": [
+          "reviewState"
+        ]
       },
       "UpdateFactReviewStateRequest": {
         "type": "object",
@@ -4190,7 +5329,36 @@
           },
           "reviewedValue": {}
         },
-        "required": ["reviewState"]
+        "required": [
+          "reviewState"
+        ]
+      },
+      "UpdateGenerationDefaultsRequest": {
+        "type": "object",
+        "properties": {
+          "guidelines": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 1
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
+          "language": {
+            "type": "string",
+            "pattern": "auto|pt-BR|en"
+          },
+          "optimizeForAts": {
+            "type": "boolean"
+          },
+          "templateName": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1
+          }
+        }
       },
       "UpdateOwnerVaultRequest": {
         "type": "object",
@@ -4225,7 +5393,9 @@
             "minLength": 1
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "Usage": {
         "type": "object",
@@ -4243,7 +5413,11 @@
             "format": "int32"
           }
         },
-        "required": ["extractions", "generations", "uploads"]
+        "required": [
+          "extractions",
+          "generations",
+          "uploads"
+        ]
       },
       "UserResponse": {
         "type": "object",
@@ -4265,7 +5439,12 @@
             }
           }
         },
-        "required": ["email", "enabled", "id", "roles"]
+        "required": [
+          "email",
+          "enabled",
+          "id",
+          "roles"
+        ]
       },
       "VersionInfo": {
         "type": "object",

@@ -5,6 +5,7 @@ import {
 import tailorlyLogo from "@assets/tailorly-logo.svg";
 import { AccountAccess } from "@components/account-access";
 import { NotificationBell } from "@components/notifications/notification-bell";
+import { useServerFeatures } from "@queries/server-features";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useReducedMotion } from "motion/react";
 
@@ -13,7 +14,7 @@ const navigation = [
   { label: "Currículo Base", to: "/base" },
   { label: "Gerador", to: "/generator" },
   { label: "Meus Currículos", to: "/cvs" },
-  { label: "Due Diligence", to: "/due-diligence" },
+  { label: "Due Diligence", to: "/due-diligence", needsWebSearch: true },
 ] as const;
 
 type HeaderProps = {
@@ -23,8 +24,13 @@ type HeaderProps = {
 export function Header({ onProfileClick }: HeaderProps) {
   const activePath = useLocation({ select: (location) => location.pathname });
   const reduceMotion = useReducedMotion();
+  const features = useServerFeatures();
+  // A due diligence depende da busca web; sem ela no servidor, a tela nunca funcionaria.
+  const visibleNavigation = navigation.filter(
+    (item) => !("needsWebSearch" in item) || features.webSearch,
+  );
   // null when on a non-nav route (e.g. /profile) so the Highlight pill clears instead of staying frozen.
-  const activeNavPath = navigation.some(({ to }) => activePath === to)
+  const activeNavPath = visibleNavigation.some(({ to }) => activePath === to)
     ? activePath
     : null;
 
@@ -62,7 +68,7 @@ export function Header({ onProfileClick }: HeaderProps) {
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
           >
             <ul className="flex items-center gap-3">
-              {navigation.map(({ label, to }) => {
+              {visibleNavigation.map(({ label, to }) => {
                 const active = activePath === to;
                 return (
                   <HighlightItem as="li" key={to} value={to}>

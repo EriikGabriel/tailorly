@@ -35,7 +35,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @WebMvcTest({UserController.class, AuthenticationController.class, CurrentAccountController.class})
-@Import({SecurityConfiguration.class, LocalizedSecurityErrorHandler.class, JwtTokenService.class,
+@Import({SecurityConfiguration.class, com.tailorly.api.shared.security.AccountAuthenticationCache.class, LocalizedSecurityErrorHandler.class, JwtTokenService.class,
     RateLimitConfiguration.class, LoginAttemptLimiter.class})
 @TestPropertySource(properties = {
     "tailorly.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
@@ -43,6 +43,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
     "tailorly.security.jwt.ttl=PT1H"
 })
 class BearerSecurityTest {
+  @Autowired
+  private AccountAuthenticationCache accountCache;
+
   @Autowired
   private MockMvc mvc;
 
@@ -134,6 +137,7 @@ class BearerSecurityTest {
         .andExpect(jsonPath("$.email").value("person@example.com"));
 
     user.setEnabled(false);
+    accountCache.invalidate(id);
     mvc.perform(get("/v1/users/{id}", id).header("Authorization", "Bearer " + token))
         .andExpect(status().isUnauthorized());
   }

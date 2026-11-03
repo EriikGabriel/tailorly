@@ -1,3 +1,4 @@
+import { toLanguagePreference } from "@constants/generation-options";
 import { useSelectedGeneration } from "@queries/cv-generation";
 import {
   useJobPostingVersion,
@@ -52,6 +53,7 @@ export function useRestoreGeneratorForms() {
         guidelines: preferences.guidelines,
         optimizeForAts: preferences.optimizeForAts ?? current.optimizeForAts,
         templateName: preferences.templateName ?? current.templateName,
+        language: toLanguagePreference(preferences.language),
       });
     }
   }, [generation, generationKind]);

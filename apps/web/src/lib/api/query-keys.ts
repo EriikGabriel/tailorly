@@ -51,6 +51,8 @@ export const apiQueryKeys = {
   },
   dueDiligence: {
     all: ["due-diligence"] as const,
+    preferences: (ownerId: string) =>
+      ["due-diligence", "preferences", ownerId] as const,
     byOwner: (ownerId: string) => ["due-diligence", "owner", ownerId] as const,
     detail: (id: string) => ["due-diligence", "detail", id] as const,
   },
@@ -59,6 +61,9 @@ export const apiQueryKeys = {
   },
   generationDefaults: {
     byOwner: (ownerId: string) => ["generation-defaults", ownerId] as const,
+  },
+  serverFeatures: {
+    all: ["server-features"] as const,
   },
   ownerVault: {
     byOwner: (ownerId: string) => ["owner-vault", ownerId] as const,

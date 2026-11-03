@@ -32,6 +32,7 @@ public class AnonymousSessionService {
   private final OwnerRepository ownerRepository;
   private final AnonymousProperties properties;
   private final AnonymousDataPurgeService purgeService;
+  private final AnonymousPrincipalCache principals;
 
   @Transactional
   public IssuedAnonymousSessionResponse issue() {
@@ -58,13 +59,17 @@ public class AnonymousSessionService {
   }
 
   /** Válida apenas se o token existir, não tiver sido revogado e ainda não tiver expirado. */
-  @Transactional(readOnly = true)
   public Optional<AnonymousPrincipal> authenticate(String token) {
     if (!AnonymousSessionTokens.isAnonymousToken(token)) {
       return Optional.empty();
     }
+    return principals.get(AnonymousSessionTokens.hash(token), this::loadPrincipal)
+        .filter(principal -> principal.expiresAt().isAfter(Instant.now()));
+  }
+
+  private Optional<AnonymousPrincipal> loadPrincipal(String tokenHash) {
     Instant now = Instant.now();
-    return sessionRepository.findByTokenHash(AnonymousSessionTokens.hash(token))
+    return sessionRepository.findByTokenHash(tokenHash)
         .filter(session -> session.getRevokedAt() == null)
         .filter(session -> session.getExpiresAt().isAfter(now))
         .map(session -> new AnonymousPrincipal(
@@ -99,7 +104,9 @@ public class AnonymousSessionService {
     if (session.getRevokedAt() == null) {
       session.setRevokedAt(Instant.now());
     }
-    return AnonymousSessionResponse.from(sessionRepository.save(session), Instant.now());
+    AnonymousSessionResponse response = AnonymousSessionResponse.from(sessionRepository.save(session), Instant.now());
+    principals.clear();
+    return response;
   }
 
   @Transactional(readOnly = true)

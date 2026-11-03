@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Coleta, consulta e revisão de evidências complementares de um snapshot do Ground Truth. */
@@ -22,10 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class SupplementaryEvidenceController {
   private final SupplementaryEvidenceService service;
 
-  /** Analisa as fontes (links, busca web e vault) dos projetos do snapshot ainda não analisadas e devolve o resumo. */
+  /**
+   * Analisa as fontes (links, busca web, vault e, para contas, repositórios do GitHub) ainda não analisadas e
+   * devolve o resumo. {@code jobPostingId}, opcional, orienta a escolha dos repositórios candidatos.
+   */
   @PostMapping("/snapshots/{snapshotId}/collect")
-  public SupplementaryEvidenceService.CollectionResult collect(@PathVariable UUID snapshotId) {
-    return service.collect(snapshotId);
+  public SupplementaryEvidenceService.CollectionResult collect(@PathVariable UUID snapshotId,
+      @RequestParam(required = false) UUID jobPostingId) {
+    return service.collect(snapshotId, jobPostingId);
   }
 
   @GetMapping("/snapshots/{snapshotId}")

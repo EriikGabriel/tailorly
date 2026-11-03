@@ -1,3 +1,4 @@
+import { MotionEffect } from "@animate/primitives/effects/motion-effect";
 import type { ComponentType, ReactNode } from "react";
 
 type SectionCardProps = {
@@ -16,7 +17,12 @@ export function SectionCard({
   children,
 }: SectionCardProps) {
   return (
-    <section className="flex w-full flex-col gap-6 rounded-xl bg-card p-6 shadow-xs">
+    <MotionEffect
+      as="section"
+      inView
+      slide={{ offset: 20 }}
+      className="flex w-full flex-col gap-6 rounded-xl bg-card p-6 shadow-xs"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h2 className="flex items-center gap-2 text-headline-sm font-semibold text-primary-950">
@@ -32,7 +38,7 @@ export function SectionCard({
         {trailing}
       </div>
       {children}
-    </section>
+    </MotionEffect>
   );
 }
 

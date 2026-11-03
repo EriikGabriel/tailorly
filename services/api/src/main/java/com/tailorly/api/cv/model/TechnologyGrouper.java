@@ -49,15 +49,25 @@ public final class TechnologyGrouper {
         "agile", "metodologias ageis"));
   }
 
+  /** Rótulos das categorias em inglês; o dicionário e os ids ficam em português. */
+  private static final Map<String, String> ENGLISH = Map.of("Linguagens", "Languages", "Backend", "Backend",
+      "Frontend", "Frontend", "Mobile", "Mobile", "Banco de dados", "Databases", "Cloud e DevOps", "Cloud & DevOps",
+      "Testes", "Testing", "Dados e IA", "Data & AI", "Ferramentas", "Tools", OTHERS, "Other");
+
   private TechnologyGrouper() {
   }
 
   /** Devolve o documento com a seção de tecnologias agrupada, ou o próprio documento se não compensar. */
   public static CvDocument apply(CvDocument document) {
+    return apply(document, CvLanguage.PT_BR);
+  }
+
+  /** Igual a {@link #apply(CvDocument)}, com os rótulos das categorias no idioma do currículo. */
+  public static CvDocument apply(CvDocument document, CvLanguage language) {
     List<Section> sections = new ArrayList<>();
     boolean changed = false;
     for (Section section : document.sections()) {
-      Section grouped = "technologies".equals(section.key()) ? group(section) : section;
+      Section grouped = "technologies".equals(section.key()) ? group(section, language) : section;
       changed |= grouped != section;
       sections.add(grouped);
     }
@@ -68,7 +78,7 @@ public final class TechnologyGrouper {
         List.copyOf(sections), document.layout());
   }
 
-  private static Section group(Section section) {
+  private static Section group(Section section, CvLanguage language) {
     if (section.grouped() || section.entries().size() < MIN_TECHNOLOGIES) {
       return section;
     }
@@ -83,11 +93,15 @@ public final class TechnologyGrouper {
     }
     List<Entry> entries = new ArrayList<>();
     List<String> others = groups.remove(OTHERS);
-    groups.forEach((label, items) -> entries.add(groupEntry(label, items)));
+    groups.forEach((label, items) -> entries.add(groupEntry(translate(label, language), items)));
     if (others != null) {
-      entries.add(groupEntry(OTHERS, others));
+      entries.add(groupEntry(translate(OTHERS, language), others));
     }
     return new Section(section.key(), section.heading(), false, true, List.copyOf(entries));
+  }
+
+  private static String translate(String label, CvLanguage language) {
+    return language.isEnglish() ? ENGLISH.getOrDefault(label, label) : label;
   }
 
   private static Entry groupEntry(String label, List<String> items) {

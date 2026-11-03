@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 import com.tailorly.api.diligence.DueDiligenceAnalyzer.Gathered;
 import com.tailorly.api.diligence.dto.CreateDueDiligenceRequest;
+import com.tailorly.api.diligence.preferences.DueDiligencePreferencesService;
 import com.tailorly.api.diligence.dto.DueDiligenceReport;
 import com.tailorly.api.diligence.dto.DueDiligenceReport.Entity;
 import com.tailorly.api.diligence.dto.DueDiligenceResponse;
@@ -48,18 +49,20 @@ public class DueDiligenceService {
   private final JobPostingRepository postings;
   private final JobPostingVersionRepository versions;
   private final DueDiligenceAnalyzer analyzer;
+  private final DueDiligencePreferencesService preferences;
   private final AnonymousQuotaService quota;
   private final ExecutorService background = Executors.newVirtualThreadPerTaskExecutor();
 
   public DueDiligenceService(OwnerRepository owners, OwnerAccessService access, DueDiligenceRepository repository,
       JobPostingRepository postings, JobPostingVersionRepository versions, DueDiligenceAnalyzer analyzer,
-      AnonymousQuotaService quota) {
+      DueDiligencePreferencesService preferences, AnonymousQuotaService quota) {
     this.owners = owners;
     this.access = access;
     this.repository = repository;
     this.postings = postings;
     this.versions = versions;
     this.analyzer = analyzer;
+    this.preferences = preferences;
     this.quota = quota;
   }
 
@@ -103,7 +106,9 @@ public class DueDiligenceService {
    */
   public void startForJob(Owner owner, UUID jobPostingId) {
     try {
-      if (AnonymousQuotaService.isAnonymous(owner) || owner.getActiveSnapshotId() == null
+      // Desligada no perfil, a etapa não gasta busca nem IA; a consulta manual na página segue disponível.
+      if (AnonymousQuotaService.isAnonymous(owner) || !preferences.isPipelineEnabled(owner.getId())
+          || owner.getActiveSnapshotId() == null
           || !analyzer.isSearchConfigured() || !analyzer.isAiAvailable(owner.getId()))
         return;
       Entity entity = resolveEntity(owner, new CreateDueDiligenceRequest(owner.getId(), null, jobPostingId));
