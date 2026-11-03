@@ -10,9 +10,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.MissingNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.MissingNode;
 import com.tailorly.api.ai.AiChatClient;
 import com.tailorly.api.job.dto.JobAnalysis;
 import com.tailorly.api.job.dto.JobAnalysis.Requirement;

@@ -2,8 +2,9 @@ package com.tailorly.api.shared.config;
 
 import java.lang.reflect.Type;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.hibernate.type.descriptor.WrapperOptions;
 import org.hibernate.type.descriptor.java.JavaType;
 import org.hibernate.type.format.FormatMapper;
@@ -17,13 +18,13 @@ import org.hibernate.type.format.FormatMapper;
  * vira um literal JSON e é lido de volta como {@code String}.</p>
  */
 public class JacksonJsonValueFormatMapper implements FormatMapper {
-  private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+  private final ObjectMapper objectMapper = JsonMapper.builder().findAndAddModules().build();
 
   @Override
   public <T> String toString(T value, JavaType<T> javaType, WrapperOptions options) {
     try {
       return objectMapper.writeValueAsString(value);
-    } catch (JsonProcessingException exception) {
+    } catch (JacksonException exception) {
       throw new IllegalArgumentException("Could not serialize value as JSON", exception);
     }
   }
@@ -33,7 +34,7 @@ public class JacksonJsonValueFormatMapper implements FormatMapper {
     Type type = javaType.getJavaType();
     try {
       return objectMapper.readValue(charSequence.toString(), objectMapper.constructType(type));
-    } catch (JsonProcessingException exception) {
+    } catch (JacksonException exception) {
       throw new IllegalArgumentException("Could not deserialize JSON as " + type, exception);
     }
   }

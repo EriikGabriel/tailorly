@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.cv.template.CvTemplateCatalog;
 import com.tailorly.api.cv.template.TypstTemplateMaterializer;

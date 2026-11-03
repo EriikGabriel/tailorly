@@ -13,9 +13,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.job.dto.JobPostingResponse;
 import com.tailorly.api.job.dto.JobPostingResponse.Company;
 import com.tailorly.api.job.dto.JobPostingResponse.Location;
@@ -40,7 +40,7 @@ public class JsonLdJobExtractor implements JobPageExtractor {
       JsonNode root;
       try {
         root = objectMapper.readTree(script.data());
-      } catch (JsonProcessingException exception) {
+      } catch (JacksonException exception) {
         continue;
       }
       JsonNode posting = findJobPosting(root);

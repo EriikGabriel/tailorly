@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Locale;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ApiError;
 import jakarta.servlet.ServletException;

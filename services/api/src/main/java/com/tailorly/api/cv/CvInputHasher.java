@@ -6,8 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.cv.model.CvPreferences;
 import com.tailorly.api.cv.pipeline.CvPipeline;
@@ -40,7 +40,7 @@ class CvInputHasher {
       }
       byte[] content = objectMapper.writeValueAsBytes(inputs);
       return Sha256.hex(concat(content, template.getContentHash().getBytes(StandardCharsets.US_ASCII)));
-    } catch (JsonProcessingException exception) {
+    } catch (JacksonException exception) {
       throw new IllegalStateException("Could not hash the CV content", exception);
     }
   }

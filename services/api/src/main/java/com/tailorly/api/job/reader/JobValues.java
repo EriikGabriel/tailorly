@@ -3,7 +3,7 @@ package com.tailorly.api.job.reader;
 import java.net.URI;
 import java.util.Locale;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 /** Leitura defensiva de valores vindos de páginas externas. */
 final class JobValues {

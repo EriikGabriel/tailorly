@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.ai.AiChatClient;
 import com.tailorly.api.aipreferences.AiPreferencesService;
 import com.tailorly.api.aipreferences.EffectiveAiSettings;
@@ -171,7 +171,7 @@ public class AtsReviewer {
         cited.add(lines.get(index));
       }
     }
-    String evidence = cited.isEmpty() ? null : text(new com.fasterxml.jackson.databind.node.TextNode(
+    String evidence = cited.isEmpty() ? null : text(new tools.jackson.databind.node.StringNode(
         String.join(" / ", cited)), 240);
     if (!"missing".equals(status) && evidence == null) {
       status = "missing";

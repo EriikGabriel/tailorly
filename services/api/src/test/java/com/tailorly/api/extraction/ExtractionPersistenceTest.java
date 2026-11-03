@@ -36,7 +36,8 @@ import org.springframework.transaction.support.TransactionTemplate;
     // para qualquer outro teste de integração que reuse o mesmo TAILORLY_TEST_DATABASE_URL.
     "spring.jpa.hibernate.ddl-auto=validate",
     "tailorly.extraction.enabled=false",
-    "tailorly.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    "tailorly.security.jwt.secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    "tailorly.security.secrets-key=integration-test-secrets-key"
 })
 @EnabledIfEnvironmentVariable(named = "TAILORLY_TEST_DATABASE_URL", matches = ".+")
 class ExtractionPersistenceTest {

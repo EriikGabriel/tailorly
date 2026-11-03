@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.job.dto.JobPostingResponse;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;

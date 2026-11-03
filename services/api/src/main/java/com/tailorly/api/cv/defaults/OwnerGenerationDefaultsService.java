@@ -5,9 +5,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.cv.defaults.dto.GenerationDefaultsResponse;
 import com.tailorly.api.cv.defaults.dto.UpdateGenerationDefaultsRequest;
 import com.tailorly.api.cv.model.CvLanguage;
@@ -98,7 +98,7 @@ public class OwnerGenerationDefaultsService {
   private List<String> read(String json) {
     try {
       return objectMapper.readValue(json, STRINGS);
-    } catch (JsonProcessingException exception) {
+    } catch (JacksonException exception) {
       throw new IllegalStateException("Invalid stored guidelines", exception);
     }
   }
@@ -106,7 +106,7 @@ public class OwnerGenerationDefaultsService {
   private String write(List<String> guidelines) {
     try {
       return objectMapper.writeValueAsString(guidelines);
-    } catch (JsonProcessingException exception) {
+    } catch (JacksonException exception) {
       throw new IllegalStateException("Could not store guidelines", exception);
     }
   }

@@ -2,7 +2,7 @@ package com.tailorly.api.extraction.interpreting;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.ai.AiChatClient;
 import com.tailorly.api.ai.AiChatClient.ModelConfiguration;
 import com.tailorly.api.aipreferences.EffectiveAiSettings;

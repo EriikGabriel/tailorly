@@ -12,9 +12,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.job.dto.JobPostingResponse;
 import com.tailorly.api.job.dto.JobPostingResponse.Company;
 import com.tailorly.api.job.dto.JobPostingResponse.Location;
@@ -42,7 +42,7 @@ public class GupyJobExtractor implements JobPageExtractor {
     JsonNode pageProps;
     try {
       pageProps = objectMapper.readTree(script.data()).path("props").path("pageProps");
-    } catch (JsonProcessingException exception) {
+    } catch (JacksonException exception) {
       return Optional.empty();
     }
 
@@ -93,7 +93,7 @@ public class GupyJobExtractor implements JobPageExtractor {
 
     JsonNode social = careerPage.path("socialLinks");
     Map<String, String> links = new LinkedHashMap<>();
-    social.fieldNames().forEachRemaining(field -> {
+    social.propertyNames().forEach(field -> {
       String url = httpUrl(text(social, field));
       if (url != null && field.startsWith("url") && !field.equals("urlSite"))
         links.put(field.substring(3).toLowerCase(Locale.ROOT), url);

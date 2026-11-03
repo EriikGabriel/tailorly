@@ -7,8 +7,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ServiceUnavailableException;
@@ -67,7 +67,7 @@ public class TypstPdfRenderer implements PdfRenderer {
       Files.write(directory.resolve("data.json"), objectMapper.writeValueAsBytes(document));
       run(directory, "compile", "--root", directory.toString(), "main.typ", "out.pdf");
       return Files.readAllBytes(directory.resolve("out.pdf"));
-    } catch (JsonProcessingException exception) {
+    } catch (JacksonException exception) {
       throw new IllegalStateException("Could not serialize the CV content", exception);
     } catch (IOException exception) {
       throw new IllegalStateException("Could not run the PDF compiler", exception);

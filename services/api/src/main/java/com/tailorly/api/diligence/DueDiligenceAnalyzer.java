@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.ai.AiChatClient;
 import com.tailorly.api.aipreferences.AiPreferencesService;
 import com.tailorly.api.aipreferences.EffectiveAiSettings;

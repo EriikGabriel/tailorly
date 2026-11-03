@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.cv.ats.parser.ResumeParser;
 import com.tailorly.api.cv.model.CvDocument;
 import com.tailorly.api.cv.model.JobTerms;

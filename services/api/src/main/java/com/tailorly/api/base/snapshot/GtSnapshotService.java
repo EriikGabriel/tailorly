@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.base.fact.Fact;
 import com.tailorly.api.base.fact.FactRepository;
 import com.tailorly.api.base.review.ReviewDecision;
@@ -203,7 +203,7 @@ public class GtSnapshotService {
           .toList();
       byte[] bytes = objectMapper.writeValueAsBytes(entries);
       return Sha256.hex(bytes);
-    } catch (JsonProcessingException exception) {
+    } catch (JacksonException exception) {
       throw new IllegalStateException(
           "Não foi possível calcular o hash do snapshot aprovado do Ground Truth", exception);
     }

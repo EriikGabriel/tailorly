@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.ai.AiChatClient;
 import com.tailorly.api.aipreferences.AiPreferencesService;
 import com.tailorly.api.aipreferences.EffectiveAiSettings;

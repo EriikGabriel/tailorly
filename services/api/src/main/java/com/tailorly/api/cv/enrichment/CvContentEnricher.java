@@ -13,8 +13,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.ai.AiChatClient;
 import com.tailorly.api.aipreferences.AiPreferencesService;
 import com.tailorly.api.aipreferences.EffectiveAiSettings;
