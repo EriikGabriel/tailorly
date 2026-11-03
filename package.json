@@ -19,6 +19,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
-    "turbo": "^2.11.9"
+    "turbo": "^2.11.10"
   }
 }
