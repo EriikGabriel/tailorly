@@ -171,6 +171,7 @@ public final class ErrorCodes {
     public static final String AI_UNAVAILABLE = "error.diligence.ai_unavailable";
     public static final String COMPANY_REQUIRED = "error.diligence.company_required";
     public static final String ANALYSIS_FAILED = "error.diligence.analysis_failed";
+    public static final String PREFERENCES_ACCOUNT_ONLY = "error.diligence.preferences_account_only";
 
     private Diligence() {
     }

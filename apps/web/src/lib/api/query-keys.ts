@@ -51,6 +51,8 @@ export const apiQueryKeys = {
   },
   dueDiligence: {
     all: ["due-diligence"] as const,
+    preferences: (ownerId: string) =>
+      ["due-diligence", "preferences", ownerId] as const,
     byOwner: (ownerId: string) => ["due-diligence", "owner", ownerId] as const,
     detail: (id: string) => ["due-diligence", "detail", id] as const,
   },

@@ -14,6 +14,8 @@ export interface CvPreferences {
    * @items.maxLength 80
    */
   guidelines: string[];
+  /** @pattern auto|pt-BR|en */
+  language?: string;
   optimizeForAts?: boolean;
   /**
    * @minLength 0

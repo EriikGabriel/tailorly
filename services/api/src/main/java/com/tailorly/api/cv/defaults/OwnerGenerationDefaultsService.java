@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tailorly.api.cv.defaults.dto.GenerationDefaultsResponse;
 import com.tailorly.api.cv.defaults.dto.UpdateGenerationDefaultsRequest;
+import com.tailorly.api.cv.model.CvLanguage;
 import com.tailorly.api.cv.model.CvPreferences;
 
 import com.tailorly.api.cv.template.CvTemplateCatalog;
@@ -63,13 +64,14 @@ public class OwnerGenerationDefaultsService {
     GenerationDefaultsResponse next = new GenerationDefaultsResponse(
         request.templateName() != null ? request.templateName() : current.templateName(),
         request.optimizeForAts() != null ? request.optimizeForAts() : current.optimizeForAts(),
-        request.guidelines() != null ? request.guidelines().stream().distinct().toList() : current.guidelines());
+        request.guidelines() != null ? request.guidelines().stream().distinct().toList() : current.guidelines(),
+        request.language() != null ? CvLanguage.normalizePreference(request.language()) : current.language());
     jdbc.update("insert into owner_generation_defaults (owner_id, template_name, optimize_for_ats, "
-        + "guidelines, updated_at) values (?, ?, ?, ?, ?) "
+        + "guidelines, language, updated_at) values (?, ?, ?, ?, ?, ?) "
         + "on conflict (owner_id) do update set template_name = excluded.template_name, "
         + "optimize_for_ats = excluded.optimize_for_ats, guidelines = excluded.guidelines, "
-        + "updated_at = excluded.updated_at", ownerId, next.templateName(), next.optimizeForAts(),
-        write(next.guidelines()), Timestamp.from(Instant.now()));
+        + "language = excluded.language, updated_at = excluded.updated_at", ownerId, next.templateName(),
+        next.optimizeForAts(), write(next.guidelines()), next.language(), Timestamp.from(Instant.now()));
     return next;
   }
 
@@ -80,14 +82,17 @@ public class OwnerGenerationDefaultsService {
   @Transactional(readOnly = true)
   public CvPreferences preferencesFor(UUID ownerId) {
     GenerationDefaultsResponse defaults = row(ownerId);
-    return new CvPreferences(defaults.guidelines(), defaults.optimizeForAts(), defaults.templateName());
+    return new CvPreferences(defaults.guidelines(), defaults.optimizeForAts(), defaults.templateName(),
+        defaults.language());
   }
 
   private GenerationDefaultsResponse row(UUID ownerId) {
-    return jdbc.query("select template_name, optimize_for_ats, guidelines "
+    return jdbc.query("select template_name, optimize_for_ats, guidelines, language "
         + "from owner_generation_defaults where owner_id = ?",
-        (rs, rowNum) -> new GenerationDefaultsResponse(rs.getString(1), rs.getBoolean(2), read(rs.getString(3))),
-        ownerId).stream().findFirst().orElse(new GenerationDefaultsResponse(null, true, DEFAULT_GUIDELINES));
+        (rs, rowNum) -> new GenerationDefaultsResponse(rs.getString(1), rs.getBoolean(2), read(rs.getString(3)),
+            rs.getString(4)),
+        ownerId).stream().findFirst().orElse(new GenerationDefaultsResponse(null, true, DEFAULT_GUIDELINES,
+            CvLanguage.AUTO));
   }
 
   private List<String> read(String json) {

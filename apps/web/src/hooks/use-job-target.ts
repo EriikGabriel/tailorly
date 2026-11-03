@@ -10,6 +10,7 @@ import {
 } from "@queries/supplementary-evidence";
 import { useBaseCvStore } from "@stores/base-cv-store";
 import { useJobDraftStore } from "@stores/job-draft-store";
+import { useJobPostingStore } from "@stores/job-posting-store";
 import { useQuickReviewStore } from "@stores/quick-review-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -71,7 +72,10 @@ export function useJobTarget() {
   async function collectPendingEvidence(): Promise<number> {
     if (!snapshotId || !token) return 0;
     try {
-      await collectEvidence.mutateAsync();
+      // Com a vaga já lida e selecionada, a busca prioriza repositórios do GitHub que mostram o que ela pede.
+      await collectEvidence.mutateAsync({
+        jobPostingId: useJobPostingStore.getState().selected?.postingId,
+      });
     } catch {
       // Segue com o que já existe: o que está pendente não entra no currículo de qualquer forma.
     }

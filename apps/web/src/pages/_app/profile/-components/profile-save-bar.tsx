@@ -6,6 +6,7 @@ import {
   useOwnerVault,
   useSaveOwnerVault,
 } from "@queries/owner-vault";
+import { useProfileDueDiligencePreferences } from "@queries/profile-due-diligence-preferences";
 import { useProfileGenerationDefaults } from "@queries/profile-generation-defaults";
 import { AlertTriangle, Info } from "@react-zero-ui/icon-sprite";
 import { useOwnerVaultDraftStore } from "@stores/owner-vault-draft-store";
@@ -39,13 +40,20 @@ export function ProfileSaveBar() {
     viewer.token,
   );
 
-  const isDirty = isAiDirty || isVaultDirty || generation.isDirty;
+  const dueDiligence = useProfileDueDiligencePreferences();
+
+  const isDirty =
+    isAiDirty || isVaultDirty || generation.isDirty || dueDiligence.isDirty;
   const isSaving =
-    isAiSaving || saveVault.isPending || saveGeneration.isPending;
+    isAiSaving ||
+    saveVault.isPending ||
+    saveGeneration.isPending ||
+    dueDiligence.save.isPending;
   const saveError =
     aiSaveError ??
     saveVault.error?.message ??
     saveGeneration.error?.message ??
+    dueDiligence.save.error?.message ??
     null;
   const reduceMotion = useReducedMotion();
 
@@ -53,6 +61,12 @@ export function ProfileSaveBar() {
     if (isAiDirty) saveAi().catch(() => {});
     if (isVaultDirty && vaultDraft) {
       saveVault.mutate(vaultDraft, { onSuccess: () => setVaultDraft(null) });
+    }
+    if (dueDiligence.isDirty && dueDiligence.draft !== null) {
+      dueDiligence.save.mutate(
+        { pipelineEnabled: dueDiligence.draft },
+        { onSuccess: () => dueDiligence.setDraft(null) },
+      );
     }
     if (generation.isDirty && generation.draft) {
       saveGeneration.mutate(generation.draft, {
@@ -65,6 +79,7 @@ export function ProfileSaveBar() {
     discardAi();
     setVaultDraft(null);
     generation.setDraft(null);
+    dueDiligence.setDraft(null);
   }
 
   return (

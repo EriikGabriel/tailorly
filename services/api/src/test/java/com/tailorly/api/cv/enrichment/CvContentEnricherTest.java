@@ -171,4 +171,68 @@ class CvContentEnricherTest {
     assertTrue(targets.get(0).sources().stream().anyMatch(source -> source.id().equals("evidence:" + jobEvidence)));
     assertTrue(targets.get(1).sources().stream().anyMatch(source -> source.id().equals("evidence:" + projectEvidence)));
   }
+
+  @Test
+  void adaptsTheHeadlineToTheJobWhenTheSourcesSupportIt() {
+    CvDocument document = new CvDocument("Ana", "Engenheira de Software", null, List.of(), List.of(
+        new CvDocument.Section("technologies", "Tecnologias", true, List.of(
+            new CvDocument.Entry("technologies:0", "Java", null, null, null, List.of(), null),
+            new CvDocument.Entry("technologies:1", "React", null, null, null, List.of(), null))),
+        new CvDocument.Section("experience", "Experiência", false,
+            List.of(job("experience:0", "Dev", "Acme", "Cuidou da API.")))));
+    doReturn(Map.of("headline", bullets("Desenvolvedora Full Stack", "technologies", "role:experience:0")))
+        .when(chat).run(any(), anyString(), any());
+
+    CvContentEnricher.Result result = enricher.enrich(owner, document, List.of(), null, "Full Stack Developer");
+
+    assertEquals("Desenvolvedora Full Stack", result.document().headline());
+    assertTrue(result.enrichment().headlineRewritten());
+    assertEquals("Engenheira de Software", result.enrichment().originalHeadline());
+  }
+
+  @Test
+  void keepsTheApprovedHeadlineWhenTheProposalInventsSeniority() {
+    CvDocument document = document(null, job("experience:0", "Dev", "Acme", "Cuidou da API."));
+    doReturn(Map.of("headline", bullets("Engenheira de Software Sênior", "headline")))
+        .when(chat).run(any(), anyString(), any());
+
+    CvContentEnricher.Result result = enricher.enrich(owner, document, List.of(), null, "Senior Engineer");
+
+    assertEquals("Engenheira de Software", result.document().headline());
+    assertFalse(result.enrichment().headlineRewritten());
+  }
+
+  @Test
+  void createsAHeadlineWhenThePersonHadNone() {
+    CvDocument document = new CvDocument("Ana", null, null, List.of(), List.of(
+        new CvDocument.Section("technologies", "Tecnologias", true, List.of(
+            new CvDocument.Entry("technologies:0", "React", null, null, null, List.of(), null),
+            new CvDocument.Entry("technologies:1", "TypeScript", null, null, null, List.of(), null)))));
+    doReturn(Map.of("headline", bullets("Desenvolvedora Front-end", "technologies")))
+        .when(chat).run(any(), anyString(), any());
+
+    CvContentEnricher.Result result = enricher.enrich(owner, document, List.of(), null, "Front-end Developer");
+
+    assertEquals("Desenvolvedora Front-end", result.document().headline());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void asksTheAiToWriteInTheResumeLanguage() {
+    CvDocument document = document(null, job("experience:0", "Dev", "Acme", "Cuidou da API."));
+    java.util.List<String> prompts = new java.util.ArrayList<>();
+    org.mockito.Mockito.doAnswer(invocation -> ((java.util.function.Function<Object, Object>) invocation
+        .getArgument(2)).apply(null)).when(chat).run(any(), anyString(), any());
+    org.mockito.Mockito.when(chat.complete(any(), anyString(), anyString())).thenAnswer(invocation -> {
+      prompts.add(invocation.getArgument(2));
+      return "{}";
+    });
+
+    enricher.enrich(owner, document, List.of(), null, "Dev", List.of(), com.tailorly.api.cv.model.CvLanguage.EN);
+    enricher.enrich(owner, document, List.of(), null, "Dev");
+
+    assertTrue(prompts.get(0).contains("written in English"));
+    assertTrue(prompts.get(1).contains("written in Brazilian Portuguese"));
+    assertTrue(prompts.get(0).contains("HEADLINE id=headline"));
+  }
 }

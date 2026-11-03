@@ -19,6 +19,7 @@ import com.tailorly.api.cv.evidence.SupplementaryEvidenceRepository;
 import com.tailorly.api.cv.model.CvTailoring;
 import com.tailorly.api.vault.OwnerVaultService;
 import com.tailorly.api.cv.model.FactValue;
+import com.tailorly.api.cv.model.CvLanguage;
 import com.tailorly.api.cv.model.CvPreferences;
 import com.tailorly.api.cv.model.JobTerms;
 import com.tailorly.api.cv.pipeline.CvAtsResult;
@@ -139,7 +140,7 @@ public class CvGenerationService {
   /** Tudo o que a fase 2 precisa, em dados simples (nada de entidades preguiçosas fora da transação). */
   private record Prepared(Result reused, UUID ownerId, UUID snapshotId, UUID jobVersionId, UUID templateId,
       String templateSource, CvDocument base, JobTerms terms, JobAnalysis analysis, String jobTitle,
-      CvPreferences preferences, String inputHash, List<ConfirmedEvidence> evidence) {
+      CvPreferences preferences, String inputHash, List<ConfirmedEvidence> evidence, CvLanguage language) {
   }
 
   public Result generate(GenerateCvRequest request) {
@@ -160,7 +161,7 @@ public class CvGenerationService {
     }
     try {
       CvPipeline.Outcome outcome = pipeline.run(prepared.ownerId(), prepared.base(), prepared.templateSource(),
-          prepared.terms(), prepared.analysis(), prepared.jobTitle(), preferences, prepared.evidence(), tracker);
+          prepared.terms(), prepared.analysis(), prepared.jobTitle(), preferences, prepared.evidence(), prepared.language(), tracker);
       tracker.step(GenerationProgress.SAVING, "Gravando o PDF, o Markdown e o relatório de ATS");
       Result result = transaction.execute(status -> persist(prepared, outcome));
       progress.finish(request.ownerId());
@@ -227,7 +228,9 @@ public class CvGenerationService {
 
     List<FactValue> facts = inputs.factsOf(snapshot);
     JobTerms terms = JobTerms.of(jobVersion.getDetails(), jobVersion.getAnalysis());
-    CvDocumentBuilder.Result built = CvDocumentBuilder.build(facts, terms);
+    // O idioma é fixo pela preferência ou, em "auto", o da vaga; títulos de seção e rótulos saem nele.
+    CvLanguage language = CvLanguage.resolve(preferences.language(), CvLanguage.jobText(jobVersion.getDetails()));
+    CvDocumentBuilder.Result built = CvDocumentBuilder.build(facts, terms, language);
     List<ConfirmedEvidence> confirmed = supplementaryEvidence.findAllBySnapshotIdOrderByCollectedAtAsc(snapshot.getId())
         .stream().filter(item -> ConfirmedEvidence.CONFIRMED.equals(item.getReviewState()))
         .map(ConfirmedEvidence::from).toList();
@@ -236,13 +239,13 @@ public class CvGenerationService {
 
     var existing = generations.findByOwnerIdAndInputHash(owner.getId(), inputHash);
     if (existing.isPresent()) {
-      return new Prepared(reuse(existing.get()), null, null, null, null, null, null, null, null, null, null, null, List.of());
+      return new Prepared(reuse(existing.get()), null, null, null, null, null, null, null, null, null, null, null, List.of(), null);
     }
 
     quota.consumeGeneration(owner);
     return new Prepared(null, owner.getId(), snapshot.getId(), jobVersion.getId(), template.getId(),
         template.getContent(), built.document(), terms, jobVersion.getAnalysis(),
-        jobVersion.getDetails().title(), preferences, inputHash, confirmed);
+        jobVersion.getDetails().title(), preferences, inputHash, confirmed, language);
   }
 
   private Result reuse(CvGeneration generation) {
@@ -281,7 +284,8 @@ public class CvGenerationService {
         .document(outcome.document())
         .ats(new CvAtsResult(outcome.report(), outcome.iterations(), outcome.aiStatus()))
         .tailoring(new CvTailoring(prepared.terms().terms(), outcome.report().matchedTerms(),
-            jobVersion.getAnalysisStatus(), outcome.enrichment()))
+            jobVersion.getAnalysisStatus(), outcome.enrichment(), prepared.language().code(),
+            outcome.projectsAdded(), outcome.projectsOmitted()))
         .pdfObject(pdfObject)
         .markdownObject(markdownObject)
         .createdAt(Instant.now())

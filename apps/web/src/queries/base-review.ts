@@ -160,7 +160,7 @@ export function useCreateFact(versionId: string) {
       extractedValue?: null;
       reviewedValue: string;
       origin: string;
-      reviewState: "pendente";
+      reviewState: "confirmado";
     },
     BaseFact
   >(versionId, () => "/v1/facts", "POST");

@@ -42,6 +42,11 @@ public final class CvDocumentBuilder {
   }
 
   public static Result build(List<FactValue> facts, JobTerms terms) {
+    return build(facts, terms, CvLanguage.PT_BR);
+  }
+
+  /** Títulos de seção e rótulos fixos saem no idioma pedido; o texto dos fatos nunca é traduzido aqui. */
+  public static Result build(List<FactValue> facts, JobTerms terms, CvLanguage language) {
     Map<String, String> identity = new LinkedHashMap<>();
     Map<String, TreeMap<ItemKey, Map<String, String>>> lists = new LinkedHashMap<>();
     StringBuilder allText = new StringBuilder();
@@ -66,21 +71,21 @@ public final class CvDocumentBuilder {
     }
 
     List<Section> sections = new ArrayList<>();
-    addSection(sections, "technologies", "Tecnologias", true,
+    addSection(sections, "technologies", language.heading("technologies"), true,
         sortByRelevance(entries(lists, "technologies", CvDocumentBuilder::technology), terms));
-    addSection(sections, "experience", "Experiência profissional", false,
-        entries(lists, "experience", item -> role(item, "role", "company", "employment")));
-    addSection(sections, "projects", "Projetos", false,
-        sortByRelevance(entries(lists, "projects", CvDocumentBuilder::project), terms));
-    addSection(sections, "degrees", "Formação acadêmica", false,
-        entries(lists, "degrees", CvDocumentBuilder::degree));
-    addSection(sections, "certifications", "Certificações", false,
-        entries(lists, "certifications", CvDocumentBuilder::certification));
-    addSection(sections, "languages", "Idiomas", true,
+    addSection(sections, "experience", language.heading("experience"), false,
+        entries(lists, "experience", item -> role(item, "role", "company", "employment", language)));
+    addSection(sections, "projects", language.heading("projects"), false,
+        sortByRelevance(entries(lists, "projects", item -> project(item, language)), terms));
+    addSection(sections, "degrees", language.heading("degrees"), false,
+        entries(lists, "degrees", item -> degree(item, language)));
+    addSection(sections, "certifications", language.heading("certifications"), false,
+        entries(lists, "certifications", item -> certification(item, language)));
+    addSection(sections, "languages", language.heading("languages"), true,
         entries(lists, "languages", item -> new Entry(item.get("language"), item.get("proficiency"),
             null, null, List.of(), null)));
-    addSection(sections, "volunteering", "Voluntariado", false,
-        entries(lists, "volunteering", item -> role(item, "role", "organization", null)));
+    addSection(sections, "volunteering", language.heading("volunteering"), false,
+        entries(lists, "volunteering", item -> role(item, "role", "organization", null, language)));
 
     CvDocument document = new CvDocument(
         identity.get("name"), identity.get("headline"), identity.get("summary"),
@@ -116,14 +121,15 @@ public final class CvDocumentBuilder {
 
   // ------------------------------------------------------------------ itens
 
-  private static Entry role(Map<String, String> item, String roleKey, String organizationKey, String metaKey) {
+  private static Entry role(Map<String, String> item, String roleKey, String organizationKey, String metaKey,
+      CvLanguage language) {
     String role = item.get(roleKey);
     String organization = item.get(organizationKey);
     return new Entry(
         role != null ? role : organization,
         role != null ? organization : null,
         metaKey == null ? null : item.get(metaKey),
-        period(item.get("start"), item.get("end"), item.get("status"), "Atual"),
+        period(item.get("start"), item.get("end"), item.get("status"), language.current()),
         details(item.get("description")),
         null);
   }
@@ -132,10 +138,10 @@ public final class CvDocumentBuilder {
     return new Entry(item.get("name"), item.get("context"), null, null, List.of(), null);
   }
 
-  private static Entry project(Map<String, String> item) {
+  private static Entry project(Map<String, String> item, CvLanguage language) {
     List<String> details = new ArrayList<>(details(item.get("statement")));
     if (item.get("metric") != null) {
-      details.add("Resultado: " + item.get("metric"));
+      details.add(language.result() + item.get("metric"));
     }
     String link = item.get("link");
     String url = url(link);
@@ -145,16 +151,16 @@ public final class CvDocumentBuilder {
     return new Entry(item.get("title"), item.get("context"), null, null, List.copyOf(details), url);
   }
 
-  private static Entry degree(Map<String, String> item) {
+  private static Entry degree(Map<String, String> item, CvLanguage language) {
     return new Entry(item.get("degree"), item.get("institution"), null,
-        period(item.get("start"), item.get("end"), item.get("status"), "Em andamento"), List.of(), null);
+        period(item.get("start"), item.get("end"), item.get("status"), language.inProgress()), List.of(), null);
   }
 
-  private static Entry certification(Map<String, String> item) {
+  private static Entry certification(Map<String, String> item, CvLanguage language) {
     String expires = date(item.get("expires"));
     List<String> details = item.get("credential") == null
-        ? List.of() : List.of("Credencial: " + item.get("credential"));
-    return new Entry(item.get("name"), item.get("issuer"), expires == null ? null : "Válida até " + expires,
+        ? List.of() : List.of(language.credential() + item.get("credential"));
+    return new Entry(item.get("name"), item.get("issuer"), expires == null ? null : language.validUntil() + expires,
         date(item.get("issued")), details, null);
   }
 
@@ -221,13 +227,25 @@ public final class CvDocumentBuilder {
   private static String period(String start, String end, String status, String currentLabel) {
     String from = date(start);
     String to = date(end);
-    if (to == null && currentLabel.equals(status)) {
+    if (to == null && isOngoing(status, currentLabel)) {
       to = currentLabel;
     }
     if (from == null) {
       return to;
     }
     return to == null ? from : from + " – " + to;
+  }
+
+  /** O status aprovado pode estar em português ou em inglês, qualquer que seja o idioma do currículo. */
+  private static boolean isOngoing(String status, String currentLabel) {
+    if (status == null) {
+      return false;
+    }
+    String value = status.strip();
+    return value.equalsIgnoreCase(currentLabel) || value.equalsIgnoreCase("Atual")
+        || value.equalsIgnoreCase("Em andamento") || value.equalsIgnoreCase("Present")
+        || value.equalsIgnoreCase("Current") || value.equalsIgnoreCase("In progress")
+        || value.equalsIgnoreCase("Ongoing");
   }
 
   /** {@code 2021-05} vira {@code 05/2021}; qualquer outro formato é mantido como foi aprovado. */

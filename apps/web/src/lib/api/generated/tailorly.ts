@@ -12,12 +12,14 @@ import type {
   AnonymousMigrationResponse,
   AnonymousSessionResponse,
   AnonymousSessionStatusResponse,
+  AtsReview,
   BaseDocumentResponse,
   BaseDocumentUploadBody,
   BaseDocumentUploadParams,
   BaseDocumentUploadResponse,
   BaseVersionResponse,
   CollectionResult,
+  CreateDueDiligenceRequest,
   CreateExtractionRunRequest,
   CreateFactEvidenceRequest,
   CreateFactRecordRequest,
@@ -27,9 +29,12 @@ import type {
   CreateStoredObjectRequest,
   CreateUserRequest,
   CurrentAccountResponse,
+  CvGenerationAtsReviewParams,
   CvGenerationDownloadParams,
   CvGenerationResponse,
   CvTemplateResponse,
+  DueDiligenceResponse,
+  DueDiligenceSummaryResponse,
   ExtractedPageResponse,
   ExtractedPageTextResponse,
   ExtractionRunResponse,
@@ -37,7 +42,10 @@ import type {
   FactEvidenceResponse,
   FactRecordResponse,
   FactResponse,
+  Features,
   GenerateCvRequest,
+  GenerationDefaultsResponse,
+  GenerationProgressResponse,
   GtSnapshotResponse,
   IssuedAnonymousSessionResponse,
   JobPostingDetailResponse,
@@ -55,6 +63,7 @@ import type {
   SessionResponse,
   Settings,
   StoredObjectResponse,
+  SupplementaryEvidenceCollectParams,
   SupplementaryEvidenceResponse,
   UpdateAiPreferencesRequest,
   UpdateDeletionStatusRequest,
@@ -62,6 +71,7 @@ import type {
   UpdateEvidenceLocatorRequest,
   UpdateEvidenceReviewStateRequest,
   UpdateFactReviewStateRequest,
+  UpdateGenerationDefaultsRequest,
   UpdateOwnerVaultRequest,
   UpdateUserRequest,
   UserGetUserByEmailParams,
@@ -486,6 +496,37 @@ export const baseDocumentFindById = async (
   });
 };
 
+export const getBaseDocumentOriginalUrl = (id: string) => {
+  return `/v1/base-documents/${encodeURIComponent(String(id))}/file`;
+};
+
+export const baseDocumentOriginal = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<string> => {
+  return apiRequest<string>(getBaseDocumentOriginalUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getBaseVersionFindByOwnerIdUrl = (ownerId: string) => {
+  return `/v1/base-versions/owner/${encodeURIComponent(String(ownerId))}`;
+};
+
+export const baseVersionFindByOwnerId = async (
+  ownerId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<BaseVersionResponse[]> => {
+  return apiRequest<BaseVersionResponse[]>(
+    getBaseVersionFindByOwnerIdUrl(ownerId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export const getBaseVersionDeleteUrl = (id: string) => {
   return `/v1/base-versions/${encodeURIComponent(String(id))}`;
 };
@@ -533,16 +574,32 @@ export const supplementaryEvidenceFindBySnapshot = async (
   );
 };
 
-export const getSupplementaryEvidenceCollectUrl = (snapshotId: string) => {
-  return `/v1/cv/evidence/snapshots/${encodeURIComponent(String(snapshotId))}/collect`;
+export const getSupplementaryEvidenceCollectUrl = (
+  snapshotId: string,
+  params?: SupplementaryEvidenceCollectParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/cv/evidence/snapshots/${encodeURIComponent(String(snapshotId))}/collect?${stringifiedParams}`
+    : `/v1/cv/evidence/snapshots/${encodeURIComponent(String(snapshotId))}/collect`;
 };
 
 export const supplementaryEvidenceCollect = async (
   snapshotId: string,
+  params?: SupplementaryEvidenceCollectParams,
   options?: Parameters<typeof apiRequest>[1],
 ): Promise<CollectionResult> => {
   return apiRequest<CollectionResult>(
-    getSupplementaryEvidenceCollectUrl(snapshotId),
+    getSupplementaryEvidenceCollectUrl(snapshotId, params),
     {
       ...options,
       method: "POST",
@@ -634,6 +691,23 @@ export const cvGenerationGenerate = async (
   });
 };
 
+export const getCvGenerationProgressUrl = (ownerId: string) => {
+  return `/v1/cv/generate/progress/${encodeURIComponent(String(ownerId))}`;
+};
+
+export const cvGenerationProgress = async (
+  ownerId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<GenerationProgressResponse> => {
+  return apiRequest<GenerationProgressResponse>(
+    getCvGenerationProgressUrl(ownerId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export const getCvGenerationFindByOwnerUrl = (ownerId: string) => {
   return `/v1/cv/generations/owner/${encodeURIComponent(String(ownerId))}`;
 };
@@ -676,6 +750,36 @@ export const cvGenerationFindById = async (
   return apiRequest<CvGenerationResponse>(getCvGenerationFindByIdUrl(id), {
     ...options,
     method: "GET",
+  });
+};
+
+export const getCvGenerationAtsReviewUrl = (
+  id: string,
+  params?: CvGenerationAtsReviewParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/cv/generations/${encodeURIComponent(String(id))}/ats-review?${stringifiedParams}`
+    : `/v1/cv/generations/${encodeURIComponent(String(id))}/ats-review`;
+};
+
+export const cvGenerationAtsReview = async (
+  id: string,
+  params?: CvGenerationAtsReviewParams,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<AtsReview> => {
+  return apiRequest<AtsReview>(getCvGenerationAtsReviewUrl(id, params), {
+    ...options,
+    method: "POST",
   });
 };
 
@@ -826,6 +930,91 @@ export const cvTemplateFindById = async (
   options?: Parameters<typeof apiRequest>[1],
 ): Promise<CvTemplateResponse> => {
   return apiRequest<CvTemplateResponse>(getCvTemplateFindByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDueDiligenceCreateUrl = () => {
+  return `/v1/due-diligence`;
+};
+
+export const dueDiligenceCreate = async (
+  createDueDiligenceRequest: CreateDueDiligenceRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<DueDiligenceResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<DueDiligenceResponse>(getDueDiligenceCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(createDueDiligenceRequest),
+  });
+};
+
+export const getDueDiligenceFindByOwnerUrl = (ownerId: string) => {
+  return `/v1/due-diligence/owner/${encodeURIComponent(String(ownerId))}`;
+};
+
+export const dueDiligenceFindByOwner = async (
+  ownerId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<DueDiligenceSummaryResponse[]> => {
+  return apiRequest<DueDiligenceSummaryResponse[]>(
+    getDueDiligenceFindByOwnerUrl(ownerId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getDueDiligenceDeleteUrl = (id: string) => {
+  return `/v1/due-diligence/${encodeURIComponent(String(id))}`;
+};
+
+export const dueDiligenceDelete = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<void> => {
+  return apiRequest<void>(getDueDiligenceDeleteUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDueDiligenceFindByIdUrl = (id: string) => {
+  return `/v1/due-diligence/${encodeURIComponent(String(id))}`;
+};
+
+export const dueDiligenceFindById = async (
+  id: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<DueDiligenceResponse> => {
+  return apiRequest<DueDiligenceResponse>(getDueDiligenceFindByIdUrl(id), {
     ...options,
     method: "GET",
   });
@@ -1317,6 +1506,19 @@ export const factUpdateReviewState = async (
   });
 };
 
+export const getFeaturesGetUrl = () => {
+  return `/v1/features`;
+};
+
+export const featuresGet = async (
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<Features> => {
+  return apiRequest<Features>(getFeaturesGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export const getGtSnapshotApproveVersionUrl = (baseVersionId: string) => {
   return `/v1/gt-snapshots/approve-version/${encodeURIComponent(String(baseVersionId))}`;
 };
@@ -1635,6 +1837,67 @@ export const ownerIncrementRevision = async (
     ...options,
     method: "PATCH",
   });
+};
+
+export const getOwnerGenerationDefaultsGetUrl = (ownerId: string) => {
+  return `/v1/owners/${encodeURIComponent(String(ownerId))}/generation-defaults`;
+};
+
+export const ownerGenerationDefaultsGet = async (
+  ownerId: string,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<GenerationDefaultsResponse> => {
+  return apiRequest<GenerationDefaultsResponse>(
+    getOwnerGenerationDefaultsGetUrl(ownerId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getOwnerGenerationDefaultsSetUrl = (ownerId: string) => {
+  return `/v1/owners/${encodeURIComponent(String(ownerId))}/generation-defaults`;
+};
+
+export const ownerGenerationDefaultsSet = async (
+  ownerId: string,
+  updateGenerationDefaultsRequest: UpdateGenerationDefaultsRequest,
+  options?: Parameters<typeof apiRequest>[1],
+): Promise<GenerationDefaultsResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiRequest<GenerationDefaultsResponse>(
+    getOwnerGenerationDefaultsSetUrl(ownerId),
+    {
+      ...options,
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...getHeaders(options?.headers),
+      },
+      body: JSON.stringify(updateGenerationDefaultsRequest),
+    },
+  );
 };
 
 export const getOwnerVaultClearUrl = (ownerId: string) => {

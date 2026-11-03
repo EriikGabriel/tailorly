@@ -16,7 +16,7 @@ import type { TemplateSource } from "./templateSource";
 export interface CvGenerationResponse {
   analysisStatus?: string;
   ats?: CvAtsResult;
-  atsReview?: AtsReview | null;
+  atsReview?: AtsReview;
   createdAt?: string;
   groundTruth?: GroundTruthSource;
   id?: string;

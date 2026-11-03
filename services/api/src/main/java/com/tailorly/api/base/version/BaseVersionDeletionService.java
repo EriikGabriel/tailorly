@@ -124,6 +124,9 @@ public class BaseVersionDeletionService {
     String facts = "(select f.id from facts f join fact_records r on r.id = f.record_id "
         + "where r.base_version_id = ?)";
 
+    // Evidências e checagens de fontes ligadas aos snapshots saem antes deles, sem depender de ON DELETE CASCADE.
+    jdbc.update("delete from cv_supplementary_evidence where snapshot_id in " + snapshots, baseVersionId);
+    jdbc.update("delete from cv_evidence_link_checks where snapshot_id in " + snapshots, baseVersionId);
     jdbc.update("delete from cv_generations where snapshot_id in " + snapshots, baseVersionId);
     jdbc.update("delete from gt_snapshot_items where snapshot_id in " + snapshots, baseVersionId);
     jdbc.update("update owners set active_snapshot_id = null where active_snapshot_id in "

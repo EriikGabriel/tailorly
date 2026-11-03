@@ -130,4 +130,18 @@ class CvDocumentBuilderTest {
     assertTrue(section(result.document(), "languages").compact());
     assertEquals("Avançado", section(result.document(), "languages").entries().getFirst().subtitle());
   }
+
+  @Test
+  void englishUsesEnglishHeadingsAndLabels() {
+    var result = CvDocumentBuilder.build(List.of(
+        item("experience", 0, "0:role", "Dev"), item("experience", 0, "0:company", "Acme"),
+        item("experience", 0, "0:start", "2021-05"), item("experience", 0, "0:status", "Atual"),
+        item("projects", 0, "0:title", "App"), item("projects", 0, "0:metric", "30% mais rápido")),
+        terms(), CvLanguage.EN);
+
+    assertEquals("Professional Experience", section(result.document(), "experience").heading());
+    assertEquals("05/2021 – Present", section(result.document(), "experience").entries().getFirst().period());
+    assertEquals(List.of("Result: 30% mais rápido"),
+        section(result.document(), "projects").entries().getFirst().details());
+  }
 }

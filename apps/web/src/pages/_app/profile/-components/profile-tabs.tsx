@@ -5,6 +5,7 @@ import {
 import { useBaseReview } from "@queries/base-review";
 import { useActiveGroundTruth } from "@queries/ground-truth";
 import { isOwnerVaultInputDirty } from "@queries/owner-vault";
+import { useProfileDueDiligencePreferences } from "@queries/profile-due-diligence-preferences";
 import { useProfileGenerationDefaults } from "@queries/profile-generation-defaults";
 import { useSecondBrain } from "@queries/second-brain";
 import {
@@ -89,7 +90,12 @@ export function ProfileTabs() {
       ),
   );
   const generationDefaults = useProfileGenerationDefaults();
-  if (aiPreferencesDirty || generationDefaults.isDirty)
+  const dueDiligencePreferences = useProfileDueDiligencePreferences();
+  if (
+    aiPreferencesDirty ||
+    generationDefaults.isDirty ||
+    dueDiligencePreferences.isDirty
+  )
     pendingSections.add("ai-preferences");
   if (secondBrainDirty) pendingSections.add("connections");
 

@@ -1,4 +1,9 @@
 import {
+  type CvLanguagePreference,
+  DEFAULT_LANGUAGE,
+  toLanguagePreference,
+} from "@constants/generation-options";
+import {
   DEFAULT_TEMPLATE,
   type GenerationDefaults,
 } from "@queries/generation-defaults";
@@ -10,6 +15,7 @@ export interface GenerationDefaultsDraft {
   templateName: string;
   optimizeForAts: boolean;
   guidelines: string[];
+  language: CvLanguagePreference;
 }
 
 export function draftFromSaved(
@@ -19,6 +25,7 @@ export function draftFromSaved(
     templateName: saved.templateName ?? DEFAULT_TEMPLATE,
     optimizeForAts: saved.optimizeForAts,
     guidelines: saved.guidelines,
+    language: toLanguagePreference(saved.language),
   };
 }
 
@@ -26,6 +33,7 @@ export const defaultGenerationDraft = (): GenerationDefaultsDraft => ({
   templateName: DEFAULT_TEMPLATE,
   optimizeForAts: true,
   guidelines: availableGuidelines.slice(0, 3),
+  language: DEFAULT_LANGUAGE,
 });
 
 /**
@@ -56,6 +64,7 @@ export function isGenerationDraftDirty(
   return (
     draft.templateName !== saved.templateName ||
     draft.optimizeForAts !== saved.optimizeForAts ||
+    draft.language !== saved.language ||
     !sameSet(draft.guidelines, saved.guidelines)
   );
 }
