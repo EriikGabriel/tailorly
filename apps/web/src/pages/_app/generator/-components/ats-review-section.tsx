@@ -1,6 +1,6 @@
 import type {
   AtsReview,
-  AtsReviewRequirementCheck,
+  RequirementCheck,
   CvGenerationResponse,
 } from "@api/generated/model";
 import { AiStageLabel } from "@components/ai-progress/ai-stage-label";
@@ -27,7 +27,7 @@ const FAILURE: Record<string, string> = {
   failed: "A IA não conseguiu analisar agora. Tente de novo em instantes.",
 };
 
-function RequirementRow({ check }: { check: AtsReviewRequirementCheck }) {
+function RequirementRow({ check }: { check: RequirementCheck }) {
   const status = STATUS[check.status] ?? STATUS.missing;
   return (
     <li className="flex flex-col gap-0.5 rounded-lg bg-surface-container-low p-2.5">

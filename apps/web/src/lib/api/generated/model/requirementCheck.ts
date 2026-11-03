@@ -7,9 +7,11 @@
  */
 
 export interface RequirementCheck {
-  evidence?: string;
-  importance?: string;
-  note?: string;
-  requirement?: string;
-  status?: string;
+  /** @nullable */
+  evidence?: string | null;
+  importance: string;
+  /** @nullable */
+  note?: string | null;
+  requirement: string;
+  status: string;
 }

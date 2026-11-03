@@ -8,11 +8,12 @@
 import type { RequirementCheck } from "./requirementCheck";
 
 export interface AtsReview {
-  alignment?: number;
-  requirements?: RequirementCheck[];
-  reviewedAt?: string;
-  status?: string;
-  strengths?: string[];
-  suggestions?: string[];
-  summary?: string;
+  alignment: number;
+  requirements: RequirementCheck[];
+  reviewedAt: string;
+  status: string;
+  strengths: string[];
+  suggestions: string[];
+  /** @nullable */
+  summary?: string | null;
 }
