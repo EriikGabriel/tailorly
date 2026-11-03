@@ -3,7 +3,7 @@
 # O build Maven roda na arquitetura de quem compila ($BUILDPLATFORM): o .jar é independente de
 # arquitetura, então só o estágio final é montado (ou emulado) para a plataforma alvo.
 
-FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk AS build
+FROM --platform=$BUILDPLATFORM eclipse-temurin:25-jdk AS build
 WORKDIR /src
 # O mvnw baixa o Maven e as dependências para .mvn/wrapper (fora do Git); o cache mount mantém isso
 # entre builds.
@@ -13,7 +13,7 @@ COPY src src
 RUN --mount=type=cache,target=/src/.mvn/wrapper ./mvnw -B -q -DskipTests package \
     && cp target/api-*.jar /src/app.jar
 
-FROM eclipse-temurin:21-jre AS runtime
+FROM eclipse-temurin:25-jre AS runtime
 ARG TARGETARCH
 # Versão fixa do Typst
 ARG TYPST_VERSION=0.15.1
