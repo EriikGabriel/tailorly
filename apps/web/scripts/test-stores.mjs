@@ -65,14 +65,20 @@ Module._resolveFilename = function (request, ...rest) {
     JSON.stringify({
       compilerOptions: {
         module: "commonjs",
-        moduleResolution: "node",
+        moduleResolution: "bundler",
         target: "ES2022",
         esModuleInterop: true,
         skipLibCheck: true,
         strict: true,
         jsx: "react-jsx",
-        baseUrl: root,
-        paths,
+        types: ["node"],
+        // TS 7 removeu baseUrl: os caminhos precisam ser absolutos.
+        paths: Object.fromEntries(
+          Object.entries(paths).map(([key, targets]) => [
+            key,
+            targets.map((target) => path.join(root, target)),
+          ]),
+        ),
         outDir: output,
         rootDir: root,
       },
