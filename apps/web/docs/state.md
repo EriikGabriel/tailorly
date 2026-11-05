@@ -21,7 +21,7 @@ Outras stores seguem o mesmo padrão e estão documentadas no próprio arquivo: 
 e `active-token` (sessão de visitante e qual credencial vale quando há conta e visitante ao mesmo tempo),
 `job-posting-store` e `cv-generation-store` (ponteiros para a vaga e a geração abertas; o conteúdo vive
 no servidor), `generation-preferences-store` (escolhas de uma geração, partindo dos padrões do perfil),
-`generation-defaults-draft-store`, `owner-vault-draft-store` e `profile-settings-store` (rascunhos
+`template-draft-store` (código Typst editado e ainda não aplicado; guardado em `sessionStorage` para sobreviver ao reload, apagado em `resetClientState`), `generation-defaults-draft-store`, `owner-vault-draft-store` e `profile-settings-store` (rascunhos
 das preferências do perfil, salvos ou descartados pela barra de alterações), `notification-store`
 (toasts e sino) e `session-pointer` (ponteiros em `sessionStorage`). Toda edição não salva do perfil
 acende a bolinha de pendência na aba correspondente.

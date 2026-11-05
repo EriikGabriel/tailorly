@@ -18,4 +18,7 @@ public interface CvGenerationRepository extends JpaRepository<CvGeneration, UUID
 
   @EntityGraph(attributePaths = {"snapshot", "snapshot.baseVersion", "jobPostingVersion", "jobPostingVersion.jobPosting", "template", "pdfObject", "markdownObject", "owner"})
   Optional<CvGeneration> findWithDetailsById(UUID id);
+
+  /** Há gerações feitas a partir de alguma versão desta vaga (a FK não tem cascata). */
+  boolean existsByJobPostingVersion_JobPosting_Id(UUID jobPostingId);
 }

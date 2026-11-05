@@ -1,0 +1,1185 @@
+{
+  "version": 1,
+  "id": "d_f3e86114",
+  "title": "Imported from Mermaid",
+  "theme": "dark",
+  "nodes": [
+    {
+      "id": "n_ab527dac",
+      "type": "group",
+      "position": {
+        "x": 397.88804584461946,
+        "y": 53.77602747228991
+      },
+      "data": {
+        "kind": "group",
+        "label": "Render · Spring Boot Application",
+        "color": "#fb7185"
+      },
+      "width": 942,
+      "height": 290,
+      "zIndex": 4
+    },
+    {
+      "id": "n_e59db104",
+      "type": "group",
+      "position": {
+        "x": 1476.7586575994128,
+        "y": -120.32508144561444
+      },
+      "data": {
+        "kind": "group",
+        "label": "Persistence",
+        "color": "#fbbf24"
+      },
+      "width": 417,
+      "height": 427,
+      "zIndex": -1
+    },
+    {
+      "id": "n_4ec5e3de",
+      "type": "group",
+      "position": {
+        "x": 1476.7586575994128,
+        "y": 296.40352765801964
+      },
+      "data": {
+        "kind": "group",
+        "label": "External Integrations",
+        "color": "#f472b6"
+      },
+      "width": 417,
+      "height": 528,
+      "zIndex": -1
+    },
+    {
+      "id": "n_7575b26b",
+      "type": "arch",
+      "position": {
+        "x": 569.1017295015643,
+        "y": 509.40885023907265
+      },
+      "data": {
+        "kind": "client",
+        "label": "User",
+        "sublabel": "Browser"
+      },
+      "width": 170,
+      "height": 64
+    },
+    {
+      "id": "n_32292f89",
+      "type": "arch",
+      "position": {
+        "x": 550.1017295015643,
+        "y": 373.9097059444296
+      },
+      "data": {
+        "kind": "webapp",
+        "label": "Tailorly Web",
+        "sublabel": "React / Vite Application"
+      },
+      "width": 208,
+      "height": 64
+    },
+    {
+      "id": "n_9eb1b2c6",
+      "type": "arch",
+      "position": {
+        "x": 418.70784443067146,
+        "y": 206.53663465509032
+      },
+      "data": {
+        "kind": "api",
+        "label": "REST API",
+        "sublabel": "Spring Boot"
+      },
+      "width": 170,
+      "height": 64,
+      "parentId": "n_ab527dac"
+    },
+    {
+      "id": "n_b5d512a8",
+      "type": "arch",
+      "position": {
+        "x": 24,
+        "y": 24
+      },
+      "data": {
+        "kind": "function",
+        "label": "Extraction Worker",
+        "sublabel": "Function"
+      },
+      "width": 210,
+      "height": 64,
+      "parentId": "n_ab527dac"
+    },
+    {
+      "id": "n_baf189f1",
+      "type": "arch",
+      "position": {
+        "x": 45.99999999999994,
+        "y": 189.160417901995
+      },
+      "data": {
+        "kind": "function",
+        "label": "Job Parser",
+        "sublabel": "Function"
+      },
+      "width": 170,
+      "height": 64,
+      "parentId": "n_ab527dac"
+    },
+    {
+      "id": "n_4715587b",
+      "type": "arch",
+      "position": {
+        "x": 450.11195415538054,
+        "y": 24
+      },
+      "data": {
+        "kind": "service",
+        "label": "PDFBox + Tesseract",
+        "sublabel": "OCR",
+        "locked": true
+      },
+      "width": 219,
+      "height": 64,
+      "parentId": "n_ab527dac"
+    },
+    {
+      "id": "n_76dd3983",
+      "type": "arch",
+      "position": {
+        "x": 748.2064135790251,
+        "y": 130.160417901995
+      },
+      "data": {
+        "kind": "service",
+        "label": "Typst CLI",
+        "sublabel": "Template",
+        "color": "#b5835a"
+      },
+      "width": 170,
+      "height": 64,
+      "parentId": "n_ab527dac"
+    },
+    {
+      "id": "n_b4489948",
+      "type": "arch",
+      "position": {
+        "x": 83.1909550677567,
+        "y": 21
+      },
+      "data": {
+        "kind": "external",
+        "label": "Second Brain (Optional)",
+        "sublabel": "Obsidian Vault"
+      },
+      "width": 256,
+      "height": 68,
+      "parentId": "n_4ec5e3de"
+    },
+    {
+      "id": "n_c16ae638",
+      "type": "arch",
+      "position": {
+        "x": 83.1909550677567,
+        "y": 24
+      },
+      "data": {
+        "kind": "storage",
+        "label": "Storage",
+        "sublabel": "S3 Storage",
+        "color": "#94a3b8"
+      },
+      "width": 256,
+      "height": 64,
+      "parentId": "n_e59db104"
+    },
+    {
+      "id": "n_e7bad647",
+      "type": "arch",
+      "position": {
+        "x": 24,
+        "y": 138.58976291702513
+      },
+      "data": {
+        "kind": "storage",
+        "label": "R2 Storage",
+        "sublabel": "Cloudflare",
+        "color": "#F38020",
+        "icon": "cloudflare"
+      },
+      "width": 182,
+      "height": 64,
+      "parentId": "n_e59db104"
+    },
+    {
+      "id": "n_cb022dd9",
+      "type": "arch",
+      "position": {
+        "x": 211.1909550677567,
+        "y": 345.36201396408325
+      },
+      "data": {
+        "kind": "database",
+        "label": "PostgreSQL",
+        "sublabel": "Local",
+        "color": "#4169E1",
+        "icon": "postgres"
+      },
+      "width": 182,
+      "height": 64,
+      "parentId": "n_e59db104"
+    },
+    {
+      "id": "n_b0fc1a1b",
+      "type": "arch",
+      "position": {
+        "x": 211.1909550677567,
+        "y": 138.58976291702513
+      },
+      "data": {
+        "kind": "service",
+        "label": "Garage",
+        "sublabel": "Docker",
+        "color": "#2496ED",
+        "icon": "docker"
+      },
+      "width": 182,
+      "height": 64,
+      "parentId": "n_e59db104"
+    },
+    {
+      "id": "n_22e15ca2",
+      "type": "arch",
+      "position": {
+        "x": 83.1909550677567,
+        "y": 221.160417901995
+      },
+      "data": {
+        "kind": "database",
+        "label": "Database",
+        "sublabel": "Persistance Data"
+      },
+      "width": 256,
+      "height": 64,
+      "parentId": "n_e59db104"
+    },
+    {
+      "id": "n_6067d697",
+      "type": "arch",
+      "position": {
+        "x": 24,
+        "y": 345.36201396408325
+      },
+      "data": {
+        "kind": "database",
+        "label": "PostgreSQL",
+        "sublabel": "Neon",
+        "color": "#3FCF8E",
+        "icon": "supabase"
+      },
+      "width": 182,
+      "height": 64,
+      "parentId": "n_e59db104"
+    },
+    {
+      "id": "n_40107b96",
+      "type": "arch",
+      "position": {
+        "x": 83.1909550677567,
+        "y": 110.85480028514723
+      },
+      "data": {
+        "kind": "api",
+        "label": "Search API",
+        "sublabel": "Web Search API",
+        "color": "#f472b6"
+      },
+      "width": 256,
+      "height": 64,
+      "parentId": "n_4ec5e3de"
+    },
+    {
+      "id": "n_d178d65c",
+      "type": "arch",
+      "position": {
+        "x": 24,
+        "y": 230.66536535350832
+      },
+      "data": {
+        "kind": "api",
+        "label": "Tavily",
+        "sublabel": "AI Search API",
+        "color": "#fb7185"
+      },
+      "width": 182,
+      "height": 64,
+      "parentId": "n_4ec5e3de"
+    },
+    {
+      "id": "n_689581e2",
+      "type": "arch",
+      "position": {
+        "x": 211.1909550677567,
+        "y": 230.66536535350832
+      },
+      "data": {
+        "kind": "service",
+        "label": "SearXNG",
+        "sublabel": "Docker",
+        "color": "#2496ED",
+        "icon": "docker"
+      },
+      "width": 182,
+      "height": 64,
+      "parentId": "n_4ec5e3de",
+      "zIndex": 1
+    },
+    {
+      "id": "n_dc893457",
+      "type": "arch",
+      "position": {
+        "x": 83.1909550677567,
+        "y": 317.6754455584332
+      },
+      "data": {
+        "kind": "external",
+        "label": "AI Provider",
+        "sublabel": "Chat Completion",
+        "color": "#94a3b8"
+      },
+      "width": 256,
+      "height": 68,
+      "parentId": "n_4ec5e3de"
+    },
+    {
+      "id": "n_bc0352f6",
+      "type": "arch",
+      "position": {
+        "x": 24,
+        "y": 439.92155378759475
+      },
+      "data": {
+        "kind": "api",
+        "label": "Remote API",
+        "sublabel": "GPT, Claude, etc...",
+        "color": "#818cf8"
+      },
+      "width": 182,
+      "height": 64,
+      "parentId": "n_4ec5e3de"
+    },
+    {
+      "id": "n_40d08f35",
+      "type": "arch",
+      "position": {
+        "x": 211.1909550677567,
+        "y": 439.92155378759475
+      },
+      "data": {
+        "kind": "service",
+        "label": "Ollama",
+        "sublabel": "Docker",
+        "color": "#2496ED",
+        "icon": "docker"
+      },
+      "width": 182,
+      "height": 64,
+      "parentId": "n_4ec5e3de"
+    },
+    {
+      "id": "n_9b1c602f",
+      "type": "group",
+      "position": {
+        "x": 528.8880458446195,
+        "y": 349.2583279431669
+      },
+      "data": {
+        "kind": "group",
+        "label": "Vercel  · Frontend Application",
+        "color": "#34d399"
+      },
+      "width": 252,
+      "height": 111,
+      "zIndex": -1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_c2783512",
+      "source": "n_b5d512a8",
+      "target": "n_4715587b",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "flow",
+      "data": {
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots",
+          "tokenLabel": "EXTRACT"
+        },
+        "payload": {
+          "kind": "json",
+          "content": "{\n  \"documentId\": \"doc_8f21a\",\n  \"source\": {\n    \"bucket\": \"tailorly\",\n    \"key\": \"owners/{ownerId}/originals/{uuid}.pdf\"\n  },\n  \"options\": {\n    \"extractNativeText\": true,\n    \"enableOCR\": true,\n    \"ocrLanguages\": [\"por\", \"eng\"]\n  }\n}"
+        }
+      }
+    },
+    {
+      "id": "e_68a5bec6",
+      "source": "n_32292f89",
+      "target": "n_9eb1b2c6",
+      "sourceHandle": "r",
+      "targetHandle": "lb",
+      "type": "flow",
+      "data": {
+        "animation": {
+          "enabled": true,
+          "direction": "both",
+          "speed": 3,
+          "color": "#22d3ee",
+          "density": 2,
+          "style": "dots",
+          "tokenLabel": "HTTPS"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "http",
+          "content": "POST /v1/documents HTTP/1.1\nContent-Type: multipart/form-data; boundary=----TailorlyBoundary\n\n------TailorlyBoundary\nContent-Disposition: form-data; name=\"file\"; filename=\"resume.pdf\"\nContent-Type: application/pdf\n\n<PDF binary data>"
+        },
+        "payloadOffset": {
+          "x": 198,
+          "y": -22
+        }
+      }
+    },
+    {
+      "id": "e_73bf70eb",
+      "source": "n_baf189f1",
+      "target": "n_9eb1b2c6",
+      "sourceHandle": "rb",
+      "targetHandle": "l",
+      "type": "flow",
+      "data": {
+        "label": "Job Description",
+        "labelPos": 0.55,
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1.25,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "pulse",
+          "tokenLabel": "PARSED JOB"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "json",
+          "content": "{\n  \"title\": \"Backend Developer\",\n  \"company\": \"Example Company\",\n  \"description\": \"Develop and maintain backend systems...\",\n  \"requirements\": [\n    \"Java\",\n    \"Spring Boot\",\n    \"PostgreSQL\",\n    \"REST APIs\"\n  ],\n  \"responsibilities\": [\n    \"Design backend services\",\n    \"Maintain APIs\"\n  ]\n}"
+        },
+        "payloadOffset": {
+          "x": 0,
+          "y": 17
+        }
+      }
+    },
+    {
+      "id": "e_48a57e9c",
+      "source": "n_9eb1b2c6",
+      "target": "n_baf189f1",
+      "sourceHandle": "la",
+      "targetHandle": "r",
+      "type": "flow",
+      "data": {
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 0.5,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots",
+          "tokenLabel": "PARSE JOB"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "json",
+          "content": "{\n  \"source\": {\n    \"type\": \"URL\",\n    \"value\": \"https://example.com/jobs/backend-developer\"\n  },\n  \"requestedFields\": [\n    \"title\",\n    \"description\",\n    \"requirements\",\n    \"responsibilities\"\n  ]\n}"
+        },
+        "payloadOffset": {
+          "x": -16,
+          "y": -226
+        }
+      }
+    },
+    {
+      "id": "e_c2445755",
+      "source": "n_b5d512a8",
+      "target": "n_4715587b",
+      "sourceHandle": "rb",
+      "targetHandle": "lb",
+      "type": "flow",
+      "data": {
+        "label": "Extracted Text / OCR",
+        "animation": {
+          "enabled": true,
+          "direction": "reverse",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 3,
+          "style": "pulse",
+          "tokenLabel": "TEXT READY"
+        },
+        "payload": {
+          "kind": "json",
+          "content": "{\n  \"documentId\": \"doc_8f21a\",\n  \"pages\": [\n    {\n      \"pageNumber\": 1,\n      \"extractionMethod\": \"PDFBOX\",\n      \"text\": \"Software Engineer with experience in Java...\"\n    },\n    {\n      \"pageNumber\": 2,\n      \"extractionMethod\": \"TESSERACT\",\n      \"text\": \"Education: Computer Science...\"\n    }\n  ],\n  \"totalPages\": 2\n}"
+        }
+      }
+    },
+    {
+      "id": "e_134f2aac",
+      "source": "n_c16ae638",
+      "target": "n_e7bad647",
+      "sourceHandle": "b",
+      "targetHandle": "t",
+      "type": "flow",
+      "data": {
+        "label": "Production",
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots"
+        },
+        "routing": "step"
+      }
+    },
+    {
+      "id": "e_7503e667",
+      "source": "n_c16ae638",
+      "target": "n_b0fc1a1b",
+      "sourceHandle": "b",
+      "targetHandle": "t",
+      "type": "flow",
+      "data": {
+        "label": "Local",
+        "animation": {
+          "enabled": false,
+          "direction": "forward",
+          "speed": 2.5,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots"
+        },
+        "routing": "step"
+      }
+    },
+    {
+      "id": "e_3f0aebf0",
+      "source": "n_22e15ca2",
+      "target": "n_6067d697",
+      "sourceHandle": "b",
+      "targetHandle": "t",
+      "type": "flow",
+      "data": {
+        "label": "Production",
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots"
+        },
+        "routing": "step"
+      }
+    },
+    {
+      "id": "e_a9938058",
+      "source": "n_22e15ca2",
+      "target": "n_cb022dd9",
+      "sourceHandle": "b",
+      "targetHandle": "t",
+      "type": "flow",
+      "data": {
+        "label": "Local",
+        "animation": {
+          "enabled": false,
+          "direction": "forward",
+          "speed": 2,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots"
+        },
+        "routing": "step"
+      }
+    },
+    {
+      "id": "e_da55be68",
+      "source": "n_40107b96",
+      "target": "n_d178d65c",
+      "sourceHandle": "b",
+      "targetHandle": "t",
+      "type": "flow",
+      "data": {
+        "label": "Production",
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots"
+        }
+      }
+    },
+    {
+      "id": "e_daeeb0e6",
+      "source": "n_40107b96",
+      "target": "n_689581e2",
+      "sourceHandle": "b",
+      "targetHandle": "t",
+      "type": "flow",
+      "data": {
+        "label": "Local",
+        "animation": {
+          "enabled": false,
+          "direction": "forward",
+          "speed": 2,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots"
+        }
+      }
+    },
+    {
+      "id": "e_0f8589a1",
+      "source": "n_dc893457",
+      "target": "n_bc0352f6",
+      "sourceHandle": "b",
+      "targetHandle": "t",
+      "type": "flow",
+      "data": {
+        "label": "Production",
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots"
+        }
+      }
+    },
+    {
+      "id": "e_29ec4125",
+      "source": "n_dc893457",
+      "target": "n_40d08f35",
+      "sourceHandle": "b",
+      "targetHandle": "t",
+      "type": "flow",
+      "data": {
+        "label": "Local",
+        "animation": {
+          "enabled": false,
+          "direction": "forward",
+          "speed": 0.75,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots"
+        }
+      }
+    },
+    {
+      "id": "e_d879af40",
+      "source": "n_76dd3983",
+      "target": "n_c16ae638",
+      "sourceHandle": "r",
+      "targetHandle": "lb",
+      "type": "flow",
+      "data": {
+        "label": "PDF output",
+        "labelPos": 0.117,
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1.75,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "pulse",
+          "tokenLabel": "SAVE CV"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "http",
+          "content": "PUT /owners/{ownerId}/generations/{generationId}/resume.pdf HTTP/1.1\nContent-Type: application/pdf\n\n<Generated PDF binary data>"
+        },
+        "payloadOffset": {
+          "x": -54,
+          "y": 143
+        }
+      }
+    },
+    {
+      "id": "e_87c36740",
+      "source": "n_9eb1b2c6",
+      "target": "n_76dd3983",
+      "sourceHandle": "tb",
+      "targetHandle": "l",
+      "type": "flow",
+      "data": {
+        "label": "Generated CV content",
+        "labelPos": 0.583,
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1.25,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots",
+          "tokenLabel": "COMPILE PDF"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "text",
+          "content": "#set page(paper: \"a4\")\n#set text(font: \"Libertinus Serif\")\n\n= Professional Resume\n\n== Summary\nBackend developer with experience...\n\n== Skills\n- Java\n- PostgreSQL"
+        },
+        "payloadOffset": {
+          "x": 0,
+          "y": 9
+        }
+      }
+    },
+    {
+      "id": "e_01d55c8f",
+      "source": "n_9eb1b2c6",
+      "target": "n_c16ae638",
+      "sourceHandle": "t",
+      "targetHandle": "l",
+      "type": "flow",
+      "data": {
+        "label": "Upload / Download",
+        "labelPos": 0.233,
+        "animation": {
+          "enabled": true,
+          "direction": "both",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots",
+          "tokenLabel": "OBJECT"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "http",
+          "content": "PUT /owners/{ownerId}/originals/{uuid}.pdf HTTP/1.1\nHost: <r2-bucket-endpoint>\nContent-Type: application/pdf\nContent-Length: <file-size>\nx-amz-content-sha256: <sha256>\n\n<PDF binary data>"
+        },
+        "payloadOffset": {
+          "x": -203,
+          "y": 11
+        },
+        "waypoints": [
+          {
+            "x": 903,
+            "y": 165
+          },
+          {
+            "x": 1376,
+            "y": 168
+          },
+          {
+            "x": 1376,
+            "y": -63
+          }
+        ]
+      }
+    },
+    {
+      "id": "e_39927e70",
+      "source": "n_b5d512a8",
+      "target": "n_c16ae638",
+      "sourceHandle": "ra",
+      "targetHandle": "la",
+      "type": "flow",
+      "data": {
+        "label": "Extraction results",
+        "labelPos": 0.433,
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 3,
+          "color": "#22d3ee",
+          "density": 5,
+          "style": "pulse",
+          "tokenLabel": "SAVE TEXT"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "http",
+          "content": "PUT /owners/{ownerId}/extractions/{runId}/pages/1.txt HTTP/1.1\nContent-Type: text/plain; charset=utf-8\n\nSoftware Engineer with experience in Java..."
+        },
+        "payloadOffset": {
+          "x": 363,
+          "y": -165
+        },
+        "waypoints": [
+          {
+            "x": 696,
+            "y": 93
+          },
+          {
+            "x": 696,
+            "y": 40
+          },
+          {
+            "x": 1339,
+            "y": 41
+          },
+          {
+            "x": 1339,
+            "y": -81
+          }
+        ]
+      }
+    },
+    {
+      "id": "e_b96d2ab1",
+      "source": "n_b5d512a8",
+      "target": "n_22e15ca2",
+      "sourceHandle": "tb",
+      "targetHandle": "ra",
+      "type": "flow",
+      "data": {
+        "label": "Proposals and status",
+        "labelPos": 0.45,
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 2,
+          "style": "pulse",
+          "tokenLabel": "SAVE RESULTS"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "sql",
+          "content": "INSERT INTO extraction_proposals (\n    extraction_run_id,\n    document_id,\n    proposed_facts,\n    status\n)\nVALUES (\n    :run_id,\n    :document_id,\n    :facts,\n    'PROPOSED'\n);\n\nUPDATE extraction_jobs\nSET status = 'COMPLETED'\nWHERE id = :job_id;"
+        },
+        "payloadOffset": {
+          "x": -882,
+          "y": -137
+        },
+        "waypoints": [
+          {
+            "x": 585,
+            "y": -119
+          },
+          {
+            "x": 1888,
+            "y": -120
+          },
+          {
+            "x": 1886,
+            "y": 116
+          }
+        ]
+      }
+    },
+    {
+      "id": "e_b7f1ee6a",
+      "source": "n_9eb1b2c6",
+      "target": "n_b4489948",
+      "sourceHandle": "bb",
+      "targetHandle": "l",
+      "type": "flow",
+      "data": {
+        "label": "Optional integration",
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dash"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "file",
+          "content": "Tailorly/Resumes/Backend-Developer.md"
+        },
+        "payloadOffset": {
+          "x": 4,
+          "y": 10
+        }
+      }
+    },
+    {
+      "id": "e_9d688d38",
+      "source": "n_9eb1b2c6",
+      "target": "n_22e15ca2",
+      "sourceHandle": "ra",
+      "targetHandle": "la",
+      "type": "flow",
+      "data": {
+        "label": "Users, documents,snapshots, jobs",
+        "labelPos": 0.333,
+        "animation": {
+          "enabled": true,
+          "direction": "both",
+          "speed": 2,
+          "color": "#22d3ee",
+          "density": 3,
+          "style": "dots",
+          "tokenLabel": "DATA"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "sql",
+          "content": "BEGIN;\n\nINSERT INTO documents (\n    id,\n    owner_id,\n    filename,\n    content_type,\n    file_hash\n)\nVALUES (\n    :document_id,\n    :owner_id,\n    'resume.pdf',\n    'application/pdf',\n    :sha256\n);\n\nINSERT INTO document_versions (\n    document_id,\n    status\n)\nVALUES (\n    :document_id,\n    'CANDIDATE'\n);\n\nINSERT INTO extraction_jobs (\n    document_id,\n    status\n)\nVALUES (\n    :document_id,\n    'QUEUED'\n);\n\nCOMMIT;"
+        },
+        "payloadOffset": {
+          "x": -216,
+          "y": 14
+        },
+        "waypoints": [
+          {
+            "x": 1460,
+            "y": 276
+          },
+          {
+            "x": 1461,
+            "y": 116
+          }
+        ]
+      }
+    },
+    {
+      "id": "e_97a87e07",
+      "source": "n_9eb1b2c6",
+      "target": "n_22e15ca2",
+      "sourceHandle": "rb",
+      "targetHandle": "l",
+      "type": "flow",
+      "data": {
+        "label": "Approved Ground Truth",
+        "labelPos": 0.333,
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots",
+          "tokenLabel": "LOAD SNAPSHOT"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "sql",
+          "content": "SELECT\n    snapshot_id,\n    snapshot_hash,\n    approved_facts\nFROM ground_truth_snapshots\nWHERE owner_id = :owner_id\n  AND snapshot_id = :active_snapshot_id;"
+        },
+        "payloadOffset": {
+          "x": -228,
+          "y": 6
+        },
+        "waypoints": [
+          {
+            "x": 1479,
+            "y": 309
+          },
+          {
+            "x": 1479,
+            "y": 133
+          }
+        ]
+      }
+    },
+    {
+      "id": "e_7b9f46ab",
+      "source": "n_9eb1b2c6",
+      "target": "n_40107b96",
+      "sourceHandle": "b",
+      "targetHandle": "l",
+      "type": "flow",
+      "data": {
+        "label": "Research",
+        "labelPos": 0.583,
+        "animation": {
+          "enabled": true,
+          "direction": "both",
+          "speed": 0.25,
+          "color": "#22d3ee",
+          "density": 4,
+          "style": "dots",
+          "tokenLabel": "SEARCH"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "json",
+          "content": "{\n  \"query\": \"Example Company workplace culture reviews\",\n  \"context\": {\n    \"company\": \"Example Company\",\n    \"jobTitle\": \"Backend Developer\"\n  },\n  \"maxResults\": 5\n}"
+        },
+        "payloadOffset": {
+          "x": 38,
+          "y": 6
+        }
+      }
+    },
+    {
+      "id": "e_45f6e5e3",
+      "source": "n_9eb1b2c6",
+      "target": "n_dc893457",
+      "sourceHandle": "ba",
+      "targetHandle": "la",
+      "type": "flow",
+      "data": {
+        "label": "Requirements analysis and CV adaptation",
+        "labelPos": 0.683,
+        "animation": {
+          "enabled": true,
+          "direction": "both",
+          "speed": 0.75,
+          "color": "#22d3ee",
+          "density": 1,
+          "style": "dots",
+          "tokenLabel": "GENERATE CV"
+        },
+        "payload": {
+          "kind": "json",
+          "content": "{\n  \"task\": \"CV_ADAPTATION\",\n  \"job\": {\n    \"title\": \"Backend Developer\",\n    \"requirements\": [\n      \"Java\",\n      \"Spring Boot\",\n      \"PostgreSQL\"\n    ]\n  },\n  \"groundTruth\": {\n    \"snapshotId\": \"snapshot_92ac\",\n    \"facts\": [\n      {\n        \"type\": \"SKILL\",\n        \"value\": \"Java\"\n      },\n      {\n        \"type\": \"SKILL\",\n        \"value\": \"PostgreSQL\"\n      }\n    ]\n  },\n  \"instructions\": [\n    \"Adapt resume to job requirements\",\n    \"Do not invent professional experience\",\n    \"Use only approved facts\"\n  ]\n}"
+        },
+        "payloadOffset": {
+          "x": 41,
+          "y": 12
+        }
+      }
+    },
+    {
+      "id": "e_60867927",
+      "source": "n_7575b26b",
+      "target": "n_32292f89",
+      "sourceHandle": "t",
+      "targetHandle": "b",
+      "type": "flow",
+      "data": {
+        "animation": {
+          "enabled": true,
+          "direction": "forward",
+          "speed": 3,
+          "color": "#38bdf8",
+          "density": 1,
+          "style": "dash",
+          "tokenLabel": "UPLOAD"
+        },
+        "payload": {
+          "kind": "file",
+          "content": "resume.pdf",
+          "description": "PDF document containing the user's original resume.\nThe file is selected by the user and submitted through\nthe frontend upload interface."
+        },
+        "payloadOffset": {
+          "x": -278,
+          "y": -60
+        }
+      }
+    },
+    {
+      "id": "e_798c0267",
+      "source": "n_b5d512a8",
+      "target": "n_22e15ca2",
+      "sourceHandle": "ta",
+      "targetHandle": "r",
+      "type": "flow",
+      "data": {
+        "label": "Queue Polling",
+        "labelPos": 0.467,
+        "animation": {
+          "enabled": true,
+          "direction": "reverse",
+          "speed": 1,
+          "color": "#22d3ee",
+          "density": 4,
+          "style": "dots",
+          "tokenLabel": "POLL"
+        },
+        "routing": "step",
+        "payload": {
+          "kind": "json",
+          "content": "{\n  \"jobId\": \"job_41b9\",\n  \"documentId\": \"doc_8f21a\",\n  \"ownerId\": \"owner_72c\",\n  \"status\": \"QUEUED\",\n  \"attempt\": 1\n}"
+        },
+        "payloadOffset": {
+          "x": -702,
+          "y": -187
+        },
+        "waypoints": [
+          {
+            "x": 469,
+            "y": -160
+          },
+          {
+            "x": 1919,
+            "y": -162
+          },
+          {
+            "x": 1919,
+            "y": 133
+          }
+        ]
+      }
+    },
+    {
+      "id": "e_360b3b90",
+      "source": "n_b5d512a8",
+      "target": "n_dc893457",
+      "sourceHandle": "l",
+      "targetHandle": "lb",
+      "type": "flow",
+      "data": {
+        "label": "Document interpretation",
+        "labelPos": 0.817,
+        "animation": {
+          "enabled": true,
+          "direction": "both",
+          "speed": 0.5,
+          "color": "#22d3ee",
+          "density": 2,
+          "style": "dots",
+          "tokenLabel": "AI REQUEST/RESPONSE"
+        },
+        "payload": {
+          "kind": "json",
+          "content": "{\n  \"task\": \"RESUME_FACT_EXTRACTION\",\n  \"language\": \"pt-BR\",\n  \"document\": {\n    \"id\": \"doc_8f21a\",\n    \"pages\": [\n      {\n        \"pageNumber\": 1,\n        \"text\": \"Software Engineer with experience in Java...\"\n      }\n    ]\n  },\n  \"instructions\": [\n    \"Extract factual resume information\",\n    \"Preserve source evidence\",\n    \"Include page numbers and text offsets\",\n    \"Do not infer unsupported facts\"\n  ]\n}"
+        },
+        "payloadOffset": {
+          "x": 269,
+          "y": 13
+        }
+      }
+    }
+  ],
+  "viewport": {
+    "x": 480.54470502086235,
+    "y": 313.10990706273196,
+    "zoom": 0.5658711804567852
+  },
+  "meta": {
+    "createdAt": "2026-11-02T21:11:12.262Z",
+    "updatedAt": "2026-11-03T03:58:54.807Z"
+  },
+  "scenario": [
+    {
+      "id": "step_d6fa2010",
+      "caption": "Step 1",
+      "edgeIds": [
+        "e_c2783512"
+      ],
+      "dir": "reverse"
+    }
+  ],
+  "sequenceInFlight": 3
+}

@@ -3,8 +3,9 @@ import { Save } from "@react-zero-ui/icon-sprite";
 
 type TemplateActionsBarProps = {
   dirty: boolean;
-  busy: boolean;
-  regenerating: boolean;
+  saving: boolean;
+  /** Template salvo que a geração aberta ainda não usa. */
+  saved: boolean;
   canRestore: boolean;
   /** "Nome vN" do template em uso, mostrado quando não há alterações pendentes. */
   templateLabel: string;
@@ -12,11 +13,11 @@ type TemplateActionsBarProps = {
   onRestore: () => void;
 };
 
-/** Ações do template Typst: salvar e gerar de novo, ou restaurar o padrão. */
+/** Ações do template Typst: salvar (sem gerar de novo) ou restaurar o padrão. */
 export function TemplateActionsBar({
   dirty,
-  busy,
-  regenerating,
+  saving,
+  saved,
   canRestore,
   templateLabel,
   onSave,
@@ -27,11 +28,11 @@ export function TemplateActionsBar({
       <Button
         type="button"
         onClick={onSave}
-        disabled={!dirty || busy}
+        disabled={!dirty || saving}
         className="h-9 gap-1.5 rounded-lg bg-primary-900 px-3 text-xs font-semibold text-primary-foreground disabled:opacity-40"
       >
         <Save className="size-3.5" aria-hidden="true" />
-        {regenerating ? "Gerando..." : "Salvar e gerar de novo"}
+        {saving ? "Salvando..." : "Salvar template"}
       </Button>
       <Button
         type="button"
@@ -45,7 +46,9 @@ export function TemplateActionsBar({
       <span className="text-xs text-on-surface-variant">
         {dirty
           ? "Alterações não salvas: o PDF acima é só uma prévia."
-          : templateLabel}
+          : saved
+            ? "Template salvo. Use “Gerar currículo sob medida” para aplicá-lo em um novo currículo."
+            : templateLabel}
       </span>
     </div>
   );

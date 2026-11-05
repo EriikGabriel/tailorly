@@ -1,5 +1,10 @@
 import type { CollectionProps, ReviewField } from "@@types/review-model";
-import { Briefcase, Building2, HandHeart } from "@react-zero-ui/icon-sprite";
+import {
+  Briefcase,
+  Building2,
+  HandHeart,
+  MapPin,
+} from "@react-zero-ui/icon-sprite";
 import { ReviewDraftCollection } from "../-components/review-draft-collection";
 import { ReviewStepShell } from "../-components/review-step-shell";
 import {
@@ -17,6 +22,11 @@ const employmentOptions = [
   "Autônomo / Freelancer",
 ].map((value) => ({ value, label: value }));
 
+const workModeOptions = ["Presencial", "Remoto", "Híbrido"].map((value) => ({
+  value,
+  label: value,
+}));
+
 const experienceFields: ReviewField[] = [
   {
     key: "role",
@@ -32,6 +42,14 @@ const experienceFields: ReviewField[] = [
     options: employmentOptions,
     icon: Briefcase,
     hint: "Tipo de contratação informado no documento.",
+  },
+  {
+    key: "workMode",
+    label: "Modalidade",
+    type: "select",
+    options: workModeOptions,
+    icon: MapPin,
+    hint: "Presencial, remoto ou híbrido. Opcional: só aparece no currículo se estiver preenchido.",
   },
   {
     key: "period",

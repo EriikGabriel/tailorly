@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 final class CurriculumFactSchema {
 
   private static final Map<String, Set<String>> LIST_FIELDS = Map.of(
-      "experience", Set.of("company", "role", "employment", "status", "start", "end", "description"),
+      "experience", Set.of("company", "role", "employment", "workMode", "status", "start", "end", "description"),
       "volunteering", Set.of("organization", "role", "status", "start", "end", "description"),
       "projects", Set.of("title", "context", "statement", "metric", "link"),
       "degrees", Set.of("degree", "institution", "status", "start", "end"),

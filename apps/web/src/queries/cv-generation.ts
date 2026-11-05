@@ -1,4 +1,4 @@
-import { ApiClientError, apiBlob, apiRequest } from "@api/client";
+import { ApiClientError, apiBlob, apiDownload, apiRequest } from "@api/client";
 import { SESSION_EXPIRED_MESSAGE } from "@api/error-message";
 import type {
   AtsReview,
@@ -89,10 +89,22 @@ export function useGenerateCv() {
       }
       const { guidelines, optimizeForAts, templateName, language } =
         useGenerationPreferencesStore.getState();
+      // Um template editado e salvo vale sobre o layout escolhido; o servidor só o usa se o id vier.
+      const current = await queryClient.fetchQuery({
+        queryKey: apiQueryKeys.cv.template(credential.ownerId),
+        queryFn: () =>
+          cvTemplateCurrent(credential.ownerId, {
+            accessToken: credential.token,
+          }),
+        staleTime: 0,
+      });
+      const customTemplateId =
+        current.name === "custom" && current.id ? current.id : null;
       return cvGenerationGenerate(
         {
           ownerId: credential.ownerId,
           jobPostingId: selected.postingId,
+          ...(customTemplateId ? { templateId: customTemplateId } : {}),
           ...(selected.versionNumber
             ? { jobVersionNumber: selected.versionNumber }
             : {}),
@@ -312,14 +324,16 @@ export async function downloadCvFile(
   format: "pdf" | "markdown",
   token: string,
 ): Promise<void> {
-  const blob = await apiBlob(
+  const { blob, filename } = await apiDownload(
     getCvGenerationDownloadUrl(generationId, { format }),
     { accessToken: token },
   );
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = format === "pdf" ? "curriculo.pdf" : "curriculo.md";
+  // O servidor monta o nome (primeiro nome, cargo e empresa); o genérico é só reserva.
+  link.download =
+    filename ?? (format === "pdf" ? "curriculo.pdf" : "curriculo.md");
   link.click();
   URL.revokeObjectURL(url);
 }

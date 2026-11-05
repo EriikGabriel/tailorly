@@ -160,6 +160,7 @@ public final class ErrorCodes {
     public static final String NO_CONTENT = "error.job.no_content";
     public static final String NOT_FOUND = "error.job.not_found";
     public static final String INPUT_REQUIRED = "error.job.input_required";
+    public static final String HAS_GENERATIONS = "error.job.has_generations";
 
     private Job() {
     }

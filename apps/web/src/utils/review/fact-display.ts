@@ -41,6 +41,7 @@ const fieldLabels: Record<string, string> = {
   technology: "Tecnologia",
   technologies: "Tecnologias",
   employment: "Vínculo",
+  workMode: "Modalidade",
   status: "Situação",
   start: "Início",
   end: "Término",

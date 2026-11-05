@@ -20,6 +20,9 @@ public class PastedTextJobExtractor {
     content.addLines(lines, JobSection.OTHER);
 
     String resolvedTitle = blankToNull(title);
+    // Rótulo ("Cargo: …") ou frase de busca ("em busca de um …") vale mais que a primeira linha.
+    if (resolvedTitle == null)
+      resolvedTitle = JobTextHints.title(text);
     // Sem título informado, a primeira linha só vale se parecer um título (curta, sem pontuação final).
     if (resolvedTitle == null && !lines.isEmpty()) {
       String first = lines.getFirst().text();
@@ -31,6 +34,8 @@ public class PastedTextJobExtractor {
     }
 
     String company = blankToNull(companyName);
+    if (company == null)
+      company = JobTextHints.company(text);
     return content.applyTo(JobPostingResponse.builder())
         .platform("text")
         .title(resolvedTitle)

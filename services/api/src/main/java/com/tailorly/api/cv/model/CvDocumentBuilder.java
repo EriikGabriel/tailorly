@@ -5,9 +5,12 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.tailorly.api.cv.model.CvDocument.Contact;
 import com.tailorly.api.cv.model.CvDocument.Entry;
@@ -74,7 +77,7 @@ public final class CvDocumentBuilder {
     addSection(sections, "technologies", language.heading("technologies"), true,
         sortByRelevance(entries(lists, "technologies", CvDocumentBuilder::technology), terms));
     addSection(sections, "experience", language.heading("experience"), false,
-        entries(lists, "experience", item -> role(item, "role", "company", "employment", language)));
+        entries(lists, "experience", item -> role(item, "role", "company", "employment", "workMode", language)));
     addSection(sections, "projects", language.heading("projects"), false,
         sortByRelevance(entries(lists, "projects", item -> project(item, language)), terms));
     addSection(sections, "degrees", language.heading("degrees"), false,
@@ -85,7 +88,7 @@ public final class CvDocumentBuilder {
         entries(lists, "languages", item -> new Entry(item.get("language"), item.get("proficiency"),
             null, null, List.of(), null)));
     addSection(sections, "volunteering", language.heading("volunteering"), false,
-        entries(lists, "volunteering", item -> role(item, "role", "organization", null, language)));
+        entries(lists, "volunteering", item -> role(item, "role", "organization", null, null, language)));
 
     CvDocument document = new CvDocument(
         identity.get("name"), identity.get("headline"), identity.get("summary"),
@@ -122,13 +125,19 @@ public final class CvDocumentBuilder {
   // ------------------------------------------------------------------ itens
 
   private static Entry role(Map<String, String> item, String roleKey, String organizationKey, String metaKey,
-      CvLanguage language) {
+      String workModeKey, CvLanguage language) {
     String role = item.get(roleKey);
     String organization = item.get(organizationKey);
+    // Vínculo e modalidade (ex.: "CLT · Remoto") só aparecem quando foram aprovados no Currículo Base.
+    String meta = Stream.of(metaKey, workModeKey)
+        .filter(Objects::nonNull)
+        .map(item::get)
+        .filter(value -> value != null && !value.isBlank())
+        .collect(Collectors.collectingAndThen(Collectors.joining(" · "), joined -> joined.isEmpty() ? null : joined));
     return new Entry(
         role != null ? role : organization,
         role != null ? organization : null,
-        metaKey == null ? null : item.get(metaKey),
+        meta,
         period(item.get("start"), item.get("end"), item.get("status"), language.current()),
         details(item.get("description")),
         null);

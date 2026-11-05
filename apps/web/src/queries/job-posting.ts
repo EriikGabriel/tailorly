@@ -232,6 +232,16 @@ export function useDeleteJobPosting() {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
+    meta: {
+      notify: {
+        error: (error) =>
+          notices.failure(
+            "Não foi possível excluir a vaga",
+            error,
+            "A exclusão falhou.",
+          ),
+      },
+    },
     mutationFn: (postingId) => {
       const selected = useJobPostingStore.getState().selected;
       const token = tokenForOwnerKind(selected?.ownerKind ?? null);

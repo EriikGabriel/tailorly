@@ -81,6 +81,7 @@ public final class FactValueNormalizer {
     return switch (baseKey) {
       case "status" -> normalizeStatus(category, value);
       case "employment" -> normalizeEmployment(value);
+      case "workMode" -> normalizeWorkMode(value);
       case "proficiency" -> normalizeProficiency(value);
       case "phone" -> normalizePhone(value);
       case "email" -> stripEmail(value);
@@ -172,6 +173,19 @@ public final class FactValueNormalizer {
       return "Temporário";
     if (containsAny(text, "freelanc", "autonom", "self-employed", "self employed"))
       return "Autônomo / Freelancer";
+    return value;
+  }
+
+  /** Modalidade de trabalho: Presencial, Remoto ou Híbrido; outro texto fica como escrito. */
+  private static String normalizeWorkMode(String value) {
+    String text = fold(value);
+    // "Híbrido" primeiro: costuma citar também "remoto" e "presencial" (ex.: "3 dias presencial, 2 remoto").
+    if (containsAny(text, "hibrid", "hybrid"))
+      return "Híbrido";
+    if (containsAny(text, "remot", "home office", "homeoffice", "work from home", "teletrabalho", "anywhere"))
+      return "Remoto";
+    if (containsAny(text, "presencial", "on-site", "onsite", "on site", "in-person", "in person", "in loco"))
+      return "Presencial";
     return value;
   }
 

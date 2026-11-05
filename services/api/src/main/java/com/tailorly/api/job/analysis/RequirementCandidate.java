@@ -12,8 +12,9 @@ import com.tailorly.api.job.dto.JobPostingResponse;
 record RequirementCandidate(String text, String importance) {
   static final int MAX_REQUIREMENTS = 60;
 
+  // "plus" de fora: "Plus de 3 anos de Java" é requisito. Só o rótulo de desejável conta aqui.
   private static final Pattern DESIRABLE_WORDING =
-      Pattern.compile("desejav|diferencia|nice to have|bonus|\\bplus\\b|preferenc");
+      Pattern.compile("desejav|diferencia|nice to have|bonus|preferenc");
 
   /**
    * Requisitos e desejáveis que a divisão por títulos já encontrou, na ordem do texto. Só vale o que

@@ -73,6 +73,18 @@ class FactValueNormalizerTest {
   }
 
   @Test
+  void workModeMapsKnownModalities() {
+    assertEquals("Remoto", value("experience", "workMode", "remote"));
+    assertEquals("Remoto", value("experience", "workMode", "Home Office"));
+    assertEquals("Presencial", value("experience", "workMode", "On-site"));
+    assertEquals("Presencial", value("experience", "workMode", "presencial"));
+    assertEquals("Híbrido", value("experience", "workMode", "Hybrid"));
+    // Modelo híbrido costuma citar as duas modalidades: vence "Híbrido".
+    assertEquals("Híbrido", value("experience", "workMode", "Híbrido (3 dias presencial, 2 remoto)"));
+    assertEquals("Flexível", value("experience", "workMode", "Flexível"));
+  }
+
+  @Test
   void proficiencyMapsLevelsAndKeepsCodes() {
     assertEquals("Avançado", value("languages", "proficiency", "avançado"));
     assertEquals("Avançado", value("languages", "proficiency", "Advanced"));

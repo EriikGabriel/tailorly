@@ -56,6 +56,22 @@ class CvDocumentBuilderTest {
   }
 
   @Test
+  @DisplayName("vínculo e modalidade só aparecem quando aprovados")
+  void showsEmploymentAndWorkModeOnlyWhenApproved() {
+    var result = CvDocumentBuilder.build(List.of(
+        item("experience", 0, "0:company", "Acme"), item("experience", 0, "0:role", "Dev"),
+        item("experience", 0, "0:employment", "CLT"), item("experience", 0, "0:workMode", "Remoto"),
+        item("experience", 0, "1:company", "Beta"), item("experience", 0, "1:role", "Dev"),
+        item("experience", 0, "1:workMode", "Híbrido"),
+        item("experience", 0, "2:company", "Gama"), item("experience", 0, "2:role", "Dev")), terms());
+
+    var entries = section(result.document(), "experience").entries();
+    assertEquals("CLT · Remoto", entries.get(0).meta());
+    assertEquals("Híbrido", entries.get(1).meta());
+    assertEquals(null, entries.get(2).meta());
+  }
+
+  @Test
   @DisplayName("itens saem na ordem do currículo e seções sem fatos não existem")
   void keepsDocumentOrderAndOmitsEmptySections() {
     var result = CvDocumentBuilder.build(List.of(

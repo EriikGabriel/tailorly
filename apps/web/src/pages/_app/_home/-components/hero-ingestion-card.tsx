@@ -8,6 +8,7 @@ import {
 } from "@animate/base/tabs";
 import { RippleButton } from "@animate/buttons/ripple";
 import { GenerationStageLabel } from "@components/ai-progress/generation-stage-label";
+import { JobTextField } from "@components/job/job-text-field";
 import {
   JobUrlFeedback,
   useSettledUrlCheck,
@@ -167,12 +168,10 @@ export function HeroIngestionCard() {
               </TabsPanel>
 
               <TabsPanel value="text" className="p-1">
-                <textarea
-                  aria-label="Texto da vaga"
+                <JobTextField
                   placeholder="Cole aqui a descrição da vaga..."
                   value={jobText}
-                  maxLength={50000}
-                  onChange={(event) => setJobText(event.target.value)}
+                  onChange={setJobText}
                   className="min-h-29.75 w-full resize-y rounded-lg bg-surface-container-low p-4 text-[15px] text-on-surface shadow-xs outline-none placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-primary-300"
                 />
               </TabsPanel>

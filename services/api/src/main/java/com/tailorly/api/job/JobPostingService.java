@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.tailorly.api.cv.CvGenerationRepository;
 import com.tailorly.api.diligence.DueDiligenceService;
 import com.tailorly.api.job.analysis.JobRequirementsAnalyzer;
 import com.tailorly.api.job.dto.CreateJobPostingRequest;
@@ -29,6 +30,7 @@ import com.tailorly.api.owner.OwnerRepository;
 import com.tailorly.api.session.AnonymousProperties;
 import com.tailorly.api.session.AnonymousQuotaService;
 import com.tailorly.api.shared.exception.BadRequestException;
+import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
 import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
 import com.tailorly.api.shared.exception.TooManyRequestsException;
@@ -66,11 +68,13 @@ public class JobPostingService {
   private final AnonymousProperties anonymousProperties;
   private final DueDiligenceService dueDiligence;
   private final TransactionTemplate transaction;
+  private final CvGenerationRepository generations;
 
   public JobPostingService(OwnerRepository owners, OwnerAccessService access, JobPostingRepository postings,
       JobPostingVersionRepository versions, JobPostingExtractionService extraction,
       JobRequirementsAnalyzer analyzer, AnonymousQuotaService quota, AnonymousProperties anonymousProperties,
-      DueDiligenceService dueDiligence, PlatformTransactionManager transactionManager) {
+      DueDiligenceService dueDiligence, PlatformTransactionManager transactionManager,
+      CvGenerationRepository generations) {
     this.owners = owners;
     this.access = access;
     this.postings = postings;
@@ -81,6 +85,7 @@ public class JobPostingService {
     this.anonymousProperties = anonymousProperties;
     this.dueDiligence = dueDiligence;
     this.transaction = new TransactionTemplate(transactionManager);
+    this.generations = generations;
   }
 
   /** Resultado de {@link #create}: a versão e se ela foi criada agora ou reaproveitada. */
@@ -150,10 +155,16 @@ public class JobPostingService {
     return toVersionResponse(versions.findById(version.getId()).orElseThrow(), false);
   }
 
-  /** Exclusão: remove a vaga e todas as suas versões, com o texto lido e a análise. */
+  /**
+   * Exclusão: remove a vaga e todas as suas versões, com o texto lido e a análise. Uma vaga que já
+   * originou currículos gerados não é apagada em silêncio: a pessoa exclui esses currículos antes
+   * (eles contêm os dados dela), e a recusa vira {@code 409} em vez de erro de integridade.
+   */
   public void delete(UUID id) {
     loadAccessible(id);
     transaction.executeWithoutResult(status -> {
+      if (generations.existsByJobPostingVersion_JobPosting_Id(id))
+        throw new ResourceAlreadyExistsException(ErrorCodes.Job.HAS_GENERATIONS);
       versions.deleteAllByJobPostingId(id);
       postings.deleteById(id);
     });

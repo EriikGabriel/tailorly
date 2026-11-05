@@ -29,7 +29,8 @@ import org.springframework.stereotype.Component;
 public class JobRequirementsAnalyzer {
   public static final String VERSION = "job-analysis-2";
 
-  private static final int MAX_SOURCE_CHARS = 24_000;
+  /** Mesmo limite do texto colado aceito pela API ({@code CreateJobPostingRequest.text}): nada é cortado. */
+  static final int MAX_SOURCE_CHARS = 50_000;
   private final AiChatClient chat;
   private final AiPreferencesService preferences;
   private final JobAnalysisParser parser;

@@ -236,6 +236,17 @@ final class CurriculumPromptBuilder {
              wording.
            - If the contract type is not stated, omit the employment fact.
 
+      5.3.1. Work mode (experience only)
+           - Extract only when the document explicitly states how that job was
+             performed. Never infer it from the company location or from the
+             candidate's current city.
+           - Use these canonical values: Presencial, Remoto, Híbrido
+             (e.g. "home office" -> Remoto, "on-site" -> Presencial,
+             "hybrid" -> Híbrido).
+           - If the wording does not match these options, copy the original
+             wording.
+           - If the work mode is not stated, omit the "workMode" fact.
+
       5.4. Status
            - Paid professional experience and volunteering:
              "Atual" or "Encerrado".
@@ -268,6 +279,7 @@ final class CurriculumPromptBuilder {
            - "company": employer or organization.
            - "role": job title or position.
            - "employment": explicitly stated contract type.
+           - "workMode": explicitly stated work mode (Section 5.3.1).
            - "status": "Atual" or "Encerrado", when supported.
            - "start" and "end": dates as specified in Section 5.
            - "description": responsibilities and achievements of that job,
@@ -326,7 +338,7 @@ final class CurriculumPromptBuilder {
         summary
 
       experience (list):
-        company, role, employment, status, start, end, description
+        company, role, employment, workMode, status, start, end, description
 
       volunteering (list):
         organization, role, status, start, end, description

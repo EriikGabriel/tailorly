@@ -32,6 +32,8 @@ import com.tailorly.api.session.AnonymousPrincipal;
 import com.tailorly.api.session.AnonymousSessionAuthenticationToken;
 import com.tailorly.api.session.AnonymousSessionService;
 import com.tailorly.api.shared.exception.BadRequestException;
+import com.tailorly.api.shared.exception.ErrorCodes;
+import com.tailorly.api.shared.exception.ResourceAlreadyExistsException;
 import com.tailorly.api.shared.exception.ResourceNotFoundException;
 import com.tailorly.api.shared.exception.ServiceUnavailableException;
 import com.tailorly.api.shared.exception.TooManyRequestsException;
@@ -137,6 +139,7 @@ class CvGenerationIntegrationTest {
   }
 
   @Autowired CvGenerationService service;
+  @Autowired com.tailorly.api.job.JobPostingService jobPostingService;
   @Autowired com.tailorly.api.cv.template.CvTemplateService templateService;
   @Autowired CvGenerationRepository generations;
   @Autowired AnonymousSessionService sessions;
@@ -203,7 +206,7 @@ class CvGenerationIntegrationTest {
     assertFalse(markdown.contains("Rust"));
     var pdf = service.download(generation.id(), "pdf");
     assertEquals("application/pdf", pdf.mimeType());
-    assertEquals("curriculo-acme.pdf", pdf.filename());
+    assertEquals("ana_dev-java_acme.pdf", pdf.filename());
     assertTrue(new String(pdf.content(), StandardCharsets.ISO_8859_1).startsWith("%PDF-"));
 
     assertEquals(2, jdbc.queryForObject("select count(*) from stored_objects where owner_id = ? "
@@ -213,6 +216,17 @@ class CvGenerationIntegrationTest {
     // Gerar não reexecuta OCR nem extração: nenhuma execução nova existe para as versões do owner.
     assertEquals(0, jdbc.queryForObject("select count(*) from extraction_runs where base_version_id in "
         + "(select id from base_versions where owner_id = ?)", Integer.class, ownerId));
+  }
+
+  @Test
+  @DisplayName("não exclui a vaga enquanto houver currículos gerados a partir dela (409, sem erro de integridade)")
+  void jobPostingWithGenerationsIsNotDeleted() {
+    var result = service.generate(request());
+
+    var refused = assertThrows(ResourceAlreadyExistsException.class, () -> jobPostingService.delete(jobId));
+    assertEquals(ErrorCodes.Job.HAS_GENERATIONS, refused.getMessage());
+    assertTrue(postings.existsById(jobId));
+    assertTrue(generations.existsById(result.generation().id()));
   }
 
   @Test

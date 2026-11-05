@@ -52,7 +52,7 @@ testes unitários.
 | Etapa         | Chaves                                                                                       |
 | ------------- | -------------------------------------------------------------------------------------------- |
 | Identidade    | `name`, `headline`, `location`, `email`, `phone`, `summary`, `linkedin`, `github`, `website` |
-| Experiência   | `company`, `role`, `employment`, `status`, `start`, `end`, `description`                     |
+| Experiência   | `company`, `role`, `employment`, `workMode`, `status`, `start`, `end`, `description`         |
 | Voluntariado  | `organization`, `role`, `status`, `start`, `end`, `description`                              |
 | Projetos      | `title`, `context`, `statement`, `metric`, `link`, `source`                                  |
 | Formação      | `degree`, `institution`, `status`, `start`, `end`                                            |

@@ -20,6 +20,7 @@ export function summarizeExperience(fields: DraftFields): RecordSummary {
   const period = formatPeriod(fields.start, fields.end, current);
   const duration = durationLabel(fields.start, fields.end, current);
   const employment = clean(fields.employment);
+  const workMode = clean(fields.workMode);
   const status = clean(fields.status);
 
   return {
@@ -28,6 +29,7 @@ export function summarizeExperience(fields: DraftFields): RecordSummary {
     meta: compact([period, duration && `(${duration})`]).join(" "),
     badges: compact([
       employment && { label: employment, tone: "neutral" as const },
+      workMode && { label: workMode, tone: "neutral" as const },
       status && {
         label: current ? "Atual" : status,
         tone: current ? ("success" as const) : ("neutral" as const),

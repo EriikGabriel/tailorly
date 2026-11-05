@@ -1,19 +1,19 @@
 import type { CvGenerationResponse } from "@api/generated/model";
 import { useBundledCvTemplate } from "@queries/cv-generation";
-import { useEffect, useMemo, useState } from "react";
+import { useTemplateDraftStore } from "@stores/template-draft-store";
+import { useMemo } from "react";
 import { formatTypstTemplate } from "../-utils/format-typst";
 
 /**
- * Código Typst que a pessoa edita. Começa como o template usado na geração (já formatado, para
- * facilitar ver e editar cada variável); `dirty` indica alterações ainda não salvas e `restore`
- * volta ao template padrão do sistema.
+ * Código Typst que a pessoa edita. Começa como o template usado na geração (já formatado); o
+ * rascunho vive numa store (e em `sessionStorage`) para sobreviver à troca de aba e ao reload.
+ * `dirty` indica alterações ainda não salvas; `saved` indica template salvo que a geração aberta
+ * ainda não usa (vale na próxima geração); `restore` volta ao template padrão do sistema.
  */
 export function useTypstTemplateDraft(
   generation: CvGenerationResponse | undefined,
   token: string | null,
 ) {
-  // O template em uso (nome, versão e código) já vem na própria geração; não há o que buscar.
-  // O template padrão só é consultado quando há uma geração aberta, para o botão "Restaurar".
   const bundled = useBundledCvTemplate(generation ? token : null);
 
   const rawBaseline = generation?.template?.content ?? null;
@@ -22,10 +22,18 @@ export function useTypstTemplateDraft(
     [rawBaseline],
   );
 
-  const [draft, setDraft] = useState<string | null>(null);
-  useEffect(() => {
-    setDraft(formattedBaseline);
-  }, [formattedBaseline]);
+  const generationId = generation?.id ?? null;
+  const stored = useTemplateDraftStore((state) => state);
+  const own = generationId !== null && stored.generationId === generationId;
+  const draft = (own ? stored.content : null) ?? formattedBaseline;
+  const savedContent = own ? stored.savedContent : null;
+  // O que já está gravado no servidor: o último salvo ou, sem isso, o template da própria geração.
+  const persisted = savedContent ?? formattedBaseline;
+
+  function setDraft(value: string | null) {
+    if (generationId === null) return;
+    stored.setDraft(generationId, value === formattedBaseline ? null : value);
+  }
 
   const template = generation?.template;
   return {
@@ -35,7 +43,12 @@ export function useTypstTemplateDraft(
     templateLabel: template
       ? `Template ${template.name} v${template.version}`
       : "",
-    dirty: draft !== null && draft !== formattedBaseline,
+    dirty: draft !== null && draft !== persisted,
+    /** Há um template salvo diferente do que a geração aberta usa. */
+    saved: savedContent !== null && savedContent !== formattedBaseline,
+    markSaved(content: string) {
+      if (generationId !== null) stored.markSaved(generationId, content);
+    },
     canRestore: Boolean(bundled.data),
     restore() {
       if (!bundled.data) return;

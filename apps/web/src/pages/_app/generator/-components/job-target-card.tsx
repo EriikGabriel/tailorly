@@ -6,6 +6,7 @@ import {
   TabsPanels,
   TabsTab,
 } from "@animate/base/tabs";
+import { JobTextField } from "@components/job/job-text-field";
 import {
   JobUrlFeedback,
   useSettledUrlCheck,
@@ -124,12 +125,10 @@ export function JobTargetCard() {
             </TabsPanel>
 
             <TabsPanel value="text" className="p-1">
-              <textarea
-                aria-label="Texto da vaga"
+              <JobTextField
                 placeholder="Cole aqui a descrição completa da vaga..."
                 value={jobText}
-                maxLength={50000}
-                onChange={(event) => setJobText(event.target.value)}
+                onChange={setJobText}
                 className="min-h-28 w-full resize-y rounded-lg bg-surface-container-low p-3.5 text-[15px] text-on-surface shadow-xs outline-none placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-primary-300"
               />
             </TabsPanel>

@@ -172,6 +172,32 @@ class JobRequirementsAnalyzerTest {
   }
 
   @Test
+  void readsPastedTextUpToTheServerLimitWithoutCuttingTheEnd() throws IOException {
+    // Um requisito no fim de uma vaga de ~45 mil caracteres precisa chegar à análise (o limite antigo cortava em 24 mil).
+    String padding = "Descrição da empresa e da equipe com detalhes sobre o dia a dia. ".repeat(600);
+    String lastRequirement = "Experiência com Kafka em produção";
+    String source = padding + "\nRequisitos\n" + lastRequirement + ".\n";
+    assertTrue(source.length() > 30_000 && source.length() < JobRequirementsAnalyzer.MAX_SOURCE_CHARS);
+
+    JobRequirementsAnalyzer analyzer = analyzerReturning("""
+        {"seniority":null,"seniorityEvidence":null,
+         "items":[{"id":1,"keep":true,"category":"technology","technologies":["Kafka"]}],
+         "technologies":["Kafka"]}
+        """);
+    JobPostingResponse job = JobPostingResponse.builder()
+        .title("Desenvolvedor Pleno")
+        .descriptionText(source)
+        .requirements(List.of(lastRequirement + "."))
+        .build();
+
+    JobAnalysis analysis = analyzer.analyze(owner, job).orElseThrow();
+
+    assertEquals(1, analysis.requirements().size());
+    assertEquals(lastRequirement + ".", analysis.requirements().getFirst().text());
+    assertEquals(50_000, JobRequirementsAnalyzer.MAX_SOURCE_CHARS);
+  }
+
+  @Test
   void everyItemFoundByTheSectionSplitStaysEvenWhenTheModelOnlyAnnotatesSome() throws IOException {
     // O modelo anota só 3 dos 10 itens, erra "Java 11+" como 11 anos e descarta o item 9.
     JobRequirementsAnalyzer analyzer = analyzerReturning("""

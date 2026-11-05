@@ -23,6 +23,7 @@ export type ExperienceFact = {
   company?: string;
   role?: string;
   employment?: string;
+  workMode?: string;
   status?: string;
   start?: string;
   end?: string;

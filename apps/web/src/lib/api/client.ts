@@ -46,6 +46,38 @@ export async function apiBlob(
   return response.blob();
 }
 
+/** Nome do arquivo sugerido pelo servidor em `Content-Disposition`, se houver. */
+export function filenameFromDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const encoded = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(header)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded.trim());
+    } catch {
+      // Cai no `filename=` simples abaixo.
+    }
+  }
+  const plain = /filename\s*=\s*"?([^";]+)"?/i.exec(header)?.[1];
+  return plain?.trim() || null;
+}
+
+/** Como `apiBlob`, mas também devolve o nome de arquivo que o servidor sugeriu. */
+export async function apiDownload(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<{ blob: Blob; filename: string | null }> {
+  const response = await apiFetch(path, {
+    accept: "application/pdf, text/markdown, */*",
+    ...options,
+  });
+  return {
+    blob: await response.blob(),
+    filename: filenameFromDisposition(
+      response.headers.get("Content-Disposition"),
+    ),
+  };
+}
+
 export async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {},

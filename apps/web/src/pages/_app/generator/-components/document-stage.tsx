@@ -38,7 +38,12 @@ export function DocumentStage({
   const templateDraft = useTypstTemplateDraft(generation.data, token);
   const { draft } = templateDraft;
   const preview = useCvPreview(generation.data?.id ?? null, draft, token);
-  const actions = useDocumentActions(generation.data, token, draft);
+  const actions = useDocumentActions(
+    generation.data,
+    token,
+    draft,
+    templateDraft.markSaved,
+  );
 
   const showsEditor = viewMode === "typst" || viewMode === "split";
   const editor =
@@ -47,7 +52,7 @@ export function DocumentStage({
         value={draft}
         onChange={templateDraft.setDraft}
         preview={preview}
-        onSave={actions.saveAndRegenerate}
+        onSave={actions.saveTemplate}
       />
     );
 
@@ -86,11 +91,11 @@ export function DocumentStage({
       {showsEditor && generation.data && (
         <TemplateActionsBar
           dirty={templateDraft.dirty}
-          busy={actions.busy}
-          regenerating={actions.regenerating}
+          saving={actions.saving}
+          saved={templateDraft.saved}
           canRestore={templateDraft.canRestore}
           templateLabel={templateDraft.templateLabel}
-          onSave={actions.saveAndRegenerate}
+          onSave={actions.saveTemplate}
           onRestore={templateDraft.restore}
         />
       )}
