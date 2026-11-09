@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { checkJobUrl, MAX_JOB_URL_LENGTH } from "@utils/job/job-url";
+import {
+  checkJobUrl,
+  FULLY_COMPATIBLE_PLATFORMS,
+  MAX_JOB_URL_LENGTH,
+} from "@utils/job/job-url";
 
 test("campo vazio não é erro", () => {
   assert.equal(checkJobUrl("").status, "empty");
@@ -10,7 +14,9 @@ test("campo vazio não é erro", () => {
 test("aceita links públicos e reconhece plataformas", () => {
   assert.deepEqual(checkJobUrl(" https://acme.gupy.io/jobs/1?x=1 "), {
     status: "valid",
-    message: "Link da Gupy reconhecido.",
+    message: "Link da Gupy: plataforma totalmente compatível.",
+    platform: "Gupy",
+    fullyCompatible: true,
   });
   assert.equal(
     checkJobUrl("https://boards.greenhouse.io/acme/jobs/1").status,
@@ -69,4 +75,37 @@ test("rejeita links acima do limite do servidor", () => {
     checkJobUrl(`https://acme.com/${"a".repeat(MAX_JOB_URL_LENGTH)}`).status,
     "invalid",
   );
+});
+
+test("marca Gupy e Trakstar Hire como totalmente compatíveis", () => {
+  for (const [value, platform] of [
+    ["https://empresa.gupy.io/jobs/123", "Gupy"],
+    ["https://sensedia.hire.trakstar.com/jobs/fk0zc1c/", "Trakstar Hire"],
+  ]) {
+    const check = checkJobUrl(value);
+    assert.equal(check.status, "valid", value);
+    assert.ok(check.status === "valid" && check.fullyCompatible, value);
+    assert.ok(check.status === "valid" && check.platform === platform, value);
+  }
+  assert.deepEqual(
+    FULLY_COMPATIBLE_PLATFORMS.map(({ name }) => name),
+    ["Gupy", "Trakstar Hire"],
+  );
+});
+
+test("Greenhouse e Lever são reconhecidas, mas sem o selo de compatibilidade total", () => {
+  for (const value of [
+    "https://boards.greenhouse.io/acme/jobs/1",
+    "https://jobs.lever.co/acme/abc",
+    "https://exemplo.com/vaga/1",
+  ]) {
+    const check = checkJobUrl(value);
+    assert.equal(check.status, "valid", value);
+    assert.ok(check.status === "valid" && !check.fullyCompatible, value);
+  }
+});
+
+test("um domínio parecido não ganha o selo", () => {
+  const check = checkJobUrl("https://hire.trakstar.com.evil.test/jobs/1");
+  assert.ok(check.status === "valid" && !check.fullyCompatible);
 });

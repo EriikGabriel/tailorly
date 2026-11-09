@@ -204,6 +204,10 @@ test(// O título vira parte do relatório e liga este cenário ao requisito fun
       },
     }),
   );
+  // A geração consulta o template atual antes de enviar (um template editado vale sobre o layout).
+  await page.route("**/v1/cv/templates/owner/*/current", (route) =>
+    route.fulfill({ json: { name: "classic", custom: false } }),
+  );
   await page.route("**/v1/cv/generate", (route) =>
     route.fulfill({ status: 201, json: { id: "generation-1" } }),
   );

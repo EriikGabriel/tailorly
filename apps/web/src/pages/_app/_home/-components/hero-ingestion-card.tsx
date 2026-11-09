@@ -10,6 +10,8 @@ import { RippleButton } from "@animate/buttons/ripple";
 import { GenerationStageLabel } from "@components/ai-progress/generation-stage-label";
 import { JobTextField } from "@components/job/job-text-field";
 import {
+  CompatiblePlatforms,
+  JobUrlBadge,
   JobUrlFeedback,
   useSettledUrlCheck,
 } from "@components/job-url-feedback";
@@ -23,7 +25,6 @@ import {
   Link,
   Search,
   ShieldCheck,
-  Zap,
 } from "@react-zero-ui/icon-sprite";
 import { useJobDraftStore } from "@stores/job-draft-store";
 import { MAX_JOB_URL_LENGTH } from "@utils/job/job-url";
@@ -32,11 +33,6 @@ import { BaseCvPicker } from "./base-cv-picker";
 const inputModes = [
   { value: "url", label: "Inserir URL da Vaga", icon: Link },
   { value: "text", label: "Colar Texto da Vaga", icon: FileText },
-] as const;
-
-const quickTests = [
-  "Senior Tech Lead @ Nubank",
-  "Staff Engineer @ Inter",
 ] as const;
 
 export function HeroIngestionCard() {
@@ -106,7 +102,7 @@ export function HeroIngestionCard() {
             ))}
           </TabsList>
 
-          <div className="mt-3 pb-4">
+          <div className="mt-3 pb-2">
             <TabsPanels className="-mx-1">
               <TabsPanel value="url" className="p-1">
                 <div
@@ -116,11 +112,17 @@ export function HeroIngestionCard() {
                       : "focus-within:ring-primary-300"
                   }`}
                 >
-                  <Search className="pointer-events-none absolute left-4.5 size-4.75 text-secondary-700" />
+                  <JobUrlBadge
+                    check={shownUrlCheck}
+                    className="pointer-events-none absolute left-4.5 size-4.75"
+                    fallback={
+                      <Search className="pointer-events-none absolute left-4.5 size-4.75 text-secondary-700" />
+                    }
+                  />
                   <input
                     type="url"
                     aria-label="Link da vaga"
-                    placeholder="Cole o link da vaga (Gupy, Greenhouse, Lever...)"
+                    placeholder="Cole o link da vaga (Gupy, Trakstar Hire...)"
                     value={jobUrl}
                     maxLength={MAX_JOB_URL_LENGTH + 1}
                     autoComplete="off"
@@ -139,27 +141,7 @@ export function HeroIngestionCard() {
                     Colar
                   </button>
                 </div>
-
-                <div className="mt-2 flex flex-wrap items-center gap-1 text-xs tracking-[0.3px]">
-                  <span className="mr-1 inline-flex items-center gap-1 font-medium text-on-surface-variant">
-                    <Zap className="size-3.25" />
-                    Testar com 1 clique:
-                  </span>
-                  {quickTests.map((title) => (
-                    <button
-                      key={title}
-                      type="button"
-                      onClick={() => {
-                        setJobText(title);
-                        setMode("text");
-                      }}
-                      className="rounded-full bg-surface-container px-2 py-1 font-semibold text-primary-900 hover:bg-primary-100 focus-visible:outline-2 focus-visible:outline-primary-900"
-                    >
-                      {title}
-                    </button>
-                  ))}
-                </div>
-
+                <CompatiblePlatforms className="mt-2 px-1" />
                 <JobUrlFeedback
                   id="home-job-url-feedback"
                   check={shownUrlCheck}

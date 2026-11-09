@@ -24,7 +24,7 @@ com sessão temporária e limites aplicados no servidor.
   páginas que precisam; fatos propostos pela IA com página e trecho de origem.
 - **Revisão por fato:** cada fato fica como `pendente`, `confirmado`, `corrigido` ou `omitido`. Ao
   aprovar, o servidor congela um snapshot imutável e o torna o Ground Truth ativo.
-- **Vagas por link ou texto:** leitura de Gupy, JSON-LD e páginas HTML genéricas, com análise de
+- **Vagas por link ou texto:** leitura de Gupy e Trakstar Hire (validadas com páginas reais), JSON-LD e páginas HTML genéricas, com análise de
   requisitos obrigatórios, desejáveis, tecnologias e anos de experiência.
 - **Geração controlada:** a IA reescreve e adapta a apresentação à vaga, mas não adiciona fatos fora do
   snapshot aprovado. Evidências complementares (vaga, links, busca web) só entram com fonte citada e

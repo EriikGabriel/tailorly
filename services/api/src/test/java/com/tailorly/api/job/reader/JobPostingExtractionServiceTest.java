@@ -24,7 +24,7 @@ class JobPostingExtractionServiceTest {
   private static JobPostingExtractionService serviceFor(String html, String finalUrl) {
     JobPageFetcher fetcher = url -> new FetchedPage(Jsoup.parse(html, finalUrl), finalUrl);
     ObjectMapper mapper = new ObjectMapper();
-    return new JobPostingExtractionService(fetcher, new GupyJobExtractor(mapper), new JsonLdJobExtractor(mapper),
+    return new JobPostingExtractionService(fetcher, new GupyJobExtractor(mapper), new JsonLdJobExtractor(),
         new GenericHtmlJobExtractor(), new PastedTextJobExtractor());
   }
 

@@ -4,13 +4,31 @@ export type JobUrlCheck =
   | { status: "empty" }
   | { status: "invalid"; message: string }
   | { status: "warning"; message: string }
-  | { status: "valid"; message: string };
+  | {
+      status: "valid";
+      message: string;
+      /** Plataforma reconhecida pelo endereço, quando houver. */
+      platform?: string;
+      /** A leitura desta plataforma foi conferida contra páginas reais. */
+      fullyCompatible?: boolean;
+    };
 
 // Sites que só entregam a vaga depois de login ou por JavaScript; a leitura por link não funciona.
 const LOGIN_WALLED = ["linkedin.com"];
 
-const KNOWN_PLATFORMS: Record<string, string> = {
-  "gupy.io": "Gupy",
+/**
+ * Plataformas cuja leitura por link foi conferida contra páginas reais de vaga (campos, seções e
+ * empresa para a due diligence). Só entram aqui as que passaram por essa conferência; ver
+ * docs/product/job-postings.md.
+ */
+export const FULLY_COMPATIBLE_PLATFORMS = [
+  { name: "Gupy", domain: "gupy.io" },
+  { name: "Trakstar Hire", domain: "hire.trakstar.com" },
+] as const;
+
+// Reconhecidas pelo endereço e lidas por dados estruturados (JSON-LD), mas ainda não validadas
+// contra páginas reais: o link é aceito, sem o selo de compatibilidade total.
+const RECOGNIZED_PLATFORMS: Record<string, string> = {
   "greenhouse.io": "Greenhouse",
   "lever.co": "Lever",
 };
@@ -111,11 +129,25 @@ export function checkJobUrl(raw: string): JobUrlCheck {
         "Este site costuma exigir login e não pode ser lido por link. Cole o texto da vaga.",
     };
 
-  const platform = Object.entries(KNOWN_PLATFORMS).find(([domain]) =>
+  const compatible = FULLY_COMPATIBLE_PLATFORMS.find(({ domain }) =>
+    hostMatches(host, domain),
+  );
+  if (compatible)
+    return {
+      status: "valid",
+      message: `Link da ${compatible.name}: plataforma totalmente compatível.`,
+      platform: compatible.name,
+      fullyCompatible: true,
+    };
+
+  const recognized = Object.entries(RECOGNIZED_PLATFORMS).find(([domain]) =>
     hostMatches(host, domain),
   )?.[1];
   return {
     status: "valid",
-    message: platform ? `Link da ${platform} reconhecido.` : "Link válido.",
+    message: recognized
+      ? `Link da ${recognized} reconhecido (leitura ainda não validada).`
+      : "Link válido.",
+    ...(recognized ? { platform: recognized } : {}),
   };
 }
