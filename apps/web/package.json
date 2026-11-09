@@ -42,7 +42,7 @@
     "codemirror": "^6.0.2",
     "codemirror-lang-typst": "^0.6.0",
     "date-fns": "^4.4.0",
-    "motion": "^13.4.4",
+    "motion": "^14.9.1",
     "pdfjs-dist": "6.3.289",
     "react": "^19.1.9",
     "react-datepicker": "^9.1.0",
