@@ -64,15 +64,15 @@ A fonte de verdade do contrato é o OpenAPI (`GET /v3/api-docs`, interface em `/
 
 ## Rotas descritas em outros documentos
 
-| Rotas                                                            | Documento                                                                                                         |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `/v1/job-postings/**`                                            | [Vagas](../../../docs/product/job-postings.md)                                                                    |
-| `/v1/due-diligence/**`                                           | [Due diligence](../../../docs/product/due-diligence.md)                                                           |
-| `/v1/cv/evidence/**`, `/v1/owners/{ownerId}/generation-defaults` | [Enriquecimento da geração](../../../docs/product/enrichment.md)                                                  |
-| `/v1/owners/{ownerId}/vault`                                     | [Second Brain](../../../docs/product/second-brain.md)                                                             |
-| `/v1/extraction-runs/**`, `/v1/extracted-pages/**`               | [Extração de PDF](extraction.md)                                                                                  |
-| `/v1/stored-objects/**`                                          | [Documentos e storage](documents-and-storage.md)                                                                  |
-| `/v1/ai-preferences`                                             | Preferências de IA da conta (chaves guardadas criptografadas com `TAILORLY_SECRETS_KEY`); visitantes não as usam. |
+| Rotas                                                            | Documento                                                                                                                                                                                                                       |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/v1/job-postings/**`                                            | [Vagas](../../../docs/product/job-postings.md)                                                                                                                                                                                  |
+| `/v1/due-diligence/**`                                           | [Due diligence](../../../docs/product/due-diligence.md)                                                                                                                                                                         |
+| `/v1/cv/evidence/**`, `/v1/owners/{ownerId}/generation-defaults` | [Enriquecimento da geração](../../../docs/product/enrichment.md)                                                                                                                                                                |
+| `/v1/owners/{ownerId}/vault`                                     | [Second Brain](../../../docs/product/second-brain.md)                                                                                                                                                                           |
+| `/v1/extraction-runs/**`, `/v1/extracted-pages/**`               | [Extração de PDF](extraction.md)                                                                                                                                                                                                |
+| `/v1/stored-objects/**`                                          | [Documentos e storage](documents-and-storage.md)                                                                                                                                                                                |
+| `/v1/ai-preferences`                                             | Preferências de IA da conta (chaves guardadas criptografadas com `TAILORLY_SECRETS_KEY`), incluindo modelo, timeout e esforço por etapa do `claude-cli` e do `codex-cli` quando o servidor os habilita; visitantes não as usam. |
 
 ## Respostas de erro e idioma
 

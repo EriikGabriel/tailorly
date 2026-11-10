@@ -81,6 +81,10 @@ test("marca Gupy e Trakstar Hire como totalmente compatíveis", () => {
   for (const [value, platform] of [
     ["https://empresa.gupy.io/jobs/123", "Gupy"],
     ["https://sensedia.hire.trakstar.com/jobs/fk0zc1c/", "Trakstar Hire"],
+    [
+      "https://yandeh.inhire.app/vagas/1a963223-260a-4242-bbb7-f53dd801d760/dev?source=linkedin",
+      "InHire",
+    ],
   ]) {
     const check = checkJobUrl(value);
     assert.equal(check.status, "valid", value);
@@ -89,7 +93,7 @@ test("marca Gupy e Trakstar Hire como totalmente compatíveis", () => {
   }
   assert.deepEqual(
     FULLY_COMPATIBLE_PLATFORMS.map(({ name }) => name),
-    ["Gupy", "Trakstar Hire"],
+    ["Gupy", "Trakstar Hire", "InHire"],
   );
 });
 

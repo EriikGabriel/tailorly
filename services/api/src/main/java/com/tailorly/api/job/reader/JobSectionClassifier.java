@@ -85,7 +85,8 @@ final class JobSectionClassifier {
       return JobSection.RESPONSIBILITIES;
     if (containsAny(normalized, "requisito", "qualificac", "pre requisito", "requirements", "qualifications",
         "o que esperamos", "o que buscamos", "o que procuramos", "what we are looking for", "what we re looking for", "what you ll need",
-        "what you need", "must have", " you have "))
+        "what you need", "must have", " you have ", " hard skills ", " soft skills ", "habilidades tecnicas",
+        "competencias tecnicas", "competencias comportamentais"))
       return JobSection.REQUIREMENTS;
     if (containsAny(normalized, "sobre a empresa", "sobre nos", "quem somos", "about us", "about the company",
         "who we are"))

@@ -20,6 +20,22 @@ export const interpretationProviderOptions = [
     recommended: false,
   },
   {
+    value: "claude-cli",
+    name: "Claude Code local (sua assinatura)",
+    description:
+      "Usa o Claude Code logado neste computador, consumindo os limites da sua assinatura Claude em vez de cobrar por requisição. Só aparece quando o servidor local o habilita.",
+    recommended: false,
+    localOnly: true,
+  },
+  {
+    value: "codex-cli",
+    name: "Codex local (sua conta ChatGPT)",
+    description:
+      "Usa o Codex CLI logado neste computador, consumindo os limites da sua conta ChatGPT em vez de cobrar por requisição. Só aparece quando o servidor local o habilita.",
+    recommended: false,
+    localOnly: true,
+  },
+  {
     value: "ollama-only",
     name: "Somente modelo local (Ollama)",
     description:
@@ -37,6 +53,83 @@ export const interpretationProviderOptions = [
 
 export type InterpretationProvider =
   (typeof interpretationProviderOptions)[number]["value"];
+
+/** Níveis de esforço dos CLIs locais, do mais rápido ao mais caprichado. */
+export const localCliEffortOptions = [
+  { value: "low", label: "Baixo — mais rápido" },
+  { value: "medium", label: "Médio" },
+  { value: "high", label: "Alto" },
+  { value: "xhigh", label: "Muito alto" },
+  { value: "max", label: "Máximo — mais lento" },
+] as const;
+
+/** Nomes das etapas com IA (chaves de `LocalCliEfforts.TASKS` no backend). */
+export const localCliTaskLabels: Record<
+  string,
+  { name: string; hint: string }
+> = {
+  interpretation: {
+    name: "Extração do Currículo Base",
+    hint: "Fatos do Ground Truth; erros aqui contaminam o resto.",
+  },
+  "job-analysis": {
+    name: "Análise da vaga",
+    hint: "Anota requisitos já separados por seção.",
+  },
+  "due-diligence": {
+    name: "Due diligence da empresa",
+    hint: "Fatores a partir de fontes públicas.",
+  },
+  "supplementary-evidence": {
+    name: "Evidências complementares",
+    hint: "Afirmações com trecho citado dos links.",
+  },
+  "content-enrichment": {
+    name: "Adaptação do conteúdo à vaga",
+    hint: "Reescreve sem inventar fatos.",
+  },
+  "ats-review": {
+    name: "Revisão de ATS",
+    hint: "As regras já cobrem o básico.",
+  },
+  "resume-layout-plan": {
+    name: "Plano de layout do currículo",
+    hint: "Decisão simples sobre dados prontos.",
+  },
+  default: {
+    name: "Demais etapas",
+    hint: "Etapas novas sem esforço próprio.",
+  },
+};
+
+/** Diferenças entre os CLIs locais mostradas no perfil. */
+export const localCliMeta = {
+  "claude-cli": {
+    title: "Claude Code local — sua assinatura",
+    description:
+      "Cada etapa roda o Claude Code logado neste computador, sem ferramentas, e consome os limites da sua assinatura Claude. É mais lento que uma API (um processo por vez).",
+    loginCommand: "claude → /login",
+    enableVariable: "TAILORLY_CLAUDE_CLI_ENABLED",
+    modelSuggestions: ["sonnet", "opus", "haiku"],
+    allowEmptyModel: false,
+    modelHint: "Alias (sonnet, opus, haiku) ou nome completo.",
+  },
+  "codex-cli": {
+    title: "Codex local — sua conta ChatGPT",
+    description:
+      "Cada etapa roda o Codex CLI logado neste computador, com sandbox somente leitura e sem shell, navegador ou plugins, e consome os limites da sua conta ChatGPT. É mais lento que uma API (um processo por vez).",
+    loginCommand: "codex login",
+    enableVariable: "TAILORLY_CODEX_CLI_ENABLED",
+    modelSuggestions: [],
+    allowEmptyModel: true,
+    modelHint:
+      "Vazio usa o modelo padrão do Codex. O esforço Máximo vira Muito alto no Codex.",
+  },
+} as const;
+
+/** O modelo vira argumento do CLI: só nomes simples, sem espaço nem hífen inicial. */
+export const LOCAL_CLI_MODEL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:/[\]-]*$/;
+export const LOCAL_CLI_TIMEOUT_RANGE = { min: 10, max: 1800 } as const;
 
 // O backend só expõe um slot de "provedor remoto" (tailorly.interpretation.remote.*),
 // mas qualquer serviço compatível com o formato Chat Completions da OpenAI funciona

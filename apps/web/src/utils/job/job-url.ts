@@ -24,6 +24,7 @@ const LOGIN_WALLED = ["linkedin.com"];
 export const FULLY_COMPATIBLE_PLATFORMS = [
   { name: "Gupy", domain: "gupy.io" },
   { name: "Trakstar Hire", domain: "hire.trakstar.com" },
+  { name: "InHire", domain: "inhire.app" },
 ] as const;
 
 // Reconhecidas pelo endereço e lidas por dados estruturados (JSON-LD), mas ainda não validadas

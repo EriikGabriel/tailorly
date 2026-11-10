@@ -1,6 +1,7 @@
 package com.tailorly.api.aipreferences;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 import com.tailorly.api.owner.Owner;
@@ -19,7 +20,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 /**
  * Preferência de IA de um owner para a extração do Currículo Base.
@@ -73,6 +76,32 @@ public class AiPreferences {
   @ToString.Exclude
   @Column(name = "ollama_api_key_encrypted")
   private String ollamaApiKeyEncrypted;
+
+  /** Alias do CLI ({@code sonnet}, {@code opus}, {@code haiku}) ou nome completo; nulo usa o do servidor. */
+  @Column(name = "claude_cli_model")
+  private String claudeCliModel;
+
+  /** Nulo usa o timeout do servidor ({@code TAILORLY_CLAUDE_CLI_TIMEOUT}). */
+  @Column(name = "claude_cli_timeout_seconds")
+  private Integer claudeCliTimeoutSeconds;
+
+  /** Esforço por etapa ({@code default} e chaves de {@code ClaudeCliProperties#TASKS}). */
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "claude_cli_efforts", columnDefinition = "jsonb")
+  private Map<String, String> claudeCliEfforts;
+
+  /** Modelo do Codex; nulo usa o do servidor (que, vazio, usa o padrão do próprio Codex). */
+  @Column(name = "codex_cli_model")
+  private String codexCliModel;
+
+  /** Nulo usa o timeout do servidor ({@code TAILORLY_CODEX_CLI_TIMEOUT}). */
+  @Column(name = "codex_cli_timeout_seconds")
+  private Integer codexCliTimeoutSeconds;
+
+  /** Esforço por etapa ({@code default} e chaves de {@code LocalCliEfforts#TASKS}). */
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "codex_cli_efforts", columnDefinition = "jsonb")
+  private Map<String, String> codexCliEfforts;
 
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)

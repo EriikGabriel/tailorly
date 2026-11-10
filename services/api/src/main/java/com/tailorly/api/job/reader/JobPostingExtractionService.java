@@ -17,7 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * Obtém a página da vaga e combina os extratores por ordem de confiabilidade: Gupy (dados
+ * Obtém a página da vaga e combina os extratores por ordem de confiabilidade: InHire (API pública,
+ * pois a página é uma SPA), Gupy (dados
  * estruturados da própria plataforma), JSON-LD {@code JobPosting} e, por último, o HTML genérico.
  * Cada extrator só completa o que o anterior não encontrou. O resultado não é persistido e não passa
  * por IA; ele descreve apenas o que a página declara.
@@ -26,12 +27,21 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class JobPostingExtractionService {
   private final JobPageFetcher fetcher;
+  private final InhireJobExtractor inhireExtractor;
   private final GupyJobExtractor gupyExtractor;
   private final JsonLdJobExtractor jsonLdExtractor;
   private final GenericHtmlJobExtractor genericExtractor;
   private final PastedTextJobExtractor textExtractor;
 
   public JobPostingResponse extract(String url) {
+    // A InHire é uma SPA: a página baixada não tem a vaga, que vem da API pública da plataforma.
+    if (InhireJobExtractor.match(url).isPresent()) {
+      JobPostingResponse inhire = inhireExtractor.extract(url)
+          .filter(job -> !isUnusable(job))
+          .orElseThrow(() -> new UnprocessableRequestException(ErrorCodes.Job.NO_CONTENT));
+      return finalizeResponse(inhire, url.trim(), inhire.canonicalUrl());
+    }
+
     FetchedPage page = fetcher.fetch(url);
 
     JobPostingResponse merged = null;

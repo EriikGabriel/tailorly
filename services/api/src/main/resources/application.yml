@@ -104,12 +104,55 @@ tailorly:
     # remote (só provedor remoto)
     # remote-with-ollama-fallback (recomendado: remoto com fallback automático para o Ollama local)
     # ollama-only (só o Ollama local, sem chamada remota)
+    # claude-cli (SÓ USO LOCAL: chama o Claude Code logado nesta máquina e consome a assinatura de quem fez login;
+    #             exige TAILORLY_CLAUDE_CLI_ENABLED=true e nunca deve ser usado em deploy que atenda outras pessoas)
+    # codex-cli (SÓ USO LOCAL: chama o Codex CLI logado com a conta ChatGPT nesta máquina e consome os limites
+    #            dessa conta; exige TAILORLY_CODEX_CLI_ENABLED=true e nunca deve ser usado em deploy)
     provider: ${TAILORLY_INTERPRETATION_PROVIDER:rules}
     # Qualquer serviço compatível com o formato Chat Completions da OpenAI funciona aqui: OpenAI, Anthropic, DeepSeek, OpenRouter etc. Não há configuração específica por fabricante, só endpoint/modelo/chave.
     remote:
       endpoint: ${TAILORLY_REMOTE_ENDPOINT:https://api.openai.com/v1/chat/completions}
       model: ${TAILORLY_REMOTE_MODEL:}
       api-key: ${TAILORLY_REMOTE_API_KEY:}
+    claude-cli:
+      enabled: ${TAILORLY_CLAUDE_CLI_ENABLED:false}
+      command: ${TAILORLY_CLAUDE_CLI_COMMAND:claude}
+      # Alias do CLI (sonnet, opus, haiku) ou nome completo do modelo.
+      model: ${TAILORLY_CLAUDE_CLI_MODEL:sonnet}
+      timeout: ${TAILORLY_CLAUDE_CLI_TIMEOUT:PT3M}
+      # Esforço de raciocínio (--effort: low, medium, high, xhigh, max). Mais esforço = mais qualidade,
+      # porém mais lento e mais consumo da assinatura. Etapas não listadas usam o padrão abaixo.
+      effort: ${TAILORLY_CLAUDE_CLI_EFFORT:medium}
+      efforts:
+        # Extração dos fatos do Currículo Base: é o Ground Truth, erros contaminam tudo depois.
+        interpretation: ${TAILORLY_CLAUDE_CLI_EFFORT_INTERPRETATION:high}
+        # Reescrita do conteúdo para a vaga: precisa adaptar o texto sem inventar fatos.
+        content-enrichment: ${TAILORLY_CLAUDE_CLI_EFFORT_CONTENT_ENRICHMENT:high}
+        # Anotação dos requisitos já separados por seção (tecnologias, categoria, anos).
+        job-analysis: ${TAILORLY_CLAUDE_CLI_EFFORT_JOB_ANALYSIS:medium}
+        # Afirmações com trecho citado de links do currículo.
+        supplementary-evidence: ${TAILORLY_CLAUDE_CLI_EFFORT_SUPPLEMENTARY_EVIDENCE:medium}
+        # Fatores da empresa a partir de fontes públicas, com trecho verificado.
+        due-diligence: ${TAILORLY_CLAUDE_CLI_EFFORT_DUE_DILIGENCE:medium}
+        # Revisão de ATS do currículo gerado; as regras cobrem o básico.
+        ats-review: ${TAILORLY_CLAUDE_CLI_EFFORT_ATS_REVIEW:medium}
+        # Escolha de layout/seções: decisão simples sobre dados já prontos.
+        resume-layout-plan: ${TAILORLY_CLAUDE_CLI_EFFORT_RESUME_LAYOUT_PLAN:low}
+    # Mesmas etapas e níveis do claude-cli; max vira xhigh no Codex. Modelo vazio = padrão do próprio Codex.
+    codex-cli:
+      enabled: ${TAILORLY_CODEX_CLI_ENABLED:false}
+      command: ${TAILORLY_CODEX_CLI_COMMAND:codex}
+      model: ${TAILORLY_CODEX_CLI_MODEL:}
+      timeout: ${TAILORLY_CODEX_CLI_TIMEOUT:PT3M}
+      effort: ${TAILORLY_CODEX_CLI_EFFORT:medium}
+      efforts:
+        interpretation: ${TAILORLY_CODEX_CLI_EFFORT_INTERPRETATION:high}
+        content-enrichment: ${TAILORLY_CODEX_CLI_EFFORT_CONTENT_ENRICHMENT:high}
+        job-analysis: ${TAILORLY_CODEX_CLI_EFFORT_JOB_ANALYSIS:medium}
+        supplementary-evidence: ${TAILORLY_CODEX_CLI_EFFORT_SUPPLEMENTARY_EVIDENCE:medium}
+        due-diligence: ${TAILORLY_CODEX_CLI_EFFORT_DUE_DILIGENCE:medium}
+        ats-review: ${TAILORLY_CODEX_CLI_EFFORT_ATS_REVIEW:medium}
+        resume-layout-plan: ${TAILORLY_CODEX_CLI_EFFORT_RESUME_LAYOUT_PLAN:low}
     ollama:
       endpoint: ${TAILORLY_OLLAMA_ENDPOINT:http://127.0.0.1:11434/v1/chat/completions}
       model: ${TAILORLY_OLLAMA_MODEL:qwen3:8b}

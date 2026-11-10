@@ -123,11 +123,85 @@ vazias. Reinicie a API depois de alterar. A tabela completa está em
 | `remote`                      | Só o provedor remoto (`TAILORLY_REMOTE_*`), sem fallback.                          |
 | `ollama-only`                 | Só o Ollama local, sem nenhuma chamada remota.                                     |
 | `remote-with-ollama-fallback` | Tenta o remoto e cai para o Ollama local em caso de erro (recomendado localmente). |
+| `claude-cli`                  | **Só uso local:** chama o Claude Code logado nesta máquina (veja abaixo).          |
+| `codex-cli`                   | **Só uso local:** chama o Codex CLI logado nesta máquina (veja abaixo).            |
 
 `TAILORLY_REMOTE_ENDPOINT` aceita qualquer serviço compatível com Chat Completions (OpenAI, Anthropic,
 DeepSeek, OpenRouter etc.). Para o Ollama, baixe o modelo configurado, por exemplo
 `ollama pull qwen3:8b`. O endpoint remoto precisa ser alcançável pela API: em deploy na nuvem, um
 serviço rodando só no seu computador (`localhost`) não serve.
+
+#### Claude Code com a sua assinatura (`claude-cli`, só uso local)
+
+Para usar o Claude sem pagar a API por requisição, a API pode chamar o Claude Code (`claude -p`)
+já logado com a sua conta Pro/Max. O consumo entra nos limites da sua assinatura. **Não habilite em
+deploy nem em ambiente que atenda outras pessoas:** a assinatura é pessoal e os termos não permitem
+usá-la como backend para terceiros. Por isso o provider só funciona com a flag explícita:
+
+```bash
+TAILORLY_INTERPRETATION_PROVIDER=claude-cli
+TAILORLY_CLAUDE_CLI_ENABLED=true
+TAILORLY_CLAUDE_CLI_MODEL=sonnet   # opcional: alias (sonnet, opus, haiku) ou nome completo
+```
+
+Pré-requisito: `claude` instalado no `PATH` (ou em `TAILORLY_CLAUDE_CLI_COMMAND`) e logado com
+`claude` → `/login`. A API roda o CLI sem ferramentas, MCP, configurações nem sessão salva, em um
+diretório temporário, um processo por vez e com timeout (`TAILORLY_CLAUDE_CLI_TIMEOUT`, padrão
+`PT3M`). `ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN` são removidas do ambiente do processo para que
+ele use a assinatura, e não a API. É mais lento que uma API (cada chamada abre um processo).
+
+Cada etapa usa um esforço de raciocínio (`--effort`) próprio. Mais esforço dá respostas melhores,
+mas é mais lento e consome mais da assinatura:
+
+| Etapa                                | Esforço  | Variável                                            |
+| ------------------------------------ | -------- | --------------------------------------------------- |
+| Extração dos fatos do Currículo Base | `high`   | `TAILORLY_CLAUDE_CLI_EFFORT_INTERPRETATION`         |
+| Adaptação do conteúdo à vaga         | `high`   | `TAILORLY_CLAUDE_CLI_EFFORT_CONTENT_ENRICHMENT`     |
+| Análise dos requisitos da vaga       | `medium` | `TAILORLY_CLAUDE_CLI_EFFORT_JOB_ANALYSIS`           |
+| Evidências complementares (links)    | `medium` | `TAILORLY_CLAUDE_CLI_EFFORT_SUPPLEMENTARY_EVIDENCE` |
+| Due diligence da empresa             | `medium` | `TAILORLY_CLAUDE_CLI_EFFORT_DUE_DILIGENCE`          |
+| Revisão de ATS                       | `medium` | `TAILORLY_CLAUDE_CLI_EFFORT_ATS_REVIEW`             |
+| Plano de layout do currículo         | `low`    | `TAILORLY_CLAUDE_CLI_EFFORT_RESUME_LAYOUT_PLAN`     |
+
+Valores aceitos: `low`, `medium`, `high`, `xhigh`, `max`. Uma etapa sem entrada ou com valor
+inválido usa `TAILORLY_CLAUDE_CLI_EFFORT` (padrão `medium`).
+
+**No perfil (Preferências de IA):** com `TAILORLY_CLAUDE_CLI_ENABLED=true`, a opção "Claude Code
+local" aparece no seletor de provedor da conta, com modelo, tempo máximo por etapa (10 a 1800 s) e o
+esforço de cada etapa. As variáveis acima viram os padrões do servidor: o perfil mostra quando um
+valor difere deles e tem "Restaurar padrões". O que a conta salva tem prioridade sobre as variáveis;
+uma etapa sem valor da conta usa o padrão do servidor para ela, e "Demais etapas" vale para etapas
+novas sem esforço próprio. O executável (`TAILORLY_CLAUDE_CLI_COMMAND`) e a liberação continuam só no
+servidor: a API recusa `claude-cli` (`400`, `error.ai_preferences.claude_cli_unavailable`) onde ele
+não está habilitado, e o modelo só aceita nomes simples porque vira argumento do CLI. Sem a
+liberação, a opção não aparece. Visitantes sem conta usam sempre a configuração do servidor.
+
+#### Codex com a sua conta ChatGPT (`codex-cli`, só uso local)
+
+Mesma ideia com o Codex CLI (`codex exec`), logado com a sua conta ChatGPT (`codex login`); o consumo
+entra nos limites dessa conta. As mesmas restrições valem: **só uso local**, desligado por padrão:
+
+```bash
+TAILORLY_CODEX_CLI_ENABLED=true
+TAILORLY_CODEX_CLI_COMMAND=codex   # ou o caminho completo
+TAILORLY_CODEX_CLI_MODEL=          # vazio usa o modelo padrão do Codex
+```
+
+O Codex é um agente com ferramentas, então a API o roda em um diretório temporário com sandbox
+somente leitura, sem aprovações, sem a configuração e as regras do usuário (`--ignore-user-config`,
+`--ignore-rules`), sem sessão salva (`--ephemeral`), sem busca na web e com shell, navegador, plugins,
+apps, hooks, geração de imagem e subagentes desligados (`--disable`), além de instruir o modelo a não
+usar ferramentas. O Codex não tem prompt de sistema separado: as instruções vão antes da entrada, no
+mesmo stdin. A resposta vem de `--output-last-message`. `OPENAI_*` e `CODEX_*` (menos `CODEX_HOME`, onde
+fica o login) são removidas do ambiente do processo, para ele usar a conta e não uma chave de API. Como o
+Codex repete o prompt no stderr, só as linhas `ERROR` vão para o log e para a mensagem de falha (por
+exemplo, cota esgotada).
+
+Esforços: as mesmas etapas e níveis do `claude-cli`, com variáveis `TAILORLY_CODEX_CLI_EFFORT` e
+`TAILORLY_CODEX_CLI_EFFORT_<ETAPA>`; `max` vira `xhigh` (`model_reasoning_effort`), o maior nível do
+Codex. No perfil, a opção "Codex local" aparece com `TAILORLY_CODEX_CLI_ENABLED=true` e tem os mesmos
+ajustes; a API recusa `codex-cli` (`400`, `error.ai_preferences.codex_cli_unavailable`) onde ele não
+está habilitado.
 
 ### Busca web (SearXNG) e Typst
 

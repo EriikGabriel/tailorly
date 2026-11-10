@@ -122,7 +122,7 @@ export function HeroIngestionCard() {
                   <input
                     type="url"
                     aria-label="Link da vaga"
-                    placeholder="Cole o link da vaga (Gupy, Trakstar Hire...)"
+                    placeholder="Cole o link da vaga (Gupy, InHire, Trakstar Hire...)"
                     value={jobUrl}
                     maxLength={MAX_JOB_URL_LENGTH + 1}
                     autoComplete="off"

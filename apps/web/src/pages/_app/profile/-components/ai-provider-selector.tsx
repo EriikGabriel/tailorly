@@ -1,10 +1,13 @@
+import type { LocalCliProvider } from "@@types/profile-settings";
 import {
   type InterpretationProvider,
   interpretationProviderOptions,
 } from "@constants/ai-providers";
 import {
   Bot,
+  Brain,
   CircleCheck,
+  Cpu,
   HardDrive,
   ListChecks,
   Workflow,
@@ -20,16 +23,21 @@ const providerIcons: Record<
   remote: Bot,
   "ollama-only": HardDrive,
   rules: ListChecks,
+  "claude-cli": Brain,
+  "codex-cli": Cpu,
 };
 
 type AiProviderSelectorProps = {
   value: InterpretationProvider;
   onChange: (value: InterpretationProvider) => void;
+  /** CLIs locais habilitados pelo servidor (uso local); sem isso a opção não aparece. */
+  localCliAvailable?: Partial<Record<LocalCliProvider, boolean>>;
 };
 
 export function AiProviderSelector({
   value,
   onChange,
+  localCliAvailable = {},
 }: AiProviderSelectorProps) {
   const reduceMotion = useReducedMotion();
 
@@ -39,81 +47,88 @@ export function AiProviderSelector({
       aria-label="Provedor de IA das etapas com IA"
       className="grid gap-2 sm:grid-cols-2"
     >
-      {interpretationProviderOptions.map((provider) => {
-        const Icon = providerIcons[provider.value];
-        const selected = value === provider.value;
+      {interpretationProviderOptions
+        .filter(
+          (provider) =>
+            !("localOnly" in provider) ||
+            localCliAvailable[provider.value as LocalCliProvider] === true ||
+            provider.value === value,
+        )
+        .map((provider) => {
+          const Icon = providerIcons[provider.value];
+          const selected = value === provider.value;
 
-        return (
-          // biome-ignore lint/a11y/useSemanticElements: rich card content can't live inside a native <input type="radio">.
-          <button
-            key={provider.value}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onChange(provider.value)}
-            className={`relative flex flex-col gap-1 rounded-xl p-2.5 text-left transition-colors ${
-              selected
-                ? "bg-surface-container-low"
-                : "bg-card hover:bg-surface-container-low/60"
-            }`}
-          >
-            <motion.span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-xl border-2"
-              initial={false}
-              animate={{
-                borderColor: selected
-                  ? "var(--color-primary)"
-                  : "var(--color-outline-variant)",
-              }}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : { type: "spring", stiffness: 400, damping: 30 }
-              }
-            />
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+          return (
+            // biome-ignore lint/a11y/useSemanticElements: rich card content can't live inside a native <input type="radio">.
+            <button
+              key={provider.value}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(provider.value)}
+              className={`relative flex flex-col gap-1 rounded-xl p-2.5 text-left transition-colors ${
+                selected
+                  ? "bg-surface-container-low"
+                  : "bg-card hover:bg-surface-container-low/60"
+              }`}
+            >
+              <motion.span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-xl border-2"
+                initial={false}
+                animate={{
+                  borderColor: selected
+                    ? "var(--color-primary)"
+                    : "var(--color-outline-variant)",
+                }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 400, damping: 30 }
+                }
+              />
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${
+                      selected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-surface-container text-on-surface-variant"
+                    }`}
+                  >
+                    <Icon className="size-3.5" />
+                  </span>
+                  <span className="text-label-md font-semibold text-primary-950">
+                    {provider.name}
+                  </span>
+                </div>
                 <span
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${
+                  aria-hidden="true"
+                  className={`size-3 shrink-0 rounded-full ${
                     selected
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-surface-container text-on-surface-variant"
+                      ? "bg-on-secondary-container"
+                      : "border border-outline"
+                  }`}
+                />
+              </div>
+              <p className="text-body-sm text-on-surface-variant">
+                {provider.description}
+              </p>
+              {provider.recommended && (
+                <span
+                  className={`inline-flex items-center gap-1 text-label-sm font-semibold ${
+                    selected
+                      ? "text-on-secondary-container"
+                      : "text-on-surface-variant"
                   }`}
                 >
-                  <Icon className="size-3.5" />
+                  <CircleCheck aria-hidden="true" className="size-3" />
+                  Recomendado (resiliência automática)
                 </span>
-                <span className="text-label-md font-semibold text-primary-950">
-                  {provider.name}
-                </span>
-              </div>
-              <span
-                aria-hidden="true"
-                className={`size-3 shrink-0 rounded-full ${
-                  selected
-                    ? "bg-on-secondary-container"
-                    : "border border-outline"
-                }`}
-              />
-            </div>
-            <p className="text-body-sm text-on-surface-variant">
-              {provider.description}
-            </p>
-            {provider.recommended && (
-              <span
-                className={`inline-flex items-center gap-1 text-label-sm font-semibold ${
-                  selected
-                    ? "text-on-secondary-container"
-                    : "text-on-surface-variant"
-                }`}
-              >
-                <CircleCheck aria-hidden="true" className="size-3" />
-                Recomendado (resiliência automática)
-              </span>
-            )}
-          </button>
-        );
-      })}
+              )}
+            </button>
+          );
+        })}
     </div>
   );
 }

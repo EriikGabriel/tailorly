@@ -2974,6 +2974,18 @@
           "accountOverride": {
             "type": "boolean"
           },
+          "claudeCli": {
+            "$ref": "#/components/schemas/LocalCliPreferencesResponse"
+          },
+          "codexCli": {
+            "$ref": "#/components/schemas/LocalCliPreferencesResponse"
+          },
+          "localCliTasks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "ollamaApiKeyConfigured": {
             "type": "boolean"
           },
@@ -3017,6 +3029,9 @@
         },
         "required": [
           "accountOverride",
+          "claudeCli",
+          "codexCli",
+          "localCliTasks",
           "ollamaApiKeyConfigured",
           "ollamaEndpoint",
           "ollamaModel",
@@ -3581,7 +3596,8 @@
           },
           "sizeBytes": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "minimum": 0
           },
           "storageKey": {
             "type": "string",
@@ -4770,6 +4786,72 @@
           "maxUploads"
         ]
       },
+      "LocalCliPreferencesRequest": {
+        "type": "object",
+        "properties": {
+          "efforts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0,
+            "pattern": "^$|[A-Za-z0-9][A-Za-z0-9._:/\\[\\]-]*"
+          },
+          "timeoutSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 1800,
+            "minimum": 10
+          }
+        }
+      },
+      "LocalCliPreferencesResponse": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "efforts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "model": {
+            "type": "string"
+          },
+          "serverEfforts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "serverModel": {
+            "type": "string"
+          },
+          "serverTimeoutSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timeoutSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "available",
+          "efforts",
+          "model",
+          "serverEfforts",
+          "serverModel",
+          "serverTimeoutSeconds",
+          "timeoutSeconds"
+        ]
+      },
       "Location": {
         "type": "object",
         "properties": {
@@ -5238,6 +5320,12 @@
       "UpdateAiPreferencesRequest": {
         "type": "object",
         "properties": {
+          "claudeCli": {
+            "$ref": "#/components/schemas/LocalCliPreferencesRequest"
+          },
+          "codexCli": {
+            "$ref": "#/components/schemas/LocalCliPreferencesRequest"
+          },
           "ollamaApiKey": {
             "type": "string"
           },
@@ -5250,7 +5338,7 @@
           "provider": {
             "type": "string",
             "minLength": 1,
-            "pattern": "rules|remote|remote-with-ollama-fallback|ollama-only"
+            "pattern": "rules|remote|remote-with-ollama-fallback|ollama-only|claude-cli|codex-cli"
           },
           "remoteApiKey": {
             "type": "string"

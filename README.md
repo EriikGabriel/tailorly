@@ -24,8 +24,7 @@ com sessão temporária e limites aplicados no servidor.
   páginas que precisam; fatos propostos pela IA com página e trecho de origem.
 - **Revisão por fato:** cada fato fica como `pendente`, `confirmado`, `corrigido` ou `omitido`. Ao
   aprovar, o servidor congela um snapshot imutável e o torna o Ground Truth ativo.
-- **Vagas por link ou texto:** leitura de Gupy e Trakstar Hire (validadas com páginas reais), JSON-LD e páginas HTML genéricas, com análise de
-  requisitos obrigatórios, desejáveis, tecnologias e anos de experiência.
+- **Vagas por link ou texto:** leitura de Gupy, InHire e Trakstar Hire (validadas com páginas reais), JSON-LD e páginas HTML genéricas, com análise de requisitos obrigatórios, desejáveis, tecnologias e anos de experiência.
 - **Geração controlada:** a IA reescreve e adapta a apresentação à vaga, mas não adiciona fatos fora do
   snapshot aprovado. Evidências complementares (vaga, links, busca web) só entram com fonte citada e
   confirmação.
@@ -57,20 +56,20 @@ As regras de domínio estão em [Currículo Base como Ground Truth](docs/product
 
 ## Tecnologias
 
-| Área                  | Tecnologias                                                                                                                 |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Frontend              | React 19, TypeScript, Vite 7, TanStack Router e TanStack Query, Zustand, Tailwind CSS 4, Base UI, Zod, CodeMirror, react-pdf |
-| Geração de API client | Orval a partir do OpenAPI (springdoc)                                                                                       |
-| Backend               | Java 21, Spring Boot 4 (Web MVC, Security com OAuth2 Resource Server/JWT, Validation, Actuator), Spring Data JPA, Lombok    |
-| Banco e migrations    | PostgreSQL 17 (Neon em produção), Flyway                                                                                    |
-| Arquivos              | Cliente S3 (AWS SDK v2): Cloudflare R2 em produção e Garage em desenvolvimento                                              |
-| Extração e OCR        | Apache PDFBox 3, Tesseract (por + eng), Jsoup para leitura de vagas                                                         |
-| Geração de PDF        | Typst CLI (versão fixa, mesma na imagem Docker e no CI)                                                                     |
-| IA                    | Provedor remoto compatível com Chat Completions, com Ollama como alternativa local e fallback opcional                      |
-| Busca web             | SearXNG (local) ou Tavily (produção), opcionais                                                                              |
-| Monorepo e ferramentas | pnpm workspaces, Turborepo, Biome, Orval, Playwright, Maven Wrapper                                                       |
-| Infra e deploy        | Vercel (SPA), Render (API em Docker, Blueprint em `render.yaml`), Neon, Cloudflare R2, GitHub Actions                       |
-| Documentação da API   | OpenAPI com springdoc (Swagger UI desligado em produção)                                                                    |
+| Área                   | Tecnologias                                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Frontend               | React 19, TypeScript, Vite 7, TanStack Router e TanStack Query, Zustand, Tailwind CSS 4, Base UI, Zod, CodeMirror, react-pdf |
+| Geração de API client  | Orval a partir do OpenAPI (springdoc)                                                                                        |
+| Backend                | Java 21, Spring Boot 4 (Web MVC, Security com OAuth2 Resource Server/JWT, Validation, Actuator), Spring Data JPA, Lombok     |
+| Banco e migrations     | PostgreSQL 17 (Neon em produção), Flyway                                                                                     |
+| Arquivos               | Cliente S3 (AWS SDK v2): Cloudflare R2 em produção e Garage em desenvolvimento                                               |
+| Extração e OCR         | Apache PDFBox 3, Tesseract (por + eng), Jsoup para leitura de vagas                                                          |
+| Geração de PDF         | Typst CLI (versão fixa, mesma na imagem Docker e no CI)                                                                      |
+| IA                     | Provedor remoto compatível com Chat Completions, com Ollama como alternativa local e fallback opcional                       |
+| Busca web              | SearXNG (local) ou Tavily (produção), opcionais                                                                              |
+| Monorepo e ferramentas | pnpm workspaces, Turborepo, Biome, Orval, Playwright, Maven Wrapper                                                          |
+| Infra e deploy         | Vercel (SPA), Render (API em Docker, Blueprint em `render.yaml`), Neon, Cloudflare R2, GitHub Actions                        |
+| Documentação da API    | OpenAPI com springdoc (Swagger UI desligado em produção)                                                                     |
 
 ## Arquitetura e plataforma
 

@@ -178,6 +178,15 @@ public final class ErrorCodes {
     }
   }
 
+  public static final class AiPreferences {
+    public static final String CLAUDE_CLI_UNAVAILABLE = "error.ai_preferences.claude_cli_unavailable";
+    public static final String CODEX_CLI_UNAVAILABLE = "error.ai_preferences.codex_cli_unavailable";
+    public static final String INVALID_EFFORT = "error.ai_preferences.invalid_effort";
+
+    private AiPreferences() {
+    }
+  }
+
   public static final class Vault {
     public static final String NOT_CONFIGURED = "error.vault.not_configured";
     public static final String INVALID_PATH = "error.vault.invalid_path";

@@ -16,6 +16,7 @@ export interface CreateStoredObjectRequest {
   ownerId: string;
   /** @minLength 1 */
   purpose: string;
+  /** @minimum 0 */
   sizeBytes: number;
   /** @minLength 1 */
   storageKey: string;

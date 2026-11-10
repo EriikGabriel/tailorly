@@ -1,13 +1,16 @@
 import { AutoHeight } from "@animate/primitives/effects/auto-height";
+import { localCliMeta } from "@constants/ai-providers";
 import { useAiPreferences } from "@queries/ai-preferences";
 import { Cpu, RefreshCw, Sparkles } from "@react-zero-ui/icon-sprite";
 import { useProfileSettingsStore } from "@stores/profile-settings-store";
+import { isLocalCliProvider } from "@utils/ai-preferences";
 import { useReducedMotion } from "motion/react";
 import { useEffect, useId, useState } from "react";
 import { AiConnectionParametersCard } from "./ai-connection-parameters-card";
 import { AiDueDiligencePreviewCard } from "./ai-due-diligence-preview-card";
 import { AiFallbackCard } from "./ai-fallback-card";
 import { AiGenerationPreviewCard } from "./ai-generation-preview-card";
+import { AiLocalCliCard } from "./ai-local-cli-card";
 import { AiProviderSelector } from "./ai-provider-selector";
 import { AiStepsList, AiStepsToggle } from "./ai-steps-list";
 import { SectionCard } from "./section-card";
@@ -18,6 +21,9 @@ export function AiPreferencesSection() {
     (state) => state.updateProvider,
   );
   const aiLoaded = useProfileSettingsStore((state) => state.aiLoaded);
+  const localCliServer = useProfileSettingsStore(
+    (state) => state.aiDraft.localCliServer,
+  );
   const hydrateAiPreferences = useProfileSettingsStore(
     (state) => state.hydrateAiPreferences,
   );
@@ -67,7 +73,14 @@ export function AiPreferencesSection() {
               Escolha como as etapas com IA são executadas. O mesmo provedor
               atende todas as etapas listadas abaixo.
             </p>
-            <AiProviderSelector value={provider} onChange={updateProvider} />
+            <AiProviderSelector
+              value={provider}
+              onChange={updateProvider}
+              localCliAvailable={{
+                "claude-cli": localCliServer["claude-cli"].available,
+                "codex-cli": localCliServer["codex-cli"].available,
+              }}
+            />
             <AiStepsList open={stepsOpen} id={stepsId} />
           </div>
 
@@ -77,6 +90,20 @@ export function AiPreferencesSection() {
           >
             <div className="flex flex-col gap-4 pb-px">
               {needsRemote && <AiConnectionParametersCard />}
+              {isLocalCliProvider(provider) &&
+                (localCliServer[provider].available ? (
+                  <AiLocalCliCard provider={provider} />
+                ) : (
+                  <p className="rounded-xl border border-destructive/40 bg-surface-container-low p-4 text-body-sm text-destructive">
+                    Este modo local não está habilitado neste servidor. Escolha
+                    outro provedor; ele só funciona quando a API roda no seu
+                    computador com{" "}
+                    <span className="font-mono">
+                      {localCliMeta[provider].enableVariable}=true
+                    </span>
+                    .
+                  </p>
+                ))}
               {needsOllama && (
                 <AiFallbackCard
                   mode={provider === "ollama-only" ? "primary" : "fallback"}
