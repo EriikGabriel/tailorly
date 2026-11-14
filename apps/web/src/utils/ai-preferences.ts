@@ -1,12 +1,68 @@
-import type { AiPreferencesDraft } from "@@types/profile-settings";
+import type {
+  AiPreferencesDraft,
+  LocalCliDraft,
+  LocalCliProvider,
+  LocalCliServerInfo,
+} from "@@types/profile-settings";
 import type {
   AiPreferencesResponse,
+  LocalCliPreferencesRequest,
+  LocalCliPreferencesResponse,
   UpdateAiPreferencesRequest,
 } from "@api/generated/model";
 import {
   defaultInterpretationSettings,
   type InterpretationProvider,
+  LOCAL_CLI_MODEL_PATTERN,
+  LOCAL_CLI_TIMEOUT_RANGE,
+  localCliMeta,
 } from "@constants/ai-providers";
+
+export const LOCAL_CLI_PROVIDERS: readonly LocalCliProvider[] = [
+  "claude-cli",
+  "codex-cli",
+];
+
+export function isLocalCliProvider(
+  provider: string,
+): provider is LocalCliProvider {
+  return (LOCAL_CLI_PROVIDERS as readonly string[]).includes(provider);
+}
+
+const emptyLocalCli = (provider: LocalCliProvider): LocalCliDraft => ({
+  model: provider === "claude-cli" ? "sonnet" : "",
+  timeoutSeconds: 180,
+  efforts: {},
+});
+
+const unavailable = (provider: LocalCliProvider): LocalCliServerInfo => ({
+  available: false,
+  defaults: emptyLocalCli(provider),
+});
+
+function localCliFromResponse(
+  provider: LocalCliProvider,
+  response: LocalCliPreferencesResponse | undefined,
+): { draft: LocalCliDraft; server: LocalCliServerInfo } {
+  // Backend anterior aos CLIs locais: sem o bloco, o provider só fica indisponível.
+  if (!response)
+    return { draft: emptyLocalCli(provider), server: unavailable(provider) };
+  return {
+    draft: {
+      model: response.model ?? "",
+      timeoutSeconds: response.timeoutSeconds,
+      efforts: { ...(response.efforts ?? {}) },
+    },
+    server: {
+      available: response.available,
+      defaults: {
+        model: response.serverModel ?? "",
+        timeoutSeconds: response.serverTimeoutSeconds,
+        efforts: { ...(response.serverEfforts ?? {}) },
+      },
+    },
+  };
+}
 
 /** Rascunho inicial de IA, com os valores padrão do formulário. */
 export function defaultAiPreferencesDraft(): AiPreferencesDraft {
@@ -23,6 +79,15 @@ export function defaultAiPreferencesDraft(): AiPreferencesDraft {
     },
     remoteApiKeyConfigured: false,
     ollamaApiKeyConfigured: false,
+    localCli: {
+      "claude-cli": emptyLocalCli("claude-cli"),
+      "codex-cli": emptyLocalCli("codex-cli"),
+    },
+    localCliServer: {
+      "claude-cli": unavailable("claude-cli"),
+      "codex-cli": unavailable("codex-cli"),
+    },
+    localCliTasks: [],
   };
 }
 
@@ -30,6 +95,8 @@ export function defaultAiPreferencesDraft(): AiPreferencesDraft {
 export function aiDraftFromResponse(
   response: AiPreferencesResponse,
 ): AiPreferencesDraft {
+  const claude = localCliFromResponse("claude-cli", response.claudeCli);
+  const codex = localCliFromResponse("codex-cli", response.codexCli);
   return {
     provider: response.provider as InterpretationProvider,
     remote: {
@@ -43,6 +110,48 @@ export function aiDraftFromResponse(
     },
     remoteApiKeyConfigured: response.remoteApiKeyConfigured,
     ollamaApiKeyConfigured: response.ollamaApiKeyConfigured,
+    localCli: { "claude-cli": claude.draft, "codex-cli": codex.draft },
+    localCliServer: { "claude-cli": claude.server, "codex-cli": codex.server },
+    localCliTasks: [...(response.localCliTasks ?? [])],
+  };
+}
+
+/**
+ * Mesmas regras do `LocalCliPreferencesRequest` (o modelo vira argumento do CLI). O Codex aceita
+ * modelo vazio (padrão do próprio CLI); o Claude Code precisa de um.
+ */
+export function isLocalCliDraftValid(
+  provider: LocalCliProvider,
+  config: LocalCliDraft,
+): boolean {
+  const model = config.model.trim();
+  const modelOk =
+    model === ""
+      ? localCliMeta[provider].allowEmptyModel
+      : model.length <= 255 && LOCAL_CLI_MODEL_PATTERN.test(model);
+  return (
+    modelOk &&
+    Number.isInteger(config.timeoutSeconds) &&
+    config.timeoutSeconds >= LOCAL_CLI_TIMEOUT_RANGE.min &&
+    config.timeoutSeconds <= LOCAL_CLI_TIMEOUT_RANGE.max
+  );
+}
+
+function localCliRequest(
+  draft: AiPreferencesDraft,
+  provider: LocalCliProvider,
+): LocalCliPreferencesRequest | undefined {
+  // Só onde o servidor habilita o CLI; sem o bloco, o backend mantém o que já estava salvo.
+  const config = draft.localCli[provider];
+  if (
+    !draft.localCliServer[provider].available ||
+    !isLocalCliDraftValid(provider, config)
+  )
+    return undefined;
+  return {
+    model: config.model.trim(),
+    timeoutSeconds: config.timeoutSeconds,
+    efforts: config.efforts,
   };
 }
 
@@ -82,6 +191,12 @@ export function isAiDraftValid(draft: AiPreferencesDraft): boolean {
     if (draft.ollama.model.trim().length === 0) return false;
   }
 
+  if (isLocalCliProvider(draft.provider)) {
+    if (!draft.localCliServer[draft.provider].available) return false;
+    if (!isLocalCliDraftValid(draft.provider, draft.localCli[draft.provider]))
+      return false;
+  }
+
   return true;
 }
 
@@ -97,5 +212,7 @@ export function aiPreferencesRequestFromDraft(
       draft.remote.apiKey.trim() === "" ? undefined : draft.remote.apiKey,
     ollamaEndpoint: draft.ollama.endpoint,
     ollamaModel: draft.ollama.model,
+    claudeCli: localCliRequest(draft, "claude-cli"),
+    codexCli: localCliRequest(draft, "codex-cli"),
   };
 }

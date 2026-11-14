@@ -5,6 +5,10 @@
 
 FROM --platform=$BUILDPLATFORM eclipse-temurin:25-jdk AS build
 WORKDIR /src
+# O mvnw usa curl para baixar o Maven, e a imagem JDK 25 não o traz mais.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 # O mvnw baixa o Maven e as dependências para .mvn/wrapper (fora do Git); o cache mount mantém isso
 # entre builds.
 COPY mvnw pom.xml ./

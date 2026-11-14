@@ -203,6 +203,10 @@ async function mockAccount(page: Page, evidence: Evidence[]) {
     if (item) item.reviewState = reviewState;
     return route.fulfill({ json: item });
   });
+  // A geração consulta o template atual antes de enviar (um template editado vale sobre o layout).
+  await page.route("**/v1/cv/templates/owner/*/current", (route) =>
+    route.fulfill({ json: { name: "classic", custom: false } }),
+  );
   await page.route("**/v1/cv/generate", (route) => {
     calls.generate++;
     return route.fulfill({ status: 201, json: { id: "generation-1" } });

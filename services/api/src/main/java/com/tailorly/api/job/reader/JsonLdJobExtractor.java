@@ -14,13 +14,15 @@ import java.util.Map;
 import java.util.Optional;
 
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.core.json.JsonReadFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.tailorly.api.job.dto.JobPostingResponse;
 import com.tailorly.api.job.dto.JobPostingResponse.Company;
 import com.tailorly.api.job.dto.JobPostingResponse.Location;
 import com.tailorly.api.job.dto.JobPostingResponse.Salary;
-import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Component;
@@ -30,16 +32,29 @@ import org.springframework.stereotype.Component;
  * do Google Jobs (por exemplo Greenhouse e Lever).
  */
 @Component
-@RequiredArgsConstructor
 public class JsonLdJobExtractor implements JobPageExtractor {
-  private final ObjectMapper objectMapper;
+  /** Perfis e avaliações: em {@code sameAs} não indicam o site da empresa. */
+  private static final List<String> PROFILE_DOMAINS = List.of(
+      "linkedin.com", "facebook.com", "instagram.com", "twitter.com", "x.com", "youtube.com", "github.com",
+      "glassdoor.com", "glassdoor.com.br", "crunchbase.com", "tiktok.com", "indeed.com");
+
+  private final ObjectMapper lenient;
+
+  /**
+   * Alguns recrutadores (Trakstar Hire, por exemplo) publicam quebras de linha sem escape dentro das
+   * strings do JSON-LD; o parser estrito recusaria a vaga inteira, então este aceita esse desvio.
+   */
+  public JsonLdJobExtractor() {
+    this.lenient = JsonMapper.builder(JsonFactory.builder()
+        .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS).build()).build();
+  }
 
   @Override
   public Optional<JobPostingResponse> extract(Document document, String finalUrl) {
     for (Element script : document.select("script[type=application/ld+json]")) {
       JsonNode root;
       try {
-        root = objectMapper.readTree(script.data());
+        root = lenient.readTree(script.data());
       } catch (JacksonException exception) {
         continue;
       }
@@ -123,17 +138,29 @@ public class JsonLdJobExtractor implements JobPageExtractor {
       sameAs.forEach(url -> urls.add(text(url)));
     else
       urls.add(text(sameAs));
+    String ownSite = null;
     for (String url : urls) {
       String valid = httpUrl(url);
-      if (valid != null)
-        links.putIfAbsent(linkName(valid), valid);
+      if (valid == null)
+        continue;
+      if (ownSite == null && !isProfileLink(valid))
+        ownSite = valid;
+      links.putIfAbsent(linkName(valid), valid);
     }
 
     JsonNode logo = organization.path("logo");
     String logoUrl = logo.isObject() ? first(text(logo, "url"), text(logo, "contentUrl")) : text(logo);
 
+    // Sem {@code url}, alguns recrutadores põem o site da empresa em {@code sameAs}; ele serve para a
+    // due diligence confirmar de qual empresa se trata.
+    String website = first(httpUrl(text(organization, "url")), ownSite);
     return new Company(text(organization, "name"), text(organization, "description"),
-        httpUrl(text(organization, "url")), httpUrl(logoUrl), null, links);
+        website, httpUrl(logoUrl), null, links);
+  }
+
+  private static boolean isProfileLink(String url) {
+    String host = URI.create(url).getHost().toLowerCase(Locale.ROOT);
+    return PROFILE_DOMAINS.stream().anyMatch(domain -> host.equals(domain) || host.endsWith("." + domain));
   }
 
   private static String linkName(String url) {

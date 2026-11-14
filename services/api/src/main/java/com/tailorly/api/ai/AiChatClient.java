@@ -11,6 +11,7 @@ import tools.jackson.databind.JsonNode;
 import com.tailorly.api.aipreferences.EffectiveAiSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -20,13 +21,17 @@ import org.springframework.web.client.RestClientException;
 
 /**
  * Cliente HTTP único para provedores compatíveis com Chat Completions da OpenAI. Resolve o
- * provider efetivo ({@code remote}, {@code ollama-only} ou {@code remote-with-ollama-fallback}) e
+ * provider efetivo ({@code remote}, {@code ollama-only}, {@code remote-with-ollama-fallback} ou,
+ * só para uso local, {@code claude-cli} e {@code codex-cli}, que delegam ao {@link ClaudeCliClient} e
+ * ao {@link CodexCliClient}) e
  * deixa o prompt e a validação da resposta com cada chamador.
  */
 @Component
 public class AiChatClient {
   private static final String REMOTE = "Remote provider";
   private static final String OLLAMA = "Ollama";
+  private static final String CLAUDE_CLI = "Claude Code CLI";
+  private static final String CODEX_CLI = "Codex CLI";
 
   private static final Logger log = LoggerFactory.getLogger(AiChatClient.class);
 
@@ -43,7 +48,30 @@ public class AiChatClient {
       .requestFactory(readTimeoutFactory())
       .build();
 
-  public record ModelConfiguration(String provider, String endpoint, String model, String apiKey) {
+  private final ClaudeCliClient claudeCli;
+  private final CodexCliClient codexCli;
+
+  @Autowired
+  public AiChatClient(ClaudeCliClient claudeCli, CodexCliClient codexCli) {
+    this.claudeCli = claudeCli;
+    this.codexCli = codexCli;
+  }
+
+  public AiChatClient(ClaudeCliClient claudeCli) {
+    this(claudeCli, null);
+  }
+
+  /** Sem os providers locais por CLI; usado nos testes. */
+  public AiChatClient() {
+    this(null, null);
+  }
+
+  /** {@code effort} e {@code timeout} só são usados pelos CLIs locais; os provedores Chat Completions os ignoram. */
+  public record ModelConfiguration(String provider, String endpoint, String model, String apiKey, String effort,
+      Duration timeout) {
+    public ModelConfiguration(String provider, String endpoint, String model, String apiKey) {
+      this(provider, endpoint, model, apiKey, null, null);
+    }
   }
 
   /**
@@ -52,6 +80,12 @@ public class AiChatClient {
    * resposta dentro de {@code attempt}) tenta o Ollama local antes de desistir (RNF07).
    */
   public <T> T run(EffectiveAiSettings settings, String task, Function<ModelConfiguration, T> attempt) {
+    if ("claude-cli".equals(settings.provider()))
+      return attempt.apply(claudeCliConfiguration(settings, task));
+
+    if ("codex-cli".equals(settings.provider()))
+      return attempt.apply(codexCliConfiguration(settings, task));
+
     if ("ollama-only".equals(settings.provider()))
       return attempt.apply(ollamaConfiguration(settings));
 
@@ -84,6 +118,20 @@ public class AiChatClient {
 
   /** Envia o prompt e devolve o texto gerado; a resposta ainda deve ser validada por quem chama. */
   public String complete(ModelConfiguration configuration, String systemPrompt, String userPrompt) {
+    if (CLAUDE_CLI.equals(configuration.provider())) {
+      if (claudeCli == null || !claudeCli.enabled())
+        throw new IllegalStateException(
+            "Claude Code CLI provider is disabled (set TAILORLY_CLAUDE_CLI_ENABLED=true for local use)");
+      return claudeCli.complete(configuration.model(), configuration.effort(), configuration.timeout(),
+          systemPrompt, userPrompt);
+    }
+    if (CODEX_CLI.equals(configuration.provider())) {
+      if (codexCli == null || !codexCli.enabled())
+        throw new IllegalStateException(
+            "Codex CLI provider is disabled (set TAILORLY_CODEX_CLI_ENABLED=true for local use)");
+      return codexCli.complete(configuration.model(), configuration.effort(), configuration.timeout(),
+          systemPrompt, userPrompt);
+    }
     validateConfiguration(configuration);
 
     // Solicita JSON para simplificar a leitura; ainda assim a resposta será validada localmente.
@@ -121,6 +169,28 @@ public class AiChatClient {
       return trimmed;
 
     return trimmed.substring(firstLineEnd + 1, closingFence).trim();
+  }
+
+  private ModelConfiguration claudeCliConfiguration(EffectiveAiSettings settings, String task) {
+    return claudeCli == null
+        ? new ModelConfiguration(CLAUDE_CLI, null, null, null)
+        : localCliConfiguration(CLAUDE_CLI, claudeCli.properties(), settings.claudeCli(), task);
+  }
+
+  private ModelConfiguration codexCliConfiguration(EffectiveAiSettings settings, String task) {
+    return codexCli == null
+        ? new ModelConfiguration(CODEX_CLI, null, null, null)
+        : localCliConfiguration(CODEX_CLI, codexCli.properties(), settings.codexCli(), task);
+  }
+
+  /** Escolhas da conta por cima dos padrões do servidor (modelo, esforço da etapa e timeout). */
+  private static ModelConfiguration localCliConfiguration(String provider, LocalCliProperties server,
+      EffectiveAiSettings.LocalCliOverrides account, String task) {
+    String model = account != null && account.model() != null && !account.model().isBlank()
+        ? account.model() : server.model();
+    return new ModelConfiguration(provider, null, model, null,
+        server.effortFor(task, account == null ? null : account.efforts()),
+        account == null ? null : account.timeout());
   }
 
   private static ModelConfiguration remoteConfiguration(EffectiveAiSettings settings) {

@@ -5,9 +5,13 @@
  * API HTTP do Tailorly. Endpoints de domínio ainda estão planejados.
  * OpenAPI spec version: 0.1.0
  */
+import type { LocalCliPreferencesResponse } from "./localCliPreferencesResponse";
 
 export interface AiPreferencesResponse {
   accountOverride: boolean;
+  claudeCli: LocalCliPreferencesResponse;
+  codexCli: LocalCliPreferencesResponse;
+  localCliTasks: string[];
   ollamaApiKeyConfigured: boolean;
   /** @nullable */
   ollamaEndpoint: string | null;

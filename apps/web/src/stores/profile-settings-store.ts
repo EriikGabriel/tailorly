@@ -1,5 +1,7 @@
 import type {
   AiPreferencesDraft,
+  LocalCliDraft,
+  LocalCliProvider,
   OllamaDraft,
   RemoteDraft,
 } from "@@types/profile-settings";
@@ -32,6 +34,15 @@ interface ProfileSettingsStore {
   updateProvider: (provider: InterpretationProvider) => void;
   updateRemote: (patch: Partial<RemoteDraft>) => void;
   updateOllama: (patch: Partial<OllamaDraft>) => void;
+  updateLocalCli: (
+    provider: LocalCliProvider,
+    patch: Partial<LocalCliDraft>,
+  ) => void;
+  updateLocalCliEffort: (
+    provider: LocalCliProvider,
+    task: string,
+    effort: string,
+  ) => void;
 
   hydrateAiPreferences: (response: AiPreferencesResponse) => void;
 
@@ -76,6 +87,41 @@ export const useProfileSettingsStore = create<ProfileSettingsStore>()(
         const aiDraft = {
           ...state.aiDraft,
           ollama: { ...state.aiDraft.ollama, ...patch },
+        };
+        return {
+          aiDraft,
+          isDirty: !isEqual(aiDraft, state.aiCommitted),
+          isAiConfigValid: isAiDraftValid(aiDraft),
+        };
+      }),
+
+    updateLocalCli: (provider, patch) =>
+      set((state) => {
+        const aiDraft = {
+          ...state.aiDraft,
+          localCli: {
+            ...state.aiDraft.localCli,
+            [provider]: { ...state.aiDraft.localCli[provider], ...patch },
+          },
+        };
+        return {
+          aiDraft,
+          isDirty: !isEqual(aiDraft, state.aiCommitted),
+          isAiConfigValid: isAiDraftValid(aiDraft),
+        };
+      }),
+    updateLocalCliEffort: (provider, task, effort) =>
+      set((state) => {
+        const current = state.aiDraft.localCli[provider];
+        const aiDraft = {
+          ...state.aiDraft,
+          localCli: {
+            ...state.aiDraft.localCli,
+            [provider]: {
+              ...current,
+              efforts: { ...current.efforts, [task]: effort },
+            },
+          },
         };
         return {
           aiDraft,
