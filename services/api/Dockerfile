@@ -9,12 +9,18 @@ WORKDIR /src
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-# O mvnw baixa o Maven e as dependências para .mvn/wrapper (fora do Git); o cache mount mantém isso
-# entre builds.
+# O mvnw baixa o Maven e as dependências para .mvn/wrapper/dists e ~/.m2 (fora do
+# Git); os cache mounts mantêm isso entre builds. Montar só esses dois subdiretórios preserva o
+# maven-wrapper.properties e o .jar, que precisam vir do COPY.
 COPY mvnw pom.xml ./
-RUN --mount=type=cache,target=/src/.mvn/wrapper ./mvnw -B -q dependency:go-offline
+COPY .mvn/wrapper/maven-wrapper.properties .mvn/wrapper/maven-wrapper.jar .mvn/wrapper/
+RUN --mount=type=cache,target=/src/.mvn/wrapper/dists \
+    --mount=type=cache,target=/root/.m2/repository \
+    ./mvnw -B -q dependency:go-offline
 COPY src src
-RUN --mount=type=cache,target=/src/.mvn/wrapper ./mvnw -B -q -DskipTests package \
+RUN --mount=type=cache,target=/src/.mvn/wrapper/dists \
+    --mount=type=cache,target=/root/.m2/repository \
+    ./mvnw -B -q -DskipTests package \
     && cp target/api-*.jar /src/app.jar
 
 FROM eclipse-temurin:25-jre AS runtime
