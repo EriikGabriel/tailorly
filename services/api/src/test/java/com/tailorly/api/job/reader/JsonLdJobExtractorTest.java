@@ -6,13 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.util.List;
 
-import tools.jackson.databind.ObjectMapper;
 import com.tailorly.api.job.dto.JobPostingResponse;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;
 
 class JsonLdJobExtractorTest {
-  private final JsonLdJobExtractor extractor = new JsonLdJobExtractor(new ObjectMapper());
+  private final JsonLdJobExtractor extractor = new JsonLdJobExtractor();
 
   private JobPostingResponse extract(String jsonLd) {
     String html = "<html><head><script type=\"application/ld+json\">" + jsonLd + "</script></head><body></body></html>";
@@ -88,5 +87,41 @@ class JsonLdJobExtractorTest {
     assertEquals(new BigDecimal("5000"), job.salary().min());
     assertEquals(new BigDecimal("5000"), job.salary().max());
     assertEquals("Lisboa, Portugal", job.location().raw());
+  }
+
+  @Test
+  void readsTrakstarHirePostingWithRawNewlinesAndQuestionHeadings() {
+    // Formato real do Trakstar Hire: quebras de linha sem escape na descrição (JSON inválido para um
+    // parser estrito), títulos em forma de pergunta e o site da empresa em sameAs, sem url.
+    String description = "&lt;h3&gt;Qual a miss&amp;atilde;o do Cargo?&lt;/h3&gt;\n&lt;p&gt;Atuar com APIs.&lt;/p&gt;\n"
+        + "&lt;h3&gt;Quais ser&amp;atilde;o suas atividades do dia-a-dia?&lt;/h3&gt;\n&lt;ul&gt;\n&lt;li&gt;Desenvolver microsservi&amp;ccedil;os;&lt;/li&gt;\n&lt;/ul&gt;\n"
+        + "&lt;h3&gt;Quais s&amp;atilde;o os requisitos obrigat&amp;oacute;rios para esse cargo?&lt;/h3&gt;\n&lt;ul&gt;\n&lt;li&gt;Java 17+;&lt;/li&gt;\n&lt;/ul&gt;\n"
+        + "&lt;h3&gt;Quais ser&amp;atilde;o os requisitos diferenciais para este cargo?&lt;/h3&gt;\n&lt;ul&gt;\n&lt;li&gt;Kafka;&lt;/li&gt;\n&lt;/ul&gt;";
+    String json = "{\n \"@context\" : \"http://schema.org/\",\n \"@type\" : \"JobPosting\",\n"
+        + " \"title\" : \"Desenvolvedor Java | J\u00fanior (13938)\",\n"
+        + " \"description\" : \"" + description + "\",\n"
+        + " \"datePosted\" : \"2026-11-03\",\n \"employmentType\" : \"FULL_TIME\",\n"
+        + " \"identifier\" : {\"@type\": \"PropertyValue\", \"name\": \"Sensedia\", \"value\": \"fk0zc1c\"},\n"
+        + " \"hiringOrganization\" : {\"@type\": \"Organization\", \"name\": \"Sensedia\", \"sameAs\": \"http://www.sensedia.com\"}\n}";
+
+    JobPostingResponse job = extract(json);
+
+    assertEquals("Desenvolvedor Java | Júnior (13938)", job.title());
+    assertEquals("fk0zc1c", job.externalId());
+    assertEquals("Sensedia", job.company().name());
+    assertEquals("http://www.sensedia.com", job.company().website());
+    assertEquals(List.of("Desenvolver microsserviços;"), job.responsibilities());
+    assertEquals(List.of("Java 17+;"), job.requirements());
+    assertEquals(List.of("Kafka;"), job.niceToHave());
+  }
+
+  @Test
+  void doesNotTakeSocialProfileInSameAsAsCompanyWebsite() {
+    JobPostingResponse job = extract("""
+        {"@type":"JobPosting","title":"X","description":"y",
+        "hiringOrganization":{"name":"Acme","sameAs":["https://www.linkedin.com/company/acme"]}}
+        """);
+
+    assertEquals(null, job.company().website());
   }
 }

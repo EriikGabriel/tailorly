@@ -1,13 +1,21 @@
 package com.tailorly.api.aipreferences;
 
+import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
+import com.tailorly.api.ai.ClaudeCliProperties;
+import com.tailorly.api.ai.CodexCliProperties;
+import com.tailorly.api.ai.LocalCliEfforts;
 import com.tailorly.api.aipreferences.dto.AiPreferencesResponse;
 import com.tailorly.api.aipreferences.dto.UpdateAiPreferencesRequest;
 import com.tailorly.api.extraction.interpreting.OllamaInterpretationProperties;
 import com.tailorly.api.extraction.interpreting.RemoteInterpretationProperties;
 import com.tailorly.api.owner.OwnerKindEnum;
 import com.tailorly.api.owner.OwnerRepository;
+import com.tailorly.api.shared.exception.BadRequestException;
+import com.tailorly.api.shared.exception.ErrorCodes;
 import com.tailorly.api.shared.security.SecretEncryptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -30,25 +38,31 @@ public class AiPreferencesService {
   private final SecretEncryptor secretEncryptor;
   private final RemoteInterpretationProperties remoteDefaults;
   private final OllamaInterpretationProperties ollamaDefaults;
+  private final ClaudeCliProperties claudeCliDefaults;
+  private final CodexCliProperties codexCliDefaults;
   private final String defaultProvider;
 
   public AiPreferencesService(AiPreferencesRepository repository, OwnerRepository ownerRepository,
       SecretEncryptor secretEncryptor, RemoteInterpretationProperties remoteDefaults,
-      OllamaInterpretationProperties ollamaDefaults,
+      OllamaInterpretationProperties ollamaDefaults, ClaudeCliProperties claudeCliDefaults,
+      CodexCliProperties codexCliDefaults,
       @Value("${tailorly.interpretation.provider:rules}") String defaultProvider) {
     this.repository = repository;
     this.ownerRepository = ownerRepository;
     this.secretEncryptor = secretEncryptor;
     this.remoteDefaults = remoteDefaults;
     this.ollamaDefaults = ollamaDefaults;
+    this.claudeCliDefaults = claudeCliDefaults;
+    this.codexCliDefaults = codexCliDefaults;
     this.defaultProvider = defaultProvider;
   }
 
   @Transactional(readOnly = true)
   public AiPreferencesResponse find(UUID ownerId) {
     return repository.findByOwnerId(ownerId)
-        .map(AiPreferencesResponse::from)
-        .orElseGet(() -> AiPreferencesResponse.serverDefaults(defaultProvider, remoteDefaults, ollamaDefaults));
+        .map(preferences -> AiPreferencesResponse.from(preferences, claudeCliDefaults, codexCliDefaults))
+        .orElseGet(() -> AiPreferencesResponse.serverDefaults(defaultProvider, remoteDefaults, ollamaDefaults,
+            claudeCliDefaults, codexCliDefaults));
   }
 
   @Transactional
@@ -56,7 +70,25 @@ public class AiPreferencesService {
     AiPreferences preferences = repository.findByOwnerId(ownerId)
         .orElseGet(() -> AiPreferences.builder().owner(ownerRepository.getReferenceById(ownerId)).build());
 
+    // claude-cli/codex-cli rodam o CLI logado na máquina do servidor: só existem onde o servidor os habilitou
+    // (uso local). O executável nunca vem da requisição.
+    if ("claude-cli".equals(request.provider()) && !claudeCliDefaults.enabled())
+      throw new BadRequestException(ErrorCodes.AiPreferences.CLAUDE_CLI_UNAVAILABLE);
+    if ("codex-cli".equals(request.provider()) && !codexCliDefaults.enabled())
+      throw new BadRequestException(ErrorCodes.AiPreferences.CODEX_CLI_UNAVAILABLE);
+
     preferences.setProvider(request.provider());
+    // Sem o bloco na requisição, mantém o que já estava salvo para aquele CLI.
+    if (request.claudeCli() != null) {
+      preferences.setClaudeCliModel(blankToNull(request.claudeCli().model()));
+      preferences.setClaudeCliTimeoutSeconds(request.claudeCli().timeoutSeconds());
+      preferences.setClaudeCliEfforts(validEfforts(request.claudeCli().efforts()));
+    }
+    if (request.codexCli() != null) {
+      preferences.setCodexCliModel(blankToNull(request.codexCli().model()));
+      preferences.setCodexCliTimeoutSeconds(request.codexCli().timeoutSeconds());
+      preferences.setCodexCliEfforts(validEfforts(request.codexCli().efforts()));
+    }
     preferences.setRemoteEndpoint(blankToNull(request.remoteEndpoint()));
     preferences.setRemoteModel(blankToNull(request.remoteModel()));
     preferences.setOllamaEndpoint(blankToNull(request.ollamaEndpoint()));
@@ -70,7 +102,7 @@ public class AiPreferencesService {
       preferences.setOllamaApiKeyEncrypted(secretEncryptor.encrypt(request.ollamaApiKey()));
     }
 
-    return AiPreferencesResponse.from(repository.save(preferences));
+    return AiPreferencesResponse.from(repository.save(preferences), claudeCliDefaults, codexCliDefaults);
   }
 
   /** Usado pela extração (veja {@code com.tailorly.api.extraction.interpreting}). */
@@ -99,7 +131,32 @@ public class AiPreferencesService {
         orDefault(secretEncryptor.decrypt(preferences.getRemoteApiKeyEncrypted()), remoteDefaults.apiKey()),
         orDefault(preferences.getOllamaEndpoint(), ollamaDefaults.endpoint()),
         orDefault(preferences.getOllamaModel(), ollamaDefaults.model()),
-        orDefault(secretEncryptor.decrypt(preferences.getOllamaApiKeyEncrypted()), ollamaDefaults.apiKey()));
+        orDefault(secretEncryptor.decrypt(preferences.getOllamaApiKeyEncrypted()), ollamaDefaults.apiKey()),
+        new EffectiveAiSettings.LocalCliOverrides(
+            preferences.getClaudeCliModel(), seconds(preferences.getClaudeCliTimeoutSeconds()),
+            preferences.getClaudeCliEfforts()),
+        new EffectiveAiSettings.LocalCliOverrides(
+            preferences.getCodexCliModel(), seconds(preferences.getCodexCliTimeoutSeconds()),
+            preferences.getCodexCliEfforts()));
+  }
+
+  private static Duration seconds(Integer value) {
+    return value == null ? null : Duration.ofSeconds(value);
+  }
+
+  /** Só {@code default} e etapas conhecidas, com níveis válidos; vazio vira nulo (usa o servidor). */
+  private static Map<String, String> validEfforts(Map<String, String> requested) {
+    if (requested == null || requested.isEmpty())
+      return null;
+    Map<String, String> efforts = new LinkedHashMap<>();
+    requested.forEach((key, value) -> {
+      boolean knownKey = LocalCliEfforts.DEFAULT_KEY.equals(key) || LocalCliEfforts.TASKS.contains(key);
+      String level = LocalCliEfforts.normalize(value);
+      if (!knownKey || level == null)
+        throw new BadRequestException(ErrorCodes.AiPreferences.INVALID_EFFORT);
+      efforts.put(key, level);
+    });
+    return efforts;
   }
 
   private EffectiveAiSettings defaultEffectiveSettings() {

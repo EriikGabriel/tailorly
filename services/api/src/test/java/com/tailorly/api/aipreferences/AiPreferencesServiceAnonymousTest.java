@@ -30,6 +30,7 @@ class AiPreferencesServiceAnonymousTest {
     return new AiPreferencesService(repository, ownerRepository, secretEncryptor,
         new RemoteInterpretationProperties("https://env.example/v1/chat/completions", "env-model", "env-key"),
         new OllamaInterpretationProperties("http://127.0.0.1:11434/v1/chat/completions", "env-ollama", "ollama"),
+        com.tailorly.api.ai.ClaudeCliProperties.disabled(), com.tailorly.api.ai.CodexCliProperties.disabled(),
         "remote-with-ollama-fallback");
   }
 

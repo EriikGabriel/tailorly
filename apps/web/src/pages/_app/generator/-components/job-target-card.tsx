@@ -8,6 +8,8 @@ import {
 } from "@animate/base/tabs";
 import { JobTextField } from "@components/job/job-text-field";
 import {
+  CompatiblePlatforms,
+  JobUrlBadge,
   JobUrlFeedback,
   useSettledUrlCheck,
 } from "@components/job-url-feedback";
@@ -83,19 +85,22 @@ export function JobTargetCard() {
                 >
                   Link da Vaga
                 </label>
-                <span className="text-xs font-medium tracking-[0.3px] text-on-surface-variant">
-                  Gupy, Lever, Greenhouse
-                </span>
               </div>
               <div className="relative flex items-center">
-                <LinkIcon
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-3.5 size-4 text-on-surface-variant"
+                <JobUrlBadge
+                  check={shownUrlCheck}
+                  className="pointer-events-none absolute left-3.5 size-4"
+                  fallback={
+                    <LinkIcon
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-3.5 size-4 text-on-surface-variant"
+                    />
+                  }
                 />
                 <input
                   id="generator-job-url"
                   type="url"
-                  placeholder="https://linkedin.com/jobs/view/..."
+                  placeholder="https://empresa.gupy.io/jobs/..."
                   value={jobUrl}
                   maxLength={MAX_JOB_URL_LENGTH + 1}
                   autoComplete="off"
@@ -118,6 +123,7 @@ export function JobTargetCard() {
                   Colar
                 </button>
               </div>
+              <CompatiblePlatforms />
               <JobUrlFeedback
                 id="generator-job-url-feedback"
                 check={shownUrlCheck}
